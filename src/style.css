@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --brand-green-50: #ecfdf3;
+  --brand-green-600: #16a34a;
+  --brand-green-700: #15803d;
+  --ink-900: #0f172a;
+  --ink-600: #475569;
+  --surface-soft: #f8fafc;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--surface-soft);
+  color: var(--ink-900);
+  font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Sora', 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-black,
+.font-extrabold {
+  font-family: 'Sora', 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+a,
+button {
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 560ms ease both;
+}
+
+.animate-fade-up-delayed {
+  animation: fade-up 680ms ease 90ms both;
+}

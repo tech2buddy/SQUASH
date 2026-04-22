@@ -1,23 +1,20 @@
 import {
   ArrowLeft,
   Bell,
-  BriefcaseBusiness,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  ClipboardList,
   CreditCard,
   Download,
   FileText,
   Home,
   Menu,
-  MessageSquare,
   Search,
-  Settings,
   ShieldCheck,
   Smartphone,
   UserCircle2,
-  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,19 +26,16 @@ export default function SquashReportDetailsPage() {
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { label: 'My Jobs', icon: BriefcaseBusiness, href: '/dashboard' },
+    { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
     { label: 'Reports', icon: FileText, href: '/report-details', active: true },
-    { label: 'Testers', icon: Users, href: '/tester-jobs' },
-    { label: 'Messages', icon: MessageSquare, href: '/report-details', badge: '2' },
-    { label: 'Billing', icon: CreditCard, href: '/pricing' },
-    { label: 'Settings', icon: Settings, href: '/dashboard' },
+    { label: 'Billing', icon: CreditCard, href: '/billing' },
   ];
 
   const tabs = [
-    { label: 'Report Details', active: true },
-    { label: 'Comments (3)' },
-    { label: 'Attachments (2)' },
-    { label: 'Activity' },
+    { label: 'Report Details', href: '/report-details', active: true },
+    { label: 'Comments (3)', href: '/report-details/comments' },
+    { label: 'Attachments (2)', href: '/report-details/attachments' },
+    { label: 'Activity', href: '/report-details/activity' },
   ];
 
   const steps = [
@@ -131,11 +125,6 @@ export default function SquashReportDetailsPage() {
                     <Icon className="h-4 w-4" />
                     {item.label}
                   </span>
-                  {item.badge ? (
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs text-white">
-                      {item.badge}
-                    </span>
-                  ) : null}
                 </a>
               );
             })}
@@ -151,8 +140,8 @@ export default function SquashReportDetailsPage() {
                 >
                   Post a New Job
                 </a>
-                <a href="/tester-jobs" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
-                  Invite Testers
+                <a href="/post-job" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
+                  Post a New Job
                 </a>
               </div>
             </div>
@@ -181,9 +170,9 @@ export default function SquashReportDetailsPage() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </button>
+                  </a>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -194,13 +183,13 @@ export default function SquashReportDetailsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <button className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       3
                     </span>
-                  </button>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  </a>
+                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <UserCircle2 className="h-7 w-7" />
                     </div>
@@ -208,7 +197,7 @@ export default function SquashReportDetailsPage() {
                       <div className="text-sm font-bold text-slate-900">Alex Developer</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </div>
 
@@ -228,7 +217,7 @@ export default function SquashReportDetailsPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <a
-                  href="/dashboard"
+                  href="/report-details"
                   className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back to Reports
@@ -264,8 +253,9 @@ export default function SquashReportDetailsPage() {
 
             <div className="mt-8 flex flex-wrap gap-6 border-b border-slate-200">
               {tabs.map((tab) => (
-                <button
+                <a
                   key={tab.label}
+                  href={tab.href}
                   className={`border-b-2 px-2 pb-4 text-sm font-semibold transition ${
                     tab.active
                       ? 'border-green-600 text-green-700'
@@ -273,7 +263,7 @@ export default function SquashReportDetailsPage() {
                   }`}
                 >
                   {tab.label}
-                </button>
+                </a>
               ))}
             </div>
 
@@ -451,7 +441,7 @@ export default function SquashReportDetailsPage() {
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-slate-900">Attachments (2)</h2>
-                    <a href="/report-details" className="text-sm font-semibold text-green-700">View all</a>
+                    <a href="/report-details/attachments" className="text-sm font-semibold text-green-700">View all</a>
                   </div>
 
                   <div className="mt-5 space-y-4">

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import SquashActiveTestScreen from './SquashActiveTestScreen';
 import SquashAboutPage from './SquashAboutPage';
 import SquashDeveloperDashboard from './SquashDeveloperDashboard';
+import SquashDeveloperBillingPage from './SquashDeveloperBillingPage';
 import SquashForDevelopersPage from './SquashForDevelopersPage';
 import SquashForTestersPage from './SquashForTestersPage';
 import SquashHomepage from './SquashHomepage';
@@ -10,8 +11,16 @@ import SquashPostJobPage from './SquashPostJobPage';
 import SquashPricingPage from './SquashPricingPage';
 import SquashReportDetailsPage from './SquashReportDetailsPage';
 import SquashSignupPage from './SquashSignupPage';
+import SquashTesterDashboardPage from './SquashTesterDashboardPage';
 import SquashTesterJobBoard from './SquashTesterJobBoard';
 import SquashInfoPage from './SquashInfoPage';
+import SquashNotFoundPage from './SquashNotFoundPage';
+import {
+  SquashDeveloperActivityPage,
+  SquashDeveloperJobsPage,
+  SquashDeveloperSubmissionsPage,
+  SquashReportAttachmentsPage,
+} from './SquashDeveloperViewsPage';
 import { roleHomePath, routeRole, useAuth, type UserRole } from './auth';
 
 function ProtectedRoute({
@@ -150,7 +159,55 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashDeveloperBillingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/developer/jobs"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashDeveloperJobsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/developer/submissions"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashDeveloperSubmissionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/developer/activity"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashDeveloperActivityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/report-details/attachments"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashReportAttachmentsPage />
+          </ProtectedRoute>
+        }
+      />
 
+      <Route
+        path="/tester/dashboard"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/tester-jobs"
         element={
@@ -168,17 +225,9 @@ export default function App() {
         }
       />
 
-      <Route path="*" element={<FallbackRedirect />} />
+      <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
   );
-}
-
-function FallbackRedirect() {
-  const { session } = useAuth();
-  if (session) {
-    return <Navigate to={roleHomePath(session.role)} replace />;
-  }
-  return <Navigate to="/" replace />;
 }
 
 export function routeBelongsToRole(pathname: string, role: UserRole): boolean {

@@ -34,13 +34,13 @@ export default function SquashTesterJobBoard() {
   const [filterNotice, setFilterNotice] = useState('');
 
   const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester-jobs' },
+    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
     { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs', active: true },
     { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/active-test' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/active-test' },
-    { label: 'Profile', icon: UserCircle2, href: '/active-test' },
-    { label: 'Settings', icon: Settings, href: '/active-test' },
+    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
+    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
+    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
+    { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
   const tabs = [
@@ -290,7 +290,7 @@ export default function SquashTesterJobBoard() {
               </div>
               <div className="mt-4 text-center font-semibold text-slate-800">Level 3</div>
               <div className="text-center text-sm text-slate-500">Quality Tester</div>
-              <a href="/active-test" className="mt-4 inline-block text-sm font-semibold text-green-700">View Profile -&gt;</a>
+              <a href="/tester/profile" className="mt-4 inline-block text-sm font-semibold text-green-700">View Profile -&gt;</a>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -298,7 +298,7 @@ export default function SquashTesterJobBoard() {
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Refer a friend and earn R100 when they complete a test.
               </p>
-              <a href="/active-test" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
+              <a href="/tester/referrals" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
                 <Gift className="h-4 w-4" /> Refer Now -&gt;
               </a>
             </div>
@@ -310,9 +310,9 @@ export default function SquashTesterJobBoard() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </button>
+                  </a>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -325,13 +325,13 @@ export default function SquashTesterJobBoard() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <button className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       2
                     </span>
-                  </button>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  </a>
+                  <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <UserCircle2 className="h-7 w-7" />
                     </div>
@@ -339,7 +339,7 @@ export default function SquashTesterJobBoard() {
                       <div className="text-sm font-bold text-slate-900">Thando M.</div>
                       <div className="text-xs text-slate-500">Tester</div>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </div>
 
@@ -477,8 +477,9 @@ export default function SquashTesterJobBoard() {
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
               <div className="flex items-center gap-2">
                 {['<-', '1', '2', '3', '4', '5', '...', '12', '->'].map((item, index) => (
-                  <button
+                  <a
                     key={`${item}-${index}`}
+                    href={item === '<-' ? '/tester-jobs?page=1' : item === '->' ? '/tester-jobs?page=12' : item === '...' ? '/tester-jobs?page=6' : `/tester-jobs?page=${item}`}
                     className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-semibold ${
                       item === '1'
                         ? 'border-green-600 bg-green-600 text-white'
@@ -486,7 +487,7 @@ export default function SquashTesterJobBoard() {
                     }`}
                   >
                     {item}
-                  </button>
+                  </a>
                 ))}
               </div>
               <div className="text-sm text-slate-500">
@@ -643,7 +644,7 @@ export default function SquashTesterJobBoard() {
                 </div>
               ))}
             </div>
-            <a href="/active-test" className="mt-4 inline-block text-sm font-semibold text-green-700">View Leaderboard -&gt;</a>
+            <a href="/tester/leaderboard" className="mt-4 inline-block text-sm font-semibold text-green-700">View Leaderboard -&gt;</a>
           </div>
         </aside>
       </div>

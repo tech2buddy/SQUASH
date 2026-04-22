@@ -20,13 +20,13 @@ import { useNavigate } from 'react-router-dom';
 export default function SquashActiveTestScreen() {
   const navigate = useNavigate();
   const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester-jobs' },
+    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
     { label: 'Available Jobs', icon: ClipboardList, href: '/tester-jobs' },
     { label: 'My Tests', icon: PlayCircle, href: '/active-test', active: true },
-    { label: 'Reports', icon: ClipboardList, href: '/active-test' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/active-test' },
-    { label: 'Profile', icon: UserCircle2, href: '/active-test' },
-    { label: 'Settings', icon: Settings, href: '/active-test' },
+    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
+    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
+    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
+    { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
   const tasks = [
@@ -159,9 +159,9 @@ export default function SquashActiveTestScreen() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </button>
+                  </a>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -172,13 +172,13 @@ export default function SquashActiveTestScreen() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <button className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       2
                     </span>
-                  </button>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  </a>
+                  <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <UserCircle2 className="h-7 w-7" />
                     </div>
@@ -186,7 +186,7 @@ export default function SquashActiveTestScreen() {
                       <div className="text-sm font-bold text-slate-900">Thando M.</div>
                       <div className="text-xs text-slate-500">Tester</div>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </div>
 

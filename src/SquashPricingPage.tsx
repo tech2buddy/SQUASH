@@ -252,9 +252,9 @@ export default function SquashPricingPage() {
 
                 <div className="mt-8">
                   <div className="mb-3 text-sm font-semibold text-slate-700">Test type:</div>
-                  <button className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-semibold text-slate-700">
+                  <a href="/pricing/calculator" className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-semibold text-slate-700">
                     Functional Testing <span className="text-slate-400">&#9662;</span>
-                  </button>
+                  </a>
                 </div>
               </div>
 

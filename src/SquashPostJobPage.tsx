@@ -1,6 +1,5 @@
 import {
   Bell,
-  BriefcaseBusiness,
   ChevronDown,
   CircleHelp,
   ClipboardList,
@@ -9,10 +8,8 @@ import {
   Home,
   Menu,
   Search,
-  Settings,
   SlidersHorizontal,
   UserCircle2,
-  Users,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -91,12 +88,9 @@ export default function SquashPostJobPage() {
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { label: 'My Jobs', icon: BriefcaseBusiness, href: '/dashboard' },
     { label: 'Post a Job', icon: ClipboardList, href: '/post-job', active: true },
     { label: 'Reports', icon: FileText, href: '/report-details' },
-    { label: 'Testers', icon: Users, href: '/dashboard' },
-    { label: 'Billing', icon: CreditCard, href: '/pricing' },
-    { label: 'Settings', icon: Settings, href: '/dashboard' },
+    { label: 'Billing', icon: CreditCard, href: '/billing' },
   ];
 
   const steps = [
@@ -152,8 +146,8 @@ export default function SquashPostJobPage() {
                 >
                   Post a New Job
                 </a>
-                <a href="/tester-jobs" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
-                  Invite Testers
+                <a href="/report-details" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
+                  View Reports
                 </a>
               </div>
             </div>
@@ -180,9 +174,9 @@ export default function SquashPostJobPage() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </button>
+                  </a>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -193,13 +187,13 @@ export default function SquashPostJobPage() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <button className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       3
                     </span>
-                  </button>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  </a>
+                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <UserCircle2 className="h-7 w-7" />
                     </div>
@@ -207,7 +201,7 @@ export default function SquashPostJobPage() {
                       <div className="text-sm font-bold text-slate-900">Alex Developer</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </div>
 

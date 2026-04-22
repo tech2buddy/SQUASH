@@ -1,0 +1,644 @@
+import {
+  BadgeCheck,
+  Bell,
+  BriefcaseBusiness,
+  ChevronDown,
+  CircleDollarSign,
+  ClipboardList,
+  Clock3,
+  ContactRound,
+  Home,
+  LineChart,
+  Menu,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  UserCircle2,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
+
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+type TransactionStatus = 'Pending' | 'Approved' | 'Paid';
+
+type StatCard = {
+  title: string;
+  value: string;
+  note: string;
+  change: string;
+  icon: LucideIcon;
+  iconBg: string;
+  iconColor: string;
+};
+
+const stats: StatCard[] = [
+  {
+    title: 'Total Earnings',
+    value: 'R3,250',
+    note: 'Total earned on SQUASH',
+    change: '+R450 this month',
+    icon: Wallet,
+    iconBg: 'bg-green-50',
+    iconColor: 'text-green-700',
+  },
+  {
+    title: 'Pending Payout',
+    value: 'R620',
+    note: 'Awaiting release',
+    change: '2 submissions pending',
+    icon: Clock3,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-700',
+  },
+  {
+    title: 'Tests Completed',
+    value: '24',
+    note: 'Total tests completed',
+    change: '+6 this month',
+    icon: ClipboardList,
+    iconBg: 'bg-sky-50',
+    iconColor: 'text-sky-700',
+  },
+  {
+    title: 'Approval Rate',
+    value: '98%',
+    note: 'Excellent consistency',
+    change: 'Top performer',
+    icon: BadgeCheck,
+    iconBg: 'bg-emerald-50',
+    iconColor: 'text-emerald-700',
+  },
+  {
+    title: 'Member Since',
+    value: 'May 2025',
+    note: 'You are a valued member',
+    change: 'Level 2 Tester',
+    icon: Sparkles,
+    iconBg: 'bg-violet-50',
+    iconColor: 'text-violet-700',
+  },
+];
+
+const availableTests: Array<{
+  name: string;
+  meta: string;
+  difficulty: Difficulty;
+  amount: string;
+}> = [
+  {
+    name: 'FitTrack Mobile App',
+    meta: 'Android - Functional Testing',
+    difficulty: 'Easy',
+    amount: 'R250',
+  },
+  {
+    name: 'FoodOrder Web Platform',
+    meta: 'Web - Usability Testing',
+    difficulty: 'Medium',
+    amount: 'R400',
+  },
+  {
+    name: 'ShopEase iOS App',
+    meta: 'iOS - Bug Hunting',
+    difficulty: 'Hard',
+    amount: 'R350',
+  },
+];
+
+const myTests = [
+  {
+    name: 'TravelBuddy App',
+    type: 'Exploratory Testing',
+    progress: 50,
+    due: 'Due: 27 May',
+  },
+  {
+    name: 'BookStore Web',
+    type: 'Usability Testing',
+    progress: 30,
+    due: 'Due: 29 May',
+  },
+];
+
+const approvals = [
+  {
+    name: 'FitTrack Mobile App',
+    date: 'Submitted on 20 May',
+    amount: 'R250',
+    status: 'Pending',
+  },
+  {
+    name: 'HealthHub Web',
+    date: 'Submitted on 18 May',
+    amount: 'R370',
+    status: 'Pending',
+  },
+];
+
+const transactions: Array<{
+  date: string;
+  type: string;
+  description: string;
+  amount: string;
+  status: TransactionStatus;
+}> = [
+  {
+    date: '20 May 2025',
+    type: 'Earning',
+    description: 'FitTrack Mobile App',
+    amount: 'R250',
+    status: 'Pending',
+  },
+  {
+    date: '18 May 2025',
+    type: 'Earning',
+    description: 'HealthHub Web',
+    amount: 'R370',
+    status: 'Pending',
+  },
+  {
+    date: '10 May 2025',
+    type: 'Payout',
+    description: 'Bank Transfer',
+    amount: '-R450',
+    status: 'Paid',
+  },
+  {
+    date: '05 May 2025',
+    type: 'Earning',
+    description: 'ShopEase iOS App',
+    amount: 'R350',
+    status: 'Approved',
+  },
+  {
+    date: '01 May 2025',
+    type: 'Bonus',
+    description: 'Welcome Bonus',
+    amount: 'R100',
+    status: 'Paid',
+  },
+];
+
+const monthlyEarnings = [120, 140, 210, 260, 240, 300, 450];
+const monthlyLabels = ['1 May', '6 May', '12 May', '18 May', '22 May', '27 May', '31 May'];
+const earningsMax = Math.max(...monthlyEarnings);
+const earningsPoints = monthlyEarnings
+  .map((value, index) => {
+    const x = (index / (monthlyEarnings.length - 1)) * 100;
+    const y = 100 - (value / earningsMax) * 100;
+    return `${x},${y}`;
+  })
+  .join(' ');
+const earningsArea = `0,100 ${earningsPoints} 100,100`;
+
+function getDifficultyClasses(difficulty: Difficulty) {
+  if (difficulty === 'Easy') return 'bg-green-50 text-green-700';
+  if (difficulty === 'Medium') return 'bg-amber-50 text-amber-700';
+  return 'bg-red-50 text-red-600';
+}
+
+function getStatusClasses(status: TransactionStatus) {
+  if (status === 'Pending') return 'bg-amber-50 text-amber-700';
+  if (status === 'Approved') return 'bg-sky-50 text-sky-700';
+  return 'bg-green-50 text-green-700';
+}
+
+export default function SquashTesterDashboardPage() {
+  const navItems = [
+    { label: 'Dashboard', icon: Home, href: '/tester/dashboard', active: true },
+    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
+    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
+    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
+    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
+    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
+    { label: 'Settings', icon: Settings, href: '/tester/settings' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
+      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
+        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
+            <img
+              src="/squash-logo.png"
+              alt="SQUASH logo"
+              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
+            />
+            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
+              SQUASH
+            </a>
+          </div>
+
+          <nav className="flex-1 space-y-2 px-4 py-6">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <a
+                  href={item.href}
+                  key={item.label}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </a>
+              );
+            })}
+          </nav>
+
+          <div className="space-y-4 p-4 pt-0">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-lg font-bold text-slate-900">Your Progress</div>
+              <div className="mt-5 flex justify-center">
+                <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-[10px] border-green-600/15">
+                  <div className="absolute inset-0 rotate-[20deg] rounded-full border-[10px] border-transparent border-r-green-600 border-t-green-600" />
+                  <div className="text-center">
+                    <div className="text-2xl font-black text-slate-900">78%</div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 text-center font-semibold text-slate-800">Level 2</div>
+              <div className="text-center text-sm text-slate-500">Skilled Tester</div>
+              <a href="/tester/profile" className="mt-4 inline-block text-sm font-semibold text-green-700">
+                View Profile -&gt;
+              </a>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-lg font-bold text-slate-900">Referral Bonus</div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Invite a friend and earn R100 after their first completed test.
+              </p>
+              <a href="/tester/referrals" className="mt-4 inline-block text-sm font-semibold text-green-700">
+                Refer Now -&gt;
+              </a>
+            </div>
+          </div>
+        </aside>
+
+        <main className="min-w-0">
+          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-4">
+                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <Menu className="h-5 w-5" />
+                </a>
+                <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  <input
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    placeholder="Search jobs, apps, companies..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 sm:gap-4">
+                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    2
+                  </span>
+                </a>
+                <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
+                    A
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-sm font-bold text-slate-900">Alex Tester</div>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                </a>
+              </div>
+            </div>
+          </header>
+
+          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <div>
+              <h1 className="text-4xl font-black tracking-tight text-slate-900">Welcome back, Alex!</h1>
+              <p className="mt-2 text-slate-600">Here is what is happening with your testing journey.</p>
+            </div>
+
+            <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              {stats.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-600">{card.title}</div>
+                        <div className="mt-2 text-3xl font-black text-slate-900">{card.value}</div>
+                        <div className="mt-2 text-sm text-slate-500">{card.note}</div>
+                        <div className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                          {card.change}
+                        </div>
+                      </div>
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconBg}`}>
+                        <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+
+            <section className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900">Available Tests</h2>
+                      <p className="mt-2 text-sm text-slate-600">New opportunities matching your skills.</p>
+                    </div>
+                    <a href="/tester-jobs" className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                      View All Tests
+                    </a>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {availableTests.map((test) => (
+                      <div key={test.name} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900">{test.name}</div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                            <span>{test.meta}</span>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getDifficultyClasses(test.difficulty)}`}>
+                              {test.difficulty}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-2xl font-black text-slate-900">{test.amount}</div>
+                            <div className="text-sm text-slate-500">Earn</div>
+                          </div>
+                          <a href="/tester-jobs" className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            View
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-6 py-5">
+                    <h2 className="text-2xl font-bold text-slate-900">My Test Progress</h2>
+                    <p className="mt-2 text-sm text-slate-600">Track your active tests and deadlines.</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-6 border-b border-slate-100 px-6 py-4 text-sm font-semibold text-slate-500">
+                    <span className="text-green-700">In Progress (2)</span>
+                    <span>Submitted (3)</span>
+                    <span>Approved (19)</span>
+                  </div>
+
+                  <div className="divide-y divide-slate-100 px-6">
+                    {myTests.map((test) => (
+                      <div key={test.name} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="font-semibold text-slate-900">{test.name}</div>
+                          <div className="mt-1 text-sm text-slate-500">{test.type}</div>
+                        </div>
+                        <div className="flex items-center gap-4 md:min-w-[280px] md:justify-end">
+                          <div className="w-full max-w-[140px]">
+                            <div className="h-2 rounded-full bg-slate-100">
+                              <div className="h-2 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
+                            </div>
+                          </div>
+                          <div className="text-sm font-semibold text-slate-700">{test.progress}%</div>
+                          <div className="text-sm text-slate-500">{test.due}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="px-6 py-4 text-center text-sm font-semibold text-slate-700">
+                    <a href="/active-test" className="hover:text-green-700">View All My Tests -&gt;</a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-slate-900">Earnings Overview</h2>
+                    <div className="text-sm font-semibold text-slate-500">This Month</div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-4">
+                    <div className="h-36">
+                      <svg viewBox="0 0 100 100" className="h-full w-full">
+                        <defs>
+                          <linearGradient id="testerEarningsArea" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.25" />
+                            <stop offset="100%" stopColor="#22c55e" stopOpacity="0.03" />
+                          </linearGradient>
+                        </defs>
+                        <polyline points={earningsArea} fill="url(#testerEarningsArea)" stroke="none" />
+                        <polyline
+                          points={earningsPoints}
+                          fill="none"
+                          stroke="#16a34a"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {monthlyEarnings.map((value, index) => {
+                          const x = (index / (monthlyEarnings.length - 1)) * 100;
+                          const y = 100 - (value / earningsMax) * 100;
+                          return <circle key={`${value}-${index}`} cx={x} cy={y} r="1.7" fill="#16a34a" />;
+                        })}
+                      </svg>
+                    </div>
+                    <div className="mt-2 grid grid-cols-7 text-center text-[11px] text-slate-500">
+                      {monthlyLabels.map((label) => (
+                        <span key={label}>{label}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2 text-lg font-bold text-slate-900">
+                    <LineChart className="h-5 w-5 text-green-700" />
+                    Total Earnings:
+                    <span className="text-green-700">R450</span>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold text-slate-900">Payout Method</h2>
+
+                  <div className="relative mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-5 text-white shadow-[0_14px_30px_rgba(2,6,23,0.35)]">
+                    <div className="pointer-events-none absolute -right-12 -top-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
+                    <div className="pointer-events-none absolute -left-10 bottom-0 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+
+                    <div className="mb-4 flex items-center justify-between">
+                      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide">
+                        PAYOUT RAIL
+                      </span>
+                      <span className="text-xs text-white/75">Instant EFT</span>
+                    </div>
+
+                    <div className="font-mono text-xl tracking-[0.16em]">**** **** **** 1234</div>
+
+                    <div className="mt-5 flex items-end justify-between">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Bank</div>
+                        <div className="mt-1 text-sm font-semibold">Nedbank ZA</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Account Type</div>
+                        <div className="mt-1 text-sm font-semibold">Savings</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                    Last payout: 10 May 2025 - R450
+                  </div>
+                  <a href="/tester/payout-method" className="mt-3 inline-block text-sm font-semibold text-sky-700">
+                    Change Payout Method
+                  </a>
+                </div>
+
+                <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold text-slate-900">Pending Approvals</h2>
+                  <p className="mt-2 text-sm text-slate-600">Submissions waiting for developer approval.</p>
+                  <div className="mt-5 space-y-4">
+                    {approvals.map((item) => (
+                      <div key={item.name} className="rounded-2xl border border-sky-100 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-slate-900">{item.name}</div>
+                            <div className="mt-1 text-sm text-slate-500">{item.date}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-slate-900">{item.amount}</div>
+                            <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                              {item.status}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <a href="/tester/submissions" className="mt-4 inline-block text-sm font-semibold text-sky-700">
+                    View All Submissions -&gt;
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+              <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+                  <h2 className="text-2xl font-bold text-slate-900">Transaction History</h2>
+                  <button className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                    This Month <ChevronDown className="inline h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
+                        <th className="px-6 py-4 font-medium">Date</th>
+                        <th className="px-6 py-4 font-medium">Type</th>
+                        <th className="px-6 py-4 font-medium">Description</th>
+                        <th className="px-6 py-4 font-medium">Amount</th>
+                        <th className="px-6 py-4 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.map((item) => (
+                        <tr key={`${item.date}-${item.description}`} className="border-b border-slate-100 last:border-b-0">
+                          <td className="px-6 py-4 text-slate-700">{item.date}</td>
+                          <td className="px-6 py-4 text-slate-700">{item.type}</td>
+                          <td className="px-6 py-4 font-semibold text-slate-900">{item.description}</td>
+                          <td className={`px-6 py-4 font-semibold ${item.amount.startsWith('-') ? 'text-red-600' : 'text-slate-900'}`}>
+                            {item.amount}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(item.status)}`}>
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="px-6 py-4 text-center text-sm font-semibold text-slate-700">
+                  <a href="/tester/earnings" className="hover:text-green-700">View All Transactions -&gt;</a>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">Tester Level</h2>
+                  <ContactRound className="h-5 w-5 text-slate-400" />
+                </div>
+
+                <div className="mt-5 flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 shadow-sm">
+                    <Star className="h-8 w-8 text-green-700" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900">Level 2</div>
+                    <div className="text-slate-600">Skilled Tester</div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>Progress</span>
+                    <span>650 / 1000 XP</span>
+                  </div>
+                  <div className="mt-2 h-3 rounded-full bg-slate-100">
+                    <div className="h-3 w-[65%] rounded-full bg-green-600" />
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3 text-slate-700">
+                  <div className="inline-flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-green-700" />
+                    Complete tests consistently
+                  </div>
+                  <div className="inline-flex items-center gap-2">
+                    <BadgeCheck className="h-4 w-4 text-green-700" />
+                    Keep approval rate above 90%
+                  </div>
+                  <div className="inline-flex items-center gap-2">
+                    <Clock3 className="h-4 w-4 text-green-700" />
+                    Stay active every month
+                  </div>
+                </div>
+
+                <a href="/tester/level-benefits" className="mt-6 inline-block text-sm font-semibold text-sky-700">
+                  View Level Benefits -&gt;
+                </a>
+              </div>
+            </section>
+
+            <section className="relative mt-8 overflow-hidden rounded-3xl border border-green-200 bg-gradient-to-r from-green-50 via-emerald-50 to-green-100/70 p-6 shadow-sm">
+              <div className="pointer-events-none absolute -left-12 -top-12 h-36 w-36 rounded-full bg-green-300/20 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-emerald-300/20 blur-2xl" />
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Need Help?</h2>
+                  <p className="mt-2 text-slate-600">Our support team is here to help with any payout or test questions.</p>
+                </div>
+                <a href="/help-center" className="rounded-2xl border border-green-300 bg-white px-5 py-3 font-semibold text-slate-800 hover:bg-slate-50">
+                  Contact Support
+                </a>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}

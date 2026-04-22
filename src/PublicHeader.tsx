@@ -1,9 +1,12 @@
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 type PublicPage = 'home' | 'developers' | 'testers' | 'pricing';
 
 export default function PublicHeader({ active }: { active?: PublicPage }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const navItem = (href: string, label: string, page: PublicPage) => (
     <Link
       to={href}
@@ -65,12 +68,57 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
 
         <button
           type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          aria-expanded={mobileOpen}
           aria-label="Open menu"
           className="rounded-xl border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-50 md:hidden"
         >
-          <Menu className="h-5 w-5" />
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
+
+      {mobileOpen ? (
+        <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
+          <nav className="grid gap-2 text-sm font-semibold">
+            <Link to="/#how-it-works" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
+              How It Works
+            </Link>
+            <Link to="/for-developers" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
+              For Developers
+            </Link>
+            <Link to="/for-testers" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
+              For Testers
+            </Link>
+            <Link to="/pricing" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
+              Pricing
+            </Link>
+          </nav>
+
+          <div className="mt-4 grid gap-2">
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/post-job"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-xl bg-green-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-green-600"
+            >
+              Post a Job
+            </Link>
+            <Link
+              to="/tester-jobs"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-xl border border-green-500 px-4 py-2.5 text-center text-sm font-semibold text-green-700 hover:bg-green-50"
+            >
+              Become a Tester
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

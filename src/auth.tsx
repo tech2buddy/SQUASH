@@ -51,12 +51,21 @@ function persistSession(session: AuthSession | null) {
 }
 
 export function roleHomePath(role: UserRole): string {
-  return role === 'developer' ? '/dashboard' : '/tester-jobs';
+  return role === 'developer' ? '/dashboard' : '/tester/dashboard';
 }
 
 export function routeRole(pathname: string): UserRole | 'public' {
-  const developerRoutes = new Set(['/dashboard', '/post-job', '/report-details']);
-  const testerRoutes = new Set(['/tester-jobs', '/active-test']);
+  const developerRoutes = new Set([
+    '/dashboard',
+    '/post-job',
+    '/billing',
+    '/report-details',
+    '/developer/jobs',
+    '/developer/submissions',
+    '/developer/activity',
+    '/report-details/attachments',
+  ]);
+  const testerRoutes = new Set(['/tester/dashboard', '/tester-jobs', '/active-test']);
   if (developerRoutes.has(pathname)) return 'developer';
   if (testerRoutes.has(pathname)) return 'tester';
   return 'public';

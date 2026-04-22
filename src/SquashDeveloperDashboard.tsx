@@ -15,8 +15,6 @@ import {
   MessageSquareText,
   MoreHorizontal,
   Search,
-  Settings,
-  Sparkles,
   Star,
   TrendingUp,
   UserCircle2,
@@ -158,13 +156,9 @@ export default function SquashDeveloperDashboard() {
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard', active: true },
-    { label: 'My Jobs', icon: BriefcaseBusiness, href: '/dashboard' },
     { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
     { label: 'Reports', icon: FileText, href: '/report-details' },
-    { label: 'Testers', icon: Users, href: '/tester-jobs' },
-    { label: 'Billing', icon: CreditCard, href: '/pricing' },
-    { label: 'Messages', icon: ClipboardList, href: '/report-details', badge: '2' },
-    { label: 'Settings', icon: Settings, href: '/dashboard' },
+    { label: 'Billing', icon: CreditCard, href: '/billing' },
   ];
 
   const getStatusClasses = (status: string) => {
@@ -219,11 +213,6 @@ export default function SquashDeveloperDashboard() {
                     <Icon className="h-4 w-4" />
                     {item.label}
                   </span>
-                  {item.badge ? (
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs text-white">
-                      {item.badge}
-                    </span>
-                  ) : null}
                 </a>
               );
             })}
@@ -236,8 +225,8 @@ export default function SquashDeveloperDashboard() {
                 <a href="/post-job" className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center font-semibold text-white hover:bg-green-700">
                   Post a New Job
                 </a>
-                <a href="/tester-jobs" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
-                  Invite Testers
+                <a href="/report-details" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
+                  View Reports
                 </a>
               </div>
             </div>
@@ -264,9 +253,9 @@ export default function SquashDeveloperDashboard() {
             <div className="flex flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </button>
+                  </a>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -277,13 +266,13 @@ export default function SquashDeveloperDashboard() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <button className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
+                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       3
                     </span>
-                  </button>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  </a>
+                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <UserCircle2 className="h-7 w-7" />
                     </div>
@@ -291,7 +280,7 @@ export default function SquashDeveloperDashboard() {
                       <div className="text-sm font-bold text-slate-900">Alex Developer</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </div>
 
@@ -313,9 +302,9 @@ export default function SquashDeveloperDashboard() {
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Welcome back, Alex!</h1>
                 <p className="mt-2 text-slate-600">Here&apos;s what&apos;s happening with your testing activity.</p>
               </div>
-              <button className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+              <a href="/dashboard" className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
                 May 20 - May 28, 2024
-              </button>
+              </a>
             </div>
 
             <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -348,7 +337,7 @@ export default function SquashDeveloperDashboard() {
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">Active Jobs</h2>
                   </div>
-                  <a href="/post-job" className="text-sm font-semibold text-green-700">View all jobs -&gt;</a>
+                  <a href="/developer/jobs" className="text-sm font-semibold text-green-700">View all jobs -&gt;</a>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -424,7 +413,7 @@ export default function SquashDeveloperDashboard() {
               <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                   <h2 className="text-xl font-bold text-slate-900">Recent Submissions</h2>
-                  <a href="/report-details" className="text-sm font-semibold text-green-700">View all -&gt;</a>
+                  <a href="/developer/submissions" className="text-sm font-semibold text-green-700">View all -&gt;</a>
                 </div>
                 <div className="space-y-1 p-3">
                   {recentSubmissions.map((submission) => (
@@ -494,7 +483,7 @@ export default function SquashDeveloperDashboard() {
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="text-lg font-bold text-slate-900">Submissions Overview</div>
-                  <button className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">This Week</button>
+                  <a href="/dashboard" className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">This Week</a>
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-4">
@@ -553,7 +542,7 @@ export default function SquashDeveloperDashboard() {
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="text-lg font-bold text-slate-900">Activity Feed</div>
-                  <a href="/report-details" className="text-sm font-semibold text-green-700">View all -&gt;</a>
+                  <a href="/developer/activity" className="text-sm font-semibold text-green-700">View all -&gt;</a>
                 </div>
 
                 <div className="mt-6 space-y-5">
@@ -575,19 +564,53 @@ export default function SquashDeveloperDashboard() {
               </div>
             </section>
 
-            <section className="mt-8 rounded-3xl border border-green-100 bg-green-50 p-5 shadow-sm">
+            <section className="relative mt-8 overflow-hidden rounded-3xl border border-green-200 bg-gradient-to-r from-green-50 via-emerald-50 to-green-100/70 p-5 shadow-sm">
+              <div className="pointer-events-none absolute -left-12 -top-12 h-36 w-36 rounded-full bg-green-300/20 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-emerald-300/20 blur-2xl" />
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-3xl text-green-700 shadow-sm">
-                    <Sparkles className="h-8 w-8" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-3xl border border-green-200/80 bg-white/90 shadow-[0_8px_24px_rgba(16,185,129,0.18)]">
+                    <div className="absolute h-10 w-10 rounded-full bg-emerald-300/30 blur-xl" />
+                    <svg
+                      viewBox="0 0 64 64"
+                      className="relative h-9 w-9"
+                      aria-hidden="true"
+                    >
+                      <defs>
+                        <radialGradient id="bulbGlow" cx="50%" cy="45%" r="60%">
+                          <stop offset="0%" stopColor="#fef08a" stopOpacity="0.95" />
+                          <stop offset="65%" stopColor="#fde047" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#fde047" stopOpacity="0" />
+                        </radialGradient>
+                        <linearGradient id="bulbBody" x1="0%" x2="0%" y1="0%" y2="100%">
+                          <stop offset="0%" stopColor="#fef9c3" />
+                          <stop offset="100%" stopColor="#fde047" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="32" cy="26" r="19" fill="url(#bulbGlow)" />
+                      <path
+                        d="M32 11c-8.4 0-15 6.6-15 14.9 0 5.2 2.8 9.8 7 12.4 1.4.9 2.1 2.1 2.1 3.4V43h12v-1.3c0-1.3.8-2.5 2.1-3.4 4.2-2.6 7-7.2 7-12.4C47 17.6 40.4 11 32 11Z"
+                        fill="url(#bulbBody)"
+                        stroke="#15803d"
+                        strokeWidth="2.2"
+                        strokeLinejoin="round"
+                      />
+                      <rect x="25" y="44" width="14" height="5" rx="2.5" fill="#166534" />
+                      <rect x="26.5" y="50" width="11" height="4" rx="2" fill="#14532d" />
+                      <path d="M26 24h12" stroke="#15803d" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M24 30h16" stroke="#15803d" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M32 5v4" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" />
+                      <path d="m46.5 11.5-2.8 2.8" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" />
+                      <path d="m17.5 11.5 2.8 2.8" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" />
+                    </svg>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-slate-900">Need more testers for your project?</div>
                     <div className="mt-1 text-slate-600">Invite more skilled testers and get better coverage.</div>
                   </div>
                 </div>
-                <a href="/tester-jobs" className="w-fit rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700">
-                  Invite Testers
+                <a href="/post-job" className="w-fit rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-[0_10px_20px_rgba(22,163,74,0.28)] transition hover:-translate-y-0.5 hover:bg-green-700">
+                  Post a New Job
                 </a>
               </div>
             </section>

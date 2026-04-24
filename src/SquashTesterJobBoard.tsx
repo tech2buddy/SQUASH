@@ -14,6 +14,13 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import TesterBadge from './components/TesterBadge';
+import {
+  TEST_CATEGORIES,
+  getCategoryById,
+  type TestCategoryId,
+} from './components/testCategories';
+import { getSpecializationLabel } from './components/testerSpecializations';
 
 type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
 
@@ -45,10 +52,7 @@ export default function SquashTesterJobBoard() {
 
   const tabs = [
     { label: 'All Jobs', count: 128, active: true },
-    { label: 'Mobile Apps', count: 68 },
-    { label: 'Web Apps', count: 34 },
-    { label: 'Games', count: 12 },
-    { label: 'APIs', count: 14 },
+    ...TEST_CATEGORIES.map((item) => ({ label: item.name, count: 12 })),
   ];
 
   const jobs: Array<{
@@ -64,6 +68,8 @@ export default function SquashTesterJobBoard() {
     posted: string;
     badge: string;
     accent: string;
+    categoryId: TestCategoryId;
+    requiredSpecializations: string[];
   }> = [
     {
       name: 'FitTrack Mobile',
@@ -78,6 +84,8 @@ export default function SquashTesterJobBoard() {
       posted: '2 hours ago',
       badge: 'New',
       accent: 'bg-slate-900 text-white',
+      categoryId: 'mobile-app-testing',
+      requiredSpecializations: ['samsung-a-series', 'health', '2g-3g-only'],
     },
     {
       name: 'PayFlow Web App',
@@ -92,6 +100,8 @@ export default function SquashTesterJobBoard() {
       posted: '4 hours ago',
       badge: 'Featured',
       accent: 'bg-violet-500 text-white',
+      categoryId: 'website-testing',
+      requiredSpecializations: ['banking', 'township-network'],
     },
     {
       name: 'HealthApp iOS',
@@ -106,6 +116,8 @@ export default function SquashTesterJobBoard() {
       posted: '6 hours ago',
       badge: '',
       accent: 'bg-emerald-600 text-white',
+      categoryId: 'localization-testing',
+      requiredSpecializations: ['zulu', 'iphone-12-plus', 'health'],
     },
     {
       name: 'GameZone Web',
@@ -120,6 +132,8 @@ export default function SquashTesterJobBoard() {
       posted: '8 hours ago',
       badge: '',
       accent: 'bg-slate-800 text-white',
+      categoryId: 'performance-testing',
+      requiredSpecializations: ['load-shedding', 'budget-android'],
     },
     {
       name: 'ShopEasy Android',
@@ -134,14 +148,28 @@ export default function SquashTesterJobBoard() {
       posted: 'Yesterday',
       badge: '',
       accent: 'bg-red-500 text-white',
+      categoryId: 'ecommerce-testing',
+      requiredSpecializations: ['ecommerce', 'township-network'],
     },
   ];
 
   const topTesters = [
-    { name: 'Lerato D.', level: 'Level 5', total: 'R15,430' },
-    { name: 'Sipho N.', level: 'Level 4', total: 'R12,210' },
-    { name: 'Thando M.', level: 'Level 3', total: 'R9,870' },
+    { name: 'Lerato D.', level: 'Level 5', total: 'R15,430', testsCompleted: 64, rating: 4.9 },
+    { name: 'Sipho N.', level: 'Level 4', total: 'R12,210', testsCompleted: 32, rating: 4.7 },
+    { name: 'Thando M.', level: 'Level 3', total: 'R9,870', testsCompleted: 14, rating: 4.3 },
   ];
+
+  const testerSpecializations = useMemo(() => {
+    // TODO: Replace with Supabase query
+    const raw = window.localStorage.getItem('squash_tester_specializations');
+    if (!raw) return [] as string[];
+    try {
+      const parsed = JSON.parse(raw) as string[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [] as string[];
+    }
+  }, []);
 
   const severityClasses: Record<Severity, string> = {
     Critical: 'text-red-500',
@@ -161,17 +189,9 @@ export default function SquashTesterJobBoard() {
     let result = jobs.filter((job) => severityFilter[job.severity]);
 
     if (activeTab !== 'All Jobs') {
-      if (activeTab === 'Mobile Apps') {
-        result = result.filter((job) => job.tags.includes('Mobile App'));
-      }
-      if (activeTab === 'Web Apps') {
-        result = result.filter((job) => job.tags.includes('Web App'));
-      }
-      if (activeTab === 'Games') {
-        result = result.filter((job) => job.tags.includes('Gaming'));
-      }
-      if (activeTab === 'APIs') {
-        result = result.filter((job) => job.type.toLowerCase().includes('api'));
+      const tabCategory = TEST_CATEGORIES.find((category) => category.name === activeTab);
+      if (tabCategory) {
+        result = result.filter((job) => job.categoryId === tabCategory.id);
       }
     }
 
@@ -374,8 +394,8 @@ export default function SquashTesterJobBoard() {
               </button>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              {tabs.map((tab) => (
+              <div className="mt-8 flex flex-wrap gap-3">
+                {tabs.map((tab) => (
                 <button
                   key={tab.label}
                   type="button"
@@ -411,9 +431,27 @@ export default function SquashTesterJobBoard() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
                           <h2 className="text-2xl font-bold text-slate-900">{job.name}</h2>
+                          {(() => {
+                            const category = getCategoryById(job.categoryId);
+                            const CategoryIcon = category.icon;
+                            return (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                                {category.name}
+                                {category.saExclusive ? (
+                                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                                ) : null}
+                              </span>
+                            );
+                          })()}
                           {job.badge ? (
                             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${job.badge === 'New' ? 'bg-green-100 text-green-700' : 'bg-sky-100 text-sky-700'}`}>
                               {job.badge}
+                            </span>
+                          ) : null}
+                          {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
+                            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                              Matches Your Profile
                             </span>
                           ) : null}
                         </div>
@@ -424,6 +462,11 @@ export default function SquashTesterJobBoard() {
                               {tag}
                             </span>
                           ))}
+                          {job.requiredSpecializations.slice(0, 2).map((id) => (
+                            <span key={`${job.name}-${id}`} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                              {getSpecializationLabel(id)}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -431,7 +474,7 @@ export default function SquashTesterJobBoard() {
                     <div className="flex flex-row items-end justify-between gap-4 lg:min-w-[180px] lg:flex-col lg:items-end">
                       <div className="text-right">
                         <div className="text-3xl font-black text-green-700">{job.pay}</div>
-                        <div className="text-sm text-slate-500">per tester</div>
+                        <div className="text-sm text-slate-500">per test</div>
                         <div className="mt-1 text-sm text-slate-500">{job.testers}</div>
                       </div>
                       <a href="/active-test" className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
@@ -624,23 +667,26 @@ export default function SquashTesterJobBoard() {
             <a href="/guides" className="mt-4 inline-block text-sm font-semibold text-green-700">View Testing Guide -&gt;</a>
           </div>
 
-          <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
-              <Star className="h-5 w-5 text-amber-500" /> Top Testers
-            </div>
-            <div className="mt-4 space-y-4">
-              {topTesters.map((tester, index) => (
-                <div key={tester.name} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+            <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <Star className="h-5 w-5 text-amber-500" /> Top Testers
+              </div>
+              <div className="mt-4 space-y-4">
+                {topTesters.map((tester, index) => (
+                  <div key={tester.name} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
                       {index + 1}
                     </div>
-                    <div>
-                      <div className="font-semibold text-slate-900">{tester.name}</div>
-                      <div className="text-xs text-slate-500">{tester.level}</div>
+                      <div>
+                        <div className="font-semibold text-slate-900">{tester.name}</div>
+                        <div className="mt-1 text-xs text-slate-500">{tester.level}</div>
+                        <div className="mt-1">
+                          <TesterBadge testsCompleted={tester.testsCompleted} rating={tester.rating} />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-sm font-semibold text-slate-700">{tester.total}</div>
+                    <div className="text-sm font-semibold text-slate-700">{tester.total}</div>
                 </div>
               ))}
             </div>

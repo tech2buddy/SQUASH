@@ -11,6 +11,8 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
+import TesterBadge from './components/TesterBadge';
+import { getCategoryById, type TestCategoryId } from './components/testCategories';
 
 type NavItem = {
   label: string;
@@ -22,6 +24,7 @@ type NavItem = {
 type DashboardJob = {
   name: string;
   type: string;
+  categoryId: TestCategoryId;
   testers: string;
   status: 'In Progress' | 'Reviewing' | 'Open';
   deadline: string;
@@ -32,8 +35,11 @@ type DashboardJob = {
 type SubmissionItem = {
   app: string;
   tester: string;
+  testsCompleted: number;
+  rating: number;
   time: string;
   severity: 'Critical' | 'Medium' | 'Low';
+  videoDuration?: string;
 };
 
 type ActivityItem = {
@@ -53,6 +59,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'PayFlow Web App',
     type: 'Web Application',
+    categoryId: 'website-testing',
     testers: '24 / 30',
     status: 'In Progress',
     deadline: '28 May 2024',
@@ -62,6 +69,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'FitTrack Mobile',
     type: 'Mobile App',
+    categoryId: 'mobile-app-testing',
     testers: '18 / 20',
     status: 'In Progress',
     deadline: '25 May 2024',
@@ -71,6 +79,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'HealthApp iOS',
     type: 'iOS Application',
+    categoryId: 'localization-testing',
     testers: '30 / 30',
     status: 'Reviewing',
     deadline: '23 May 2024',
@@ -80,6 +89,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'EduLearn Platform',
     type: 'Web Application',
+    categoryId: 'onboarding-testing',
     testers: '10 / 15',
     status: 'Open',
     deadline: '05 Jun 2024',
@@ -89,6 +99,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'ShopEasy Android',
     type: 'Android App',
+    categoryId: 'ecommerce-testing',
     testers: '5 / 20',
     status: 'Open',
     deadline: '10 Jun 2024',
@@ -98,6 +109,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'MoneyMap Dashboard',
     type: 'Web Application',
+    categoryId: 'performance-testing',
     testers: '12 / 16',
     status: 'In Progress',
     deadline: '14 Jun 2024',
@@ -107,6 +119,7 @@ const jobs: DashboardJob[] = [
   {
     name: 'Kasi Eats',
     type: 'Android App',
+    categoryId: 'low-data-testing',
     testers: '8 / 12',
     status: 'Open',
     deadline: '16 Jun 2024',
@@ -116,14 +129,14 @@ const jobs: DashboardJob[] = [
 ];
 
 const submissions: SubmissionItem[] = [
-  { app: 'PayFlow Web App', tester: 'Thando M.', time: '2h ago', severity: 'Critical' },
-  { app: 'FitTrack Mobile', tester: 'Sipho N.', time: '5h ago', severity: 'Medium' },
-  { app: 'HealthApp iOS', tester: 'Lerato D.', time: '6h ago', severity: 'Low' },
-  { app: 'PayFlow Web App', tester: 'John K.', time: '1d ago', severity: 'Critical' },
-  { app: 'FitTrack Mobile', tester: 'Sarah W.', time: '1d ago', severity: 'Medium' },
-  { app: 'Kasi Eats', tester: 'Anele P.', time: '2d ago', severity: 'Low' },
-  { app: 'MoneyMap Dashboard', tester: 'Brendon R.', time: '2d ago', severity: 'Critical' },
-  { app: 'EduLearn Platform', tester: 'Nomsa L.', time: '3d ago', severity: 'Medium' },
+  { app: 'PayFlow Web App', tester: 'Thando M.', testsCompleted: 14, rating: 4.3, time: '2h ago', severity: 'Critical', videoDuration: '00:41' },
+  { app: 'FitTrack Mobile', tester: 'Sipho N.', testsCompleted: 32, rating: 4.7, time: '5h ago', severity: 'Medium', videoDuration: '00:28' },
+  { app: 'HealthApp iOS', tester: 'Lerato D.', testsCompleted: 64, rating: 4.9, time: '6h ago', severity: 'Low', videoDuration: '00:55' },
+  { app: 'PayFlow Web App', tester: 'John K.', testsCompleted: 5, rating: 3.9, time: '1d ago', severity: 'Critical' },
+  { app: 'FitTrack Mobile', tester: 'Sarah W.', testsCompleted: 11, rating: 4.1, time: '1d ago', severity: 'Medium' },
+  { app: 'Kasi Eats', tester: 'Anele P.', testsCompleted: 23, rating: 4.6, time: '2d ago', severity: 'Low' },
+  { app: 'MoneyMap Dashboard', tester: 'Brendon R.', testsCompleted: 55, rating: 4.8, time: '2d ago', severity: 'Critical' },
+  { app: 'EduLearn Platform', tester: 'Nomsa L.', testsCompleted: 8, rating: 4.2, time: '3d ago', severity: 'Medium' },
 ];
 
 const activityItems: ActivityItem[] = [
@@ -279,9 +292,10 @@ export function SquashDeveloperJobsPage() {
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
-                <th className="px-5 py-3 font-medium">App / Job</th>
-                <th className="px-5 py-3 font-medium">Testers</th>
+                      <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
+                        <th className="px-5 py-3 font-medium">App / Job</th>
+                        <th className="px-5 py-3 font-medium">Category</th>
+                        <th className="px-5 py-3 font-medium">Testers</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Deadline</th>
                 <th className="px-5 py-3 font-medium">Submissions</th>
@@ -301,6 +315,21 @@ export function SquashDeveloperJobsPage() {
                         <div className="text-sm text-slate-500">{job.type}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    {(() => {
+                      const category = getCategoryById(job.categoryId);
+                      const CategoryIcon = category.icon;
+                      return (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                          {category.name}
+                          {category.saExclusive ? (
+                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                          ) : null}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.testers}</td>
                   <td className="px-5 py-3">
@@ -345,8 +374,16 @@ export function SquashDeveloperSubmissionsPage() {
               <div className="font-semibold text-slate-900">{item.app}</div>
               <div className="text-sm text-slate-500">Submitted by {item.tester}</div>
               <div className="mt-1 text-xs text-slate-400">{item.time}</div>
+              <div className="mt-2">
+                <TesterBadge testsCompleted={item.testsCompleted} rating={item.rating} />
+              </div>
             </div>
             <div className="flex items-center gap-3">
+              {item.videoDuration ? (
+                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  Screen Recording — {item.videoDuration}
+                </span>
+              ) : null}
               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getSeverityClasses(item.severity)}`}>
                 {item.severity}
               </span>
@@ -402,24 +439,38 @@ export function SquashReportAttachmentsPage() {
     >
       <div className="space-y-4">
         {attachments.map((file) => (
-          <div key={file.name} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
-                {file.icon}
+          <div key={file.name} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
+                  {file.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-slate-900">{file.name}</div>
+                  <div className="text-sm text-slate-500">{file.meta}</div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <div className="truncate font-semibold text-slate-900">{file.name}</div>
-                <div className="text-sm text-slate-500">{file.meta}</div>
-              </div>
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
+                download={file.name}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </a>
             </div>
-            <a
-              href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
-              download={file.name}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </a>
+            {file.meta.includes('MP4') ? (
+              <div className="mt-3">
+                <div className="mb-2 text-xs font-semibold text-slate-600">
+                  Screen Recording — 00:41
+                </div>
+                <video
+                  controls
+                  className="w-full rounded-xl border border-slate-200 bg-black"
+                  src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+                />
+              </div>
+            ) : null}
           </div>
         ))}
 

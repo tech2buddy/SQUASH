@@ -17,12 +17,27 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { useState } from 'react';
+import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
+import SquashCertified from './components/SquashCertified';
+import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
+import TesterBadge from './components/TesterBadge';
 
 export default function SquashReportDetailsPage() {
   const [status, setStatus] = useState('Open');
   const [category, setCategory] = useState('Crash / Stability');
   const [reproducibility, setReproducibility] = useState('Always');
   const [actionNotice, setActionNotice] = useState('');
+  const [retestOpen, setRetestOpen] = useState(false);
+  const [retestNotice, setRetestNotice] = useState('');
+
+  const scores: SquashScoreBreakdown = {
+    usability: 84,
+    performance: 78,
+    onboarding: 80,
+    bugSeverity: 86,
+    deviceCompatibility: 82,
+  };
+  const overallScore = getOverallScore(scores);
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
@@ -92,6 +107,29 @@ export default function SquashReportDetailsPage() {
       color: 'bg-amber-100 text-amber-600',
     },
   ];
+
+  const handleRetestSubmit = (payload: RetestSubmission) => {
+    // TODO: Replace with Supabase query
+    const previousScore = 68;
+    const newScore = 81;
+    const diff = newScore - previousScore;
+    const crossedCertified = previousScore < 80 && newScore >= 80;
+    window.localStorage.setItem(
+      'squash_report_retest',
+      JSON.stringify({
+        ...payload,
+        previousScore,
+        newScore,
+        submittedAt: new Date().toISOString(),
+      }),
+    );
+    setRetestNotice(
+      `Previous Score: ${previousScore}/100 → New Score: ${newScore}/100 +${diff} points improvement 🎉${
+        crossedCertified ? " Congratulations! You've earned your SQUASH CERTIFIED badge! 🏆" : ''
+      }`,
+    );
+    setRetestOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -238,6 +276,7 @@ export default function SquashReportDetailsPage() {
                   </span>
                   <span>-</span>
                   <span>26 May 2024, 10:45 AM</span>
+                  <TesterBadge testsCompleted={32} rating={4.7} />
                 </div>
               </div>
 
@@ -269,6 +308,45 @@ export default function SquashReportDetailsPage() {
 
             <div className="mt-8 grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
               <div className="space-y-6">
+                <section className="space-y-4">
+                  <SquashScore scores={scores} />
+                  <SquashCertified score={overallScore} testers={24} certifiedAt="2025-09-20" />
+
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="text-lg font-bold text-slate-900">Share your Squash Score</div>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <a
+                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(
+                          `Our app scored ${overallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Share on LinkedIn
+                      </a>
+                      <a
+                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                          `Our app scored ${overallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Share on Twitter
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setRetestOpen(true)}
+                        className="rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                      >
+                        Request Retest
+                      </button>
+                    </div>
+                    {retestNotice ? <p className="mt-3 text-sm font-semibold text-green-700">{retestNotice}</p> : null}
+                  </div>
+                </section>
+
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="text-2xl font-bold text-slate-900">Bug Details</h2>
 
@@ -446,26 +524,35 @@ export default function SquashReportDetailsPage() {
 
                   <div className="mt-5 space-y-4">
                     {attachments.map((file) => (
-                      <div
-                        key={file.name}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3 hover:bg-slate-50"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
-                            {file.icon}
+                      <div key={file.name} className="rounded-2xl border border-slate-100 p-3 hover:bg-slate-50">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
+                              {file.icon}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="truncate font-semibold text-slate-900">{file.name}</div>
+                              <div className="text-sm text-slate-500">{file.meta}</div>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="truncate font-semibold text-slate-900">{file.name}</div>
-                            <div className="text-sm text-slate-500">{file.meta}</div>
-                          </div>
+                          <a
+                            href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
+                            download={file.name}
+                            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
                         </div>
-                        <a
-                          href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
-                          download={file.name}
-                          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
+                        {file.name.endsWith('.mp4') ? (
+                          <div className="mt-3">
+                            <div className="mb-2 text-xs font-semibold text-slate-600">Screen Recording — 00:41</div>
+                            <video
+                              controls
+                              className="w-full rounded-xl border border-slate-200 bg-black"
+                              src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+                            />
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -534,6 +621,14 @@ export default function SquashReportDetailsPage() {
           </div>
         </main>
       </div>
+      <RetestRequestModal
+        open={retestOpen}
+        onClose={() => setRetestOpen(false)}
+        plan="Growth"
+        originalScore={68}
+        initialUrl="https://staging.fittrack.app"
+        onSubmit={handleRetestSubmit}
+      />
     </div>
   );
 }

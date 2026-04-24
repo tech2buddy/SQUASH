@@ -15,6 +15,9 @@ import SquashTesterDashboardPage from './SquashTesterDashboardPage';
 import SquashTesterJobBoard from './SquashTesterJobBoard';
 import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
+import SquashApiDocsPage from './SquashApiDocsPage';
+import SquashCertificatePage from './SquashCertificatePage';
+import SquashLiveSessionPage from './SquashLiveSessionPage';
 import {
   SquashDeveloperActivityPage,
   SquashDeveloperJobsPage,
@@ -58,6 +61,9 @@ export default function App() {
       <Route path="/for-developers" element={<SquashForDevelopersPage />} />
       <Route path="/for-testers" element={<SquashForTestersPage />} />
       <Route path="/pricing" element={<SquashPricingPage />} />
+      <Route path="/api-docs" element={<SquashApiDocsPage />} />
+      <Route path="/live-session" element={<SquashLiveSessionPage />} />
+      <Route path="/certificate/:jobId" element={<SquashCertificatePage />} />
       <Route path="/login" element={<SquashLoginPage />} />
       <Route path="/signup" element={<SquashSignupPage />} />
       <Route path="/logout" element={<LogoutRoute />} />

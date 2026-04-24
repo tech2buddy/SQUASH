@@ -11,10 +11,12 @@ import {
   PlayCircle,
   Search,
   Settings,
+  Square,
+  Video,
   Upload,
   UserCircle2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SquashActiveTestScreen() {
@@ -44,6 +46,17 @@ export default function SquashActiveTestScreen() {
   const [severity, setSeverity] = useState('Medium');
   const [bugNotice, setBugNotice] = useState('');
   const [progressNotice, setProgressNotice] = useState('');
+  const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSecondsLeft, setRecordingSecondsLeft] = useState(60);
+  const [recordedVideoUrl, setRecordedVideoUrl] = useState('');
+  const [recordedVideoDuration, setRecordedVideoDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordingStartedAtRef = useRef<number | null>(null);
+  const mediaChunksRef = useRef<Blob[]>([]);
+  const countdownIntervalRef = useRef<number | null>(null);
+  const recordingIntervalRef = useRef<number | null>(null);
   const completedTasks = useMemo(() => taskState.filter(Boolean).length, [taskState]);
   const progressPercent = useMemo(
     () => Math.round((completedTasks / taskState.length) * 100),
@@ -54,6 +67,137 @@ export default function SquashActiveTestScreen() {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
   };
 
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
+  const clearIntervals = () => {
+    if (countdownIntervalRef.current) {
+      window.clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    if (recordingIntervalRef.current) {
+      window.clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+  };
+
+  const stopMediaStream = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+  };
+
+  const stopRecording = (autoStopped = false) => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    clearIntervals();
+    setIsRecording(false);
+    recordingStartedAtRef.current = null;
+    if (autoStopped) {
+      setBugNotice('Recording stopped automatically after 60 seconds.');
+    }
+  };
+
+  const startMediaRecording = async () => {
+    try {
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getDisplayMedia ||
+        typeof MediaRecorder === 'undefined'
+      ) {
+        setBugNotice('Screen recording is not supported on this browser.');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+      mediaStreamRef.current = stream;
+      mediaChunksRef.current = [];
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) mediaChunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(mediaChunksRef.current, { type: 'video/webm' });
+        if (recordedVideoUrl) {
+          URL.revokeObjectURL(recordedVideoUrl);
+        }
+        const previewUrl = URL.createObjectURL(blob);
+        setRecordedVideoUrl(previewUrl);
+        const elapsed = recordingStartedAtRef.current
+          ? Math.min(60, Math.max(1, Math.round((Date.now() - recordingStartedAtRef.current) / 1000)))
+          : Math.max(1, 60 - recordingSecondsLeft);
+        setRecordedVideoDuration(Math.max(1, elapsed));
+        recordingStartedAtRef.current = null;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = String(reader.result ?? '');
+          window.localStorage.setItem(
+            'squash_latest_bug_video',
+            JSON.stringify({
+              dataUrl: base64,
+              duration: Math.max(1, elapsed),
+              createdAt: new Date().toISOString(),
+            }),
+          );
+        };
+        reader.readAsDataURL(blob);
+        stopMediaStream();
+      };
+
+      recorder.start(200);
+      setIsRecording(true);
+      setRecordingSecondsLeft(60);
+      setBugNotice('');
+      recordingStartedAtRef.current = Date.now();
+
+      recordingIntervalRef.current = window.setInterval(() => {
+        setRecordingSecondsLeft((prev) => {
+          if (prev <= 1) {
+            stopRecording(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      setBugNotice('Could not start recording. Please allow screen recording permissions.');
+      setRecordCountdown(null);
+      stopMediaStream();
+    }
+  };
+
+  const startRecordingWithCountdown = () => {
+    if (isRecording) return;
+    setBugNotice('');
+    setRecordCountdown(3);
+    countdownIntervalRef.current = window.setInterval(() => {
+      setRecordCountdown((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearIntervals();
+          startMediaRecording();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const saveBugReport = () => {
     if (!bugDescription.trim()) {
       setBugNotice('Please describe the issue before saving.');
@@ -61,14 +205,22 @@ export default function SquashActiveTestScreen() {
     }
     const existingReports = JSON.parse(
       window.localStorage.getItem('squash_bug_reports') ?? '[]',
-    ) as Array<{ description: string; severity: string; createdAt: string }>;
+    ) as Array<{
+      description: string;
+      severity: string;
+      createdAt: string;
+      videoDuration?: number;
+      hasVideo?: boolean;
+    }>;
     existingReports.unshift({
       description: bugDescription.trim(),
       severity,
       createdAt: new Date().toISOString(),
+      hasVideo: Boolean(recordedVideoUrl),
+      videoDuration: recordedVideoDuration || undefined,
     });
     window.localStorage.setItem('squash_bug_reports', JSON.stringify(existingReports));
-    setBugNotice('Bug report saved.');
+    setBugNotice(recordedVideoUrl ? 'Bug report with video saved.' : 'Bug report saved.');
     setBugDescription('');
   };
 
@@ -98,6 +250,15 @@ export default function SquashActiveTestScreen() {
     setProgressNotice('Test submitted successfully.');
     navigate('/tester-jobs');
   };
+
+  useEffect(
+    () => () => {
+      clearIntervals();
+      stopMediaStream();
+      if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
+    },
+    [recordedVideoUrl],
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -366,14 +527,61 @@ export default function SquashActiveTestScreen() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">Screenshot</label>
-                      <button
-                        type="button"
-                        onClick={() => setBugNotice('Screenshot attached.')}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-                      >
-                        <Upload className="h-4 w-4" /> Upload Image
-                      </button>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Evidence</label>
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setBugNotice('Screenshot attached.')}
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+                        >
+                          <Upload className="h-4 w-4" /> Upload Image
+                        </button>
+
+                        <div className="flex flex-wrap gap-2">
+                          {!isRecording ? (
+                            <button
+                              type="button"
+                              onClick={startRecordingWithCountdown}
+                              className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+                            >
+                              <Video className="h-4 w-4" /> Record Bug
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => stopRecording(false)}
+                              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              <Square className="h-4 w-4" /> Stop Recording
+                            </button>
+                          )}
+
+                          {recordCountdown !== null ? (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                              Starting in {recordCountdown}...
+                            </span>
+                          ) : null}
+
+                          {isRecording ? (
+                            <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+                              ● REC - Recording bug... {formatDuration(recordingSecondsLeft)}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {recordedVideoUrl ? (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                            <div className="mb-2 text-xs font-semibold text-slate-600">
+                              Screen Recording - {formatDuration(recordedVideoDuration)}
+                            </div>
+                            <video
+                              controls
+                              src={recordedVideoUrl}
+                              className="max-h-40 w-full rounded-xl border border-slate-200 bg-black/90"
+                            />
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
 

@@ -3,12 +3,16 @@ import {
   Bug,
   CheckCircle2,
   Clock3,
+  Code2,
   FileText,
+  Link as LinkIcon,
   ShieldCheck,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 import PublicHeader from './PublicHeader';
+import FeaturedTesterCard from './components/FeaturedTesterCard';
+import { TEST_CATEGORIES } from './components/testCategories';
 import TrustedLogosRow from './TrustedLogosRow';
 
 type ItemWithIcon = {
@@ -207,6 +211,98 @@ export default function SquashForDevelopersPage() {
           </div>
         </section>
 
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="text-center">
+              <div className="inline-flex rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
+                Easy Integration - No Setup Required
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+                    <Code2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-green-700">Option A</p>
+                    <h3 className="text-xl font-bold text-slate-900">Add one script tag</h3>
+                  </div>
+                </div>
+                <p className="mt-4 text-slate-600">
+                  Paste one line into your staging site. Our testing toolbar appears automatically for
+                  testers only. Your real users never see it.
+                </p>
+                <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-900 p-4 text-sm leading-6 text-slate-100">
+{`<script
+  src="https://squash.app/widget.js"
+  data-job="YOUR-JOB-ID">
+</script>`}
+                </pre>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+                    <LinkIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-green-700">Option B</p>
+                    <h3 className="text-xl font-bold text-slate-900">Just submit your URL</h3>
+                  </div>
+                </div>
+                <p className="mt-4 text-slate-600">
+                  No code required. Submit your website link when posting a job. We wrap it in a
+                  secure Squash session and testers access it through our platform.
+                </p>
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-700">
+                  <div><span className="font-semibold">You submit:</span> https://myapp.com/staging</div>
+                  <div><span className="font-semibold">We create:</span> squash.app/test/JOB-ID</div>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-slate-600">
+              Either way, only verified Squash testers can see the testing toolbar. Your real users and
+              customers are completely unaffected.
+            </p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-2xl font-bold text-slate-900">Test With The Right Users</h3>
+            <p className="mt-2 text-slate-600">
+              Filter testers by device, network conditions, language and app expertise. Get feedback from users who match your exact target market.
+            </p>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <FeaturedTesterCard
+                name="Lerato D."
+                avatar="LD"
+                rating={4.9}
+                testsCompleted={62}
+                specializations={['township-network', 'zulu', 'ecommerce', 'samsung-a-series']}
+              />
+              <FeaturedTesterCard
+                name="Sipho N."
+                avatar="SN"
+                rating={4.7}
+                testsCompleted={34}
+                specializations={['2g-3g-only', 'load-shedding', 'banking', 'xhosa']}
+              />
+              <FeaturedTesterCard
+                name="Thando M."
+                avatar="TM"
+                rating={4.4}
+                testsCompleted={16}
+                specializations={['iphone-12-plus', 'education', 'afrikaans']}
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="text-center">
             <div className="inline-flex rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
@@ -224,6 +320,42 @@ export default function SquashForDevelopersPage() {
                 <p className="mt-3 leading-7 text-slate-600">{item.text}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="text-sm font-semibold text-slate-700">Test categories available</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {TEST_CATEGORIES.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <span
+                    key={category.id}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+                  >
+                    <Icon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                    {category.name}
+                    {category.saExclusive ? (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                    ) : null}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-green-200 bg-green-50 p-6 shadow-sm">
+            <h3 className="text-2xl font-bold text-slate-900">Live Test Sessions</h3>
+            <p className="mt-2 text-slate-700">
+              Book a live session where you watch a real user navigate your app via video call.
+              See exactly where they hesitate, what confuses them, and ask questions in real time.
+            </p>
+            <div className="mt-3 text-sm font-semibold text-green-700">From R2,000 per session</div>
+            <a
+              href="/live-session"
+              className="mt-4 inline-flex rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700"
+            >
+              Book a Live Session
+            </a>
           </div>
 
           <div className="mt-10">

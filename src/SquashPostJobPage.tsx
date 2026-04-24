@@ -1,24 +1,37 @@
 import {
   Bell,
+  CheckCircle2,
   ChevronDown,
   CircleHelp,
   ClipboardList,
   CreditCard,
   FileText,
   Home,
+  Lock,
   Menu,
+  RotateCcw,
   Search,
+  Shield,
   SlidersHorizontal,
   UserCircle2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import SpecializationChecklist from './components/SpecializationChecklist';
+import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
 
 export default function SquashPostJobPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
-  const initialRate = plan === 'basic' ? 60 : plan === 'premium' ? 120 : 90;
+  const packageConfigs = {
+    starter: { label: 'Starter Plan', testers: 5, total: 500 },
+    growth: { label: 'Growth Plan', testers: 10, total: 1200 },
+    pro: { label: 'Pro Plan', testers: 20, total: 2500 },
+  } as const;
+  type PackageKey = keyof typeof packageConfigs;
+  const initialPackage: PackageKey =
+    plan === 'starter' || plan === 'pro' ? (plan as PackageKey) : 'growth';
   const [appName, setAppName] = useState('FitTrack Mobile');
   const [platform, setPlatform] = useState('Android');
   const [appType, setAppType] = useState('Mobile Application');
@@ -26,9 +39,10 @@ export default function SquashPostJobPage() {
   const [shortDescription, setShortDescription] = useState(
     'A fitness tracking app for workouts, tracking progress and goals.',
   );
-  const [testType, setTestType] = useState('Usability Test');
-  const [ratePerTester, setRatePerTester] = useState(initialRate);
-  const [testersNeeded, setTestersNeeded] = useState(25);
+  const [testType, setTestType] = useState<TestCategoryId>('mobile-app-testing');
+  const [selectedPackage, setSelectedPackage] = useState<PackageKey>(initialPackage);
+  const [ratePerTester, setRatePerTester] = useState(packageConfigs[initialPackage].total);
+  const [testersNeeded, setTestersNeeded] = useState<number>(packageConfigs[initialPackage].testers);
   const [tasksToComplete, setTasksToComplete] = useState(
     'Create an account, start a workout, track a goal, and review weekly progress.',
   );
@@ -39,15 +53,22 @@ export default function SquashPostJobPage() {
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
   const [additionalInfo, setAdditionalInfo] = useState('');
+  const [testerTierFilter, setTesterTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
+  const [preferredSpecializations, setPreferredSpecializations] = useState<string[]>([]);
+  const [liveSessionEnabled, setLiveSessionEnabled] = useState(false);
+  const [liveSessionAt, setLiveSessionAt] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const subtotal = useMemo(
-    () => Math.max(0, ratePerTester) * Math.max(0, testersNeeded),
-    [ratePerTester, testersNeeded],
-  );
-  const platformFee = useMemo(() => Math.round(subtotal * 0.1), [subtotal]);
-  const total = subtotal + platformFee;
+  useEffect(() => {
+    setRatePerTester(packageConfigs[selectedPackage].total);
+    setTestersNeeded(packageConfigs[selectedPackage].testers);
+  }, [selectedPackage]);
+
+  const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
+  const subtotal = useMemo(() => Math.max(0, ratePerTester), [ratePerTester]);
+  const platformFee = useMemo(() => 0, [subtotal]);
+  const total = subtotal + platformFee + liveSessionAddon;
 
   const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
 
@@ -59,8 +80,13 @@ export default function SquashPostJobPage() {
       url,
       shortDescription,
       testType,
+      selectedPackage,
       ratePerTester,
       testersNeeded,
+      testerTierFilter,
+      preferredSpecializations,
+      liveSessionEnabled,
+      liveSessionAt,
       tasksToComplete,
       focusAreas,
       ageRange,
@@ -84,6 +110,12 @@ export default function SquashPostJobPage() {
     setErrorMessage('');
     setFeedbackMessage('Details saved. Continue to Review & Publish.');
     navigate('/post-job', { replace: true });
+  };
+
+  const toggleSpecialization = (id: string, checked: boolean) => {
+    setPreferredSpecializations((prev) =>
+      checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
+    );
   };
 
   const navItems = [
@@ -336,29 +368,33 @@ export default function SquashPostJobPage() {
                       <div className="relative">
                         <select
                           value={testType}
-                          onChange={(e) => setTestType(e.target.value)}
+                          onChange={(e) => setTestType(e.target.value as TestCategoryId)}
                           className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
                         >
-                          <option>Usability Test</option>
-                          <option>Bug Hunt</option>
-                          <option>Exploratory Test</option>
-                          <option>Regression Test</option>
+                          {TEST_CATEGORIES.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
                         </select>
                         <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       </div>
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">
-                        Rate per Tester (ZAR)
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={ratePerTester}
-                        onChange={(e) => setRatePerTester(Number(e.target.value) || 0)}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
-                      />
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Package</label>
+                      <div className="relative">
+                        <select
+                          value={selectedPackage}
+                          onChange={(e) => setSelectedPackage(e.target.value as PackageKey)}
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                        >
+                          <option value="starter">Starter (R500)</option>
+                          <option value="growth">Growth (R1,200)</option>
+                          <option value="pro">Pro (R2,500)</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      </div>
                     </div>
 
                     <div>
@@ -373,9 +409,21 @@ export default function SquashPostJobPage() {
                     </div>
                   </div>
 
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    {selectedPackage === 'starter' ? (
+                      <span>Screenshots only (upgrade for video reports)</span>
+                    ) : (
+                      <span>✓ Video bug reports included</span>
+                    )}
+                  </div>
+
                   <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 px-4 py-4 text-sm text-slate-700">
                     <span className="font-semibold text-green-700">SQUASH Protection:</span> You will
                     be charged once the job is published and testers start applying.
+                  </div>
+                  <div className="mt-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-4 text-sm text-slate-700">
+                    Apps scoring 80+ receive a SQUASH CERTIFIED badge to use on your app store listing
+                    - included free with Growth and Pro plans.
                   </div>
 
                   <div className="mt-5">
@@ -461,6 +509,46 @@ export default function SquashPostJobPage() {
                       </div>
                     </div>
                   </div>
+
+                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Tester Tier</label>
+                      <div className="relative">
+                        <select
+                          value={testerTierFilter}
+                          onChange={(e) =>
+                            setTesterTierFilter(e.target.value as 'All' | 'Verified+' | 'Pro+' | 'Elite Only')
+                          }
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                        >
+                          <option>All</option>
+                          <option>Verified+</option>
+                          <option>Pro+</option>
+                          <option>Elite Only</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <div className="font-semibold text-slate-800">Tier guidance</div>
+                      <div className="mt-1">
+                        {testerTierFilter === 'Elite Only'
+                          ? 'Elite tester jobs include premium pricing.'
+                          : 'Select a tier to match report quality and speed.'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-base font-semibold text-slate-900">Preferred Tester Specializations (optional)</h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Filter for testers by device, network, language and app expertise.
+                    </p>
+                    <div className="mt-4">
+                      <SpecializationChecklist selected={preferredSpecializations} onToggle={toggleSpecialization} compact />
+                    </div>
+                  </div>
                 </section>
 
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -498,6 +586,39 @@ export default function SquashPostJobPage() {
                   </div>
                 </section>
 
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold text-slate-900">Live Session Add-on</h2>
+                  <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={liveSessionEnabled}
+                      onChange={(e) => setLiveSessionEnabled(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 accent-green-600"
+                    />
+                    <span className="text-sm text-slate-700">
+                      <span className="font-semibold text-slate-900">Add Live Test Session — R2,000</span>
+                      <br />
+                      Watch a tester use your app in real time via video call. Ask questions and observe their natural behavior live.
+                    </span>
+                  </label>
+
+                  {liveSessionEnabled ? (
+                    <div className="mt-4 space-y-3 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-slate-700">
+                      <div>You will receive a Zoom/Google Meet link 24 hours before your scheduled session.</div>
+                      <div>1 tester · 60 minute session · Screen share included</div>
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred session time</label>
+                        <input
+                          type="datetime-local"
+                          value={liveSessionAt}
+                          onChange={(event) => setLiveSessionAt(event.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                   <button type="button" onClick={saveDraft} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
                     Save as Draft
@@ -517,34 +638,29 @@ export default function SquashPostJobPage() {
                   <div className="mt-5 space-y-4 text-sm">
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Test Type</span>
-                      <span className="font-semibold text-slate-900">{testType}</span>
+                      <span className="font-semibold text-slate-900">{getCategoryById(testType).name}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
-                      <span>Platform</span>
-                      <span className="font-semibold text-slate-900">{platform}</span>
+                      <span>Package</span>
+                      <span className="font-semibold text-slate-900">{packageConfigs[selectedPackage].label}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Testers</span>
                       <span className="font-semibold text-slate-900">{testersNeeded}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
-                      <span>Rate per Tester</span>
-                      <span className="font-semibold text-slate-900">{formatZar(ratePerTester)}</span>
+                      <span>Tester Tier</span>
+                      <span className="font-semibold text-slate-900">{testerTierFilter}</span>
                     </div>
+                    {liveSessionEnabled ? (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Live Session Add-on</span>
+                        <span className="font-semibold text-slate-900">R2,000</span>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="my-5 border-t border-dashed border-slate-200" />
-
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Subtotal</span>
-                      <span className="font-semibold text-slate-900">{formatZar(subtotal)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Platform Fee (10%)</span>
-                      <span className="font-semibold text-slate-900">{formatZar(platformFee)}</span>
-                    </div>
-                  </div>
 
                   <div className="mt-5 flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
                     <span className="text-lg font-bold text-slate-900">Total</span>
@@ -553,16 +669,36 @@ export default function SquashPostJobPage() {
                 </section>
 
                 <section className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
-                  <div className="text-lg font-bold text-green-800">SQUASH Protection</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    We hold payments securely and release only when you&apos;re happy with the reports.
-                  </p>
+                  <div className="text-lg font-bold text-green-800">Your money is safe</div>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-green-700" />
+                      <span>Funds held in escrow until you approve</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-700" />
+                      <span>Pay only when satisfied with results</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RotateCcw className="h-4 w-4 text-green-700" />
+                      <span>Request revisions before releasing payment</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-green-700" />
+                      <span>Secure payment processing</span>
+                    </div>
+                  </div>
                 </section>
 
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Auto-calculated</div>
                   <div className="mt-4 text-sm text-slate-500">Total Amount</div>
                   <div className="mt-2 text-4xl font-black text-green-700">{formatZar(total)}</div>
+                  {testerTierFilter === 'Elite Only' ? (
+                    <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+                      Premium indicator: Elite tester tier selected.
+                    </div>
+                  ) : null}
                 </section>
 
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

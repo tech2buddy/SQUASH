@@ -19,6 +19,11 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import SpecializationChecklist from './components/SpecializationChecklist';
+import SquashScore from './components/SquashScore';
+import TesterBadge from './components/TesterBadge';
+import { getSpecializationLabel } from './components/testerSpecializations';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 type TransactionStatus = 'Pending' | 'Approved' | 'Paid';
@@ -35,9 +40,9 @@ type StatCard = {
 
 const stats: StatCard[] = [
   {
-    title: 'Total Earnings',
+    title: 'Available Balance',
     value: 'R3,250',
-    note: 'Total earned on SQUASH',
+    note: 'Paid to bank within 24hrs of approval',
     change: '+R450 this month',
     icon: Wallet,
     iconBg: 'bg-green-50',
@@ -119,6 +124,32 @@ const myTests = [
     type: 'Usability Testing',
     progress: 30,
     due: 'Due: 29 May',
+  },
+];
+
+// TODO: Replace with Supabase query
+const completedTests = [
+  {
+    name: 'HealthHub Web',
+    type: 'Usability Testing',
+    score: {
+      usability: 82,
+      performance: 74,
+      onboarding: 79,
+      bugSeverity: 88,
+      deviceCompatibility: 81,
+    },
+  },
+  {
+    name: 'ShopEase iOS App',
+    type: 'Bug Hunting',
+    score: {
+      usability: 78,
+      performance: 70,
+      onboarding: 73,
+      bugSeverity: 85,
+      deviceCompatibility: 76,
+    },
   },
 ];
 
@@ -206,6 +237,33 @@ function getStatusClasses(status: TransactionStatus) {
 }
 
 export default function SquashTesterDashboardPage() {
+  const [specializations, setSpecializations] = useState<string[]>(() => {
+    // TODO: Replace with Supabase query
+    const raw = window.localStorage.getItem('squash_tester_specializations');
+    if (!raw) return ['township-network', 'zulu', 'ecommerce'];
+    try {
+      const parsed = JSON.parse(raw) as string[];
+      return Array.isArray(parsed) ? parsed : ['township-network', 'zulu', 'ecommerce'];
+    } catch {
+      return ['township-network', 'zulu', 'ecommerce'];
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('squash_tester_specializations', JSON.stringify(specializations));
+  }, [specializations]);
+
+  const toggleSpecialization = (id: string, checked: boolean) => {
+    setSpecializations((prev) =>
+      checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
+    );
+  };
+
+  const topProfileTags = useMemo(
+    () => specializations.slice(0, 3).map((id) => getSpecializationLabel(id)),
+    [specializations],
+  );
+
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard', active: true },
     { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
@@ -260,8 +318,17 @@ export default function SquashTesterDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-4 text-center font-semibold text-slate-800">Level 2</div>
-              <div className="text-center text-sm text-slate-500">Skilled Tester</div>
+              <div className="mt-4 flex justify-center">
+                <TesterBadge testsCompleted={24} rating={4.7} />
+              </div>
+              <div className="mt-2 text-center text-sm text-slate-500">Skilled Tester</div>
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {topProfileTags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                    {tag}
+                  </span>
+                ))}
+              </div>
               <a href="/tester/profile" className="mt-4 inline-block text-sm font-semibold text-green-700">
                 View Profile -&gt;
               </a>
@@ -419,6 +486,24 @@ export default function SquashTesterDashboardPage() {
                     <a href="/active-test" className="hover:text-green-700">View All My Tests -&gt;</a>
                   </div>
                 </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-6 py-5">
+                    <h2 className="text-2xl font-bold text-slate-900">Completed Tests</h2>
+                    <p className="mt-2 text-sm text-slate-600">Your latest completed tests and Squash Scores.</p>
+                  </div>
+                  <div className="divide-y divide-slate-100 px-6">
+                    {completedTests.map((test) => (
+                      <div key={test.name} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="font-semibold text-slate-900">{test.name}</div>
+                          <div className="text-sm text-slate-500">{test.type}</div>
+                        </div>
+                        <SquashScore scores={test.score} compact />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -470,28 +555,21 @@ export default function SquashTesterDashboardPage() {
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="text-2xl font-bold text-slate-900">Payout Method</h2>
 
-                  <div className="relative mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-5 text-white shadow-[0_14px_30px_rgba(2,6,23,0.35)]">
-                    <div className="pointer-events-none absolute -right-12 -top-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
-                    <div className="pointer-events-none absolute -left-10 bottom-0 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide">
-                        PAYOUT RAIL
-                      </span>
-                      <span className="text-xs text-white/75">Instant EFT</span>
-                    </div>
-
-                    <div className="font-mono text-xl tracking-[0.16em]">**** **** **** 1234</div>
-
-                    <div className="mt-5 flex items-end justify-between">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Bank</div>
-                        <div className="mt-1 text-sm font-semibold">Nedbank ZA</div>
-                      </div>
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Account Type</div>
-                        <div className="mt-1 text-sm font-semibold">Savings</div>
-                      </div>
+                  <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="text-sm font-semibold text-slate-600">Available payout methods</div>
+                    <div className="mt-4 space-y-3">
+                      <label className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+                        <input type="radio" name="payout-method" defaultChecked className="h-4 w-4 accent-green-600" />
+                        Bank Transfer (EFT)
+                      </label>
+                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                        <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
+                        SnapScan
+                      </label>
+                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                        <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
+                        Airtime top-up
+                      </label>
                     </div>
                   </div>
 
@@ -620,6 +698,16 @@ export default function SquashTesterDashboardPage() {
                 <a href="/tester/level-benefits" className="mt-6 inline-block text-sm font-semibold text-sky-700">
                   View Level Benefits -&gt;
                 </a>
+              </div>
+            </section>
+
+            <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-900">My Specializations</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Choose your strengths so we can match you with the right tests.
+              </p>
+              <div className="mt-5">
+                <SpecializationChecklist selected={specializations} onToggle={toggleSpecialization} />
               </div>
             </section>
 

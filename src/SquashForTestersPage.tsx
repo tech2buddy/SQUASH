@@ -76,6 +76,13 @@ export default function SquashForTestersPage() {
     'New Tests Posted Daily - always something new to test.',
   ];
 
+  const earningRows = [
+    { type: 'Basic Bug Test', amount: 'R50 to R80 per test', time: 'About 20 minutes' },
+    { type: 'Usability Test', amount: 'R80 to R120 per test', time: 'About 30 minutes' },
+    { type: 'Full UX Audit', amount: 'R150 to R200 per test', time: 'About 45 minutes' },
+    { type: 'Mystery Shop Test', amount: 'R180 to R220 per test', time: 'About 60 minutes' },
+  ];
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <PublicHeader active="testers" />
@@ -182,6 +189,38 @@ export default function SquashForTestersPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="text-2xl font-black text-slate-900 sm:text-3xl">How Much Can You Earn?</h2>
+
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full rounded-2xl border border-slate-200">
+                <thead>
+                  <tr className="bg-slate-50 text-left text-sm text-slate-600">
+                    <th className="px-4 py-3 font-semibold">Test Type</th>
+                    <th className="px-4 py-3 font-semibold">Earnings</th>
+                    <th className="px-4 py-3 font-semibold">Time Required</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {earningRows.map((row) => (
+                    <tr key={row.type} className="border-t border-slate-200 text-sm text-slate-700">
+                      <td className="px-4 py-3 font-semibold text-slate-900">{row.type}</td>
+                      <td className="px-4 py-3">{row.amount}</td>
+                      <td className="px-4 py-3">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-5 text-sm leading-7 text-slate-600 sm:text-base">
+              Payment is sent directly to your bank account within 24 hours of the developer approving
+              your submission. No waiting, no middlemen.
+            </p>
           </div>
         </section>
 

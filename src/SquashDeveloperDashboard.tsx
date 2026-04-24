@@ -3,6 +3,7 @@ import {
   Bell,
   BriefcaseBusiness,
   CheckCircle2,
+  ChevronDown,
   Clock3,
   CircleDollarSign,
   ClipboardList,
@@ -20,8 +21,14 @@ import {
   UserCircle2,
   Users,
 } from 'lucide-react';
+import { useState } from 'react';
+import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
+import SquashCertified from './components/SquashCertified';
+import SquashScore from './components/SquashScore';
+import { getCategoryById, type TestCategoryId } from './components/testCategories';
 
 export default function SquashDeveloperDashboard() {
+  // TODO: Replace with Supabase query
   const stats = [
     {
       title: 'Active Jobs',
@@ -61,7 +68,27 @@ export default function SquashDeveloperDashboard() {
     },
   ];
 
-  const jobs = [
+  const jobs: Array<{
+    name: string;
+    type: string;
+    testers: string;
+    status: 'In Progress' | 'Reviewing' | 'Open' | 'Completed';
+    deadline: string;
+    deadlineNote: string;
+    submissions: string;
+    accent: string;
+    categoryId: TestCategoryId;
+    completed?: boolean;
+    certifiedAt?: string;
+    score?: {
+      usability: number;
+      performance: number;
+      onboarding: number;
+      bugSeverity: number;
+      deviceCompatibility: number;
+    };
+    plan?: 'Starter' | 'Growth' | 'Pro';
+  }> = [
     {
       name: 'PayFlow Web App',
       type: 'Web Application',
@@ -71,6 +98,8 @@ export default function SquashDeveloperDashboard() {
       deadlineNote: '3 days left',
       submissions: '12 / 24',
       accent: 'bg-slate-900 text-white',
+      categoryId: 'website-testing',
+      plan: 'Growth',
     },
     {
       name: 'FitTrack Mobile',
@@ -81,16 +110,29 @@ export default function SquashDeveloperDashboard() {
       deadlineNote: 'Today',
       submissions: '8 / 18',
       accent: 'bg-slate-800 text-white',
+      categoryId: 'mobile-app-testing',
+      plan: 'Pro',
     },
     {
       name: 'HealthApp iOS',
       type: 'iOS Application',
       testers: '30 / 30',
-      status: 'Reviewing',
+      status: 'Completed',
       deadline: '23 May 2024',
       deadlineNote: 'Overdue',
       submissions: '30 / 30',
       accent: 'bg-emerald-600 text-white',
+      categoryId: 'localization-testing',
+      completed: true,
+      certifiedAt: '2026-03-20',
+      plan: 'Growth',
+      score: {
+        usability: 84,
+        performance: 80,
+        onboarding: 79,
+        bugSeverity: 87,
+        deviceCompatibility: 83,
+      },
     },
     {
       name: 'EduLearn Platform',
@@ -101,6 +143,8 @@ export default function SquashDeveloperDashboard() {
       deadlineNote: '9 days left',
       submissions: '0 / 10',
       accent: 'bg-violet-500 text-white',
+      categoryId: 'onboarding-testing',
+      plan: 'Starter',
     },
     {
       name: 'ShopEasy Android',
@@ -111,8 +155,14 @@ export default function SquashDeveloperDashboard() {
       deadlineNote: '14 days left',
       submissions: '0 / 5',
       accent: 'bg-red-500 text-white',
+      categoryId: 'ecommerce-testing',
+      plan: 'Starter',
     },
   ];
+
+  const [tierFilter, setTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
+  const [retestTarget, setRetestTarget] = useState<(typeof jobs)[number] | null>(null);
+  const [retestMessage, setRetestMessage] = useState('');
 
   const recentSubmissions = [
     { app: 'PayFlow Web App', tester: 'Thando M.', time: '2h ago', severity: 'Critical' },
@@ -164,6 +214,7 @@ export default function SquashDeveloperDashboard() {
   const getStatusClasses = (status: string) => {
     if (status === 'In Progress') return 'bg-green-100 text-green-700';
     if (status === 'Reviewing') return 'bg-amber-100 text-amber-700';
+    if (status === 'Completed') return 'bg-emerald-100 text-emerald-700';
     return 'bg-slate-100 text-slate-700';
   };
 
@@ -179,6 +230,51 @@ export default function SquashDeveloperDashboard() {
     if (text.includes('submitted')) return MessageSquareText;
     if (text.includes('completed')) return CheckCircle2;
     return Clock3;
+  };
+
+  const handleRetestSubmit = (payload: RetestSubmission) => {
+    if (!retestTarget) return;
+    // TODO: Replace with Supabase query
+    const previousOverall = retestTarget.score
+      ? Math.round(
+          (retestTarget.score.usability +
+            retestTarget.score.performance +
+            retestTarget.score.onboarding +
+            retestTarget.score.bugSeverity +
+            retestTarget.score.deviceCompatibility) /
+            5,
+        )
+      : 68;
+    const newOverall = 81;
+    const delta = newOverall - previousOverall;
+
+    const existing = JSON.parse(window.localStorage.getItem('squash_retests') ?? '[]') as Array<{
+      jobName: string;
+      submittedAt: string;
+      plan: string;
+      price: number;
+      url: string;
+      focusAreas: string;
+    }>;
+    existing.unshift({
+      jobName: retestTarget.name,
+      submittedAt: new Date().toISOString(),
+      plan: payload.plan,
+      price: payload.price,
+      url: payload.url,
+      focusAreas: payload.focusAreas,
+    });
+    window.localStorage.setItem('squash_retests', JSON.stringify(existing));
+
+    const certifiedMessage =
+      previousOverall < 80 && newOverall >= 80
+        ? " Congratulations! You've earned your SQUASH CERTIFIED badge! 🏆"
+        : '';
+
+    setRetestMessage(
+      `Previous Score: ${previousOverall}/100 → New Score: ${newOverall}/100 +${delta} points improvement 🎉${certifiedMessage}`,
+    );
+    setRetestTarget(null);
   };
 
   return (
@@ -334,17 +430,38 @@ export default function SquashDeveloperDashboard() {
             <section className="mt-6 grid gap-4 xl:grid-cols-[1.8fr_0.9fr]">
               <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                  <div>
+                  <div className="flex items-center gap-3">
                     <h2 className="text-xl font-bold text-slate-900">Active Jobs</h2>
+                    <div className="relative">
+                      <select
+                        value={tierFilter}
+                        onChange={(e) =>
+                          setTierFilter(e.target.value as 'All' | 'Verified+' | 'Pro+' | 'Elite Only')
+                        }
+                        className="appearance-none rounded-xl border border-slate-200 bg-white px-3 py-1.5 pr-8 text-xs font-semibold text-slate-700 outline-none"
+                      >
+                        <option>All</option>
+                        <option>Verified+</option>
+                        <option>Pro+</option>
+                        <option>Elite Only</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    </div>
                   </div>
                   <a href="/developer/jobs" className="text-sm font-semibold text-green-700">View all jobs -&gt;</a>
                 </div>
+                {tierFilter === 'Elite Only' ? (
+                  <div className="border-b border-slate-100 bg-amber-50 px-5 py-2 text-xs font-semibold text-amber-700">
+                    Premium price indicator active for Elite tester jobs.
+                  </div>
+                ) : null}
 
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
                         <th className="px-5 py-3 font-medium">App / Job</th>
+                        <th className="px-5 py-3 font-medium">Category</th>
                         <th className="px-5 py-3 font-medium">Testers</th>
                         <th className="px-5 py-3 font-medium">Status</th>
                         <th className="px-5 py-3 font-medium">Deadline</th>
@@ -366,11 +483,48 @@ export default function SquashDeveloperDashboard() {
                               </div>
                             </div>
                           </td>
+                          <td className="px-5 py-3">
+                            {(() => {
+                              const category = getCategoryById(job.categoryId);
+                              const CategoryIcon = category.icon;
+                              return (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                  <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                                  {category.name}
+                                  {category.saExclusive ? (
+                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                                  ) : null}
+                                </span>
+                              );
+                            })()}
+                          </td>
                           <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.testers}</td>
                           <td className="px-5 py-3">
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
-                              {job.status}
-                            </span>
+                            <div className="space-y-2">
+                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
+                                {job.status}
+                              </span>
+                              {job.completed && job.score ? (
+                                <div className="block">
+                                  <SquashScore scores={job.score} compact />
+                                </div>
+                              ) : null}
+                              {job.completed && job.score ? (
+                                <SquashCertified
+                                  score={Math.round(
+                                    (job.score.usability +
+                                      job.score.performance +
+                                      job.score.onboarding +
+                                      job.score.bugSeverity +
+                                      job.score.deviceCompatibility) /
+                                      5,
+                                  )}
+                                  testers={Number(job.testers.split('/')[0].trim())}
+                                  certifiedAt={job.certifiedAt ?? '2026-04-01'}
+                                  compact
+                                />
+                              ) : null}
+                            </div>
                           </td>
                           <td className="px-5 py-3">
                             <div className="text-sm font-medium text-slate-700">{job.deadline}</div>
@@ -399,9 +553,20 @@ export default function SquashDeveloperDashboard() {
                             </div>
                           </td>
                           <td className="px-5 py-3">
-                            <a href="/report-details" className="block rounded-xl p-2 text-slate-500 hover:bg-slate-100">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </a>
+                            <div className="flex items-center gap-2">
+                              <a href="/report-details" className="block rounded-xl p-2 text-slate-500 hover:bg-slate-100">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </a>
+                              {job.completed ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setRetestTarget(job)}
+                                  className="rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  Request Retest
+                                </button>
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -614,10 +779,33 @@ export default function SquashDeveloperDashboard() {
                 </a>
               </div>
             </section>
+            {retestMessage ? (
+              <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+                {retestMessage}
+              </div>
+            ) : null}
           </div>
         </main>
       </div>
+      <RetestRequestModal
+        open={Boolean(retestTarget)}
+        onClose={() => setRetestTarget(null)}
+        plan={retestTarget?.plan ?? 'Starter'}
+        originalScore={
+          retestTarget?.score
+            ? Math.round(
+                (retestTarget.score.usability +
+                  retestTarget.score.performance +
+                  retestTarget.score.onboarding +
+                  retestTarget.score.bugSeverity +
+                  retestTarget.score.deviceCompatibility) /
+                  5,
+              )
+            : 68
+        }
+        initialUrl="https://staging.example.app"
+        onSubmit={handleRetestSubmit}
+      />
     </div>
   );
 }
-

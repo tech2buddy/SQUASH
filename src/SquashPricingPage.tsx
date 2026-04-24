@@ -18,28 +18,36 @@ type TrustItem = {
 export default function SquashPricingPage() {
   const plans = [
     {
-      name: 'Basic',
-      price: 'R60',
-      suffix: '/ tester',
-      features: ['Bug reports', 'Screenshots'],
-      note: 'Best for small tests',
+      name: 'Starter',
+      price: 'R500',
+      suffix: '/ job',
+      features: ['5 testers', 'Bug reports', 'Screenshots', 'PDF report', 'Screenshots only (upgrade for video reports)'],
+      note: 'Best for small apps and quick checks',
       highlighted: false,
     },
     {
-      name: 'Standard',
-      price: 'R90',
-      suffix: '/ tester',
-      features: ['Everything in Basic', 'Video recordings', 'UX feedback'],
-      note: 'Best for startups',
+      name: 'Growth',
+      price: 'R1,200',
+      suffix: '/ job',
+      features: ['10 testers', 'Screen recordings', 'UX scores', 'Detailed PDF report', 'Priority matching', 'Video bug reports included'],
+      note: 'Best for startups before launch',
       highlighted: true,
       badge: 'Most Popular',
     },
     {
-      name: 'Premium',
-      price: 'R120',
-      suffix: '/ tester',
-      features: ['Everything in Standard', 'Priority testers', 'Faster delivery', 'Advanced insights'],
-      note: 'Best for serious products',
+      name: 'Pro',
+      price: 'R2,500',
+      suffix: '/ job',
+      features: ['20 testers', 'Full session recordings', 'Executive summary', 'Advanced analytics', 'Dedicated support', 'Video bug reports included'],
+      note: 'Best for serious products and funded startups',
+      highlighted: false,
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      suffix: 'pricing',
+      features: ['50+ testers', 'Dedicated test manager', 'Custom reporting', 'SLA guarantee'],
+      note: 'Best for corporates and large teams',
       highlighted: false,
     },
   ];
@@ -167,7 +175,7 @@ export default function SquashPricingPage() {
                       <Bug className="h-10 w-10 text-emerald-700" />
                     </div>
                     <div className="rounded-2xl border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-green-700 shadow-sm">
-                      Real testing. Real value.
+                      Plans from R500 per job
                     </div>
                   </div>
                 </div>
@@ -178,11 +186,11 @@ export default function SquashPricingPage() {
 
         <section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-4">
               {plans.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`relative rounded-[28px] border bg-white p-8 shadow-sm transition hover:-translate-y-1 ${
+                  className={`relative flex h-full flex-col rounded-[28px] border bg-white p-8 shadow-sm transition hover:-translate-y-1 ${
                     plan.highlighted ? 'border-green-300 ring-2 ring-green-100' : 'border-slate-200'
                   }`}
                 >
@@ -213,20 +221,27 @@ export default function SquashPricingPage() {
 
                   <div className="my-6 border-t border-slate-200" />
 
-                  <div className="text-center text-slate-600">{plan.note}</div>
+                  <div className="mt-auto">
+                    <div className="min-h-[56px] text-center leading-7 text-slate-600">{plan.note}</div>
 
-                  <a
-                    href={`/post-job?plan=${plan.name.toLowerCase()}`}
-                    className={`mt-6 w-full rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
-                      plan.highlighted
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
-                    }`}
-                  >
-                    Choose Plan
-                  </a>
+                    <a
+                      href={plan.name === 'Enterprise' ? '/contact?intent=enterprise' : `/post-job?plan=${plan.name.toLowerCase()}`}
+                      className={`mt-4 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
+                        plan.highlighted
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      {plan.name === 'Enterprise' ? 'Contact Us' : 'Post a Job'}
+                    </a>
+                  </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-center text-sm font-medium text-slate-700">
+              Apps scoring 80+ receive a SQUASH CERTIFIED badge to use on your app store listing
+              - included free with Growth and Pro plans.
             </div>
           </div>
         </section>
@@ -241,19 +256,19 @@ export default function SquashPricingPage() {
                   <div className="mb-3 text-sm font-semibold text-slate-700">Number of testers:</div>
                   <div className="flex items-center gap-4">
                     <div className="relative h-2 flex-1 rounded-full bg-slate-200">
-                      <div className="absolute left-0 top-0 h-2 w-[62%] rounded-full bg-green-600" />
-                      <span className="absolute left-[62%] top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow ring-2 ring-green-600" />
+                      <div className="absolute left-0 top-0 h-2 w-[78%] rounded-full bg-green-600" />
+                      <span className="absolute left-[78%] top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow ring-2 ring-green-600" />
                     </div>
                     <div className="flex h-12 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-bold text-slate-900">
-                      25
+                      20
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-8">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Test type:</div>
-                  <a href="/pricing/calculator" className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-semibold text-slate-700">
-                    Functional Testing <span className="text-slate-400">&#9662;</span>
+                  <div className="mb-3 text-sm font-semibold text-slate-700">Package selected:</div>
+                  <a href="/post-job?plan=pro" className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-semibold text-slate-700">
+                    Pro Plan <span className="text-slate-400">&#9662;</span>
                   </a>
                 </div>
               </div>
@@ -261,21 +276,22 @@ export default function SquashPricingPage() {
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <div className="space-y-4 text-base">
                   <div className="flex items-center justify-between text-slate-600">
-                    <span>Cost per tester:</span>
-                    <span className="font-semibold text-slate-900">R90</span>
+                    <span>Package selected:</span>
+                    <span className="font-semibold text-slate-900">Pro Plan</span>
                   </div>
                   <div className="flex items-center justify-between text-slate-600">
-                    <span>Platform fee (10%):</span>
-                    <span className="font-semibold text-slate-900">R225</span>
+                    <span>Number of testers:</span>
+                    <span className="font-semibold text-slate-900">20</span>
                   </div>
                 </div>
 
                 <div className="my-5 border-t border-dashed border-slate-300" />
 
                 <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 shadow-sm">
-                  <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">Total estimated cost:</span>
-                  <span className="text-3xl font-black text-green-700">R2,475</span>
+                  <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">Total:</span>
+                  <span className="text-3xl font-black text-green-700">R2,500</span>
                 </div>
+                <div className="mt-3 text-sm text-slate-500">20 testers - Pro Plan - Total: R2,500</div>
               </div>
             </div>
           </div>

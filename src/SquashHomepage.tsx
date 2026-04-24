@@ -1,10 +1,11 @@
 import PublicHeader from './PublicHeader';
 import { Star } from 'lucide-react';
+import { TEST_CATEGORIES } from './components/testCategories';
 
 export default function SquashHomepage() {
   const stats = [
     { label: 'Testers', value: '500+' },
-    { label: 'Apps Tested', value: '120+' },
+    { label: 'SA Startups Served', value: '50+' },
     { label: 'Paid Out', value: 'R2M+' },
     { label: 'Satisfaction', value: '98%' },
   ];
@@ -86,6 +87,9 @@ export default function SquashHomepage() {
               <div className="flex items-center gap-2">
                 <span className="text-green-600">&#10003;</span> Faster product feedback
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">&#10003;</span> Built for South Africa
+              </div>
             </div>
           </div>
 
@@ -142,6 +146,33 @@ export default function SquashHomepage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="text-sm font-semibold text-slate-700">Popular test categories</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {TEST_CATEGORIES.slice(0, 8).map((category) => {
+                const Icon = category.icon;
+                return (
+                  <span
+                    key={category.id}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+                  >
+                    <Icon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                    {category.name}
+                    {category.saExclusive ? (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                        SA 🇿🇦
+                      </span>
+                    ) : null}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <p className="mt-8 text-center text-sm text-slate-500">
+            Serving developers and students across Johannesburg, Cape Town, Durban and beyond.
+          </p>
         </section>
 
         <section className="bg-slate-50">

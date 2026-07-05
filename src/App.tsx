@@ -13,6 +13,10 @@ import SquashReportDetailsPage from './SquashReportDetailsPage';
 import SquashSignupPage from './SquashSignupPage';
 import SquashTesterDashboardPage from './SquashTesterDashboardPage';
 import SquashTesterJobBoard from './SquashTesterJobBoard';
+import SquashTesterProfilePage from './SquashTesterProfilePage';
+import SquashTesterEarningsPage from './SquashTesterEarningsPage';
+import SquashTesterReportsPage from './SquashTesterReportsPage';
+import SquashTesterSettingsPage from './SquashTesterSettingsPage';
 import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
 import SquashApiDocsPage from './SquashApiDocsPage';
@@ -230,7 +234,54 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/tester/profile"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/earnings"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterEarningsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/payments"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterEarningsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/reports"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/submissions"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/settings"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterSettingsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
   );

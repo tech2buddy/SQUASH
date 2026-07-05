@@ -64,13 +64,13 @@ export default function SquashHomepage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
-                href="/post-job"
+                href="/signup?role=developer&next=%2Fpost-job"
                 className="rounded-2xl bg-green-500 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-green-600"
               >
                 Post a Job
               </a>
               <a
-                href="/tester-jobs"
+                href="/signup?role=tester&next=%2Ftester-jobs"
                 className="rounded-2xl border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Become a Tester
@@ -225,13 +225,13 @@ export default function SquashHomepage() {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <a
-                  href="/post-job"
+                  href="/signup?role=developer&next=%2Fpost-job"
                   className="rounded-2xl bg-green-500 px-6 py-3 font-semibold text-white transition hover:bg-green-600"
                 >
                   Post a Job
                 </a>
                 <a
-                  href="/tester-jobs"
+                  href="/signup?role=tester&next=%2Ftester-jobs"
                   className="rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
                 >
                   Become a Tester
@@ -267,3 +267,4 @@ export default function SquashHomepage() {
     </div>
   );
 }
+

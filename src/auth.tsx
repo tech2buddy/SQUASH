@@ -65,7 +65,7 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/developer/activity',
     '/report-details/attachments',
   ]);
-  const testerRoutes = new Set(['/tester/dashboard', '/tester-jobs', '/active-test']);
+  const testerRoutes = new Set(['/tester/dashboard', '/tester-jobs', '/active-test', '/tester/profile', '/tester/earnings', '/tester/payments', '/tester/reports', '/tester/submissions', '/tester/settings']);
   if (developerRoutes.has(pathname)) return 'developer';
   if (testerRoutes.has(pathname)) return 'tester';
   return 'public';

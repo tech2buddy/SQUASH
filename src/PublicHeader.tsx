@@ -53,18 +53,6 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
           >
             Log in
           </Link>
-          <Link
-            to="/post-job"
-            className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-600"
-          >
-            Post a Job
-          </Link>
-          <Link
-            to="/tester-jobs"
-            className="rounded-xl border border-green-500 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-50"
-          >
-            Become a Tester
-          </Link>
         </div>
 
         <button
@@ -106,23 +94,10 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
             >
               Log in
             </Link>
-            <Link
-              to="/post-job"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-xl bg-green-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-green-600"
-            >
-              Post a Job
-            </Link>
-            <Link
-              to="/tester-jobs"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-xl border border-green-500 px-4 py-2.5 text-center text-sm font-semibold text-green-700 hover:bg-green-50"
-            >
-              Become a Tester
-            </Link>
           </div>
         </div>
       ) : null}
     </header>
   );
 }
+

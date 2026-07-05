@@ -1,5 +1,5 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resolvePostLoginPath, useAuth, type UserRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
@@ -19,6 +19,7 @@ export default function SquashSignupPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
 
   const submitSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +42,7 @@ export default function SquashSignupPage() {
       email: email.trim(),
       name: name.trim(),
     });
-    navigate(resolvePostLoginPath(role, null), { replace: true });
+    navigate(resolvePostLoginPath(role, nextPath), { replace: true });
   };
 
   const socialSignup = (provider: 'google' | 'github') => {
@@ -51,7 +52,7 @@ export default function SquashSignupPage() {
       email: socialEmail,
       name: role === 'developer' ? 'Alex Developer' : 'Thando M.',
     });
-    navigate(resolvePostLoginPath(role, null), { replace: true });
+    navigate(resolvePostLoginPath(role, nextPath), { replace: true });
   };
 
   return (
@@ -273,3 +274,4 @@ export default function SquashSignupPage() {
     </div>
   );
 }
+

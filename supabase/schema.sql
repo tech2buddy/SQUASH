@@ -5,13 +5,34 @@
 create extension if not exists "pgcrypto";
 
 -- Roles and workflow states
-create type public.user_role as enum ('developer', 'tester', 'admin');
-create type public.job_status as enum ('draft', 'active', 'in_review', 'completed', 'cancelled');
-create type public.application_status as enum ('pending', 'accepted', 'rejected', 'withdrawn');
-create type public.assignment_status as enum ('active', 'submitted', 'approved', 'cancelled');
-create type public.submission_status as enum ('draft', 'submitted', 'changes_requested', 'approved', 'rejected');
-create type public.payout_status as enum ('pending', 'processing', 'paid', 'failed', 'cancelled');
-create type public.notification_status as enum ('unread', 'read');
+do $$ begin
+  create type public.user_role as enum ('developer', 'tester', 'admin');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.job_status as enum ('draft', 'active', 'in_review', 'completed', 'cancelled');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.application_status as enum ('pending', 'accepted', 'rejected', 'withdrawn');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.assignment_status as enum ('active', 'submitted', 'approved', 'cancelled');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.submission_status as enum ('draft', 'submitted', 'changes_requested', 'approved', 'rejected');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.payout_status as enum ('pending', 'processing', 'paid', 'failed', 'cancelled');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.notification_status as enum ('unread', 'read');
+exception when duplicate_object then null;
+end $$;
 
 -- Shared helpers
 create or replace function public.set_updated_at()
@@ -24,6 +45,27 @@ begin
 end;
 $$;
 
+
+
+-- Profiles
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  role public.user_role not null,
+  full_name text not null,
+  email text not null,
+  avatar_url text,
+  phone text,
+  city text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint profiles_email_lowercase check (email = lower(email))
+);
+
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+-- Role helpers are created after profiles so Postgres can validate the table reference.
 create or replace function public.current_user_role()
 returns public.user_role
 language sql
@@ -63,24 +105,6 @@ set search_path = public
 as $$
   select public.current_user_role() = 'tester'::public.user_role;
 $$;
-
--- Profiles
-create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  role public.user_role not null,
-  full_name text not null,
-  email text not null,
-  avatar_url text,
-  phone text,
-  city text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint profiles_email_lowercase check (email = lower(email))
-);
-
-create trigger profiles_set_updated_at
-before update on public.profiles
-for each row execute function public.set_updated_at();
 
 create table public.developer_profiles (
   user_id uuid primary key references public.profiles(id) on delete cascade,
@@ -455,3 +479,5 @@ for update using (user_id = auth.uid() or public.is_admin()) with check (user_id
 
 create policy "notifications_admin_insert" on public.notifications
 for insert with check (public.is_admin());
+
+

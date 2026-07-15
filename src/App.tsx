@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import SquashActiveTestScreen from './SquashActiveTestScreen';
 import SquashAboutPage from './SquashAboutPage';
@@ -37,8 +38,16 @@ function ProtectedRoute({
   children: React.ReactElement;
   allowedRole: UserRole;
 }) {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading your SQUASH session...
+      </div>
+    );
+  }
 
   if (!session) {
     const next = encodeURIComponent(location.pathname);
@@ -54,7 +63,11 @@ function ProtectedRoute({
 
 function LogoutRoute() {
   const { logout } = useAuth();
-  logout();
+
+  useEffect(() => {
+    logout();
+  }, [logout]);
+
   return <Navigate to="/login" replace />;
 }
 

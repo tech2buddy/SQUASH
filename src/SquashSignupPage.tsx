@@ -17,11 +17,13 @@ export default function SquashSignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [notice, setNotice] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { signUp, signInWithOAuth } = useAuth();
   const navigate = useNavigate();
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
 
-  const submitSignup = (e: React.FormEvent) => {
+  const submitSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError('Please fill in all required fields.');
@@ -31,28 +33,57 @@ export default function SquashSignupPage() {
       setError('Passwords do not match.');
       return;
     }
+    if (password.length < 8) {
+      setError('Use a password with at least 8 characters.');
+      return;
+    }
     if (!acceptedTerms) {
       setError('Please accept Terms of Service and Privacy Policy.');
       return;
     }
 
+    setSubmitting(true);
     setError('');
-    login({
-      role,
-      email: email.trim(),
-      name: name.trim(),
-    });
-    navigate(resolvePostLoginPath(role, nextPath), { replace: true });
+    setNotice('');
+    try {
+      const result = await signUp({
+        role,
+        email,
+        password,
+        name,
+      });
+
+      if (result.requiresEmailConfirmation) {
+        setNotice('Account created. Please check your email to confirm your account before logging in.');
+        return;
+      }
+
+      const activeSession = result.session;
+      if (!activeSession) {
+        setNotice('Account created. You can now login.');
+        navigate('/login?role=' + role, { replace: true });
+        return;
+      }
+
+      navigate(resolvePostLoginPath(activeSession.role, nextPath), { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to create your account right now.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const socialSignup = (provider: 'google' | 'github') => {
-    const socialEmail = provider === 'google' ? 'user@gmail.com' : 'user@github.com';
-    login({
-      role,
-      email: socialEmail,
-      name: role === 'developer' ? 'Alex Developer' : 'Thando M.',
-    });
-    navigate(resolvePostLoginPath(role, nextPath), { replace: true });
+  const socialSignup = async (provider: 'google' | 'github') => {
+    setSubmitting(true);
+    setError('');
+    setNotice('');
+    try {
+      await signInWithOAuth({ provider, role });
+      setNotice('Redirecting to your social login provider...');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Social signup is not available yet.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -234,9 +265,10 @@ export default function SquashSignupPage() {
             </label>
 
             {error ? <p className="mt-3 text-sm font-medium text-red-600">{error}</p> : null}
+            {notice ? <p className="mt-3 text-sm font-medium text-green-700">{notice}</p> : null}
 
             <button type="submit" className="mt-5 w-full rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
-              Create Account
+              {submitting ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 

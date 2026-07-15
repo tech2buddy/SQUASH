@@ -13,10 +13,16 @@ This folder contains database setup for the SQUASH backend.
 
 1. Copy `.env.example` to `.env.local`.
 2. Add your Supabase project URL and anon key to `.env.local`.
-3. In Supabase SQL Editor, run `supabase/schema.sql`.
+3. In Supabase SQL Editor, run `supabase/schema.sql` once.
 4. Confirm all tables have RLS enabled.
 5. Add the same env vars to Vercel Project Settings > Environment Variables.
 
+## Phase 2 auth setup
+
+1. In Supabase SQL Editor, run `supabase/phase2_auth.sql` once.
+2. This creates an auth trigger that automatically creates `profiles`, `developer_profiles`, and `tester_profiles` rows when users sign up.
+3. Keep email confirmation on for stronger security, or turn it off temporarily only for local MVP testing.
+
 ## Next phase
 
-Phase 2 replaces localStorage demo auth with Supabase Auth while keeping the current UI intact.
+Phase 3 connects the Post Job page to Supabase so developer jobs are saved to the real database.

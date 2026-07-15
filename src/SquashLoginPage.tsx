@@ -28,13 +28,15 @@ export default function SquashLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [notice, setNotice] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { loginDemo, signIn, signInWithOAuth } = useAuth();
   const navigate = useNavigate();
 
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
 
   const loginWithPayload = (payload: { role: UserRole; email: string; name: string }) => {
-    login(payload);
+    loginDemo(payload);
     navigate(resolvePostLoginPath(payload.role, nextPath), { replace: true });
   };
 
@@ -52,38 +54,60 @@ export default function SquashLoginPage() {
     loginWithPayload({ role: demo.role, email: demo.email, name: demo.name });
   };
 
-  const submitLogin = (e: React.FormEvent) => {
+  const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       setError('Please enter your email and password.');
       return;
     }
+
     const matchedDemo =
       email.trim().toLowerCase() === DEMO_ACCOUNTS.developer.email
         ? DEMO_ACCOUNTS.developer
         : email.trim().toLowerCase() === DEMO_ACCOUNTS.tester.email
           ? DEMO_ACCOUNTS.tester
           : null;
-    if (matchedDemo && password !== matchedDemo.password) {
-      setError('Demo password is incorrect. Use the demo credentials below.');
+
+    if (matchedDemo) {
+      if (password !== matchedDemo.password) {
+        setError('Demo password is incorrect. Use the demo credentials below.');
+        return;
+      }
+      setError('');
+      setNotice('');
+      loginWithPayload({ role: matchedDemo.role, email: matchedDemo.email, name: matchedDemo.name });
       return;
     }
+
+    setSubmitting(true);
     setError('');
-    const finalRole = matchedDemo ? matchedDemo.role : role;
-    loginWithPayload({
-      role: finalRole,
-      email: email.trim(),
-      name: finalRole === 'developer' ? 'Alex Developer' : 'Thando M.',
-    });
+    setNotice('');
+    try {
+      const result = await signIn({ email, password });
+      const activeSession = result.session;
+      if (!activeSession) {
+        setError('We could not load your SQUASH profile. Please contact support.');
+        return;
+      }
+      navigate(resolvePostLoginPath(activeSession.role, nextPath), { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to login right now.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const socialLogin = (provider: 'google' | 'github') => {
-    const socialEmail = provider === 'google' ? 'user@gmail.com' : 'user@github.com';
-    loginWithPayload({
-      role,
-      email: socialEmail,
-      name: role === 'developer' ? 'Alex Developer' : 'Thando M.',
-    });
+  const socialLogin = async (provider: 'google' | 'github') => {
+    setSubmitting(true);
+    setError('');
+    setNotice('');
+    try {
+      await signInWithOAuth({ provider, role });
+      setNotice('Redirecting to your social login provider...');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Social login is not available yet.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -231,9 +255,10 @@ export default function SquashLoginPage() {
             </div>
 
             {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+            {notice ? <p className="text-sm font-medium text-green-700">{notice}</p> : null}
 
             <button type="submit" className="mt-5 w-full rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
-              Login
+              {submitting ? 'Logging in...' : 'Login'}
             </button>
           </form>
 

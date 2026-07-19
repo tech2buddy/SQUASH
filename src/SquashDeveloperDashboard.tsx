@@ -21,74 +21,89 @@ import {
   UserCircle2,
   Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashCertified from './components/SquashCertified';
 import SquashScore from './components/SquashScore';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
+import { useAuth } from './auth';
+import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob } from './lib/jobApi';
+
+type DashboardJob = {
+  name: string;
+  type: string;
+  testers: string;
+  status: 'In Progress' | 'Reviewing' | 'Open' | 'Completed';
+  deadline: string;
+  deadlineNote: string;
+  submissions: string;
+  accent: string;
+  logoUrl?: string | null;
+  categoryId: TestCategoryId;
+  completed?: boolean;
+  certifiedAt?: string;
+  score?: {
+    usability: number;
+    performance: number;
+    onboarding: number;
+    bugSeverity: number;
+    deviceCompatibility: number;
+  };
+  plan?: 'Starter' | 'Growth' | 'Pro';
+};
 
 export default function SquashDeveloperDashboard() {
-  // TODO: Replace with Supabase query
+  const { session } = useAuth();
+  const developerName = session?.name || 'Alex Developer';
+  const developerFirstName = developerName.split(' ')[0] || developerName;
+  const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
+  const [databaseApplications, setDatabaseApplications] = useState<DeveloperApplication[]>([]);
+  const [dashboardSummary, setDashboardSummary] = useState<DeveloperDashboardSummary | null>(null);
+  const [jobsError, setJobsError] = useState('');
+
+  const hasLiveDashboard = session?.source === 'supabase' && dashboardSummary !== null;
+  const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
+
   const stats = [
     {
       title: 'Active Jobs',
-      value: '12',
-      note: '2 in progress',
-      trend: '+8%',
+      value: hasLiveDashboard ? String(dashboardSummary.activeJobs) : '12',
+      note: hasLiveDashboard ? `${databaseJobs.length} total posted` : '2 in progress',
+      trend: hasLiveDashboard ? `${dashboardSummary.pendingApplications} pending applicants` : '+8%',
       icon: BriefcaseBusiness,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
     },
     {
       title: 'Total Testers',
-      value: '245',
-      note: '18 this week',
-      trend: '+12%',
+      value: hasLiveDashboard ? String(dashboardSummary.uniqueTesters) : '245',
+      note: hasLiveDashboard ? `${dashboardSummary.totalApplications} applications` : '18 this week',
+      trend: hasLiveDashboard ? 'Real applicants' : '+12%',
       icon: Users,
       iconBg: 'bg-sky-50',
       iconColor: 'text-sky-600',
     },
     {
-      title: 'Avg Rating',
-      value: '4.6',
-      note: 'From 124 reports',
-      trend: '+0.4',
+      title: 'Reports',
+      value: hasLiveDashboard ? String(dashboardSummary.submittedReports) : '4.6',
+      note: hasLiveDashboard ? `${dashboardSummary.approvedReports} approved` : 'From 124 reports',
+      trend: hasLiveDashboard ? `${dashboardSummary.averageScore || 0}/100 avg score` : '+0.4',
       icon: Star,
       iconBg: 'bg-amber-50',
       iconColor: 'text-amber-500',
     },
     {
-      title: 'Total Spent',
-      value: 'R78,450',
-      note: 'This month',
-      trend: '+15%',
+      title: 'Committed Budget',
+      value: hasLiveDashboard ? formatRand(dashboardSummary.totalCommittedZar) : 'R78,450',
+      note: hasLiveDashboard ? 'Across posted jobs' : 'This month',
+      trend: hasLiveDashboard ? 'Package totals only' : '+15%',
       icon: CircleDollarSign,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
     },
   ];
 
-  const jobs: Array<{
-    name: string;
-    type: string;
-    testers: string;
-    status: 'In Progress' | 'Reviewing' | 'Open' | 'Completed';
-    deadline: string;
-    deadlineNote: string;
-    submissions: string;
-    accent: string;
-    categoryId: TestCategoryId;
-    completed?: boolean;
-    certifiedAt?: string;
-    score?: {
-      usability: number;
-      performance: number;
-      onboarding: number;
-      bugSeverity: number;
-      deviceCompatibility: number;
-    };
-    plan?: 'Starter' | 'Growth' | 'Pro';
-  }> = [
+  const mockJobs: DashboardJob[] = [
     {
       name: 'PayFlow Web App',
       type: 'Web Application',
@@ -160,6 +175,48 @@ export default function SquashDeveloperDashboard() {
     },
   ];
 
+  const databaseDashboardJobs = useMemo(
+    () =>
+      databaseJobs.map<DashboardJob>((job) => ({
+        name: job.title,
+        type: job.platform,
+        testers: `0 / ${job.testersNeeded}`,
+        status: job.status === 'active' ? ('Open' as const) : job.status === 'completed' ? ('Completed' as const) : ('Reviewing' as const),
+        deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+        deadlineNote: 'Newly published',
+        submissions: `0 / ${job.testersNeeded}`,
+        accent: 'bg-green-600 text-white',
+        logoUrl: job.logoUrl,
+        categoryId: job.category as TestCategoryId,
+        plan: job.packageKey === 'starter' ? ('Starter' as const) : job.packageKey === 'growth' ? ('Growth' as const) : ('Pro' as const),
+      })),
+    [databaseJobs],
+  );
+
+  const jobs = useMemo<DashboardJob[]>(() => (session?.source === 'supabase' ? databaseDashboardJobs : mockJobs), [databaseDashboardJobs, mockJobs, session?.source]);
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+
+    let mounted = true;
+    setJobsError('');
+
+    Promise.all([getDeveloperJobs(session.userId), getDeveloperApplications(session.userId), getDeveloperDashboardSummary(session.userId)])
+      .then(([jobItems, applicationItems, summary]) => {
+        if (!mounted) return;
+        setDatabaseJobs(jobItems);
+        setDatabaseApplications(applicationItems);
+        setDashboardSummary(summary);
+      })
+      .catch((error: Error) => {
+        if (mounted) setJobsError(error.message || 'Could not load your live dashboard data right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.role, session?.source, session?.userId]);
+
   const [tierFilter, setTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
   const [retestTarget, setRetestTarget] = useState<(typeof jobs)[number] | null>(null);
   const [retestMessage, setRetestMessage] = useState('');
@@ -172,6 +229,18 @@ export default function SquashDeveloperDashboard() {
     { app: 'FitTrack Mobile', tester: 'Sarah W.', time: '1d ago', severity: 'Medium' },
   ];
 
+
+  const liveApplications = useMemo(
+    () =>
+      databaseApplications.slice(0, 5).map((application) => ({
+        app: application.jobTitle,
+        tester: application.testerName,
+        time: new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
+        status: application.status,
+      })),
+    [databaseApplications],
+  );
+
   const activity = [
     { text: 'New job "EduLearn Platform" created', time: '2 hours ago', color: 'bg-green-100 text-green-600' },
     { text: 'Critical bug reported in PayFlow Web App', time: '3 hours ago', color: 'bg-red-100 text-red-500' },
@@ -180,21 +249,31 @@ export default function SquashDeveloperDashboard() {
     { text: 'Payment of R12,450 processed', time: '2 days ago', color: 'bg-sky-100 text-sky-600' },
   ];
 
-  const bugSummary = [
-    { label: 'Critical', value: '45 (18%)', color: 'bg-red-500' },
-    { label: 'Medium', value: '97 (40%)', color: 'bg-amber-400' },
-    { label: 'Low', value: '68 (28%)', color: 'bg-green-500' },
-    { label: 'Info', value: '35 (14%)', color: 'bg-slate-300' },
-  ];
+  const totalLiveBugs = dashboardSummary
+    ? Object.values(dashboardSummary.bugCounts).reduce((sum, count) => sum + count, 0)
+    : 0;
+  const bugSummary = dashboardSummary
+    ? [
+        { label: 'Critical', value: `${dashboardSummary.bugCounts.Critical}`, color: 'bg-red-500' },
+        { label: 'High', value: `${dashboardSummary.bugCounts.High}`, color: 'bg-orange-500' },
+        { label: 'Medium', value: `${dashboardSummary.bugCounts.Medium}`, color: 'bg-amber-400' },
+        { label: 'Low', value: `${dashboardSummary.bugCounts.Low}`, color: 'bg-green-500' },
+      ]
+    : [
+        { label: 'Critical', value: '45 (18%)', color: 'bg-red-500' },
+        { label: 'Medium', value: '97 (40%)', color: 'bg-amber-400' },
+        { label: 'Low', value: '68 (28%)', color: 'bg-green-500' },
+        { label: 'Info', value: '35 (14%)', color: 'bg-slate-300' },
+      ];
 
   const testerDemographics = [
     { label: '18-24 (Students)', value: 52, color: 'bg-green-500' },
     { label: '25-34 (Early Career)', value: 29, color: 'bg-emerald-400' },
     { label: '35+ (Senior Users)', value: 19, color: 'bg-sky-400' },
   ];
-  const submissionTrendValues = [10, 16, 19, 23, 32, 38, 30];
+  const submissionTrendValues = dashboardSummary && dashboardSummary.trend.some(Boolean) ? dashboardSummary.trend : [10, 16, 19, 23, 32, 38, 30];
   const submissionTrendLabels = ['20 May', '21 May', '22 May', '23 May', '24 May', '25 May', '26 May'];
-  const trendMax = Math.max(...submissionTrendValues);
+  const trendMax = Math.max(1, ...submissionTrendValues);
   const trendPoints = submissionTrendValues
     .map((value, index) => {
       const x = (index / (submissionTrendValues.length - 1)) * 100;
@@ -373,7 +452,7 @@ export default function SquashDeveloperDashboard() {
                       <UserCircle2 className="h-7 w-7" />
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">Alex Developer</div>
+                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
                   </a>
@@ -395,7 +474,7 @@ export default function SquashDeveloperDashboard() {
           <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Welcome back, Alex!</h1>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Welcome back, {developerFirstName}!</h1>
                 <p className="mt-2 text-slate-600">Here&apos;s what&apos;s happening with your testing activity.</p>
               </div>
               <a href="/dashboard" className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
@@ -455,6 +534,16 @@ export default function SquashDeveloperDashboard() {
                     Premium price indicator active for Elite tester jobs.
                   </div>
                 ) : null}
+                {databaseJobs.length > 0 ? (
+                  <div className="border-b border-green-100 bg-green-50 px-5 py-2 text-xs font-semibold text-green-700">
+                    Showing {databaseJobs.length} real Supabase job{databaseJobs.length === 1 ? '' : 's'}.
+                  </div>
+                ) : null}
+                {jobsError ? (
+                  <div className="border-b border-red-100 bg-red-50 px-5 py-2 text-xs font-semibold text-red-600">
+                    {jobsError}
+                  </div>
+                ) : null}
 
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
@@ -470,12 +559,18 @@ export default function SquashDeveloperDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {jobs.map((job) => (
+                      {jobs.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-5 py-8 text-center text-sm font-semibold text-slate-500">
+                            No jobs posted yet. Create your first job to see live dashboard data.
+                          </td>
+                        </tr>
+                      ) : jobs.map((job) => (
                         <tr key={job.name} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-3">
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold ${job.accent}`}>
-                                {job.name.charAt(0)}
+                              <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-base font-bold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
+                                {job.logoUrl ? <img src={job.logoUrl} alt={`${job.name} logo`} className="h-full w-full object-cover" /> : job.name.charAt(0)}
                               </div>
                               <div>
                                 <div className="font-semibold text-slate-900">{job.name}</div>
@@ -581,23 +676,51 @@ export default function SquashDeveloperDashboard() {
                   <a href="/developer/submissions" className="text-sm font-semibold text-green-700">View all -&gt;</a>
                 </div>
                 <div className="space-y-1 p-3">
-                  {recentSubmissions.map((submission) => (
-                    <div key={`${submission.app}-${submission.tester}-${submission.time}`} className="flex items-center justify-between gap-3 rounded-2xl border border-transparent px-3 py-3 transition hover:border-slate-200 hover:bg-slate-50">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                            <UserCircle2 className="h-5 w-5" />
+                  {liveApplications.length > 0 ? (
+                    liveApplications.map((application) => (
+                      <a
+                        key={`${application.app}-${application.tester}-${application.time}`}
+                        href="/developer/submissions"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-green-100 bg-green-50/50 px-3 py-3 transition hover:border-green-200 hover:bg-green-50"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-green-700 ring-1 ring-green-100">
+                              <UserCircle2 className="h-5 w-5" />
+                            </div>
+                            <div className="truncate font-semibold text-slate-900">{application.app}</div>
                           </div>
-                          <div className="font-semibold text-slate-900">{submission.app}</div>
+                          <div className="mt-1 text-sm text-slate-600">Application by {application.tester}</div>
+                          <div className="mt-1 text-xs text-slate-400">Applied {application.time}</div>
                         </div>
-                        <div className="mt-1 text-sm text-slate-500">by {submission.tester}</div>
-                        <div className="mt-1 text-xs text-slate-400">{submission.time}</div>
-                      </div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getSeverityClasses(submission.severity)}`}>
-                        {submission.severity}
-                      </span>
+                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold capitalize text-amber-700 ring-1 ring-amber-100">
+                          {application.status}
+                        </span>
+                      </a>
+                    ))
+                  ) : session?.source === 'supabase' ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+                      No live applications yet.
                     </div>
-                  ))}
+                  ) : (
+                    recentSubmissions.map((submission) => (
+                      <div key={`${submission.app}-${submission.tester}-${submission.time}`} className="flex items-center justify-between gap-3 rounded-2xl border border-transparent px-3 py-3 transition hover:border-slate-200 hover:bg-slate-50">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                              <UserCircle2 className="h-5 w-5" />
+                            </div>
+                            <div className="font-semibold text-slate-900">{submission.app}</div>
+                          </div>
+                          <div className="mt-1 text-sm text-slate-500">by {submission.tester}</div>
+                          <div className="mt-1 text-xs text-slate-400">{submission.time}</div>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getSeverityClasses(submission.severity)}`}>
+                          {submission.severity}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </section>
@@ -608,7 +731,7 @@ export default function SquashDeveloperDashboard() {
                 <div className="mt-6 flex items-center justify-center">
                   <div className="relative flex h-40 w-40 items-center justify-center rounded-full bg-[conic-gradient(#ef4444_0_18%,#fbbf24_18%_58%,#22c55e_58%_86%,#cbd5e1_86%_100%)]">
                     <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">
-                      <div className="text-2xl font-black text-slate-900">245</div>
+                      <div className="text-2xl font-black text-slate-900">{dashboardSummary ? totalLiveBugs : 245}</div>
                       <div className="text-xs text-slate-500">Total Bugs</div>
                     </div>
                   </div>
@@ -691,10 +814,10 @@ export default function SquashDeveloperDashboard() {
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-4">
                   {[
-                    ['124', 'Received'],
-                    ['18', 'In Review'],
-                    ['96', 'Completed'],
-                    ['4.6*', 'Avg Rating'],
+                    [dashboardSummary ? String(dashboardSummary.totalApplications) : '124', 'Applications'],
+                    [dashboardSummary ? String(dashboardSummary.submittedReports) : '18', 'In Review'],
+                    [dashboardSummary ? String(dashboardSummary.approvedReports) : '96', 'Approved'],
+                    [dashboardSummary ? `${dashboardSummary.averageScore || 0}/100` : '4.6*', 'Avg Score'],
                   ].map(([value, label]) => (
                     <div key={label} className="rounded-2xl bg-slate-50 p-3 text-center">
                       <div className="text-xl font-black text-slate-900">{value}</div>
@@ -809,3 +932,7 @@ export default function SquashDeveloperDashboard() {
     </div>
   );
 }
+
+
+
+

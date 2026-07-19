@@ -16,19 +16,65 @@ import {
   Smartphone,
   UserCircle2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashCertified from './components/SquashCertified';
 import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
 import TesterBadge from './components/TesterBadge';
+import { useAuth } from './auth';
+import { getDeveloperSubmittedReports, reviewSubmittedReport, type DeveloperSubmissionReview } from './lib/jobApi';
+
+
+function formatDateTime(value: string | null) {
+  if (!value) return 'Not submitted yet';
+  return new Intl.DateTimeFormat('en-ZA', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
 
 export default function SquashReportDetailsPage() {
+  const { session } = useAuth();
+  const developerName = session?.name || 'Alex Developer';
+  const submissionId = new URLSearchParams(window.location.search).get('submission');
+  const [realReport, setRealReport] = useState<DeveloperSubmissionReview | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [reportError, setReportError] = useState('');
   const [status, setStatus] = useState('Open');
   const [category, setCategory] = useState('Crash / Stability');
   const [reproducibility, setReproducibility] = useState('Always');
   const [actionNotice, setActionNotice] = useState('');
   const [retestOpen, setRetestOpen] = useState(false);
   const [retestNotice, setRetestNotice] = useState('');
+
+  useEffect(() => {
+    if (!submissionId || !session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+
+    let mounted = true;
+    setLoadingReport(true);
+    setReportError('');
+
+    getDeveloperSubmittedReports(session.userId)
+      .then((reports) => {
+        if (!mounted) return;
+        const found = reports.find((report) => report.id === submissionId) || null;
+        setRealReport(found);
+        if (!found) setReportError('This report was not found for your developer workspace.');
+      })
+      .catch((error: Error) => {
+        if (mounted) setReportError(error.message || 'Could not load this report right now.');
+      })
+      .finally(() => {
+        if (mounted) setLoadingReport(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.roles, session?.source, session?.userId, submissionId]);
 
   const scores: SquashScoreBreakdown = {
     usability: 84,
@@ -37,7 +83,49 @@ export default function SquashReportDetailsPage() {
     bugSeverity: 86,
     deviceCompatibility: 82,
   };
-  const overallScore = getOverallScore(scores);
+  const displayScores: SquashScoreBreakdown = realReport?.scores || scores;
+  const displayOverallScore = getOverallScore(displayScores);
+  const displayTitle = realReport ? `${realReport.jobTitle} - Submitted Report` : 'FitTrack Mobile - Usability Test';
+  const displayTester = realReport?.testerName || 'Sipho N.';
+  const displaySubmitted = realReport ? formatDateTime(realReport.submittedAt || realReport.createdAt) : '26 May 2024, 10:45 AM';
+  const displaySummary = realReport?.summary || 'The app crashes every time I try to add a new workout with more than 5 exercises.';
+  const displaySeverity = realReport?.criticalBugCount ? 'Critical' : realReport?.bugCount ? 'Medium' : 'Low';
+  const displayTestType = realReport?.jobCategory ? realReport.jobCategory.replace(/-/g, ' ') : 'Usability Test';
+  const displayPlatform = realReport?.jobPlatform || 'Samsung Galaxy S23 - Android 14';
+  const displayAttachments = realReport
+    ? [
+        {
+          name: `${realReport.bugCount || 1}_bug_report_evidence.txt`,
+          meta: `${realReport.bugCount} bug report${realReport.bugCount === 1 ? '' : 's'}`,
+          accent: 'bg-red-50 text-red-500',
+          icon: 'BUG',
+        },
+        ...(realReport.videoBugCount > 0
+          ? [
+              {
+                name: 'Screen_Recording_from_tester.mp4',
+                meta: `MP4 - ${realReport.videoBugCount} video report${realReport.videoBugCount === 1 ? '' : 's'}`,
+                accent: 'bg-violet-50 text-violet-500',
+                icon: 'VID',
+              },
+            ]
+          : []),
+      ]
+    : [
+        {
+          name: 'Screenshot_2024-05-26_10-42.png',
+          meta: 'PNG - 1.2 MB',
+          accent: 'bg-red-50 text-red-500',
+          icon: 'IMG',
+        },
+        {
+          name: 'Screen_Recording_2024-05-26.mp4',
+          meta: 'MP4 - 12.4 MB',
+          accent: 'bg-violet-50 text-violet-500',
+          icon: 'VID',
+        },
+      ];
+
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
@@ -60,21 +148,6 @@ export default function SquashReportDetailsPage() {
     'Add more than 5 exercises.',
     'Tap "Save Workout".',
     'App crashes and returns to home screen.',
-  ];
-
-  const attachments = [
-    {
-      name: 'Screenshot_2024-05-26_10-42.png',
-      meta: 'PNG - 1.2 MB',
-      accent: 'bg-red-50 text-red-500',
-      icon: 'IMG',
-    },
-    {
-      name: 'Screen_Recording_2024-05-26.mp4',
-      meta: 'MP4 - 12.4 MB',
-      accent: 'bg-violet-50 text-violet-500',
-      icon: 'VID',
-    },
   ];
 
   const activity = [
@@ -232,7 +305,7 @@ export default function SquashReportDetailsPage() {
                       <UserCircle2 className="h-7 w-7" />
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">Alex Developer</div>
+                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
                   </a>
@@ -263,7 +336,7 @@ export default function SquashReportDetailsPage() {
 
                 <div className="flex flex-wrap items-center gap-3">
                   <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                    FitTrack Mobile - Usability Test
+                    {displayTitle}
                   </h1>
                   <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
                     Critical
@@ -272,10 +345,10 @@ export default function SquashReportDetailsPage() {
 
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
                   <span>
-                    Reported by <span className="font-semibold text-slate-700">Sipho N.</span>
+                    Reported by <span className="font-semibold text-slate-700">{displayTester}</span>
                   </span>
                   <span>-</span>
-                  <span>26 May 2024, 10:45 AM</span>
+                  <span>{displaySubmitted}</span>
                   <TesterBadge testsCompleted={32} rating={4.7} />
                 </div>
               </div>
@@ -289,6 +362,17 @@ export default function SquashReportDetailsPage() {
                 </a>
               </div>
             </div>
+
+            {loadingReport ? (
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500">
+                Loading real report details...
+              </div>
+            ) : null}
+            {reportError ? (
+              <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                {reportError} Showing a sample report for now.
+              </div>
+            ) : null}
 
             <div className="mt-8 flex flex-wrap gap-6 border-b border-slate-200">
               {tabs.map((tab) => (
@@ -309,15 +393,15 @@ export default function SquashReportDetailsPage() {
             <div className="mt-8 grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
               <div className="space-y-6">
                 <section className="space-y-4">
-                  <SquashScore scores={scores} />
-                  <SquashCertified score={overallScore} testers={24} certifiedAt="2025-09-20" />
+                  <SquashScore scores={displayScores} />
+                  <SquashCertified score={displayOverallScore} testers={realReport?.testerTestsCompleted || 24} certifiedAt="2025-09-20" />
 
                   <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="text-lg font-bold text-slate-900">Share your Squash Score</div>
                     <div className="mt-3 flex flex-wrap gap-3">
                       <a
                         href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(
-                          `Our app scored ${overallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
+                          `Our app scored ${displayOverallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -327,7 +411,7 @@ export default function SquashReportDetailsPage() {
                       </a>
                       <a
                         href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          `Our app scored ${overallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
+                          `Our app scored ${displayOverallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -365,7 +449,7 @@ export default function SquashReportDetailsPage() {
                     <div>
                       <div className="text-sm font-semibold text-slate-500">Severity</div>
                       <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600">
-                        <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Critical
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> {displaySeverity}
                       </div>
                     </div>
                     <div>
@@ -410,8 +494,7 @@ export default function SquashReportDetailsPage() {
                     <div>
                       <div className="text-sm font-semibold text-slate-500">Device &amp; OS</div>
                       <div className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                        <Smartphone className="h-4 w-4 text-slate-400" /> Samsung Galaxy S23 -
-                        Android 14
+                        <Smartphone className="h-4 w-4 text-slate-400" /> {displayPlatform}
                       </div>
                     </div>
                     <div>
@@ -434,8 +517,7 @@ export default function SquashReportDetailsPage() {
                   <div className="mt-6">
                     <div className="text-sm font-semibold text-slate-500">Summary</div>
                     <p className="mt-3 text-base leading-7 text-slate-700">
-                      The app crashes every time I try to add a new workout with more than 5
-                      exercises.
+                      {displaySummary}
                     </p>
                   </div>
                 </section>
@@ -489,16 +571,16 @@ export default function SquashReportDetailsPage() {
                     <div className="flex items-center justify-between gap-3 text-slate-600">
                       <span>Job</span>
                       <span className="text-right font-semibold text-slate-900">
-                        FitTrack Mobile - Usability Test
+                        {displayTitle}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3 text-slate-600">
                       <span>Test Type</span>
-                      <span className="font-semibold text-slate-900">Usability Test</span>
+                      <span className="font-semibold text-slate-900 capitalize">{displayTestType}</span>
                     </div>
                     <div className="flex items-center justify-between gap-3 text-slate-600">
                       <span>Tester</span>
-                      <span className="font-semibold text-green-700">Sipho N.</span>
+                      <span className="font-semibold text-green-700">{displayTester}</span>
                     </div>
                   </div>
 
@@ -511,19 +593,19 @@ export default function SquashReportDetailsPage() {
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Submitted</span>
-                      <span className="font-semibold text-slate-900">26 May 2024, 10:45 AM</span>
+                      <span className="font-semibold text-slate-900">{displaySubmitted}</span>
                     </div>
                   </div>
                 </section>
 
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-slate-900">Attachments (2)</h2>
+                    <h2 className="text-2xl font-bold text-slate-900">Attachments ({displayAttachments.length})</h2>
                     <a href="/report-details/attachments" className="text-sm font-semibold text-green-700">View all</a>
                   </div>
 
                   <div className="mt-5 space-y-4">
-                    {attachments.map((file) => (
+                    {displayAttachments.map((file) => (
                       <div key={file.name} className="rounded-2xl border border-slate-100 p-3 hover:bg-slate-50">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
@@ -592,7 +674,12 @@ export default function SquashReportDetailsPage() {
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => setActionNotice('More information requested from tester.')}
+                    onClick={async () => {
+                      if (realReport) {
+                        await reviewSubmittedReport({ submissionId: realReport.id, assignmentId: realReport.assignmentId, status: 'changes_requested' });
+                      }
+                      setActionNotice('More information requested from tester.');
+                    }}
                     className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     Request More Info
@@ -606,9 +693,12 @@ export default function SquashReportDetailsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      if (realReport) {
+                        await reviewSubmittedReport({ submissionId: realReport.id, assignmentId: realReport.assignmentId, status: 'approved' });
+                      }
                       setStatus('Resolved');
-                      setActionNotice('Report marked as resolved.');
+                      setActionNotice('Report marked as resolved and approved.');
                     }}
                     className="inline-flex items-center gap-2 rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
                   >
@@ -625,10 +715,11 @@ export default function SquashReportDetailsPage() {
         open={retestOpen}
         onClose={() => setRetestOpen(false)}
         plan="Growth"
-        originalScore={68}
+        originalScore={displayOverallScore}
         initialUrl="https://staging.fittrack.app"
         onSubmit={handleRetestSubmit}
       />
     </div>
   );
 }
+

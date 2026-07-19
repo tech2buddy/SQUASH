@@ -9,6 +9,7 @@ import {
   Star,
   type LucideIcon,
 } from 'lucide-react';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
 
@@ -305,6 +306,7 @@ export default function SquashForTestersPage() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   );
 }

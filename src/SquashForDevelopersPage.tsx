@@ -10,6 +10,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import FeaturedTesterCard from './components/FeaturedTesterCard';
 import { TEST_CATEGORIES } from './components/testCategories';
@@ -335,7 +336,7 @@ export default function SquashForDevelopersPage() {
                     <Icon className="h-3.5 w-3.5" style={{ color: category.color }} />
                     {category.name}
                     {category.saExclusive ? (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA</span>
                     ) : null}
                   </span>
                 );
@@ -380,6 +381,7 @@ export default function SquashForDevelopersPage() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 
 export default function SquashLiveSessionPage() {
@@ -15,7 +16,7 @@ export default function SquashLiveSessionPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Book a Live Test Session</h1>
           <p className="mt-2 text-slate-600">
-            1 tester · 60 minute session · Screen share included · R2,000
+            1 tester - 60 minute session - Screen share included - R2,000
           </p>
 
           <form
@@ -78,6 +79,7 @@ export default function SquashLiveSessionPage() {
           {notice ? <p className="mt-4 text-sm font-semibold text-green-700">{notice}</p> : null}
         </div>
       </main>
+      <PublicFooter />
     </div>
   );
 }

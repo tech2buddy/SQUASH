@@ -1,6 +1,7 @@
 import { CheckCircle2, Copy, Share2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import SquashCertified from './components/SquashCertified';
 import SquashScore, { type SquashScoreBreakdown } from './components/SquashScore';
@@ -80,7 +81,7 @@ export default function SquashCertificatePage() {
               </div>
             </div>
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
-              Verified by SQUASH — South Africa&apos;s #1 App Testing Platform
+              Verified by SQUASH - South Africa&apos;s #1 App Testing Platform
             </div>
           </div>
 
@@ -146,6 +147,7 @@ export default function SquashCertificatePage() {
           ) : null}
         </div>
       </main>
+      <PublicFooter />
     </div>
   );
 }

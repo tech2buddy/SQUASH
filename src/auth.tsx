@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 
-export type UserRole = 'developer' | 'tester';
-type SupabaseProfileRole = UserRole | 'admin';
+export type UserRole = 'developer' | 'tester' | 'admin';
+export type WorkspaceRole = Exclude<UserRole, 'admin'>;
+type SupabaseProfileRole = UserRole;
 
 type AuthSession = {
   role: UserRole;
+  roles: UserRole[];
   email: string;
   name: string;
   isAuthenticated: true;
@@ -13,11 +15,6 @@ type AuthSession = {
   source: 'supabase' | 'demo';
 };
 
-type DemoLoginPayload = {
-  role: UserRole;
-  email: string;
-  name: string;
-};
 
 type AuthResult = {
   session: AuthSession | null;
@@ -27,10 +24,12 @@ type AuthResult = {
 type AuthContextValue = {
   session: AuthSession | null;
   loading: boolean;
-  loginDemo: (payload: DemoLoginPayload) => void;
   signIn: (payload: { email: string; password: string }) => Promise<AuthResult>;
-  signUp: (payload: { role: UserRole; email: string; password: string; name: string }) => Promise<AuthResult>;
-  signInWithOAuth: (payload: { provider: 'google' | 'github'; role: UserRole }) => Promise<void>;
+  signUp: (payload: { role: WorkspaceRole; email: string; password: string; name: string }) => Promise<AuthResult>;
+  signInWithOAuth: (payload: { provider: 'google' | 'github'; role: WorkspaceRole }) => Promise<void>;
+  refreshSessionProfile: () => Promise<AuthSession | null>;
+  activateRole: (role: UserRole) => Promise<AuthSession | null>;
+  addRole: (role: WorkspaceRole) => Promise<AuthSession | null>;
   logout: () => Promise<void>;
 };
 
@@ -45,18 +44,6 @@ type ProfileRow = {
   email: string;
 };
 
-function readStoredDemoSession(): AuthSession | null {
-  try {
-    const raw = window.localStorage.getItem(DEMO_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as AuthSession;
-    if (!parsed?.role || !parsed?.email || !parsed?.name || !parsed?.isAuthenticated) return null;
-    if (parsed.role !== 'developer' && parsed.role !== 'tester') return null;
-    return { ...parsed, source: 'demo' };
-  } catch {
-    return null;
-  }
-}
 
 function persistDemoSession(session: AuthSession | null) {
   try {
@@ -70,6 +57,28 @@ function persistDemoSession(session: AuthSession | null) {
   }
 }
 
+function normalizeRoles(roles: UserRole[]): UserRole[] {
+  return Array.from(new Set(roles)).filter(
+    (role): role is UserRole => role === 'developer' || role === 'tester' || role === 'admin',
+  );
+}
+
+async function readAccountRoles(userId: string, fallbackRole: UserRole): Promise<UserRole[]> {
+  const roles: UserRole[] = fallbackRole === 'admin' ? ['admin'] : [];
+
+  const [{ data: developerProfile, error: developerError }, { data: testerProfile, error: testerError }] = await Promise.all([
+    supabase.from('developer_profiles').select('user_id').eq('user_id', userId).maybeSingle(),
+    supabase.from('tester_profiles').select('user_id').eq('user_id', userId).maybeSingle(),
+  ]);
+
+  if (developerError) throw developerError;
+  if (testerError) throw testerError;
+  if (developerProfile) roles.push('developer');
+  if (testerProfile) roles.push('tester');
+
+  return normalizeRoles(roles.length > 0 ? roles : [fallbackRole]);
+}
+
 async function readProfileSession(userId: string, fallbackEmail: string): Promise<AuthSession | null> {
   const { data, error } = await supabase
     .from('profiles')
@@ -81,12 +90,13 @@ async function readProfileSession(userId: string, fallbackEmail: string): Promis
   if (!data) return null;
 
   const profile = data as ProfileRow;
-  if (profile.role === 'admin') {
-    throw new Error('Admin dashboard access is not enabled yet.');
-  }
+  const fallbackRole: UserRole = profile.role === 'admin' ? 'admin' : profile.role === 'developer' ? 'developer' : 'tester';
+  const roles = await readAccountRoles(profile.id, fallbackRole);
+  const activeRole = roles.includes(fallbackRole) ? fallbackRole : roles[0];
 
   return {
-    role: profile.role,
+    role: activeRole,
+    roles,
     email: profile.email || fallbackEmail,
     name: profile.full_name,
     userId: profile.id,
@@ -96,10 +106,17 @@ async function readProfileSession(userId: string, fallbackEmail: string): Promis
 }
 
 export function roleHomePath(role: UserRole): string {
+  if (role === 'admin') return '/admin';
   return role === 'developer' ? '/dashboard' : '/tester/dashboard';
 }
 
+export function defaultSessionPath(session: AuthSession): string {
+  if (session.role === 'admin') return '/admin';
+  return roleHomePath(session.role);
+}
+
 export function routeRole(pathname: string): UserRole | 'public' {
+  const adminRoutes = new Set(['/admin']);
   const developerRoutes = new Set([
     '/dashboard',
     '/post-job',
@@ -121,6 +138,7 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/tester/submissions',
     '/tester/settings',
   ]);
+  if (adminRoutes.has(pathname)) return 'admin';
   if (developerRoutes.has(pathname)) return 'developer';
   if (testerRoutes.has(pathname)) return 'tester';
   return 'public';
@@ -130,15 +148,19 @@ export function isSafeInternalPath(path: string): boolean {
   return path.startsWith('/') && !path.startsWith('//');
 }
 
-export function resolvePostLoginPath(role: UserRole, nextPath: string | null): string {
-  if (!nextPath || !isSafeInternalPath(nextPath)) return roleHomePath(role);
+export function resolvePostLoginPath(sessionOrRole: AuthSession | UserRole, nextPath: string | null): string {
+  const session = typeof sessionOrRole === 'string' ? null : sessionOrRole;
+  const roles = session ? session.roles : [sessionOrRole as UserRole];
+  const fallbackPath = session ? defaultSessionPath(session) : roleHomePath(sessionOrRole as UserRole);
+
+  if (!nextPath || !isSafeInternalPath(nextPath)) return fallbackPath;
   const targetRole = routeRole(nextPath);
-  if (targetRole === 'public' || targetRole === role) return nextPath;
-  return roleHomePath(role);
+  if (targetRole === 'public' || roles.includes(targetRole)) return nextPath;
+  return fallbackPath;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(() => readStoredDemoSession());
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
@@ -176,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, authSession) => {
       if (!mounted) return;
       if (!authSession?.user) {
-        setSession(readStoredDemoSession());
+        setSession(null);
         setLoading(false);
         return;
       }
@@ -203,17 +225,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       session,
       loading,
-      loginDemo: (payload) => {
-        const nextSession: AuthSession = {
-          role: payload.role,
-          email: payload.email,
-          name: payload.name,
-          isAuthenticated: true,
-          source: 'demo',
-        };
-        setSession(nextSession);
-        persistDemoSession(nextSession);
-      },
       signIn: async ({ email, password }) => {
         if (!isSupabaseConfigured) {
           throw new Error('Supabase is not configured yet.');
@@ -281,6 +292,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) throw error;
       },
+      refreshSessionProfile: async () => {
+        if (!isSupabaseConfigured) return session;
+
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (!data.user) return null;
+
+        const profileSession = await readProfileSession(data.user.id, data.user.email ?? session?.email ?? '');
+        if (profileSession) {
+          persistDemoSession(null);
+          setSession(profileSession);
+        }
+        return profileSession;
+      },
+      activateRole: async (role) => {
+        if (!session || !session.roles.includes(role)) return session;
+
+        const nextSession: AuthSession = { ...session, role };
+        setSession(nextSession);
+
+
+        if (isSupabaseConfigured && session.userId) {
+          const { error } = await supabase.from('profiles').update({ role }).eq('id', session.userId);
+          if (error) throw error;
+        }
+
+        return nextSession;
+      },
+      addRole: async (role) => {
+        if (!session?.userId || session.source !== 'supabase') {
+          throw new Error('Please log in with a real account before adding another workspace.');
+        }
+
+        if (role === 'developer') {
+          const { error } = await supabase.from('developer_profiles').upsert({
+            user_id: session.userId,
+            company_name: session.name,
+            billing_email: session.email,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('tester_profiles').upsert({ user_id: session.userId });
+          if (error) throw error;
+        }
+
+        const roles = normalizeRoles([...session.roles, role]);
+        const nextSession: AuthSession = { ...session, role, roles };
+        const { error: profileError } = await supabase.from('profiles').update({ role }).eq('id', session.userId);
+        if (profileError) throw profileError;
+        setSession(nextSession);
+        return nextSession;
+      },
       logout: async () => {
         persistDemoSession(null);
         if (isSupabaseConfigured) {
@@ -302,3 +365,6 @@ export function useAuth() {
   }
   return ctx;
 }
+
+
+

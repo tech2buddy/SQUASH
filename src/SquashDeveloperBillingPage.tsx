@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
+import { useAuth } from './auth';
 import type { LucideIcon } from 'lucide-react';
 
 type SummaryCard = {
@@ -171,6 +172,8 @@ function statusClasses(status: HistoryItem['status']) {
 }
 
 export default function SquashDeveloperBillingPage() {
+  const { session } = useAuth();
+  const developerName = session?.name || 'Dev Studio';
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
     { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
@@ -274,7 +277,7 @@ export default function SquashDeveloperBillingPage() {
                     D
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">Dev Studio</div>
+                    <div className="text-sm font-bold text-slate-900">{developerName}</div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </a>
@@ -662,3 +665,4 @@ export default function SquashDeveloperBillingPage() {
     </div>
   );
 }
+

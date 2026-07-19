@@ -93,7 +93,15 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.current_user_role() = 'developer'::public.user_role;
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid()
+      and p.role = 'developer'::public.user_role
+  )
+  or exists (
+    select 1 from public.developer_profiles dp
+    where dp.user_id = auth.uid()
+  );
 $$;
 
 create or replace function public.is_tester()
@@ -103,9 +111,16 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.current_user_role() = 'tester'::public.user_role;
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid()
+      and p.role = 'tester'::public.user_role
+  )
+  or exists (
+    select 1 from public.tester_profiles tp
+    where tp.user_id = auth.uid()
+  );
 $$;
-
 create table public.developer_profiles (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   company_name text,
@@ -150,6 +165,7 @@ create table public.jobs (
   developer_id uuid not null references public.developer_profiles(user_id) on delete cascade,
   title text not null,
   app_url text,
+  logo_url text,
   platform text not null,
   category text not null,
   package_key text not null check (package_key in ('starter', 'growth', 'pro', 'enterprise')),
@@ -326,6 +342,18 @@ alter table public.notifications enable row level security;
 create policy "profiles_select_own_or_admin" on public.profiles
 for select using (id = auth.uid() or public.is_admin());
 
+create policy "profiles_select_developer_applicants" on public.profiles
+for select using (
+  public.is_developer()
+  and exists (
+    select 1
+    from public.job_applications ja
+    join public.jobs j on j.id = ja.job_id
+    where ja.tester_id = profiles.id
+      and j.developer_id = auth.uid()
+  )
+);
+
 create policy "profiles_insert_own" on public.profiles
 for insert with check (id = auth.uid());
 
@@ -337,6 +365,18 @@ for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = 
 
 create policy "tester_profiles_public_or_own_or_admin" on public.tester_profiles
 for select using (is_public = true or user_id = auth.uid() or public.is_admin());
+
+create policy "tester_profiles_select_developer_applicants" on public.tester_profiles
+for select using (
+  public.is_developer()
+  and exists (
+    select 1
+    from public.job_applications ja
+    join public.jobs j on j.id = ja.job_id
+    where ja.tester_id = tester_profiles.user_id
+      and j.developer_id = auth.uid()
+  )
+);
 
 create policy "tester_profiles_insert_own" on public.tester_profiles
 for insert with check (user_id = auth.uid());
@@ -350,6 +390,18 @@ for select using (
   or public.is_admin()
   or exists (
     select 1 from public.tester_profiles tp where tp.user_id = tester_id and tp.is_public = true
+  )
+);
+
+create policy "tester_specializations_select_developer_applicants" on public.tester_specializations
+for select using (
+  public.is_developer()
+  and exists (
+    select 1
+    from public.job_applications ja
+    join public.jobs j on j.id = ja.job_id
+    where ja.tester_id = tester_specializations.tester_id
+      and j.developer_id = auth.uid()
   )
 );
 
@@ -479,5 +531,10 @@ for update using (user_id = auth.uid() or public.is_admin()) with check (user_id
 
 create policy "notifications_admin_insert" on public.notifications
 for insert with check (public.is_admin());
+
+
+
+
+
 
 

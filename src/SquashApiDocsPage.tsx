@@ -1,4 +1,5 @@
-import { CheckCircle2, GitBranch, Mail, Rocket, ShieldCheck } from 'lucide-react';
+﻿import { CheckCircle2, GitBranch, Mail, Rocket, ShieldCheck } from 'lucide-react';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 
 export default function SquashApiDocsPage() {
@@ -22,10 +23,10 @@ export default function SquashApiDocsPage() {
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="inline-flex rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
-            R800/month · API access
+            R800/month - API access
           </div>
           <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">
-            Squash API — Automate Your Testing
+            Squash API - Automate Your Testing
           </h1>
           <p className="mt-3 max-w-3xl text-lg text-slate-600">
             Trigger tests automatically every time you ship. Get reports without lifting a finger.
@@ -79,12 +80,12 @@ await squash.triggerTest({
           </div>
 
           <div className="rounded-3xl border border-green-200 bg-green-50 p-6 shadow-sm">
-            <div className="text-2xl font-black text-slate-900">R800/month — API Access</div>
+            <div className="text-2xl font-black text-slate-900">R800/month - API Access</div>
             <ul className="mt-4 space-y-2 text-sm text-slate-700">
-              <li>• Unlimited test triggers</li>
-              <li>• 5 job templates</li>
-              <li>• Email reports</li>
-              <li>• Webhook notifications</li>
+              <li>- Unlimited test triggers</li>
+              <li>- 5 job templates</li>
+              <li>- Email reports</li>
+              <li>- Webhook notifications</li>
             </ul>
             <a
               href="/contact?intent=api-access"
@@ -95,7 +96,7 @@ await squash.triggerTest({
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   );
 }
-

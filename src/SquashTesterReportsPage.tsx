@@ -19,13 +19,61 @@ import {
   UserCircle2,
   Video,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
+import { getTesterReportSubmissions, type TesterReportSubmission } from './lib/jobApi';
 
-type ReportStatus = 'Pending Review' | 'Approved' | 'Changes Requested' | 'Under Review';
+type ReportStatus = 'Pending Review' | 'Approved' | 'Changes Requested' | 'Under Review' | 'Rejected';
+
+
+function formatRands(value: number) {
+  return `R${Math.round(value).toLocaleString('en-ZA')}`;
+}
+
+function formatDate(value: string | null) {
+  if (!value) return 'Not submitted yet';
+  return new Intl.DateTimeFormat('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
+}
+
+function toReportStatus(status: TesterReportSubmission['status']): ReportStatus {
+  if (status === 'approved') return 'Approved';
+  if (status === 'changes_requested') return 'Changes Requested';
+  if (status === 'rejected') return 'Rejected';
+  if (status === 'draft') return 'Under Review';
+  return 'Pending Review';
+}
+
+const emptyReports: TesterReportSubmission[] = [];
 
 export default function SquashTesterReportsPage() {
   const { session } = useAuth();
   const testerName = session?.name || 'Thando M.';
+  const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
+  const [reportsError, setReportsError] = useState('');
+  const [loadingReports, setLoadingReports] = useState(false);
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    setLoadingReports(true);
+    setReportsError('');
+
+    getTesterReportSubmissions(session.userId)
+      .then((items) => {
+        if (mounted) setRealReports(items);
+      })
+      .catch((error: Error) => {
+        if (mounted) setReportsError(error.message || 'Could not load your reports right now.');
+      })
+      .finally(() => {
+        if (mounted) setLoadingReports(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.source, session?.userId]);
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -37,14 +85,14 @@ export default function SquashTesterReportsPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const summaryCards = [
+  const demoSummaryCards = [
     { title: 'Submitted', value: '36', note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
     { title: 'Approved', value: '22', note: 'Payment released', icon: BadgeCheck, color: 'text-emerald-700', bg: 'bg-emerald-50' },
     { title: 'Pending', value: '8', note: 'Awaiting review', icon: Clock3, color: 'text-amber-700', bg: 'bg-amber-50' },
     { title: 'Changes', value: '3', note: 'Need attention', icon: AlertCircle, color: 'text-sky-700', bg: 'bg-sky-50' },
   ];
 
-  const reports: Array<{
+  const demoReports: Array<{
     title: string;
     id: string;
     app: string;
@@ -96,7 +144,7 @@ export default function SquashTesterReportsPage() {
     },
   ];
 
-  const requestedChanges = [
+  const demoRequestedChanges = [
     {
       title: 'Profile & Settings',
       app: 'FitTrack Mobile App',
@@ -111,10 +159,71 @@ export default function SquashTesterReportsPage() {
     },
   ];
 
+  const isRealAccount = session?.source === 'supabase';
+  const reports = useMemo(
+    () =>
+      isRealAccount
+        ? realReports.map((report, index) => ({
+            title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
+            id: `Report #${String(index + 1).padStart(4, '0')}`,
+            app: report.jobTitle,
+            platform: report.jobPlatform,
+            submitted: formatDate(report.submittedAt || report.createdAt),
+            status: toReportStatus(report.status),
+            earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : formatRands(report.amountZar),
+            hasVideo: report.videoBugCount > 0,
+            bugCount: report.bugCount,
+          }))
+        : demoReports.map((report) => ({ ...report, bugCount: report.hasVideo ? 2 : 1 })),
+    [demoReports, isRealAccount, realReports],
+  );
+
+  const summaryCards = isRealAccount
+    ? [
+        { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
+        {
+          title: 'Approved',
+          value: String(realReports.filter((report) => report.status === 'approved').length),
+          note: 'Payment released',
+          icon: BadgeCheck,
+          color: 'text-emerald-700',
+          bg: 'bg-emerald-50',
+        },
+        {
+          title: 'Pending',
+          value: String(realReports.filter((report) => report.status === 'submitted' || report.status === 'draft').length),
+          note: 'Awaiting review',
+          icon: Clock3,
+          color: 'text-amber-700',
+          bg: 'bg-amber-50',
+        },
+        {
+          title: 'Changes',
+          value: String(realReports.filter((report) => report.status === 'changes_requested').length),
+          note: 'Need attention',
+          icon: AlertCircle,
+          color: 'text-sky-700',
+          bg: 'bg-sky-50',
+        },
+      ]
+    : demoSummaryCards;
+
+  const requestedChanges = isRealAccount
+    ? realReports
+        .filter((report) => report.status === 'changes_requested')
+        .map((report) => ({
+          title: report.summary?.split('.')[0]?.slice(0, 36) || 'Report needs updates',
+          app: report.jobTitle,
+          comment: 'Developer requested more detail. Add clearer steps, evidence, or a short video before resubmitting.',
+          due: 'Action needed',
+        }))
+    : demoRequestedChanges;
+
   const statusClass = (status: ReportStatus) => {
     if (status === 'Approved') return 'bg-green-50 text-green-700 border-green-200';
     if (status === 'Pending Review') return 'bg-amber-50 text-amber-700 border-amber-200';
     if (status === 'Changes Requested') return 'bg-sky-50 text-sky-700 border-sky-200';
+    if (status === 'Rejected') return 'bg-red-50 text-red-600 border-red-200';
     return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
@@ -277,6 +386,27 @@ export default function SquashTesterReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {loadingReports ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-sm font-semibold text-slate-500">
+                            Loading your real submissions...
+                          </td>
+                        </tr>
+                      ) : null}
+                      {reportsError ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-sm font-semibold text-red-600">
+                            {reportsError}
+                          </td>
+                        </tr>
+                      ) : null}
+                      {!loadingReports && !reportsError && reports.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-sm leading-6 text-slate-600">
+                            You have not submitted any reports yet. Once you complete an accepted test, your submission history will appear here.
+                          </td>
+                        </tr>
+                      ) : null}
                       {reports.map((report) => (
                         <tr key={report.id} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-6 py-5">
@@ -291,7 +421,7 @@ export default function SquashTesterReportsPage() {
                             <div className="flex flex-wrap gap-2">
                               <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
                                 <Camera className="h-3.5 w-3.5" />
-                                Screenshot
+                                {report.bugCount > 0 ? `${report.bugCount} bugs` : 'Report'}
                               </span>
                               {report.hasVideo ? (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-100">
@@ -341,6 +471,11 @@ export default function SquashTesterReportsPage() {
                         </a>
                       </div>
                     ))}
+                    {requestedChanges.length === 0 ? (
+                      <div className="rounded-2xl border border-sky-100 bg-white p-4 text-sm leading-6 text-slate-600">
+                        Nothing needs changes right now. Clean slate, exactly what we like to see.
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

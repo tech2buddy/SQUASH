@@ -1,58 +1,26 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { resolvePostLoginPath, useAuth, type UserRole } from './auth';
+import { resolvePostLoginPath, routeRole, useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
 
-const DEMO_ACCOUNTS = {
-  developer: {
-    role: 'developer' as const,
-    name: 'Alex Developer',
-    email: 'dev@squash.demo',
-    password: 'DevDemo123!',
-  },
-  tester: {
-    role: 'tester' as const,
-    name: 'Thando M.',
-    email: 'tester@squash.demo',
-    password: 'TesterDemo123!',
-  },
-};
 
 export default function SquashLoginPage() {
   const [searchParams] = useSearchParams();
   const requestedRole = searchParams.get('role');
-  const initialRole: UserRole = requestedRole === 'tester' ? 'tester' : 'developer';
-  const [role, setRole] = useState<UserRole>(initialRole);
+  const initialRole: WorkspaceRole = requestedRole === 'tester' ? 'tester' : 'developer';
+  const [role, setRole] = useState<WorkspaceRole>(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { loginDemo, signIn, signInWithOAuth } = useAuth();
+  const { signIn, signInWithOAuth, activateRole, logout } = useAuth();
   const navigate = useNavigate();
 
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
 
-  const loginWithPayload = (payload: { role: UserRole; email: string; name: string }) => {
-    loginDemo(payload);
-    navigate(resolvePostLoginPath(payload.role, nextPath), { replace: true });
-  };
-
-  const useDemoAccount = (roleToUse: UserRole) => {
-    const demo = DEMO_ACCOUNTS[roleToUse];
-    setRole(demo.role);
-    setEmail(demo.email);
-    setPassword(demo.password);
-    setError('');
-  };
-
-  const quickDemoLogin = (roleToUse: UserRole) => {
-    const demo = DEMO_ACCOUNTS[roleToUse];
-    setError('');
-    loginWithPayload({ role: demo.role, email: demo.email, name: demo.name });
-  };
 
   const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,23 +29,6 @@ export default function SquashLoginPage() {
       return;
     }
 
-    const matchedDemo =
-      email.trim().toLowerCase() === DEMO_ACCOUNTS.developer.email
-        ? DEMO_ACCOUNTS.developer
-        : email.trim().toLowerCase() === DEMO_ACCOUNTS.tester.email
-          ? DEMO_ACCOUNTS.tester
-          : null;
-
-    if (matchedDemo) {
-      if (password !== matchedDemo.password) {
-        setError('Demo password is incorrect. Use the demo credentials below.');
-        return;
-      }
-      setError('');
-      setNotice('');
-      loginWithPayload({ role: matchedDemo.role, email: matchedDemo.email, name: matchedDemo.name });
-      return;
-    }
 
     setSubmitting(true);
     setError('');
@@ -89,7 +40,22 @@ export default function SquashLoginPage() {
         setError('We could not load your SQUASH profile. Please contact support.');
         return;
       }
-      navigate(resolvePostLoginPath(activeSession.role, nextPath), { replace: true });
+      if (activeSession.roles.includes('admin') && routeRole(nextPath || '') === 'admin') {
+        await activateRole('admin');
+        navigate('/admin', { replace: true });
+        return;
+      }
+      if (!activeSession.roles.includes(role)) {
+        await logout();
+        const availableRoles = activeSession.roles.map((item) => (item === 'developer' ? 'Developer' : 'Tester')).join(' or ');
+        const selectedRole = role === 'developer' ? 'Developer' : 'Tester';
+        setError(
+          `This account does not have a ${selectedRole} workspace yet. Please choose ${availableRoles}, or add the ${selectedRole} workspace after logging in.`,
+        );
+        return;
+      }
+      const selectedSession = await activateRole(role);
+      navigate(resolvePostLoginPath(selectedSession || { ...activeSession, role }, nextPath), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to login right now.');
     } finally {
@@ -159,64 +125,18 @@ export default function SquashLoginPage() {
             </button>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4">
-            <div className="text-sm font-semibold text-green-800">Demo Accounts</div>
-            <div className="mt-2 space-y-2 text-xs text-slate-700">
-              <div>
-                <span className="font-semibold">Developer:</span> {DEMO_ACCOUNTS.developer.email} /{' '}
-                {DEMO_ACCOUNTS.developer.password}
-              </div>
-              <div>
-                <span className="font-semibold">Tester:</span> {DEMO_ACCOUNTS.tester.email} /{' '}
-                {DEMO_ACCOUNTS.tester.password}
-              </div>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => useDemoAccount('developer')}
-                className="rounded-xl border border-green-200 bg-white px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
-              >
-                Use Developer Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => useDemoAccount('tester')}
-                className="rounded-xl border border-green-200 bg-white px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
-              >
-                Use Tester Demo
-              </button>
-            </div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => quickDemoLogin('developer')}
-                className="rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-800"
-              >
-                Login as Developer
-              </button>
-              <button
-                type="button"
-                onClick={() => quickDemoLogin('tester')}
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900"
-              >
-                Login as Tester
-              </button>
-            </div>
-          </div>
-
-          <form className="mt-6 space-y-4" onSubmit={submitLogin}>
+          <form className="mt-6 space-y-4" onSubmit={submitLogin} autoComplete="off">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-700">Email</span>
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                 <Mail className="h-4 w-4 text-slate-400" />
                 <input
-                  type="email"
+                  type="email" name="squash_login_identifier"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  autoComplete="email"
+                  autoComplete="new-password"
                 />
               </div>
             </label>
@@ -226,12 +146,12 @@ export default function SquashLoginPage() {
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                 <Lock className="h-4 w-4 text-slate-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? 'text' : 'password'} name="squash_login_secret"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                 />
                 <button
                   className="text-slate-400 hover:text-slate-600"
@@ -296,3 +216,7 @@ export default function SquashLoginPage() {
     </div>
   );
 }
+
+
+
+

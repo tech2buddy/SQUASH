@@ -17,10 +17,16 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from './auth';
+import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 
 export default function SquashActiveTestScreen() {
+  const { session } = useAuth();
+  const testerName = session?.name || 'Thando M.';
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const assignmentId = searchParams.get('assignment');
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
     { label: 'Available Jobs', icon: ClipboardList, href: '/tester-jobs' },
@@ -31,7 +37,7 @@ export default function SquashActiveTestScreen() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const tasks = [
+  const fallbackTasks = [
     'Create an account / Sign up',
     'Set a daily step goal',
     'Navigate to the Stats page',
@@ -41,8 +47,13 @@ export default function SquashActiveTestScreen() {
   ];
 
   const bottomNav = ['Home', 'Stats', 'Progress', 'Profile'];
-  const [taskState, setTaskState] = useState(tasks.map((_, index) => index < 2));
+  const [assignment, setAssignment] = useState<TesterAssignment | null>(null);
+  const [assignmentError, setAssignmentError] = useState('');
+  const [loadingAssignment, setLoadingAssignment] = useState(false);
+  const [tasks, setTasks] = useState(fallbackTasks);
+  const [taskState, setTaskState] = useState(fallbackTasks.map((_, index) => index < 2));
   const [bugDescription, setBugDescription] = useState('');
+  const [reportSummary, setReportSummary] = useState('');
   const [severity, setSeverity] = useState('Medium');
   const [bugNotice, setBugNotice] = useState('');
   const [progressNotice, setProgressNotice] = useState('');
@@ -62,6 +73,63 @@ export default function SquashActiveTestScreen() {
     () => Math.round((completedTasks / taskState.length) * 100),
     [completedTasks, taskState.length],
   );
+
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    setLoadingAssignment(true);
+    setAssignmentError('');
+
+    const loadAssignment = assignmentId
+      ? getTesterAssignmentById(assignmentId, session.userId)
+      : getTesterPrimaryAssignment(session.userId);
+
+    loadAssignment
+      .then((item) => {
+        if (!mounted) return;
+        if (!item) {
+          setAssignmentError('No accepted test assignment found yet.');
+          return;
+        }
+
+        setAssignment(item);
+        const parsedTasks = (item.jobTasks || '')
+          .split(/[\r\n,]+/)
+          .map((task) => task.trim())
+          .filter(Boolean);
+        const nextTasks = parsedTasks.length > 0 ? parsedTasks : fallbackTasks;
+        setTasks(nextTasks);
+
+        const saved = window.localStorage.getItem(`squash_active_test_progress_${item.id}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved) as { taskState?: boolean[]; reportSummary?: string };
+            if (Array.isArray(parsed.taskState) && parsed.taskState.length === nextTasks.length) {
+              setTaskState(parsed.taskState);
+            } else {
+              setTaskState(nextTasks.map(() => false));
+            }
+            if (parsed.reportSummary) setReportSummary(parsed.reportSummary);
+            return;
+          } catch {
+            // Fall through to a fresh state.
+          }
+        }
+        setTaskState(nextTasks.map(() => false));
+      })
+      .catch((error: Error) => {
+        if (mounted) setAssignmentError(error.message || 'Could not load this accepted test.');
+      })
+      .finally(() => {
+        if (mounted) setLoadingAssignment(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [assignmentId, session?.source, session?.userId]);
 
   const toggleTask = (index: number, checked: boolean) => {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
@@ -198,7 +266,7 @@ export default function SquashActiveTestScreen() {
     }, 1000);
   };
 
-  const saveBugReport = () => {
+  const saveBugReport = async () => {
     if (!bugDescription.trim()) {
       setBugNotice('Please describe the issue before saving.');
       return;
@@ -220,35 +288,68 @@ export default function SquashActiveTestScreen() {
       videoDuration: recordedVideoDuration || undefined,
     });
     window.localStorage.setItem('squash_bug_reports', JSON.stringify(existingReports));
+
+    if (assignment && session?.userId && session.source === 'supabase') {
+      try {
+        await saveAssignmentBugReport({
+          assignmentId: assignment.id,
+          testerId: session.userId,
+          jobId: assignment.jobId,
+          description: bugDescription,
+          severity: severity as 'Low' | 'Medium' | 'High' | 'Critical',
+          videoDurationSeconds: recordedVideoDuration || null,
+        });
+      } catch (error) {
+        setBugNotice(error instanceof Error ? error.message : 'Bug saved locally, but not synced yet.');
+        return;
+      }
+    }
+
     setBugNotice(recordedVideoUrl ? 'Bug report with video saved.' : 'Bug report saved.');
     setBugDescription('');
   };
 
   const saveProgress = () => {
     window.localStorage.setItem(
-      'squash_active_test_progress',
+      `squash_active_test_progress_${assignment?.id || 'demo'}`,
       JSON.stringify({
         taskState,
+        reportSummary,
         updatedAt: new Date().toISOString(),
       }),
     );
     setProgressNotice('Progress saved.');
   };
 
-  const submitTest = () => {
+  const submitTest = async () => {
     if (completedTasks < taskState.length) {
       setProgressNotice(`Complete all tasks before submitting (${completedTasks}/${taskState.length}).`);
       return;
     }
-    window.localStorage.setItem(
-      'squash_active_test_submission',
-      JSON.stringify({
-        submittedAt: new Date().toISOString(),
-        completedTasks,
-      }),
-    );
+    if (assignment && session?.userId && session.source === 'supabase') {
+      try {
+        await submitAssignmentReport({
+          assignmentId: assignment.id,
+          testerId: session.userId,
+          jobId: assignment.jobId,
+          summary: reportSummary || `Completed ${completedTasks} of ${taskState.length} tasks.`,
+        });
+      } catch (error) {
+        setProgressNotice(error instanceof Error ? error.message : 'Could not submit this test right now.');
+        return;
+      }
+    } else {
+      window.localStorage.setItem(
+        'squash_active_test_submission',
+        JSON.stringify({
+          submittedAt: new Date().toISOString(),
+          completedTasks,
+        }),
+      );
+    }
+
     setProgressNotice('Test submitted successfully.');
-    navigate('/tester-jobs');
+    navigate('/tester/reports');
   };
 
   useEffect(
@@ -299,7 +400,7 @@ export default function SquashActiveTestScreen() {
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="text-lg font-bold text-slate-900">Active Test</div>
               <div className="mt-4 rounded-2xl bg-green-50 p-4">
-                <div className="text-sm font-semibold text-green-700">FitTrack Mobile</div>
+                <div className="text-sm font-semibold text-green-700">{assignment?.jobTitle || 'FitTrack Mobile'}</div>
                 <div className="mt-1 text-sm text-slate-600">
                   {completedTasks} / {taskState.length} tasks done
                 </div>
@@ -344,7 +445,7 @@ export default function SquashActiveTestScreen() {
                       <UserCircle2 className="h-7 w-7" />
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">Thando M.</div>
+                      <div className="text-sm font-bold text-slate-900">{testerName}</div>
                       <div className="text-xs text-slate-500">Tester</div>
                     </div>
                   </a>
@@ -366,9 +467,9 @@ export default function SquashActiveTestScreen() {
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-black tracking-tight text-slate-900">FitTrack Mobile</h1>
+                <h1 className="text-3xl font-black tracking-tight text-slate-900">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  Usability Test
+                  {assignment?.jobPlatform || 'Usability Test'}
                 </span>
               </div>
 
@@ -387,11 +488,11 @@ export default function SquashActiveTestScreen() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900">App Preview</h2>
-                    <p className="mt-1 text-slate-600">Live app view or simulated test environment.</p>
+                    <p className="mt-1 text-slate-600">{assignment?.jobDescription || 'Live app view or simulated test environment.'}</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => window.open('https://fittrack.app/download', '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(assignment?.jobAppUrl || 'https://fittrack.app/download', '_blank', 'noopener,noreferrer')}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     Open in New Tab
@@ -468,6 +569,8 @@ export default function SquashActiveTestScreen() {
                     <div>
                       <h2 className="text-2xl font-bold text-slate-900">Your Tasks</h2>
                       <p className="mt-1 text-slate-600">Complete each step before submitting your report.</p>
+                    {loadingAssignment ? <p className="mt-2 text-sm font-semibold text-slate-500">Loading accepted assignment...</p> : null}
+                    {assignmentError ? <p className="mt-2 text-sm font-semibold text-red-600">{assignmentError}</p> : null}
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
                       {completedTasks} / {taskState.length} Done
@@ -607,8 +710,18 @@ export default function SquashActiveTestScreen() {
                 <div className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Testing Notes</div>
                   <p className="mt-2 text-sm leading-6 text-slate-700">
-                    Test the signup, goals, stats, and workout flow carefully. Focus on confusing steps, broken interactions, and anything that feels slow.
+                    {assignment?.jobDescription || 'Test the signup, goals, stats, and workout flow carefully. Focus on confusing steps, broken interactions, and anything that feels slow.'}
                   </p>
+                  <label className="mt-5 block">
+                    <span className="mb-2 block text-sm font-semibold text-slate-700">Final report summary</span>
+                    <textarea
+                      rows={4}
+                      value={reportSummary}
+                      onChange={(e) => setReportSummary(e.target.value)}
+                      placeholder="Summarize what worked, what felt confusing, and any important notes for the developer..."
+                      className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
+                    />
+                  </label>
                 </div>
               </section>
             </div>

@@ -24,9 +24,12 @@ import SpecializationChecklist from './components/SpecializationChecklist';
 import TesterBadge from './components/TesterBadge';
 import { getSpecializationLabel, hasSaLanguageTag } from './components/testerSpecializations';
 import { useAuth } from './auth';
+import { getTesterProfile, getTesterSpecializations, replaceTesterSpecializations, type TesterPublicProfile } from './lib/profileApi';
 
 export default function SquashTesterProfilePage() {
   const { session } = useAuth();
+  const [profileDetails, setProfileDetails] = useState<TesterPublicProfile | null>(null);
+  const [profileError, setProfileError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
     if (!raw) return ['township-network', 'zulu', 'ecommerce', 'budget-android'];
@@ -42,10 +45,37 @@ export default function SquashTesterProfilePage() {
     window.localStorage.setItem('squash_tester_specializations', JSON.stringify(specializations));
   }, [specializations]);
 
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    setProfileError('');
+
+    Promise.all([getTesterProfile(session.userId), getTesterSpecializations(session.userId)])
+      .then(([profile, savedSpecializations]) => {
+        if (!mounted) return;
+        if (profile) setProfileDetails(profile);
+        if (savedSpecializations.length > 0) setSpecializations(savedSpecializations);
+      })
+      .catch((error: Error) => {
+        if (mounted) setProfileError(error.message || 'Could not load profile data right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.source, session?.userId]);
+
   const toggleSpecialization = (id: string, checked: boolean) => {
-    setSpecializations((prev) =>
-      checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
-    );
+    setSpecializations((prev) => {
+      const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
+      if (session?.userId && session.source === 'supabase') {
+        replaceTesterSpecializations(session.userId, next).catch((error: Error) => {
+          setProfileError(error.message || 'Could not save specialization changes right now.');
+        });
+      }
+      return next;
+    });
   };
 
   const topTags = useMemo(
@@ -63,11 +93,13 @@ export default function SquashTesterProfilePage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const testerName = session?.name || 'Thando M.';
-  const testerEmail = session?.email || 'tester@squash.demo';
-  const testsCompleted = 24;
-  const rating = 4.7;
-  const approvalRate = 98;
+  const testerName = profileDetails?.fullName || session?.name || 'Thando M.';
+  const testerEmail = profileDetails?.email || session?.email || 'tester@example.com';
+  const testerCity = profileDetails?.city || 'Johannesburg';
+  const testerPhone = profileDetails?.phone || '+27 72 000 1234';
+  const testsCompleted = profileDetails?.testsCompleted || 24;
+  const rating = profileDetails?.rating || 4.7;
+  const approvalRate = profileDetails?.approvalRate || 98;
 
   const recentWork = [
     { app: 'FitTrack Mobile', type: 'Mobile App Testing', status: 'Approved', earned: 'R250' },
@@ -184,6 +216,12 @@ export default function SquashTesterProfilePage() {
               </div>
             </div>
 
+            {profileError ? (
+              <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {profileError}
+              </div>
+            ) : null}
+
             <section className="mt-8 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -202,11 +240,11 @@ export default function SquashTesterProfilePage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-slate-400" />
-                        Johannesburg, South Africa
+                        {testerCity}, South Africa
                       </div>
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-slate-400" />
-                        +27 72 000 1234
+                        {testerPhone}
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock3 className="h-4 w-4 text-slate-400" />
@@ -382,3 +420,5 @@ export default function SquashTesterProfilePage() {
     </div>
   );
 }
+
+

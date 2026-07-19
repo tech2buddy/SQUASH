@@ -19,11 +19,91 @@ import {
   UserCircle2,
   Wallet,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
+import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
   const testerName = session?.name || 'Thando M.';
+  const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
+  const [earningsError, setEarningsError] = useState('');
+  const [payoutNotice, setPayoutNotice] = useState('');
+  const [requestingPayout, setRequestingPayout] = useState(false);
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    setEarningsError('');
+    getTesterEarningsSummary(session.userId)
+      .then((summary) => {
+        if (mounted) setEarningsSummary(summary);
+      })
+      .catch((error: Error) => {
+        if (mounted) setEarningsError(error.message || 'Could not load earnings right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.source, session?.userId]);
+
+  const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
+  const liveTransactions = useMemo(() => {
+    if (!earningsSummary) return null;
+    return [
+      ...earningsSummary.earnings.map((item) => ({
+        date: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending date',
+        type: 'Test earning',
+        description: item.jobTitle,
+        amount: formatRand(item.amountZar),
+        status:
+          item.status === 'pending'
+            ? 'Pending'
+            : item.status === 'approved'
+              ? 'Approved'
+              : item.status === 'paid'
+                ? 'Paid'
+                : item.status === 'changes_requested'
+                  ? 'Action Needed'
+                  : 'Rejected',
+      })),
+      ...earningsSummary.payouts.map((item) => ({
+        date: new Date(item.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+        type: 'Payout request',
+        description: 'Manual payout request',
+        amount: `-${formatRand(item.amountZar)}`,
+        status: item.status === 'paid' ? 'Paid' : item.status === 'processing' ? 'Approved' : 'Pending',
+      })),
+    ].slice(0, 8);
+  }, [earningsSummary]);
+
+  const handleRequestPayout = async () => {
+    if (!session?.userId || session.source !== 'supabase') {
+      setPayoutNotice('Please log in with a real tester account to request payout.');
+      return;
+    }
+    const amount = earningsSummary?.availableBalanceZar || 0;
+    if (amount <= 0) {
+      setPayoutNotice('No approved balance available for payout yet.');
+      return;
+    }
+
+    setRequestingPayout(true);
+    setPayoutNotice('');
+    try {
+      await requestTesterPayout(session.userId, amount);
+      const refreshed = await getTesterEarningsSummary(session.userId);
+      setEarningsSummary(refreshed);
+      setPayoutNotice(`Payout request created for ${formatRand(amount)}. Admin processing comes next.`);
+    } catch (error) {
+      setPayoutNotice(error instanceof Error ? error.message : 'Could not request payout right now.');
+    } finally {
+      setRequestingPayout(false);
+    }
+  };
+
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -38,7 +118,7 @@ export default function SquashTesterEarningsPage() {
   const summaryCards = [
     {
       title: 'Available Balance',
-      value: 'R3,250',
+      value: earningsSummary ? formatRand(earningsSummary.availableBalanceZar) : 'R3,250',
       note: 'Paid to bank within 24hrs of approval',
       icon: Wallet,
       iconBg: 'bg-green-50',
@@ -46,23 +126,23 @@ export default function SquashTesterEarningsPage() {
     },
     {
       title: 'Pending Payout',
-      value: 'R620',
-      note: 'Awaiting developer approval',
+      value: earningsSummary ? formatRand(earningsSummary.pendingPayoutZar) : 'R620',
+      note: 'Requested and awaiting admin processing',
       icon: Clock3,
       iconBg: 'bg-amber-50',
       iconColor: 'text-amber-700',
     },
     {
       title: 'This Month',
-      value: 'R1,120',
-      note: 'From 6 approved tests',
+      value: earningsSummary ? formatRand(earningsSummary.pendingApprovalZar) : 'R1,120',
+      note: 'Waiting for developer approval',
       icon: Banknote,
       iconBg: 'bg-sky-50',
       iconColor: 'text-sky-700',
     },
     {
       title: 'Lifetime Earned',
-      value: 'R8,740',
+      value: earningsSummary ? formatRand(earningsSummary.lifetimeApprovedZar) : 'R8,740',
       note: 'Since May 2025',
       icon: BadgeCheck,
       iconBg: 'bg-emerald-50',
@@ -94,10 +174,26 @@ export default function SquashTesterEarningsPage() {
     },
   ];
 
-  const pendingApprovals = [
-    { app: 'FitTrack Mobile App', submitted: '20 May 2025', amount: 'R250', status: 'Pending' },
-    { app: 'HealthHub Web', submitted: '18 May 2025', amount: 'R370', status: 'Pending' },
-  ];
+  const pendingApprovals = earningsSummary?.earnings
+    .filter((item) => item.status === 'pending')
+    .map((item) => ({
+      app: item.jobTitle,
+      submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
+      amount: formatRand(item.amountZar),
+      status: 'Pending',
+    })) || [
+      { app: 'FitTrack Mobile App', submitted: '20 May 2025', amount: 'R250', status: 'Pending' },
+      { app: 'HealthHub Web', submitted: '18 May 2025', amount: 'R370', status: 'Pending' },
+    ];
+
+  const actionNeededReports = earningsSummary?.earnings
+    .filter((item) => item.status === 'changes_requested')
+    .map((item) => ({
+      app: item.jobTitle,
+      submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
+      amount: formatRand(item.amountZar),
+      status: 'Action needed',
+    })) || [];
 
   const transactions = [
     { date: '22 May 2025', type: 'Test earning', description: 'FoodOrder Web Platform', amount: 'R400', status: 'Approved' },
@@ -209,14 +305,27 @@ export default function SquashTesterEarningsPage() {
                 >
                   Find More Tests
                 </a>
-                <a
-                  href="/tester/profile"
-                  className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                <button
+                  type="button"
+                  onClick={handleRequestPayout}
+                  disabled={requestingPayout}
+                  className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  View Profile
-                </a>
+                  {requestingPayout ? 'Requesting...' : 'Request Payout'}
+                </button>
               </div>
             </div>
+
+            {earningsError ? (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {earningsError}
+              </div>
+            ) : null}
+            {payoutNotice ? (
+              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+                {payoutNotice}
+              </div>
+            ) : null}
 
             <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {summaryCards.map((card) => {
@@ -314,13 +423,30 @@ export default function SquashTesterEarningsPage() {
                 <div className="flex items-start gap-3">
                   <Clock3 className="mt-1 h-6 w-6 text-amber-700" />
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Pending approvals</h2>
+                    <h2 className="text-2xl font-bold text-slate-900">Approval status</h2>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      These submissions are waiting for developer approval before payout.
+                      See what is waiting for developer approval and what needs your update before payout.
                     </p>
                   </div>
                 </div>
                 <div className="mt-5 space-y-4">
+                  {actionNeededReports.map((item) => (
+                    <div key={`action-${item.app}`} className="rounded-2xl border border-sky-100 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{item.app}</div>
+                          <div className="mt-1 text-sm text-slate-500">Submitted {item.submitted}</div>
+                          <a href="/tester/reports" className="mt-2 inline-flex text-sm font-semibold text-sky-700">Update report</a>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-black text-slate-900">{item.amount}</div>
+                          <div className="mt-1 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
+                            {item.status}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                   {pendingApprovals.map((item) => (
                     <div key={item.app} className="rounded-2xl border border-amber-100 bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -337,6 +463,11 @@ export default function SquashTesterEarningsPage() {
                       </div>
                     </div>
                   ))}
+                  {actionNeededReports.length === 0 && pendingApprovals.length === 0 ? (
+                    <div className="rounded-2xl border border-amber-100 bg-white p-4 text-sm leading-6 text-slate-600">
+                      Nothing is waiting for approval right now.
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -363,7 +494,7 @@ export default function SquashTesterEarningsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {transactions.map((item) => (
+                      {(liveTransactions || transactions).map((item) => (
                         <tr key={`${item.date}-${item.description}`} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-6 py-4 text-slate-700">{item.date}</td>
                           <td className="px-6 py-4 text-slate-700">{item.type}</td>
@@ -378,7 +509,11 @@ export default function SquashTesterEarningsPage() {
                                   ? 'bg-green-50 text-green-700'
                                   : item.status === 'Approved'
                                     ? 'bg-sky-50 text-sky-700'
-                                    : 'bg-amber-50 text-amber-700'
+                                    : item.status === 'Action Needed'
+                                      ? 'bg-sky-50 text-sky-700'
+                                      : item.status === 'Rejected'
+                                        ? 'bg-red-50 text-red-600'
+                                        : 'bg-amber-50 text-amber-700'
                               }`}
                             >
                               {item.status === 'Paid' ? <CheckCircle2 className="h-3 w-3" /> : null}

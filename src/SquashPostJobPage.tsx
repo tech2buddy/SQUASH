@@ -6,6 +6,7 @@ import {
   ClipboardList,
   CreditCard,
   FileText,
+  Image as ImageIcon,
   Home,
   Lock,
   Menu,
@@ -13,14 +14,30 @@ import {
   Search,
   Shield,
   SlidersHorizontal,
+  Upload,
+  X,
   UserCircle2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
+import { useAuth } from './auth';
+import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
+import { isSupabaseConfigured, supabase } from './lib/supabase';
+
+const defaultTestTasks: string[] = [];
+
+function parseTaskList(value: string) {
+  return value
+    .split(/\r?\n|,/)
+    .map((task) => task.trim())
+    .filter(Boolean);
+}
 
 export default function SquashPostJobPage() {
+  const { session } = useAuth();
+  const developerName = session?.name || 'Alex Developer';
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
@@ -30,86 +47,421 @@ export default function SquashPostJobPage() {
     pro: { label: 'Pro Plan', testers: 20, total: 2500 },
   } as const;
   type PackageKey = keyof typeof packageConfigs;
-  const initialPackage: PackageKey =
-    plan === 'starter' || plan === 'pro' ? (plan as PackageKey) : 'growth';
-  const [appName, setAppName] = useState('FitTrack Mobile');
+  type SelectedPackage = PackageKey | '';
+  const initialPackage: SelectedPackage =
+    plan === 'starter' || plan === 'growth' || plan === 'pro' ? (plan as PackageKey) : '';
+  const [appName, setAppName] = useState('');
   const [platform, setPlatform] = useState('Android');
   const [appType, setAppType] = useState('Mobile Application');
-  const [url, setUrl] = useState('https://fittrack.app/download');
-  const [shortDescription, setShortDescription] = useState(
-    'A fitness tracking app for workouts, tracking progress and goals.',
-  );
+  const [url, setUrl] = useState('');
+  const [appLogoUrl, setAppLogoUrl] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
   const [testType, setTestType] = useState<TestCategoryId>('mobile-app-testing');
-  const [selectedPackage, setSelectedPackage] = useState<PackageKey>(initialPackage);
-  const [ratePerTester, setRatePerTester] = useState(packageConfigs[initialPackage].total);
-  const [testersNeeded, setTestersNeeded] = useState<number>(packageConfigs[initialPackage].testers);
-  const [tasksToComplete, setTasksToComplete] = useState(
-    'Create an account, start a workout, track a goal, and review weekly progress.',
-  );
-  const [focusAreas, setFocusAreas] = useState(
-    'Bugs, UX issues, slow loading, confusing flows, and broken interactions.',
-  );
+  const [selectedPackage, setSelectedPackage] = useState<SelectedPackage>(initialPackage);
+  const [ratePerTester, setRatePerTester] = useState<number>(initialPackage ? packageConfigs[initialPackage].total : 0);
+  const [testersNeeded, setTestersNeeded] = useState<number>(initialPackage ? packageConfigs[initialPackage].testers : 0);
+  const [testTasks, setTestTasks] = useState<string[]>(defaultTestTasks);
+  const [taskDraft, setTaskDraft] = useState('');
+  const [focusAreas, setFocusAreas] = useState('');
   const [ageRange, setAgeRange] = useState('18 - 25');
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
   const [additionalInfo, setAdditionalInfo] = useState('');
+  const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
+  const draftHydratedRef = useRef(false);
   const [testerTierFilter, setTesterTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
   const [preferredSpecializations, setPreferredSpecializations] = useState<string[]>([]);
   const [liveSessionEnabled, setLiveSessionEnabled] = useState(false);
   const [liveSessionAt, setLiveSessionAt] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [draftJobId, setDraftJobId] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
+    if (!selectedPackage) {
+      setRatePerTester(0);
+      setTestersNeeded(0);
+      return;
+    }
     setRatePerTester(packageConfigs[selectedPackage].total);
     setTestersNeeded(packageConfigs[selectedPackage].testers);
   }, [selectedPackage]);
-
-  const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
-  const subtotal = useMemo(() => Math.max(0, ratePerTester), [ratePerTester]);
-  const platformFee = useMemo(() => 0, [subtotal]);
-  const total = subtotal + platformFee + liveSessionAddon;
-
-  const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
-
-  const saveDraft = () => {
-    const payload = {
-      appName,
-      platform,
-      appType,
-      url,
-      shortDescription,
-      testType,
-      selectedPackage,
-      ratePerTester,
-      testersNeeded,
-      testerTierFilter,
-      preferredSpecializations,
-      liveSessionEnabled,
-      liveSessionAt,
-      tasksToComplete,
-      focusAreas,
-      ageRange,
-      deviceType,
-      experienceLevel,
-      additionalInfo,
-    };
-    window.localStorage.setItem('squash_post_job_draft', JSON.stringify(payload));
-    setErrorMessage('');
-    setFeedbackMessage('Draft saved successfully.');
-  };
-
-  const submitStep = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!appName.trim() || !url.trim() || !shortDescription.trim()) {
-      setFeedbackMessage('');
-      setErrorMessage('Please complete app name, URL, and short description.');
+  useEffect(() => {
+    const rawDraft = window.localStorage.getItem('squash_post_job_draft');
+    if (!rawDraft) {
+      draftHydratedRef.current = true;
       return;
     }
-    saveDraft();
+    try {
+      const draft = JSON.parse(rawDraft) as Partial<{
+        appName: string;
+        platform: string;
+        appType: string;
+        url: string;
+        shortDescription: string;
+        appLogoUrl: string;
+        testType: TestCategoryId;
+        selectedPackage: SelectedPackage;
+        ratePerTester: number;
+        testersNeeded: number;
+        testerTierFilter: 'All' | 'Verified+' | 'Pro+' | 'Elite Only';
+        preferredSpecializations: string[];
+        liveSessionEnabled: boolean;
+        liveSessionAt: string;
+        tasksToComplete: string;
+        taskDraft: string;
+        focusAreas: string;
+        ageRange: string;
+        deviceType: string;
+        experienceLevel: string;
+        additionalInfo: string;
+        currentStep: number;
+        draftJobId: string;
+      }>;
+      if (
+        draft.appName === 'FitTrack Mobile' &&
+        draft.url === 'https://fittrack.app/download' &&
+        draft.shortDescription === 'A fitness tracking app for workouts, tracking progress and goals.'
+      ) {
+        window.localStorage.removeItem('squash_post_job_draft');
+        return;
+      }
+      if (draft.appName) setAppName(draft.appName);
+      if (draft.platform) setPlatform(draft.platform);
+      if (draft.appType) setAppType(draft.appType);
+      if (draft.url) setUrl(draft.url);
+      if (draft.shortDescription) setShortDescription(draft.shortDescription);
+      if (draft.appLogoUrl) setAppLogoUrl(draft.appLogoUrl);
+      if (draft.testType) setTestType(draft.testType);
+      if (draft.selectedPackage) setSelectedPackage(draft.selectedPackage);
+      if (typeof draft.ratePerTester === 'number') setRatePerTester(draft.ratePerTester);
+      if (typeof draft.testersNeeded === 'number') setTestersNeeded(draft.testersNeeded);
+      if (draft.testerTierFilter) setTesterTierFilter(draft.testerTierFilter);
+      if (Array.isArray(draft.preferredSpecializations)) setPreferredSpecializations(draft.preferredSpecializations);
+      if (typeof draft.liveSessionEnabled === 'boolean') setLiveSessionEnabled(draft.liveSessionEnabled);
+      if (draft.liveSessionAt) setLiveSessionAt(draft.liveSessionAt);
+      if (draft.tasksToComplete) setTestTasks(parseTaskList(draft.tasksToComplete));
+      if (draft.taskDraft) setTaskDraft(draft.taskDraft);
+      if (draft.focusAreas) setFocusAreas(draft.focusAreas);
+      if (draft.ageRange) setAgeRange(draft.ageRange);
+      if (draft.deviceType) setDeviceType(draft.deviceType);
+      if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel);
+      if (draft.additionalInfo) setAdditionalInfo(draft.additionalInfo);
+      if (typeof draft.currentStep === 'number') setCurrentStep(Math.min(Math.max(draft.currentStep, 0), 4));
+      if (draft.draftJobId) setDraftJobId(draft.draftJobId);
+      setFeedbackMessage('Draft restored. Continue editing or publish when ready.');
+    } catch {
+      window.localStorage.removeItem('squash_post_job_draft');
+    } finally {
+      draftHydratedRef.current = true;
+    }
+  }, []);
+
+
+  const selectedPackageConfig = selectedPackage ? packageConfigs[selectedPackage] : null;
+  const hasSelectedPackage = Boolean(selectedPackageConfig);
+  const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
+  const subtotal = useMemo(() => (selectedPackage ? Math.max(0, ratePerTester) : 0), [ratePerTester, selectedPackage]);
+  const platformFee = useMemo(() => 0, [subtotal]);
+  const total = hasSelectedPackage ? subtotal + platformFee + liveSessionAddon : 0;
+  const taskChecklistText = useMemo(() => testTasks.map((task) => task.trim()).filter(Boolean).join('\n'), [testTasks]);
+  const draftPayload = useMemo(() => ({
+    appName,
+    platform,
+    appType,
+    url,
+    shortDescription,
+    appLogoUrl,
+    testType,
+    selectedPackage,
+    ratePerTester,
+    testersNeeded,
+    testerTierFilter,
+    preferredSpecializations,
+    liveSessionEnabled,
+    liveSessionAt,
+    tasksToComplete: taskChecklistText,
+    taskDraft,
+    focusAreas,
+    ageRange,
+    deviceType,
+    experienceLevel,
+    additionalInfo,
+    currentStep,
+    draftJobId,
+  }), [
+    additionalInfo,
+    ageRange,
+    appLogoUrl,
+    appName,
+    appType,
+    currentStep,
+    deviceType,
+    draftJobId,
+    experienceLevel,
+    focusAreas,
+    liveSessionAt,
+    liveSessionEnabled,
+    platform,
+    preferredSpecializations,
+    ratePerTester,
+    selectedPackage,
+    shortDescription,
+    taskChecklistText,
+    taskDraft,
+    testerTierFilter,
+    testersNeeded,
+    testType,
+    url,
+  ]);
+
+  const hasDraftContent = useMemo(
+    () =>
+      Boolean(
+        appName.trim() ||
+          url.trim() ||
+          shortDescription.trim() ||
+          appLogoUrl ||
+          taskChecklistText ||
+          taskDraft.trim() ||
+          focusAreas.trim() ||
+          additionalInfo.trim() ||
+          preferredSpecializations.length > 0 ||
+          selectedPackage ||
+          liveSessionEnabled ||
+          draftJobId,
+      ),
+    [
+      additionalInfo,
+      appLogoUrl,
+      appName,
+      draftJobId,
+      focusAreas,
+      liveSessionEnabled,
+      preferredSpecializations.length,
+      selectedPackage,
+      shortDescription,
+      taskChecklistText,
+      taskDraft,
+      url,
+    ],
+  );
+  const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (!error) return fallback;
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && 'message' in error) {
+      return String((error as { message?: unknown }).message || fallback);
+    }
+    return fallback;
+  };
+  const validateStep = (stepIndex: number) => {
+    if (stepIndex === 0) {
+      if (!appName.trim()) return 'Please add the app name before continuing.';
+      if (!shortDescription.trim()) return 'Please add a short app description before continuing.';
+    }
+    if (stepIndex === 1) {
+      if (!selectedPackage) return 'Please choose a package before continuing.';
+      if (testTasks.every((task) => !task.trim())) return 'Please add the tasks testers must complete.';
+      if (!focusAreas.trim()) return 'Please add what testers should focus on.';
+    }
+    return '';
+  };
+
+  const addTestTask = () => {
+    const nextTask = taskDraft.trim();
+    if (!nextTask) return;
+    setTestTasks((tasks) => [...tasks, nextTask]);
+    setTaskDraft('');
+  };
+
+  const updateTestTask = (index: number, value: string) => {
+    setTestTasks((tasks) => tasks.map((task, taskIndex) => (taskIndex === index ? value : task)));
+  };
+
+  const removeTestTask = (index: number) => {
+    setTestTasks((tasks) => tasks.filter((_, taskIndex) => taskIndex !== index));
+  };
+
+  useEffect(() => {
+    if (!draftHydratedRef.current || !hasDraftContent || submitting) return;
+
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem('squash_post_job_draft', JSON.stringify(draftPayload));
+      setAutoSavedAt(new Date());
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [draftPayload, hasDraftContent, submitting]);
+  const goNext = () => {
+    const validationError = validateStep(currentStep);
+    if (validationError) {
+      setFeedbackMessage('');
+      setErrorMessage(validationError);
+      return;
+    }
     setErrorMessage('');
-    setFeedbackMessage('Details saved. Continue to Review & Publish.');
-    navigate('/post-job', { replace: true });
+    setFeedbackMessage('');
+    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
+  };
+
+  const goBack = () => {
+    setErrorMessage('');
+    setFeedbackMessage('');
+    setCurrentStep((step) => Math.max(step - 1, 0));
+  };
+
+
+  const handleLogoUpload = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFeedbackMessage('');
+      setErrorMessage('Please upload an image file for the job logo.');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setFeedbackMessage('');
+      setErrorMessage('Please keep the logo under 1MB for now.');
+      return;
+    }
+    if (!isSupabaseConfigured || !session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) {
+      setFeedbackMessage('');
+      setErrorMessage('Please log in with a real developer account before uploading a job logo.');
+      return;
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+    const safeName = `${Date.now()}-${appName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'job-logo'}.${extension}`;
+    const storagePath = `${session.userId}/${safeName}`;
+
+    setLogoUploading(true);
+    setErrorMessage('');
+    setFeedbackMessage('Uploading logo...');
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('job-logos')
+        .upload(storagePath, file, {
+          cacheControl: '31536000',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('job-logos').getPublicUrl(storagePath);
+      setAppLogoUrl(data.publicUrl);
+      setFeedbackMessage('Logo uploaded. Save as draft or continue to publish it with the job.');
+    } catch (error) {
+      setAppLogoUrl('');
+      setFeedbackMessage('');
+      setErrorMessage(
+        error instanceof Error
+          ? `Logo upload failed: ${error.message}. Make sure the job-logos storage bucket exists.`
+          : 'Logo upload failed. Make sure the job-logos storage bucket exists.',
+      );
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+  const buildJobInput = (status: 'draft' | 'active'): DeveloperJobInput | null => {
+    if (!session?.userId) {
+      setErrorMessage('Please log in with a developer account first.');
+      return null;
+    }
+    if (!selectedPackage) {
+      setErrorMessage('Please choose a package before saving or publishing this job.');
+      return null;
+    }
+
+    return {
+      developerId: session.userId,
+      title: appName,
+      appUrl: url,
+      platform,
+      category: testType,
+      packageKey: selectedPackage as JobPackageKey,
+      totalAmountZar: total,
+      testersNeeded,
+      description: shortDescription,
+      logoUrl: appLogoUrl || null,
+      tasks: taskChecklistText,
+      focusAreas,
+      preferredSpecializations,
+      liveSessionEnabled,
+      liveSessionAt: liveSessionEnabled && liveSessionAt ? liveSessionAt : null,
+      status,
+    };
+  };
+
+  const saveDraft = async () => {
+    window.localStorage.setItem('squash_post_job_draft', JSON.stringify(draftPayload));
+
+    if (!session?.userId || !session.roles.includes('developer') || session.source !== 'supabase') {
+      setErrorMessage('');
+      setFeedbackMessage('Draft saved on this device. Log in with a developer account to save it online.');
+      return;
+    }
+
+    const jobInput = buildJobInput('draft');
+    if (!jobInput) return;
+
+    setSubmitting(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+    try {
+      const draft = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
+      setDraftJobId(draft.id);
+      window.localStorage.setItem('squash_post_job_draft', JSON.stringify({ ...draftPayload, draftJobId: draft.id }));
+      setFeedbackMessage('Draft saved. You can return and publish it later.');
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Unable to save this draft right now.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const submitStep = async (e: FormEvent) => {
+    e.preventDefault();
+    const validationError = validateStep(0) || validateStep(1);
+    if (validationError) {
+      setFeedbackMessage('');
+      setErrorMessage(validationError);
+      setCurrentStep(validationError.includes('app name') ? 0 : 1);
+      return;
+    }
+
+    if (currentStep < steps.length - 1) {
+      goNext();
+      return;
+    }
+
+    if (!session?.userId || !session.roles.includes('developer') || session.source !== 'supabase') {
+      setFeedbackMessage('');
+      setErrorMessage('Please log in with a real developer account before publishing a job. Your draft has been saved on this device.');
+      await saveDraft();
+      return;
+    }
+
+    const jobInput = buildJobInput('active');
+    if (!jobInput) return;
+
+    setSubmitting(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      const job = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
+      window.localStorage.removeItem('squash_post_job_draft');
+      setDraftJobId(null);
+      setFeedbackMessage(`Job published: ${job.title}. It is now visible to matching testers.`);
+      window.setTimeout(() => navigate('/dashboard'), 900);
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Unable to publish this job right now.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleSpecialization = (id: string, checked: boolean) => {
@@ -129,7 +481,7 @@ export default function SquashPostJobPage() {
     'App Details',
     'Test Requirements',
     'Tester Profile',
-    'Testers Needed',
+    'Add-ons & Notes',
     'Review & Publish',
   ];
 
@@ -230,7 +582,7 @@ export default function SquashPostJobPage() {
                       <UserCircle2 className="h-7 w-7" />
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">Alex Developer</div>
+                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
                       <div className="text-xs text-slate-500">Developer</div>
                     </div>
                   </a>
@@ -261,7 +613,7 @@ export default function SquashPostJobPage() {
                   <div key={step} className="flex items-center gap-3">
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                        index === 0
+                        index === currentStep
                           ? 'bg-green-600 text-white'
                           : 'border border-slate-200 bg-slate-50 text-slate-600'
                       }`}
@@ -271,7 +623,7 @@ export default function SquashPostJobPage() {
                     <div className="min-w-0">
                       <div
                         className={`text-sm font-semibold ${
-                          index === 0 ? 'text-green-700' : 'text-slate-600'
+                          index === currentStep ? 'text-green-700' : 'text-slate-600'
                         }`}
                       >
                         {step}
@@ -284,7 +636,7 @@ export default function SquashPostJobPage() {
 
             <form onSubmit={submitStep} className="mt-8 grid gap-6 xl:grid-cols-[1.7fr_0.7fr]">
               <div className="space-y-6">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 0 ? '' : 'hidden'}`}>
                   <h2 className="text-2xl font-bold text-slate-900">1. App Details</h2>
 
                   <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -295,6 +647,7 @@ export default function SquashPostJobPage() {
                       <input
                         value={appName}
                         onChange={(e) => setAppName(e.target.value)}
+                        placeholder="e.g. PayFlow Web App"
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition focus:border-green-500"
                       />
                     </div>
@@ -340,8 +693,50 @@ export default function SquashPostJobPage() {
                       <input
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://your-app.com/staging"
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
                       />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Job Logo / App Icon</label>
+                      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center">
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                          {appLogoUrl ? (
+                            <img src={appLogoUrl} alt={`${appName || 'Job'} logo preview`} className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-8 w-8 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-slate-900">Add the icon testers will recognize</div>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            Upload a square PNG, JPG, SVG, or WEBP under 1MB. We store it securely in Supabase Storage.
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                              <Upload className="h-4 w-4" />
+                              {logoUploading ? 'Uploading...' : 'Upload logo'}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                                className="hidden"
+                                disabled={logoUploading}
+                                onChange={(event) => handleLogoUpload(event.target.files?.[0])}
+                              />
+                            </label>
+                            {appLogoUrl ? (
+                              <button
+                                type="button"
+                                onClick={() => setAppLogoUrl('')}
+                                disabled={logoUploading}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                <X className="h-4 w-4" /> Remove
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -353,13 +748,14 @@ export default function SquashPostJobPage() {
                       rows={4}
                       value={shortDescription}
                       onChange={(e) => setShortDescription(e.target.value)}
+                      placeholder="Briefly explain what your app does and who it is for..."
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
                     />
                     <div className="mt-2 text-right text-xs text-slate-400">{shortDescription.length} / 300</div>
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 1 ? '' : 'hidden'}`}>
                   <h2 className="text-2xl font-bold text-slate-900">2. Test Requirements</h2>
 
                   <div className="mt-6 grid gap-5 md:grid-cols-3">
@@ -386,9 +782,10 @@ export default function SquashPostJobPage() {
                       <div className="relative">
                         <select
                           value={selectedPackage}
-                          onChange={(e) => setSelectedPackage(e.target.value as PackageKey)}
+                          onChange={(e) => setSelectedPackage(e.target.value as SelectedPackage)}
                           className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
                         >
+                          <option value="">Select package</option>
                           <option value="starter">Starter (R500)</option>
                           <option value="growth">Growth (R1,200)</option>
                           <option value="pro">Pro (R2,500)</option>
@@ -410,10 +807,12 @@ export default function SquashPostJobPage() {
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {selectedPackage === 'starter' ? (
+                    {!selectedPackage ? (
+                      <span>Choose a package to see what is included</span>
+                    ) : selectedPackage === 'starter' ? (
                       <span>Screenshots only (upgrade for video reports)</span>
                     ) : (
-                      <span>✓ Video bug reports included</span>
+                      <span>Video bug reports included</span>
                     )}
                   </div>
 
@@ -426,16 +825,70 @@ export default function SquashPostJobPage() {
                     - included free with Growth and Pro plans.
                   </div>
 
-                  <div className="mt-5">
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      Specific Tasks to Complete
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={tasksToComplete}
-                      onChange={(e) => setTasksToComplete(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
-                    />
+                  <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700">
+                          Tester task checklist
+                        </label>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          Add each action as a separate task. These will become checkboxes for testers during the active test.
+                        </p>
+                      </div>
+                      <div className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700 ring-1 ring-green-100">
+                        {testTasks.filter((task) => task.trim()).length} tasks
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {testTasks.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-5 text-sm text-slate-500">
+                          No tasks added yet. Add the first tester action below.
+                        </div>
+                      ) : null}
+                      {testTasks.map((task, index) => (
+                        <div key={`${index}-${task}`} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-sm font-bold text-green-700">
+                            {index + 1}
+                          </div>
+                          <input
+                            value={task}
+                            onChange={(e) => updateTestTask(index, e.target.value)}
+                            placeholder="Example: Create an account"
+                            className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeTestTask(index)}
+                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <input
+                        value={taskDraft}
+                        onChange={(e) => setTaskDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addTestTask();
+                          }
+                        }}
+                        placeholder="Add another task testers must complete..."
+                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={addTestTask}
+                        className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                      >
+                        Add Task
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-5">
@@ -446,12 +899,13 @@ export default function SquashPostJobPage() {
                       rows={4}
                       value={focusAreas}
                       onChange={(e) => setFocusAreas(e.target.value)}
+                      placeholder="Example: checkout flow, confusing screens, slow loading, crashes, broken links..."
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
                     />
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 2 ? '' : 'hidden'}`}>
                   <h2 className="text-2xl font-bold text-slate-900">3. Tester Profile</h2>
 
                   <div className="mt-6 grid gap-5 md:grid-cols-3">
@@ -551,7 +1005,7 @@ export default function SquashPostJobPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 3 ? '' : 'hidden'}`}>
                   <h2 className="text-2xl font-bold text-slate-900">4. Additional Information</h2>
                   <p className="mt-2 text-slate-600">
                     Add extra details about your app or testing goals.
@@ -586,7 +1040,7 @@ export default function SquashPostJobPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 3 ? '' : 'hidden'}`}>
                   <h2 className="text-2xl font-bold text-slate-900">Live Session Add-on</h2>
                   <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <input
@@ -596,17 +1050,18 @@ export default function SquashPostJobPage() {
                       className="mt-1 h-4 w-4 rounded border-slate-300 accent-green-600"
                     />
                     <span className="text-sm text-slate-700">
-                      <span className="font-semibold text-slate-900">Add Live Test Session — R2,000</span>
-                      <br />
-                      Watch a tester use your app in real time via video call. Ask questions and observe their natural behavior live.
+                      <span className="font-semibold text-slate-900">Add Live Test Session - R2,000</span>
+                      <span className="mt-1 block">
+                        Watch a tester use your app in real time via video call. Ask questions and observe their natural behavior live.
+                      </span>
                     </span>
                   </label>
 
                   {liveSessionEnabled ? (
-                    <div className="mt-4 space-y-3 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-slate-700">
+                    <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
                       <div>You will receive a Zoom/Google Meet link 24 hours before your scheduled session.</div>
-                      <div>1 tester · 60 minute session · Screen share included</div>
-                      <div>
+                      <div>1 tester - 60 minute session - Screen share included</div>
+                      <div className="mt-4">
                         <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred session time</label>
                         <input
                           type="datetime-local"
@@ -619,16 +1074,64 @@ export default function SquashPostJobPage() {
                   ) : null}
                 </section>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-                  <button type="button" onClick={saveDraft} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
-                    Save as Draft
-                  </button>
-                  <button type="submit" className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
-                    Next: Test Requirements -&gt;
-                  </button>
+                <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 4 ? '' : 'hidden'}`}>
+                  <h2 className="text-2xl font-bold text-slate-900">5. Review &amp; Publish</h2>
+                  <p className="mt-2 text-slate-600">Check everything before your job goes live to testers.</p>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="text-sm font-semibold text-slate-500">App</div>
+                      <div className="mt-1 flex items-center gap-3 text-lg font-bold text-slate-900">{appLogoUrl ? <img src={appLogoUrl} alt="" className="h-10 w-10 rounded-2xl object-cover ring-1 ring-slate-200" /> : null}<span>{appName || 'Untitled app'}</span></div>
+                      <div className="mt-1 text-sm text-slate-600">{platform} - {appType}</div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="text-sm font-semibold text-slate-500">Testing</div>
+                      <div className="mt-1 text-lg font-bold text-slate-900">{getCategoryById(testType).name}</div>
+                      <div className="mt-1 text-sm text-slate-600">{testersNeeded || '-'} testers - {selectedPackageConfig?.label || 'Package not selected'}</div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="text-sm font-semibold text-slate-500">Tester profile</div>
+                      <div className="mt-1 text-lg font-bold text-slate-900">{testerTierFilter}</div>
+                      <div className="mt-1 text-sm text-slate-600">{ageRange}, {deviceType}, {experienceLevel}</div>
+                    </div>
+                    <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
+                      <div className="text-sm font-semibold text-green-700">Total</div>
+                      <div className="mt-1 text-2xl font-black text-green-700">{hasSelectedPackage ? formatZar(total) : 'Select package'}</div>
+                      <div className="mt-1 text-sm text-slate-600">{liveSessionEnabled ? 'Includes live session add-on' : hasSelectedPackage ? 'Job package only' : 'Choose a package first'}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
+                    Publishing makes this job visible to matching testers. Saving as draft keeps it private until you are ready.
+                  </div>
+                </section>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button type="button" onClick={saveDraft} disabled={submitting} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60">
+                      {submitting ? 'Saving...' : 'Save as Draft'}
+                    </button>
+                    {currentStep > 0 ? (
+                      <button type="button" onClick={goBack} disabled={submitting} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60">
+                        Back
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {currentStep < steps.length - 1 ? (
+                    <button type="button" onClick={goNext} className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
+                      Next: {steps[currentStep + 1]}
+                    </button>
+                  ) : (
+                    <button type="submit" disabled={submitting} className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300">
+                      {submitting ? 'Publishing...' : 'Publish Job'}
+                    </button>
+                  )}
                 </div>
                 {errorMessage ? <p className="text-sm font-semibold text-red-600">{errorMessage}</p> : null}
                 {feedbackMessage ? <p className="text-sm font-semibold text-green-700">{feedbackMessage}</p> : null}
+                {autoSavedAt ? (
+                  <p className="text-xs font-semibold text-slate-500">Autosaved on this device at {autoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                ) : null}
               </div>
 
               <div className="space-y-6">
@@ -642,7 +1145,7 @@ export default function SquashPostJobPage() {
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Package</span>
-                      <span className="font-semibold text-slate-900">{packageConfigs[selectedPackage].label}</span>
+                      <span className="font-semibold text-slate-900">{selectedPackageConfig?.label || 'Choose a package'}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Testers</span>
@@ -662,10 +1165,16 @@ export default function SquashPostJobPage() {
 
                   <div className="my-5 border-t border-dashed border-slate-200" />
 
-                  <div className="mt-5 flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
-                    <span className="text-lg font-bold text-slate-900">Total</span>
-                    <span className="text-2xl font-black text-green-700">{formatZar(total)}</span>
-                  </div>
+                  {hasSelectedPackage ? (
+                    <div className="mt-5 flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
+                      <span className="text-lg font-bold text-slate-900">Total</span>
+                      <span className="text-2xl font-black text-green-700">{formatZar(total)}</span>
+                    </div>
+                  ) : (
+                    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-500">
+                      Choose a package to calculate the total.
+                    </div>
+                  )}
                 </section>
 
                 <section className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
@@ -693,7 +1202,7 @@ export default function SquashPostJobPage() {
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Auto-calculated</div>
                   <div className="mt-4 text-sm text-slate-500">Total Amount</div>
-                  <div className="mt-2 text-4xl font-black text-green-700">{formatZar(total)}</div>
+                  <div className="mt-2 text-4xl font-black text-green-700">{hasSelectedPackage ? formatZar(total) : 'Pending'}</div>
                   {testerTierFilter === 'Elite Only' ? (
                     <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                       Premium indicator: Elite tester tier selected.
@@ -708,7 +1217,7 @@ export default function SquashPostJobPage() {
                       <div key={step} className="flex gap-3">
                         <div
                           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                            index === 0
+                            index === currentStep
                               ? 'bg-green-600 text-white'
                               : 'border border-slate-200 bg-slate-50 text-slate-600'
                           }`}
@@ -721,7 +1230,7 @@ export default function SquashPostJobPage() {
                             {index === 0 && 'Tell us about your app'}
                             {index === 1 && 'What to test and what to look for'}
                             {index === 2 && 'Who should test your app'}
-                            {index === 3 && 'How many testers do you need'}
+                            {index === 3 && 'Add notes and optional live session'}
                             {index === 4 && 'Review and publish your job'}
                           </div>
                         </div>
@@ -737,3 +1246,16 @@ export default function SquashPostJobPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadgeCheck,
   Bell,
   BriefcaseBusiness,
@@ -21,6 +21,7 @@
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
+import { getTesterProfile, updateTesterProfile } from './lib/profileApi';
 
 type ToggleKey =
   | 'newInvites'
@@ -46,7 +47,7 @@ type SettingsState = {
 
 const defaultSettings: SettingsState = {
   fullName: 'Thando M.',
-  email: 'tester@squash.demo',
+  email: 'tester@example.com',
   phone: '+27 72 000 1234',
   city: 'Johannesburg',
   preferredPayout: 'eft',
@@ -99,7 +100,7 @@ function ToggleSwitch({ enabled, onChange, label }: { enabled: boolean; onChange
 }
 
 export default function SquashTesterSettingsPage() {
-  const { session } = useAuth();
+  const { session, refreshSessionProfile } = useAuth();
   const starter = useMemo(
     () => ({
       ...defaultSettings,
@@ -111,6 +112,8 @@ export default function SquashTesterSettingsPage() {
 
   const [settings, setSettings] = useState<SettingsState>(() => readSettings(starter));
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     const timer = saved ? window.setTimeout(() => setSaved(false), 2500) : undefined;
@@ -118,6 +121,45 @@ export default function SquashTesterSettingsPage() {
       if (timer) window.clearTimeout(timer);
     };
   }, [saved]);
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') {
+      setSettings((prev) => ({
+        ...prev,
+        fullName: session?.name || prev.fullName,
+        email: session?.email || prev.email,
+      }));
+      return;
+    }
+
+    let mounted = true;
+    setProfileError('');
+
+    getTesterProfile(session.userId)
+      .then((profile) => {
+        if (!mounted || !profile) return;
+        setSettings((prev) => ({
+          ...prev,
+          fullName: profile.fullName,
+          email: profile.email,
+          phone: profile.phone,
+          city: profile.city || prev.city,
+          preferredPayout: profile.preferredPayout,
+          toggles: {
+            ...prev.toggles,
+            profileVisible: profile.isPublic,
+          },
+        }));
+      })
+      .catch((error: Error) => {
+        if (mounted) setProfileError(error.message || 'Could not load your profile right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.email, session?.name, session?.source, session?.userId]);
+
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -156,9 +198,31 @@ export default function SquashTesterSettingsPage() {
     }));
   };
 
-  const saveSettings = () => {
-    window.localStorage.setItem('squash_tester_settings', JSON.stringify(settings));
-    setSaved(true);
+  const saveSettings = async () => {
+    setSaving(true);
+    setProfileError('');
+
+    try {
+      window.localStorage.setItem('squash_tester_settings', JSON.stringify(settings));
+
+      if (session?.userId && session.source === 'supabase') {
+        await updateTesterProfile(session.userId, {
+          fullName: settings.fullName,
+          email: settings.email,
+          phone: settings.phone,
+          city: settings.city,
+          preferredPayout: settings.preferredPayout,
+          isPublic: settings.toggles.profileVisible,
+        });
+        await refreshSessionProfile();
+      }
+
+      setSaved(true);
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Unable to save your profile right now.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const notificationRows: Array<{ key: ToggleKey; title: string; detail: string }> = [
@@ -271,18 +335,25 @@ export default function SquashTesterSettingsPage() {
               <div className="flex flex-wrap items-center gap-3">
                 {saved ? (
                   <div className="inline-flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
-                    <CheckCircle2 className="h-4 w-4" /> Saved locally
+                    <CheckCircle2 className="h-4 w-4" /> Saved
                   </div>
                 ) : null}
                 <button
                   type="button"
                   onClick={saveSettings}
-                  className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
+                  disabled={saving}
+                  className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
-                  Save Changes
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
+
+            {profileError ? (
+              <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {profileError}
+              </div>
+            ) : null}
 
             <section className="mt-8 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -376,7 +447,7 @@ export default function SquashTesterSettingsPage() {
                     <BadgeCheck className="mt-0.5 h-5 w-5 text-green-700" />
                     <div>
                       <div className="font-bold text-slate-900">Trusted device</div>
-                      <div className="mt-1 text-sm leading-6 text-slate-600">This browser is trusted for demo access on SQUASH.</div>
+                      <div className="mt-1 text-sm leading-6 text-slate-600">This browser is trusted for your SQUASH account.</div>
                     </div>
                   </div>
                 </div>
@@ -555,3 +626,5 @@ export default function SquashTesterSettingsPage() {
     </div>
   );
 }
+
+

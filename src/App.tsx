@@ -23,13 +23,23 @@ import SquashNotFoundPage from './SquashNotFoundPage';
 import SquashApiDocsPage from './SquashApiDocsPage';
 import SquashCertificatePage from './SquashCertificatePage';
 import SquashLiveSessionPage from './SquashLiveSessionPage';
+import SquashChooseWorkspacePage from './SquashChooseWorkspacePage';
+import SquashOnboardingPage from './SquashOnboardingPage';
+import SquashAdminDashboardPage from './SquashAdminDashboardPage';
+import SquashAdminPayoutsPage from './SquashAdminPayoutsPage';
+import SquashAdminUsersPage from './SquashAdminUsersPage';
+import SquashAdminUserProfilePage from './SquashAdminUserProfilePage';
+import SquashAdminJobsPage from './SquashAdminJobsPage';
+import SquashAdminJobDetailPage from './SquashAdminJobDetailPage';
+import SquashAdminReportsPage from './SquashAdminReportsPage';
+import SquashAdminSecurityPage from './SquashAdminSecurityPage';
 import {
   SquashDeveloperActivityPage,
   SquashDeveloperJobsPage,
   SquashDeveloperSubmissionsPage,
   SquashReportAttachmentsPage,
 } from './SquashDeveloperViewsPage';
-import { roleHomePath, routeRole, useAuth, type UserRole } from './auth';
+import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
 
 function ProtectedRoute({
   children,
@@ -51,11 +61,14 @@ function ProtectedRoute({
 
   if (!session) {
     const next = encodeURIComponent(location.pathname);
-    return <Navigate to={`/login?role=${allowedRole}&next=${next}`} replace />;
+    const roleParam = allowedRole === 'admin' ? '' : `role=${allowedRole}&`;
+    return <Navigate to={`/login?${roleParam}next=${next}`} replace />;
   }
 
-  if (session.role !== allowedRole) {
-    return <Navigate to={roleHomePath(session.role)} replace />;
+  const canAccessRoute = session.roles.includes(allowedRole) || (allowedRole !== 'admin' && session.roles.includes('admin'));
+
+  if (!canAccessRoute) {
+    return <Navigate to={defaultSessionPath(session)} replace />;
   }
 
   return children;
@@ -84,6 +97,8 @@ export default function App() {
       <Route path="/login" element={<SquashLoginPage />} />
       <Route path="/signup" element={<SquashSignupPage />} />
       <Route path="/logout" element={<LogoutRoute />} />
+      <Route path="/choose-workspace" element={<SquashChooseWorkspacePage />} />
+      <Route path="/onboarding/:role" element={<SquashOnboardingPage />} />
       <Route path="/about" element={<SquashAboutPage />} />
       <Route
         path="/contact"
@@ -100,6 +115,7 @@ export default function App() {
           <SquashInfoPage
             title="Privacy Policy"
             description="Learn how SQUASH handles your data, protects your privacy, and secures your information."
+            policySlug="privacy"
           />
         }
       />
@@ -109,6 +125,67 @@ export default function App() {
           <SquashInfoPage
             title="Terms of Service"
             description="Review SQUASH terms, responsibilities, and usage guidelines for developers and testers."
+            policySlug="terms"
+          />
+        }
+      />
+      <Route
+        path="/tester-code-of-conduct"
+        element={
+          <SquashInfoPage
+            title="Tester Code of Conduct"
+            description="Standards for honest reporting, confidentiality, professionalism, and safe testing on SQUASH."
+            policySlug="tester-code-of-conduct"
+          />
+        }
+      />
+      <Route
+        path="/developer-terms"
+        element={
+          <SquashInfoPage
+            title="Developer Terms"
+            description="Responsibilities for developers posting jobs, reviewing submissions, and working with testers on SQUASH."
+            policySlug="developer-terms"
+          />
+        }
+      />
+      <Route
+        path="/payout-policy"
+        element={
+          <SquashInfoPage
+            title="Payout Policy"
+            description="How tester payouts are requested, reviewed, approved, and paid through SQUASH."
+            policySlug="payout-policy"
+          />
+        }
+      />
+      <Route
+        path="/refund-policy"
+        element={
+          <SquashInfoPage
+            title="Refund Policy"
+            description="How refund requests are reviewed fairly when testing jobs need attention."
+            policySlug="refund-policy"
+          />
+        }
+      />
+      <Route
+        path="/dispute-resolution-policy"
+        element={
+          <SquashInfoPage
+            title="Dispute Resolution Policy"
+            description="How SQUASH reviews disputes between developers and testers using job evidence and communication."
+            policySlug="dispute-resolution"
+          />
+        }
+      />
+      <Route
+        path="/popia-data-protection-policy"
+        element={
+          <SquashInfoPage
+            title="POPIA Data Protection Policy"
+            description="How SQUASH handles personal information responsibly for South African users."
+            policySlug="popia-data-protection"
           />
         }
       />
@@ -155,6 +232,79 @@ export default function App() {
             title="Help Center"
             description="Find answers to common questions and get support for your SQUASH account and workflows."
           />
+        }
+      />
+
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/payouts"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminPayoutsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/users/:userId"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminUserProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/jobs"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminJobsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/jobs/:jobId"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminJobDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminReportsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/security"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminSecurityPage />
+          </ProtectedRoute>
         }
       />
 
@@ -304,3 +454,10 @@ export function routeBelongsToRole(pathname: string, role: UserRole): boolean {
   const target = routeRole(pathname);
   return target === 'public' || target === role;
 }
+
+
+
+
+
+
+

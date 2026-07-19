@@ -23,10 +23,19 @@ import { useEffect, useMemo, useState } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import SquashScore from './components/SquashScore';
 import TesterBadge from './components/TesterBadge';
+import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { getSpecializationLabel } from './components/testerSpecializations';
+import { useAuth } from './auth';
+import { getTesterSpecializations, replaceTesterSpecializations } from './lib/profileApi';
+import {
+  getTesterAssignments,
+  getTesterEarningsSummary,
+  type TesterAssignment,
+  type TesterEarningsSummary,
+} from './lib/jobApi';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
-type TransactionStatus = 'Pending' | 'Approved' | 'Paid';
+type TransactionStatus = 'Pending' | 'Approved' | 'Paid' | 'Changes Requested' | 'Rejected';
 
 type StatCard = {
   title: string;
@@ -38,7 +47,7 @@ type StatCard = {
   iconColor: string;
 };
 
-const stats: StatCard[] = [
+const demoStats: StatCard[] = [
   {
     title: 'Available Balance',
     value: 'R3,250',
@@ -86,7 +95,7 @@ const stats: StatCard[] = [
   },
 ];
 
-const availableTests: Array<{
+const demoAvailableTests: Array<{
   name: string;
   meta: string;
   difficulty: Difficulty;
@@ -112,7 +121,7 @@ const availableTests: Array<{
   },
 ];
 
-const myTests = [
+const demoMyTests = [
   {
     name: 'TravelBuddy App',
     type: 'Exploratory Testing',
@@ -128,7 +137,7 @@ const myTests = [
 ];
 
 // TODO: Replace with Supabase query
-const completedTests = [
+const demoCompletedTests = [
   {
     name: 'HealthHub Web',
     type: 'Usability Testing',
@@ -153,7 +162,7 @@ const completedTests = [
   },
 ];
 
-const approvals = [
+const demoApprovals = [
   {
     name: 'FitTrack Mobile App',
     date: 'Submitted on 20 May',
@@ -168,7 +177,7 @@ const approvals = [
   },
 ];
 
-const transactions: Array<{
+const demoTransactions: Array<{
   date: string;
   type: string;
   description: string;
@@ -233,12 +242,40 @@ function getDifficultyClasses(difficulty: Difficulty) {
 function getStatusClasses(status: TransactionStatus) {
   if (status === 'Pending') return 'bg-amber-50 text-amber-700';
   if (status === 'Approved') return 'bg-sky-50 text-sky-700';
+  if (status === 'Changes Requested') return 'bg-sky-50 text-sky-700';
+  if (status === 'Rejected') return 'bg-red-50 text-red-600';
   return 'bg-green-50 text-green-700';
 }
 
+function formatRands(value: number) {
+  return `R${Math.round(value).toLocaleString('en-ZA')}`;
+}
+
+function formatDate(value: string | null) {
+  if (!value) return 'Not submitted yet';
+  return new Intl.DateTimeFormat('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
+}
+
+const emptyEarningsSummary: TesterEarningsSummary = {
+  availableBalanceZar: 0,
+  pendingApprovalZar: 0,
+  pendingPayoutZar: 0,
+  lifetimeApprovedZar: 0,
+  earnings: [],
+  payouts: [],
+};
+
 export default function SquashTesterDashboardPage() {
+  const { session } = useAuth();
+  const testerName = session?.name || 'Alex Tester';
+  const testerFirstName = testerName.split(' ')[0] || testerName;
+  const testerInitial = testerName.charAt(0).toUpperCase() || 'T';
+
+  const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
+  const [assignmentsError, setAssignmentsError] = useState('');
+  const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary>(emptyEarningsSummary);
+  const [earningsError, setEarningsError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>(() => {
-    // TODO: Replace with Supabase query
     const raw = window.localStorage.getItem('squash_tester_specializations');
     if (!raw) return ['township-network', 'zulu', 'ecommerce'];
     try {
@@ -253,16 +290,172 @@ export default function SquashTesterDashboardPage() {
     window.localStorage.setItem('squash_tester_specializations', JSON.stringify(specializations));
   }, [specializations]);
 
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    getTesterSpecializations(session.userId)
+      .then((savedSpecializations) => {
+        if (mounted && savedSpecializations.length > 0) setSpecializations(savedSpecializations);
+      })
+      .catch(() => {
+        // Keep local fallback if profile sync is temporarily unavailable.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.source, session?.userId]);
+
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    let mounted = true;
+    setAssignmentsError('');
+    setEarningsError('');
+
+    Promise.all([getTesterAssignments(session.userId), getTesterEarningsSummary(session.userId)])
+      .then(([assignmentItems, summary]) => {
+        if (!mounted) return;
+        setAssignments(assignmentItems);
+        setEarningsSummary(summary);
+      })
+      .catch((error: Error) => {
+        if (!mounted) return;
+        setAssignmentsError(error.message || 'Could not load your accepted tests right now.');
+        setEarningsError(error.message || 'Could not load your earnings right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.source, session?.userId]);
+
   const toggleSpecialization = (id: string, checked: boolean) => {
-    setSpecializations((prev) =>
-      checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
-    );
+    setSpecializations((prev) => {
+      const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
+      if (session?.userId && session.source === 'supabase') {
+        replaceTesterSpecializations(session.userId, next).catch(() => {
+          // Keep the UI responsive; the Settings/Profile page can retry later.
+        });
+      }
+      return next;
+    });
   };
 
   const topProfileTags = useMemo(
     () => specializations.slice(0, 3).map((id) => getSpecializationLabel(id)),
     [specializations],
   );
+
+  const isRealAccount = session?.source === 'supabase';
+  const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
+  const submittedAssignmentCount = assignments.filter((assignment) => assignment.status === 'submitted').length;
+  const approvedAssignmentCount = assignments.filter((assignment) => assignment.status === 'approved').length;
+  const approvedCount = earningsSummary.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length;
+  const pendingItems = earningsSummary.earnings.filter((item) => item.status === 'pending');
+  const changesRequestedItems = earningsSummary.earnings.filter((item) => item.status === 'changes_requested');
+  const realStats: StatCard[] = [
+    {
+      title: 'Available Balance',
+      value: formatRands(earningsSummary.availableBalanceZar),
+      note: 'Paid to bank within 24hrs of approval',
+      change: `${approvedCount} approved submission${approvedCount === 1 ? '' : 's'}`,
+      icon: Wallet,
+      iconBg: 'bg-green-50',
+      iconColor: 'text-green-700',
+    },
+    {
+      title: 'Pending Approval',
+      value: formatRands(earningsSummary.pendingApprovalZar),
+      note: 'Awaiting developer approval',
+      change: `${pendingItems.length} submission${pendingItems.length === 1 ? '' : 's'} pending`,
+      icon: Clock3,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-700',
+    },
+    {
+      title: 'Tests Completed',
+      value: String(approvedCount),
+      note: 'Approved tests completed',
+      change: `${activeAssignments.length} active test${activeAssignments.length === 1 ? '' : 's'}`,
+      icon: ClipboardList,
+      iconBg: 'bg-sky-50',
+      iconColor: 'text-sky-700',
+    },
+    {
+      title: 'Approval Rate',
+      value: earningsSummary.earnings.length ? `${Math.round((approvedCount / earningsSummary.earnings.length) * 100)}%` : '0%',
+      note: earningsSummary.earnings.length ? 'Based on submitted reports' : 'Complete tests to build this',
+      change: approvedCount > 0 ? 'Keep it up' : 'No approvals yet',
+      icon: BadgeCheck,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-700',
+    },
+    {
+      title: 'Member Since',
+      value: 'Active',
+      note: 'Real SQUASH account',
+      change: activeAssignments.length > 0 ? 'Testing in progress' : 'Ready for jobs',
+      icon: Sparkles,
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-700',
+    },
+  ];
+  const dashboardStats = isRealAccount ? realStats : demoStats;
+  const dashboardAvailableTests = isRealAccount ? [] : demoAvailableTests;
+  const dashboardApprovals = isRealAccount
+    ? [...changesRequestedItems, ...pendingItems].slice(0, 3).map((item) => ({
+        name: item.jobTitle,
+        date: `Submitted on ${formatDate(item.submittedAt)}`,
+        amount: formatRands(item.amountZar),
+        status: item.status === 'changes_requested' ? 'Changes Requested' : 'Pending',
+      }))
+    : demoApprovals;
+  const dashboardTransactions = isRealAccount
+    ? [
+        ...earningsSummary.earnings.map((item) => ({
+          date: formatDate(item.submittedAt),
+          type: 'Earning',
+          description: item.jobTitle,
+          amount: formatRands(item.amountZar),
+          status:
+            item.status === 'approved'
+              ? 'Approved'
+              : item.status === 'paid'
+                ? 'Paid'
+                : item.status === 'changes_requested'
+                  ? 'Changes Requested'
+                  : item.status === 'rejected'
+                    ? 'Rejected'
+                    : 'Pending',
+        })),
+        ...earningsSummary.payouts.map((payout) => ({
+          date: formatDate(payout.createdAt),
+          type: 'Payout',
+          description: payout.status === 'paid' ? 'Paid to payout method' : 'Payout request',
+          amount: `-${formatRands(payout.amountZar)}`,
+          status: payout.status === 'paid' ? 'Paid' : 'Pending',
+        })),
+      ].slice(0, 6) as Array<{ date: string; type: string; description: string; amount: string; status: TransactionStatus }>
+    : demoTransactions;
+  const dashboardCompletedTests = isRealAccount
+    ? earningsSummary.earnings
+        .filter((item) => item.status === 'approved' || item.status === 'paid')
+        .slice(0, 3)
+        .map((item) => ({
+          name: item.jobTitle,
+          type: 'Approved Report',
+          score: {
+            usability: 78,
+            performance: 74,
+            onboarding: 80,
+            bugSeverity: 82,
+            deviceCompatibility: 76,
+          },
+        }))
+    : demoCompletedTests;
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard', active: true },
@@ -371,10 +564,10 @@ export default function SquashTesterDashboardPage() {
                 </a>
                 <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    A
+                    {testerInitial}
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">Alex Tester</div>
+                    <div className="text-sm font-bold text-slate-900">{testerName}</div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </a>
@@ -384,12 +577,12 @@ export default function SquashTesterDashboardPage() {
 
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div>
-              <h1 className="text-4xl font-black tracking-tight text-slate-900">Welcome back, Alex!</h1>
+              <h1 className="text-4xl font-black tracking-tight text-slate-900">Welcome back, {testerFirstName}!</h1>
               <p className="mt-2 text-slate-600">Here is what is happening with your testing journey.</p>
             </div>
 
             <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              {stats.map((card) => {
+              {dashboardStats.map((card) => {
                 const Icon = card.icon;
                 return (
                   <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -425,7 +618,7 @@ export default function SquashTesterDashboardPage() {
                   </div>
 
                   <div className="divide-y divide-slate-100">
-                    {availableTests.map((test) => (
+                    {dashboardAvailableTests.map((test) => (
                       <div key={test.name} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
                         <div className="min-w-0">
                           <div className="font-semibold text-slate-900">{test.name}</div>
@@ -447,6 +640,11 @@ export default function SquashTesterDashboardPage() {
                         </div>
                       </div>
                     ))}
+                    {dashboardAvailableTests.length === 0 ? (
+                      <div className="px-6 py-8 text-sm leading-6 text-slate-600">
+                        Open the Available Jobs page to browse real jobs posted by developers. Matching jobs will appear here once we add personalized recommendations.
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -457,29 +655,67 @@ export default function SquashTesterDashboardPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-6 border-b border-slate-100 px-6 py-4 text-sm font-semibold text-slate-500">
-                    <span className="text-green-700">In Progress (2)</span>
-                    <span>Submitted (3)</span>
-                    <span>Approved (19)</span>
+                    <span className="text-green-700">In Progress ({isRealAccount ? activeAssignments.length : Math.max(assignments.length, 2)})</span>
+                    <span>Submitted ({isRealAccount ? submittedAssignmentCount : 3})</span>
+                    <span>Approved ({isRealAccount ? approvedAssignmentCount : 19})</span>
                   </div>
 
                   <div className="divide-y divide-slate-100 px-6">
-                    {myTests.map((test) => (
-                      <div key={test.name} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <div className="font-semibold text-slate-900">{test.name}</div>
-                          <div className="mt-1 text-sm text-slate-500">{test.type}</div>
-                        </div>
-                        <div className="flex items-center gap-4 md:min-w-[280px] md:justify-end">
-                          <div className="w-full max-w-[140px]">
-                            <div className="h-2 rounded-full bg-slate-100">
-                              <div className="h-2 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
+                    {assignmentsError ? (
+                      <div className="py-4 text-sm font-semibold text-red-600">{assignmentsError}</div>
+                    ) : null}
+                    {activeAssignments.map((assignment) => {
+                      const category = getCategoryById(assignment.jobCategory as TestCategoryId);
+                      const CategoryIcon = category.icon;
+                      return (
+                        <div key={assignment.id} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="font-semibold text-slate-900">{assignment.jobTitle}</div>
+                              <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-100">
+                                Accepted
+                              </span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                              <span className="inline-flex items-center gap-1.5">
+                                <CategoryIcon className="h-4 w-4" style={{ color: category.color }} />
+                                {category.name}
+                              </span>
+                              <span>{assignment.jobPlatform}</span>
                             </div>
                           </div>
-                          <div className="text-sm font-semibold text-slate-700">{test.progress}%</div>
-                          <div className="text-sm text-slate-500">{test.due}</div>
+                          <div className="flex items-center gap-3 md:justify-end">
+                            <div className="hidden w-full max-w-[140px] sm:block">
+                              <div className="h-2 rounded-full bg-slate-100">
+                                <div className="h-2 w-[12%] rounded-full bg-green-600" />
+                              </div>
+                            </div>
+                            <a href={`/active-test?assignment=${assignment.id}`} className="rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                              Start Test
+                            </a>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                    {activeAssignments.length === 0
+                      ? (isRealAccount ? [] : demoMyTests).map((test) => (
+                          <div key={test.name} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+                            <div>
+                              <div className="font-semibold text-slate-900">{test.name}</div>
+                              <div className="mt-1 text-sm text-slate-500">{test.type}</div>
+                            </div>
+                            <div className="flex items-center gap-4 md:min-w-[280px] md:justify-end">
+                              <div className="w-full max-w-[140px]">
+                                <div className="h-2 rounded-full bg-slate-100">
+                                  <div className="h-2 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
+                                </div>
+                              </div>
+                              <div className="text-sm font-semibold text-slate-700">{test.progress}%</div>
+                              <div className="text-sm text-slate-500">{test.due}</div>
+                            </div>
+                          </div>
+                        ))
+                      : null}
                   </div>
 
                   <div className="px-6 py-4 text-center text-sm font-semibold text-slate-700">
@@ -493,7 +729,7 @@ export default function SquashTesterDashboardPage() {
                     <p className="mt-2 text-sm text-slate-600">Your latest completed tests and Squash Scores.</p>
                   </div>
                   <div className="divide-y divide-slate-100 px-6">
-                    {completedTests.map((test) => (
+                    {dashboardCompletedTests.map((test) => (
                       <div key={test.name} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <div className="font-semibold text-slate-900">{test.name}</div>
@@ -502,6 +738,11 @@ export default function SquashTesterDashboardPage() {
                         <SquashScore scores={test.score} compact />
                       </div>
                     ))}
+                    {dashboardCompletedTests.length === 0 ? (
+                      <div className="py-6 text-sm leading-6 text-slate-600">
+                        No approved reports yet. Once a developer approves your submitted test, it will appear here with a Squash Score.
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -583,9 +824,12 @@ export default function SquashTesterDashboardPage() {
 
                 <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
                   <h2 className="text-2xl font-bold text-slate-900">Pending Approvals</h2>
-                  <p className="mt-2 text-sm text-slate-600">Submissions waiting for developer approval.</p>
+                  <p className="mt-2 text-sm text-slate-600">Submissions waiting for approval or your updates.</p>
                   <div className="mt-5 space-y-4">
-                    {approvals.map((item) => (
+                    {earningsError ? (
+                      <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-600">{earningsError}</div>
+                    ) : null}
+                    {dashboardApprovals.map((item) => (
                       <div key={item.name} className="rounded-2xl border border-sky-100 bg-white p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -601,6 +845,11 @@ export default function SquashTesterDashboardPage() {
                         </div>
                       </div>
                     ))}
+                    {dashboardApprovals.length === 0 ? (
+                      <div className="rounded-2xl border border-sky-100 bg-white p-4 text-sm leading-6 text-slate-600">
+                        No reports are waiting for approval or changes right now.
+                      </div>
+                    ) : null}
                   </div>
                   <a href="/tester/submissions" className="mt-4 inline-block text-sm font-semibold text-sky-700">
                     View All Submissions -&gt;
@@ -630,7 +879,7 @@ export default function SquashTesterDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {transactions.map((item) => (
+                      {dashboardTransactions.map((item) => (
                         <tr key={`${item.date}-${item.description}`} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-6 py-4 text-slate-700">{item.date}</td>
                           <td className="px-6 py-4 text-slate-700">{item.type}</td>
@@ -730,3 +979,5 @@ export default function SquashTesterDashboardPage() {
     </div>
   );
 }
+
+

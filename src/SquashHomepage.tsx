@@ -1,3 +1,4 @@
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { Star } from 'lucide-react';
 import { TEST_CATEGORIES } from './components/testCategories';
@@ -16,7 +17,7 @@ export default function SquashHomepage() {
       text: 'Developers submit a website or app test job with goals, tasks, and target users.',
     },
     {
-      title: 'Students test it',
+      title: 'Everyday users test it',
       text: 'Qualified testers complete real usability checks, bug hunts, and task-based flows.',
     },
     {
@@ -34,7 +35,7 @@ export default function SquashHomepage() {
     },
     {
       quote:
-        'We got clear bug reports, helpful usability notes, and real student testers who matched our audience.',
+        'We got clear bug reports, helpful usability notes, and real everyday users who matched our audience.',
       name: 'Lerato D.',
       role: 'CTO, HealthApp',
     },
@@ -58,7 +59,7 @@ export default function SquashHomepage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              SQUASH connects developers and startups with student testers who find bugs,
+              SQUASH connects developers and startups with everyday users who test your products, find bugs,
               complete usability tests, and deliver real feedback before launch day.
             </p>
 
@@ -79,7 +80,7 @@ export default function SquashHomepage() {
 
             <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-slate-500">
               <div className="flex items-center gap-2">
-                <span className="text-green-600">&#10003;</span> Real student testers
+                <span className="text-green-600">&#10003;</span> Real everyday users
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-green-600">&#10003;</span> Screenshots and reports
@@ -130,7 +131,7 @@ export default function SquashHomepage() {
               A faster way to validate your product before launch
             </h2>
             <p className="mt-4 text-lg text-slate-600">
-              Post a testing job, get matched with student testers, and receive clear bug reports
+              Post a testing job, get matched with everyday users, and receive clear bug reports
               and usability feedback.
             </p>
           </div>
@@ -161,7 +162,7 @@ export default function SquashHomepage() {
                     {category.name}
                     {category.saExclusive ? (
                       <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
-                        SA 🇿🇦
+                        SA
                       </span>
                     ) : null}
                   </span>
@@ -171,7 +172,7 @@ export default function SquashHomepage() {
           </div>
 
           <p className="mt-8 text-center text-sm text-slate-500">
-            Serving developers and students across Johannesburg, Cape Town, Durban and beyond.
+            Serving developers and everyday users across Johannesburg, Cape Town, Durban and beyond.
           </p>
         </section>
 
@@ -242,28 +243,7 @@ export default function SquashHomepage() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div>
-            <span className="font-bold text-slate-900">SQUASH</span> - Source Quality User Assurance
-            Solutions Here.
-          </div>
-          <div className="flex flex-wrap gap-5">
-            <a href="/about" className="hover:text-slate-900">
-              About
-            </a>
-            <a href="/pricing" className="hover:text-slate-900">
-              Pricing
-            </a>
-            <a href="/privacy" className="hover:text-slate-900">
-              Privacy
-            </a>
-            <a href="/contact" className="hover:text-slate-900">
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

@@ -1,14 +1,14 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { resolvePostLoginPath, useAuth, type UserRole } from './auth';
+import { useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
 
 export default function SquashSignupPage() {
   const [searchParams] = useSearchParams();
   const requestedRole = searchParams.get('role');
-  const initialRole: UserRole = requestedRole === 'tester' ? 'tester' : 'developer';
-  const [role, setRole] = useState<UserRole>(initialRole);
+  const initialRole: WorkspaceRole = requestedRole === 'tester' ? 'tester' : 'developer';
+  const [role, setRole] = useState<WorkspaceRole>(initialRole);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,7 +65,8 @@ export default function SquashSignupPage() {
         return;
       }
 
-      navigate(resolvePostLoginPath(activeSession.role, nextPath), { replace: true });
+      const onboardingPath = `/onboarding/${role}${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`;
+      navigate(onboardingPath, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create your account right now.');
     } finally {
@@ -135,19 +136,19 @@ export default function SquashSignupPage() {
             </button>
           </div>
 
-          <form className="mt-6" onSubmit={submitSignup}>
+          <form className="mt-6" onSubmit={submitSignup} autoComplete="off">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Full Name</span>
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                   <UserRound className="h-4 w-4 text-slate-400" />
                   <input
-                    type="text"
+                    type="text" name="squash_signup_name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your full name"
                     className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                    autoComplete="name"
+                    autoComplete="new-password"
                   />
                 </div>
               </label>
@@ -157,12 +158,12 @@ export default function SquashSignupPage() {
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                   <Mail className="h-4 w-4 text-slate-400" />
                   <input
-                    type="email"
+                    type="email" name="squash_signup_identifier"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                    autoComplete="email"
+                    autoComplete="new-password"
                   />
                 </div>
               </label>
@@ -174,7 +175,7 @@ export default function SquashSignupPage() {
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                   <Lock className="h-4 w-4 text-slate-400" />
                   <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? 'text' : 'password'} name="squash_signup_secret"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create a password"
@@ -197,7 +198,7 @@ export default function SquashSignupPage() {
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3">
                   <Lock className="h-4 w-4 text-slate-400" />
                   <input
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? 'text' : 'password'} name="squash_signup_secret_confirm"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
@@ -306,4 +307,8 @@ export default function SquashSignupPage() {
     </div>
   );
 }
+
+
+
+
 

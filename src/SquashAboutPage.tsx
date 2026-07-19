@@ -12,6 +12,7 @@ import {
   Wifi,
   type LucideIcon,
 } from 'lucide-react';
+import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
 
@@ -50,25 +51,6 @@ export default function SquashAboutPage() {
     { icon: Users, title: 'We handle everything else' },
     { icon: CheckCircle2, title: 'You receive a report within 24 hours' },
   ];
-
-  const footerLinks = {
-    Platform: ['For Developers', 'For Testers', 'Pricing', 'About'],
-    Resources: ['Blog', 'Guides', 'Help Center', 'Contact'],
-    Legal: ['Terms of Service', 'Privacy Policy'],
-  };
-
-  const footerHref: Record<string, string> = {
-    'For Developers': '/for-developers',
-    'For Testers': '/for-testers',
-    Pricing: '/pricing',
-    About: '/about',
-    Blog: '/blog',
-    Guides: '/guides',
-    'Help Center': '/help-center',
-    Contact: '/contact',
-    'Terms of Service': '/terms',
-    'Privacy Policy': '/privacy',
-  };
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -162,15 +144,15 @@ export default function SquashAboutPage() {
               </p>
               <div className="mt-6 space-y-4 text-base text-slate-700">
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✔</span>
+                  <span className="mt-1 text-green-600">✓</span>
                   <span>Not bots. Not internal teams.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✔</span>
+                  <span className="mt-1 text-green-600">✓</span>
                   <span>Not friends who tell you only what you want to hear.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✔</span>
+                  <span className="mt-1 text-green-600">✓</span>
                   <span>
                     Real people who match your target market, devices, and real user behavior.
                   </span>
@@ -208,7 +190,7 @@ export default function SquashAboutPage() {
                 <div className="mt-5 space-y-3 text-slate-700">
                   {reportItems.map((item) => (
                     <div key={item} className="flex items-start gap-3">
-                      <span className="mt-1 text-green-600">•</span>
+                      <span className="mt-1 text-green-600">✓</span>
                       <span>{item}</span>
                     </div>
                   ))}
@@ -254,7 +236,7 @@ export default function SquashAboutPage() {
                 <div className="mt-6 space-y-4 text-slate-700">
                   {testerBenefits.map((item) => (
                     <div key={item} className="flex items-start gap-3">
-                      <span className="mt-1 text-green-600">✔</span>
+                      <span className="mt-1 text-green-600">✓</span>
                       <span>{item}</span>
                     </div>
                   ))}
@@ -333,60 +315,7 @@ export default function SquashAboutPage() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-[1.1fr_1fr_1fr_1fr]">
-            <div>
-              <div className="flex items-center gap-3">
-                <img
-                  src="/squash-logo.png"
-                  alt="SQUASH logo"
-                  className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm"
-                />
-                <div className="text-2xl font-black tracking-tight">SQUASH</div>
-              </div>
-              <p className="mt-4 max-w-xs leading-7 text-slate-600">
-                Real people. Real feedback. Better apps.
-              </p>
-            </div>
-
-            {Object.entries(footerLinks).map(([title, items]) => (
-              <div key={title}>
-                <h4 className="font-bold text-slate-900">{title}</h4>
-                <div className="mt-4 space-y-3 text-slate-600">
-                  {items.map((item) => (
-                    <a
-                      key={item}
-                      href={footerHref[item] ?? '/'}
-                      className="block transition hover:text-slate-900"
-                    >
-                      {item}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            <div>
-              <h4 className="font-bold text-slate-900">Follow Us</h4>
-              <div className="mt-4 flex gap-3 text-xl text-slate-600">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200">
-                  f
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200">
-                  X
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200">
-                  ◎
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200">
-                  in
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

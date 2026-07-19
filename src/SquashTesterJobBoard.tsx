@@ -13,18 +13,46 @@ import {
   Star,
   UserCircle2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
 import {
   TEST_CATEGORIES,
   getCategoryById,
   type TestCategoryId,
 } from './components/testCategories';
+import { useAuth } from './auth';
+import { getTesterSpecializations } from './lib/profileApi';
+import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, type DeveloperJob } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
 
 type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
 
+type TesterJobCard = {
+  name: string;
+  description: string;
+  tags: string[];
+  type: string;
+  time: string;
+  deadline: string;
+  severity: Severity;
+  pay: string;
+  testers: string;
+  posted: string;
+  badge: string;
+  accent: string;
+  logoUrl?: string | null;
+  categoryId: TestCategoryId;
+  requiredSpecializations: string[];
+  source?: 'supabase' | 'demo';
+  jobId?: string;
+  developerId?: string;
+};
+
 export default function SquashTesterJobBoard() {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  const testerName = session?.name || 'Thando M.';
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('All Jobs');
   const [sortBy, setSortBy] = useState<'Newest' | 'Highest Pay'>('Newest');
@@ -39,6 +67,13 @@ export default function SquashTesterJobBoard() {
   const [testTypeFilter, setTestTypeFilter] = useState('Any');
   const [timeFilter, setTimeFilter] = useState('Any');
   const [filterNotice, setFilterNotice] = useState('');
+  const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
+  const [jobsError, setJobsError] = useState('');
+  const [applicationByJobId, setApplicationByJobId] = useState<Record<string, string>>({});
+  const [assignmentByJobId, setAssignmentByJobId] = useState<Record<string, string>>({});
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const [applicationNotice, setApplicationNotice] = useState('');
+  const [applicationError, setApplicationError] = useState('');
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -51,107 +86,57 @@ export default function SquashTesterJobBoard() {
   ];
 
   const tabs = [
-    { label: 'All Jobs', count: 128, active: true },
-    ...TEST_CATEGORIES.map((item) => ({ label: item.name, count: 12 })),
+    { label: 'All Jobs', count: databaseJobs.length, active: true },
+    ...TEST_CATEGORIES.map((item) => ({
+      label: item.name,
+      count: databaseJobs.filter((job) => job.category === item.id).length,
+    })),
   ];
 
-  const jobs: Array<{
-    name: string;
-    description: string;
-    tags: string[];
-    type: string;
-    time: string;
-    deadline: string;
-    severity: Severity;
-    pay: string;
-    testers: string;
-    posted: string;
-    badge: string;
-    accent: string;
-    categoryId: TestCategoryId;
-    requiredSpecializations: string[];
-  }> = [
-    {
-      name: 'FitTrack Mobile',
-      description: 'Fitness tracking app for workouts and goals.',
-      tags: ['Android', 'Mobile App', 'Health & Fitness'],
-      type: 'Usability Test',
-      time: '5 - 10 min',
-      deadline: '25 May 2024',
-      severity: 'Critical',
-      pay: 'R90',
-      testers: '25 testers',
-      posted: '2 hours ago',
-      badge: 'New',
-      accent: 'bg-slate-900 text-white',
-      categoryId: 'mobile-app-testing',
-      requiredSpecializations: ['samsung-a-series', 'health', '2g-3g-only'],
-    },
-    {
-      name: 'PayFlow Web App',
-      description: 'Payment management dashboard for businesses.',
-      tags: ['Web App', 'Fintech', 'Dashboard'],
-      type: 'Usability Test',
-      time: '10 - 15 min',
-      deadline: '26 May 2024',
-      severity: 'High',
-      pay: 'R120',
-      testers: '15 testers',
-      posted: '4 hours ago',
-      badge: 'Featured',
-      accent: 'bg-violet-500 text-white',
-      categoryId: 'website-testing',
-      requiredSpecializations: ['banking', 'township-network'],
-    },
-    {
-      name: 'HealthApp iOS',
-      description: 'Health & wellness companion for iOS users.',
-      tags: ['iOS', 'Mobile App', 'Health & Fitness'],
-      type: 'Bug Hunt',
-      time: '15 - 20 min',
-      deadline: '27 May 2024',
-      severity: 'Medium',
-      pay: 'R80',
-      testers: '30 testers',
-      posted: '6 hours ago',
-      badge: '',
-      accent: 'bg-emerald-600 text-white',
-      categoryId: 'localization-testing',
-      requiredSpecializations: ['zulu', 'iphone-12-plus', 'health'],
-    },
-    {
-      name: 'GameZone Web',
-      description: 'Online gaming platform for casual gamers.',
-      tags: ['Web App', 'Gaming', 'Entertainment'],
-      type: 'Exploratory Test',
-      time: '10 - 15 min',
-      deadline: '28 May 2024',
-      severity: 'Low',
-      pay: 'R100',
-      testers: '10 testers',
-      posted: '8 hours ago',
-      badge: '',
-      accent: 'bg-slate-800 text-white',
-      categoryId: 'performance-testing',
-      requiredSpecializations: ['load-shedding', 'budget-android'],
-    },
-    {
-      name: 'ShopEasy Android',
-      description: 'E-commerce app for a seamless shopping experience.',
-      tags: ['Android', 'Mobile App', 'E-commerce'],
-      type: 'Usability Test',
-      time: '10 - 15 min',
-      deadline: '29 May 2024',
-      severity: 'Medium',
-      pay: 'R90',
-      testers: '20 testers',
-      posted: 'Yesterday',
-      badge: '',
-      accent: 'bg-red-500 text-white',
-      categoryId: 'ecommerce-testing',
-      requiredSpecializations: ['ecommerce', 'township-network'],
-    },
-  ];
+
+  const databaseJobCards = useMemo<TesterJobCard[]>(
+    () =>
+      databaseJobs.map((job, index) => ({
+        name: job.title,
+        description: job.description || 'Developer is looking for real tester feedback on this app.',
+        tags: [job.platform, getCategoryById(job.category as TestCategoryId).name],
+        type: getCategoryById(job.category as TestCategoryId).name,
+        time: job.packageKey === 'starter' ? 'About 20 min' : job.packageKey === 'growth' ? 'About 30 min' : 'About 45 min',
+        deadline: 'Open now',
+        severity: index === 0 ? 'High' : 'Medium',
+        pay: job.packageKey === 'starter' ? 'R50 - R80' : job.packageKey === 'growth' ? 'R80 - R120' : 'R150 - R200',
+        testers: `${job.testersNeeded} testers needed`,
+        posted: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+        badge: 'New',
+        accent: 'bg-green-600 text-white',
+        logoUrl: job.logoUrl,
+        categoryId: job.category as TestCategoryId,
+        requiredSpecializations: job.preferredSpecializations,
+        source: 'supabase',
+        jobId: job.id,
+        developerId: job.developerId,
+      })),
+    [databaseJobs],
+  );
+
+  const jobs = useMemo<TesterJobCard[]>(() => databaseJobCards, [databaseJobCards]);
+
+  useEffect(() => {
+    let mounted = true;
+    setJobsError('');
+
+    getActiveJobs()
+      .then((items) => {
+        if (mounted) setDatabaseJobs(items);
+      })
+      .catch((error: Error) => {
+        if (mounted) setJobsError(error.message || 'Could not load live jobs right now.');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const topTesters = [
     { name: 'Lerato D.', level: 'Level 5', total: 'R15,430', testsCompleted: 64, rating: 4.9 },
@@ -159,17 +144,106 @@ export default function SquashTesterJobBoard() {
     { name: 'Thando M.', level: 'Level 3', total: 'R9,870', testsCompleted: 14, rating: 4.3 },
   ];
 
-  const testerSpecializations = useMemo(() => {
-    // TODO: Replace with Supabase query
+  const [testerSpecializations, setTesterSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
-    if (!raw) return [] as string[];
+    if (!raw) return [];
     try {
       const parsed = JSON.parse(raw) as string[];
       return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return [] as string[];
+      return [];
     }
-  }, []);
+  });
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    getTesterSpecializations(session.userId)
+      .then((savedSpecializations) => {
+        if (savedSpecializations.length > 0) setTesterSpecializations(savedSpecializations);
+      })
+      .catch(() => {
+        // Keep local fallback if Supabase is temporarily unavailable.
+      });
+  }, [session?.source, session?.userId]);
+
+  useEffect(() => {
+    if (!session?.userId || session.source !== 'supabase') return;
+
+    Promise.allSettled([getTesterApplications(session.userId), getTesterAssignments(session.userId)]).then(
+      ([applicationsResult, assignmentsResult]) => {
+        const applications = applicationsResult.status === 'fulfilled' ? applicationsResult.value : [];
+        const assignments = assignmentsResult.status === 'fulfilled' ? assignmentsResult.value : [];
+
+        const statusByJobId = applications.reduce<Record<string, string>>((acc, application) => {
+          acc[application.jobId] = application.status;
+          return acc;
+        }, {});
+
+        const assignmentIdsByJobId = assignments.reduce<Record<string, string>>((acc, assignment) => {
+          acc[assignment.jobId] = assignment.id;
+          statusByJobId[assignment.jobId] = 'accepted';
+          return acc;
+        }, {});
+
+        setAssignmentByJobId(assignmentIdsByJobId);
+        setApplicationByJobId(statusByJobId);
+
+        if (applicationsResult.status === 'rejected' && assignmentsResult.status === 'rejected') {
+          const reason = applicationsResult.reason instanceof Error ? applicationsResult.reason.message : '';
+          setApplicationError(reason || 'Could not load your applications right now.');
+        }
+      },
+    );
+  }, [session?.source, session?.userId]);
+
+  const handleApply = async (job: TesterJobCard) => {
+    setApplicationNotice('');
+    setApplicationError('');
+
+    if (job.source !== 'supabase' || !job.jobId) {
+      navigate('/active-test');
+      return;
+    }
+
+    if (!session?.userId || session.source !== 'supabase' || !session.roles.includes('tester')) {
+      setApplicationError('Please log in with a real tester account before applying.');
+      return;
+    }
+
+    if (job.developerId === session.userId) {
+      setApplicationError('You cannot apply to a job you posted yourself. Switch to another tester account to test this flow.');
+      return;
+    }
+
+    const currentStatus = applicationByJobId[job.jobId];
+    if (currentStatus === 'accepted') {
+      const assignmentId = assignmentByJobId[job.jobId];
+      navigate(assignmentId ? `/active-test?assignment=${assignmentId}` : '/active-test');
+      return;
+    }
+
+    if (currentStatus === 'pending') {
+      setApplicationNotice(`You already applied to ${job.name}. The developer is reviewing your profile.`);
+      return;
+    }
+
+    if (currentStatus === 'rejected') {
+      setApplicationNotice(`Your application for ${job.name} was not accepted this time.`);
+      return;
+    }
+
+    setApplyingJobId(job.jobId);
+    try {
+      const application = await applyToJob(job.jobId, session.userId);
+      setApplicationByJobId((prev) => ({ ...prev, [application.jobId]: application.status }));
+      setApplicationNotice(`Application sent for ${job.name}. The developer can now review your tester profile.`);
+    } catch (error) {
+      setApplicationError(error instanceof Error ? error.message : 'Unable to apply right now.');
+    } finally {
+      setApplyingJobId(null);
+    }
+  };
 
   const severityClasses: Record<Severity, string> = {
     Critical: 'text-red-500',
@@ -356,7 +430,7 @@ export default function SquashTesterJobBoard() {
                       <UserCircle2 className="h-7 w-7" />
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">Thando M.</div>
+                      <div className="text-sm font-bold text-slate-900">{testerName}</div>
                       <div className="text-xs text-slate-500">Tester</div>
                     </div>
                   </a>
@@ -420,13 +494,34 @@ export default function SquashTesterJobBoard() {
               ))}
             </div>
 
+            {databaseJobs.length > 0 ? (
+              <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+                Showing {databaseJobs.length} live Supabase job{databaseJobs.length === 1 ? '' : 's'}.
+              </div>
+            ) : null}
+            {jobsError ? (
+              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {jobsError}
+              </div>
+            ) : null}
+            {applicationNotice ? (
+              <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+                {applicationNotice}
+              </div>
+            ) : null}
+            {applicationError ? (
+              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {applicationError}
+              </div>
+            ) : null}
+
             <div className="mt-8 space-y-5">
               {filteredJobs.map((job) => (
                 <div key={job.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex gap-4">
-                      <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold ${job.accent}`}>
-                        {job.name.charAt(0)}
+                      <div className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
+                        {job.logoUrl ? <img src={job.logoUrl} alt={`${job.name} logo`} className="h-full w-full object-cover" /> : job.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
@@ -447,6 +542,11 @@ export default function SquashTesterJobBoard() {
                           {job.badge ? (
                             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${job.badge === 'New' ? 'bg-green-100 text-green-700' : 'bg-sky-100 text-sky-700'}`}>
                               {job.badge}
+                            </span>
+                          ) : null}
+                          {job.source === 'supabase' ? (
+                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                              Live Job
                             </span>
                           ) : null}
                           {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
@@ -477,9 +577,31 @@ export default function SquashTesterJobBoard() {
                         <div className="text-sm text-slate-500">per test</div>
                         <div className="mt-1 text-sm text-slate-500">{job.testers}</div>
                       </div>
-                      <a href="/active-test" className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
-                        Apply Now
-                      </a>
+                      {(() => {
+                        const applicationStatus = job.jobId ? applicationByJobId[job.jobId] : undefined;
+                        const isAccepted = applicationStatus === 'accepted';
+                        const isPending = applicationStatus === 'pending';
+                        const isRejected = applicationStatus === 'rejected';
+                        const isApplying = job.jobId && applyingJobId === job.jobId;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => handleApply(job)}
+                            disabled={Boolean(isApplying || isPending || isRejected)}
+                            className={`rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
+                              isAccepted
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : isPending
+                                  ? 'cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+                                  : isRejected
+                                    ? 'cursor-not-allowed bg-slate-100 text-slate-500'
+                                    : 'bg-green-600 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300'
+                            }`}
+                          >
+                            {isApplying ? 'Applying...' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : 'Apply Now'}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -697,3 +819,9 @@ export default function SquashTesterJobBoard() {
     </div>
   );
 }
+
+
+
+
+
+

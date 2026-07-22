@@ -12,10 +12,12 @@ import {
   SlidersHorizontal,
   Star,
   UserCircle2,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
+import MobileTabBar from './components/MobileTabBar';
 import {
   TEST_CATEGORIES,
   getCategoryById,
@@ -67,6 +69,7 @@ export default function SquashTesterJobBoard() {
   const [testTypeFilter, setTestTypeFilter] = useState('Any');
   const [timeFilter, setTimeFilter] = useState('Any');
   const [filterNotice, setFilterNotice] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [jobsError, setJobsError] = useState('');
   const [applicationByJobId, setApplicationByJobId] = useState<Record<string, string>>({});
@@ -338,6 +341,32 @@ export default function SquashTesterJobBoard() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
+      {/* Mobile Nav Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative w-full max-w-xs bg-white p-6 shadow-2xl animate-in slide-in-from-left">
+            <button onClick={() => setIsMobileMenuOpen(false)} className="absolute right-4 top-4 rounded-xl p-2 text-slate-500 hover:bg-slate-100">
+              <X className="h-6 w-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-8">
+              <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-xl" />
+              <span className="text-xl font-black">SQUASH</span>
+            </div>
+            <nav className="space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a href={item.href} key={item.label} className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+                    <Icon className="h-5 w-5" />
+                    {item.label}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr_280px]">
         <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
@@ -399,15 +428,15 @@ export default function SquashTesterJobBoard() {
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 pb-24 lg:pb-0">
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <button onClick={() => setIsMobileMenuOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
                     <Menu className="h-5 w-5" />
-                  </a>
-                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
+                  </button>
+                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
                       value={searchText}
@@ -816,6 +845,7 @@ export default function SquashTesterJobBoard() {
           </div>
         </aside>
       </div>
+      <MobileTabBar role="tester" />
     </div>
   );
 }

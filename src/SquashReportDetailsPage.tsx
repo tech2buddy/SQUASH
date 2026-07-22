@@ -1,29 +1,22 @@
 import {
-  ArrowLeft,
-  Bell,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleHelp,
   ClipboardList,
   CreditCard,
   Download,
   FileText,
   Home,
   Menu,
-  Search,
-  ShieldCheck,
-  Smartphone,
-  UserCircle2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
-import SquashCertified from './components/SquashCertified';
 import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
-import TesterBadge from './components/TesterBadge';
 import { useAuth } from './auth';
-import { getDeveloperSubmittedReports, reviewSubmittedReport, type DeveloperSubmissionReview } from './lib/jobApi';
-
+import {
+  getDeveloperSubmittedReports,
+  getSubmissionDetails,
+  reviewSubmittedReport,
+  type DeveloperSubmissionDetails,
+} from './lib/jobApi';
 
 function formatDateTime(value: string | null) {
   if (!value) return 'Not submitted yet';
@@ -38,94 +31,110 @@ function formatDateTime(value: string | null) {
 
 export default function SquashReportDetailsPage() {
   const { session } = useAuth();
-  const developerName = session?.name || 'Alex Developer';
+  const developerName = session?.name || 'Developer';
   const submissionId = new URLSearchParams(window.location.search).get('submission');
-  const [realReport, setRealReport] = useState<DeveloperSubmissionReview | null>(null);
+
+  const [realReport, setRealReport] = useState<DeveloperSubmissionDetails | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportError, setReportError] = useState('');
-  const [status, setStatus] = useState('Open');
-  const [category, setCategory] = useState('Crash / Stability');
-  const [reproducibility, setReproducibility] = useState('Always');
   const [actionNotice, setActionNotice] = useState('');
+  const [reviewing, setReviewing] = useState(false);
   const [retestOpen, setRetestOpen] = useState(false);
-  const [retestNotice, setRetestNotice] = useState('');
 
   useEffect(() => {
-    if (!submissionId || !session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+    const currentUserId = session?.userId;
+    if (!currentUserId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
 
     let mounted = true;
     setLoadingReport(true);
     setReportError('');
 
-    getDeveloperSubmittedReports(session.userId)
-      .then((reports) => {
+    const loadData = async () => {
+      try {
+        let targetId = submissionId;
+        if (!targetId) {
+          const allReports = await getDeveloperSubmittedReports(currentUserId);
+          if (!mounted) return;
+          if (allReports.length > 0) {
+            targetId = allReports[0].id;
+          } else {
+            setRealReport(null);
+            return;
+          }
+        }
+
+        const details = await getSubmissionDetails(targetId);
         if (!mounted) return;
-        const found = reports.find((report) => report.id === submissionId) || null;
-        setRealReport(found);
-        if (!found) setReportError('This report was not found for your developer workspace.');
-      })
-      .catch((error: Error) => {
-        if (mounted) setReportError(error.message || 'Could not load this report right now.');
-      })
-      .finally(() => {
+
+        if (details) {
+          setRealReport(details);
+        } else {
+          setReportError('The specified report could not be found.');
+        }
+      } catch (err) {
+        if (mounted) {
+          setReportError(err instanceof Error ? err.message : 'Could not load report details.');
+        }
+      } finally {
         if (mounted) setLoadingReport(false);
-      });
+      }
+    };
+
+    loadData();
 
     return () => {
       mounted = false;
     };
   }, [session?.roles, session?.source, session?.userId, submissionId]);
 
-  const scores: SquashScoreBreakdown = {
-    usability: 84,
-    performance: 78,
-    onboarding: 80,
-    bugSeverity: 86,
-    deviceCompatibility: 82,
-  };
-  const displayScores: SquashScoreBreakdown = realReport?.scores || scores;
-  const displayOverallScore = getOverallScore(displayScores);
-  const displayTitle = realReport ? `${realReport.jobTitle} - Submitted Report` : 'FitTrack Mobile - Usability Test';
-  const displayTester = realReport?.testerName || 'Sipho N.';
-  const displaySubmitted = realReport ? formatDateTime(realReport.submittedAt || realReport.createdAt) : '26 May 2024, 10:45 AM';
-  const displaySummary = realReport?.summary || 'The app crashes every time I try to add a new workout with more than 5 exercises.';
-  const displaySeverity = realReport?.criticalBugCount ? 'Critical' : realReport?.bugCount ? 'Medium' : 'Low';
-  const displayTestType = realReport?.jobCategory ? realReport.jobCategory.replace(/-/g, ' ') : 'Usability Test';
-  const displayPlatform = realReport?.jobPlatform || 'Samsung Galaxy S23 - Android 14';
-  const displayAttachments = realReport
-    ? [
-        {
-          name: `${realReport.bugCount || 1}_bug_report_evidence.txt`,
-          meta: `${realReport.bugCount} bug report${realReport.bugCount === 1 ? '' : 's'}`,
-          accent: 'bg-red-50 text-red-500',
-          icon: 'BUG',
-        },
-        ...(realReport.videoBugCount > 0
-          ? [
-              {
-                name: 'Screen_Recording_from_tester.mp4',
-                meta: `MP4 - ${realReport.videoBugCount} video report${realReport.videoBugCount === 1 ? '' : 's'}`,
-                accent: 'bg-violet-50 text-violet-500',
-                icon: 'VID',
-              },
-            ]
-          : []),
-      ]
-    : [
-        {
-          name: 'Screenshot_2024-05-26_10-42.png',
-          meta: 'PNG - 1.2 MB',
-          accent: 'bg-red-50 text-red-500',
-          icon: 'IMG',
-        },
-        {
-          name: 'Screen_Recording_2024-05-26.mp4',
-          meta: 'MP4 - 12.4 MB',
-          accent: 'bg-violet-50 text-violet-500',
-          icon: 'VID',
-        },
-      ];
+  const handleReviewAction = async (newStatus: 'approved' | 'changes_requested' | 'rejected') => {
+    if (!realReport) return;
+    setReviewing(true);
+    setActionNotice('');
+    setReportError('');
 
+    try {
+      await reviewSubmittedReport({
+        submissionId: realReport.id,
+        assignmentId: realReport.assignmentId,
+        status: newStatus,
+      });
+
+      setRealReport((prev: DeveloperSubmissionDetails | null) => (prev ? { ...prev, status: newStatus } : null));
+      setActionNotice(
+        newStatus === 'approved'
+          ? 'Report has been approved. Tester payment has been authorized.'
+          : newStatus === 'changes_requested'
+            ? 'Changes requested from the tester.'
+            : 'Report was marked as rejected.',
+      );
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : 'Failed to update report status.');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  const handleRetestSubmit = (payload: RetestSubmission) => {
+    if (!realReport) return;
+    window.localStorage.setItem(
+      `squash_retest_${realReport.id}`,
+      JSON.stringify({
+        ...payload,
+        submittedAt: new Date().toISOString(),
+      }),
+    );
+    setActionNotice(`Retest request submitted to ${realReport.testerName}. Notification sent.`);
+  };
+
+  const scores: SquashScoreBreakdown = realReport?.scores || {
+    usability: 0,
+    performance: 0,
+    onboarding: 0,
+    bugSeverity: 0,
+    deviceCompatibility: 0,
+  };
+  const overallScore = getOverallScore(scores);
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
@@ -134,592 +143,305 @@ export default function SquashReportDetailsPage() {
     { label: 'Billing', icon: CreditCard, href: '/billing' },
   ];
 
-  const tabs = [
-    { label: 'Report Details', href: '/report-details', active: true },
-    { label: 'Comments (3)', href: '/report-details/comments' },
-    { label: 'Attachments (2)', href: '/report-details/attachments' },
-    { label: 'Activity', href: '/report-details/activity' },
-  ];
-
-  const steps = [
-    'Open the FitTrack Mobile app.',
-    'Tap on "Workouts" from the bottom navigation.',
-    'Tap "Add Workout".',
-    'Add more than 5 exercises.',
-    'Tap "Save Workout".',
-    'App crashes and returns to home screen.',
-  ];
-
-  const activity = [
-    {
-      title: 'Report submitted',
-      author: 'by Sipho N.',
-      detail: '',
-      time: '26 May 2024, 10:45 AM',
-      color: 'bg-green-100 text-green-600',
-    },
-    {
-      title: 'Developer comment',
-      author: 'by Alex Developer',
-      detail: 'Please provide steps to reproduce.',
-      time: '26 May 2024, 11:15 AM',
-      color: 'bg-sky-100 text-sky-600',
-    },
-    {
-      title: 'Tester reply',
-      author: 'by Sipho N.',
-      detail: 'Steps added in the report.',
-      time: '26 May 2024, 11:32 AM',
-      color: 'bg-green-100 text-green-600',
-    },
-    {
-      title: 'Status changed to Open',
-      author: 'by Alex Developer',
-      detail: '',
-      time: '26 May 2024, 11:35 AM',
-      color: 'bg-amber-100 text-amber-600',
-    },
-  ];
-
-  const handleRetestSubmit = (payload: RetestSubmission) => {
-    // TODO: Replace with Supabase query
-    const previousScore = 68;
-    const newScore = 81;
-    const diff = newScore - previousScore;
-    const crossedCertified = previousScore < 80 && newScore >= 80;
-    window.localStorage.setItem(
-      'squash_report_retest',
-      JSON.stringify({
-        ...payload,
-        previousScore,
-        newScore,
-        submittedAt: new Date().toISOString(),
-      }),
-    );
-    setRetestNotice(
-      `Previous Score: ${previousScore}/100 → New Score: ${newScore}/100 +${diff} points improvement 🎉${
-        crossedCertified ? " Congratulations! You've earned your SQUASH CERTIFIED badge! 🏆" : ''
-      }`,
-    );
-    setRetestOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
-            />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active
-                      ? 'bg-green-50 text-green-700'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </span>
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="border-t border-slate-200 p-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Quick Actions</div>
-              <div className="mt-4 space-y-3">
-                <a
-                  href="/post-job"
-                  className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center font-semibold text-white hover:bg-green-700"
-                >
-                  Post a New Job
-                </a>
-                <a href="/post-job" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
-                  Post a New Job
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                  <CircleHelp className="h-5 w-5 text-slate-500" />
-                </div>
+      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
+        {/* Sidebar */}
+        <aside className="hidden border-r border-slate-200 bg-white lg:block">
+          <div className="flex h-full flex-col justify-between p-6">
+            <div className="space-y-8">
+              <Link to="/" className="flex items-center gap-3">
+                <img
+                  src="/squash-logo.png"
+                  alt="SQUASH logo"
+                  className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm"
+                />
                 <div>
-                  <div className="font-bold text-slate-900">Need Help?</div>
-                  <div className="text-sm text-slate-500">
-                    Visit our Help Center for guides and support.
-                  </div>
+                  <div className="text-xl font-black tracking-tight text-slate-900">SQUASH</div>
+                  <div className="text-xs text-slate-500">Developer Portal</div>
                 </div>
-              </div>
-              <a href="/help-center" className="mt-4 inline-block text-sm font-semibold text-green-700">Go to Help Center -&gt;</a>
+              </Link>
+
+              <nav className="space-y-1.5">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                        item.active
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Account</div>
+              <div className="mt-2 text-sm font-bold text-slate-900">{developerName}</div>
+              <Link to="/logout" className="mt-2 inline-block text-xs font-semibold text-red-600 hover:underline">
+                Sign out
+              </Link>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        {/* Main Content */}
+        <main className="flex flex-col min-w-0">
+          <header className="border-b border-slate-200 bg-white">
+            <div className="px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <Link to="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                     <Menu className="h-5 w-5" />
-                  </a>
-                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
-                    <Search className="h-4 w-4 text-slate-400" />
-                    <input
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                      placeholder="Search jobs, tests, reports..."
-                    />
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/developer/submissions" className="text-xs font-semibold text-slate-500 hover:text-slate-900">
+                      Submissions
+                    </Link>
+                    <span className="text-slate-300">/</span>
+                    <span className="text-xs font-bold text-slate-900">Report Details</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  </a>
-                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
-                      <div className="text-xs text-slate-500">Developer</div>
-                    </div>
-                  </a>
-                </div>
-              </div>
-
-              <div className="md:hidden">
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                    placeholder="Search jobs, tests, reports..."
-                  />
+                <div className="flex items-center gap-3">
+                  <Link to="/developer/submissions" className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    All Reports
+                  </Link>
                 </div>
               </div>
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <a
-                  href="/report-details"
-                  className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back to Reports
-                </a>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                    {displayTitle}
-                  </h1>
-                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
-                    Critical
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                  <span>
-                    Reported by <span className="font-semibold text-slate-700">{displayTester}</span>
-                  </span>
-                  <span>-</span>
-                  <span>{displaySubmitted}</span>
-                  <TesterBadge testsCompleted={32} rating={4.7} />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <a href="/report-details" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
-                  <ChevronLeft className="h-4 w-4" /> Previous
-                </a>
-                <a href="/report-details" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
-                  Next <ChevronRight className="h-4 w-4" />
-                </a>
-              </div>
-            </div>
-
+          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
             {loadingReport ? (
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500">
-                Loading real report details...
+              <div className="flex min-h-[400px] items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-600">
+                Loading report details...
               </div>
-            ) : null}
-            {reportError ? (
-              <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                {reportError} Showing a sample report for now.
+            ) : !realReport ? (
+              <div className="mx-auto max-w-2xl rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-50 text-green-600 ring-1 ring-green-100">
+                  <ClipboardList className="h-8 w-8" />
+                </div>
+                <h2 className="mt-4 text-2xl font-black text-slate-900">No Submitted Reports Yet</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  When accepted testers complete testing on your active jobs, their bug reports, steps to reproduce, and overall usability scores will appear here.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link
+                    to="/developer/jobs"
+                    className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                  >
+                    View Active Jobs
+                  </Link>
+                  <Link
+                    to="/post-job"
+                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Post a New Job
+                  </Link>
+                </div>
               </div>
-            ) : null}
-
-            <div className="mt-8 flex flex-wrap gap-6 border-b border-slate-200">
-              {tabs.map((tab) => (
-                <a
-                  key={tab.label}
-                  href={tab.href}
-                  className={`border-b-2 px-2 pb-4 text-sm font-semibold transition ${
-                    tab.active
-                      ? 'border-green-600 text-green-700'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  {tab.label}
-                </a>
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
+            ) : (
               <div className="space-y-6">
-                <section className="space-y-4">
-                  <SquashScore scores={displayScores} />
-                  <SquashCertified score={displayOverallScore} testers={realReport?.testerTestsCompleted || 24} certifiedAt="2025-09-20" />
+                {/* Header Card */}
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                          {realReport.jobPlatform}
+                        </span>
+                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold capitalize text-green-700 ring-1 ring-green-100">
+                          {realReport.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <h1 className="mt-3 text-2xl font-black text-slate-900 sm:text-3xl">{realReport.jobTitle}</h1>
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
+                        <span>Submitted by <strong className="text-slate-900">{realReport.testerName}</strong></span>
+                        <span>•</span>
+                        <span>{formatDateTime(realReport.submittedAt || realReport.createdAt)}</span>
+                      </div>
+                    </div>
 
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="text-lg font-bold text-slate-900">Share your Squash Score</div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      <a
-                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(
-                          `Our app scored ${displayOverallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Share on LinkedIn
-                      </a>
-                      <a
-                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          `Our app scored ${displayOverallScore}/100 on SQUASH — tested by real SA users before launch. #BuiltForSA #SQUASH`,
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Share on Twitter
-                      </a>
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setRetestOpen(true)}
-                        className="rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        disabled={reviewing}
+                        onClick={() => handleReviewAction('approved')}
+                        className="rounded-2xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:opacity-50"
                       >
-                        Request Retest
+                        {reviewing ? 'Updating...' : 'Approve Report'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewing}
+                        onClick={() => handleReviewAction('changes_requested')}
+                        className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        Request Changes
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewing}
+                        onClick={() => handleReviewAction('rejected')}
+                        className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        Reject
                       </button>
                     </div>
-                    {retestNotice ? <p className="mt-3 text-sm font-semibold text-green-700">{retestNotice}</p> : null}
-                  </div>
-                </section>
-
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Bug Details</h2>
-
-                  <div className="mt-6 grid gap-5 md:grid-cols-2">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Bug Title</div>
-                      <div className="mt-2 text-2xl font-bold text-slate-900">
-                        App crashes when adding workout
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Bug ID</div>
-                      <div className="mt-2 text-2xl font-bold text-slate-900">#BUG-1247</div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Severity</div>
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600">
-                        <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> {displaySeverity}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Status</div>
-                      <div className="relative md:max-w-[170px]">
-                        <select
-                          value={status}
-                          onChange={(e) => setStatus(e.target.value)}
-                          className="mt-3 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-left text-sm font-semibold text-red-500 outline-none transition focus:border-green-500"
-                        >
-                          <option>Open</option>
-                          <option>In Review</option>
-                          <option>Resolved</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Category</div>
-                      <div className="relative">
-                        <select
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
-                          className="mt-3 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-left text-sm font-semibold text-slate-700 outline-none transition focus:border-green-500"
-                        >
-                          <option>Crash / Stability</option>
-                          <option>UI / UX</option>
-                          <option>Performance</option>
-                          <option>Functional Bug</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Found in Version</div>
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                        v2.3.1 (Build 45)
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Device &amp; OS</div>
-                      <div className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                        <Smartphone className="h-4 w-4 text-slate-400" /> {displayPlatform}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">Reproducibility</div>
-                      <div className="relative md:max-w-[170px]">
-                        <select
-                          value={reproducibility}
-                          onChange={(e) => setReproducibility(e.target.value)}
-                          className="mt-3 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-left text-sm font-semibold text-slate-700 outline-none transition focus:border-green-500"
-                        >
-                          <option>Always</option>
-                          <option>Sometimes</option>
-                          <option>Rarely</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
                   </div>
 
-                  <div className="mt-6">
-                    <div className="text-sm font-semibold text-slate-500">Summary</div>
-                    <p className="mt-3 text-base leading-7 text-slate-700">
-                      {displaySummary}
-                    </p>
-                  </div>
-                </section>
+                  {actionNotice ? (
+                    <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-xs font-semibold text-green-800">
+                      {actionNotice}
+                    </div>
+                  ) : null}
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Steps to Reproduce</h2>
-                  <div className="mt-6 space-y-4">
-                    {steps.map((step, index) => (
-                      <div key={step} className="flex items-start gap-4">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-50 text-sm font-bold text-green-700 ring-1 ring-green-100">
-                          {index + 1}
-                        </div>
-                        <div className="pt-1 text-slate-700">{step}</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                  {reportError ? (
+                    <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+                      {reportError}
+                    </div>
+                  ) : null}
+                </div>
 
-                <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-200 p-6">
-                    <h2 className="text-2xl font-bold text-slate-900">Expected Result</h2>
-                    <div className="mt-4 flex items-start gap-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 ring-1 ring-green-100">
-                        OK
-                      </div>
-                      <p className="pt-0.5 text-slate-700">
-                        Workout should be saved successfully without crashing.
+                {/* Grid Content */}
+                <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+                  {/* Left Column: Summary & Bugs */}
+                  <div className="space-y-6">
+                    {/* Tester Summary */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                      <h2 className="text-lg font-bold text-slate-900">Tester Summary & Feedback</h2>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">
+                        {realReport.summary || 'Tester completed testing and submitted findings.'}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="p-6">
-                    <h2 className="text-2xl font-bold text-slate-900">Actual Result</h2>
-                    <div className="mt-4 flex items-start gap-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 ring-1 ring-red-100">
-                        X
-                      </div>
-                      <p className="pt-0.5 text-slate-700">
-                        App crashes and returns to the home screen.
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="space-y-6">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Report Summary</h2>
-
-                  <div className="mt-5 space-y-4 text-sm">
-                    <div className="flex items-center justify-between gap-3 text-slate-600">
-                      <span>Job</span>
-                      <span className="text-right font-semibold text-slate-900">
-                        {displayTitle}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 text-slate-600">
-                      <span>Test Type</span>
-                      <span className="font-semibold text-slate-900 capitalize">{displayTestType}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 text-slate-600">
-                      <span>Tester</span>
-                      <span className="font-semibold text-green-700">{displayTester}</span>
-                    </div>
-                  </div>
-
-                  <div className="my-5 border-t border-slate-200" />
-
-                  <div className="space-y-4 text-sm">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Time Spent</span>
-                      <span className="font-semibold text-slate-900">18m 24s</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Submitted</span>
-                      <span className="font-semibold text-slate-900">{displaySubmitted}</span>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-slate-900">Attachments ({displayAttachments.length})</h2>
-                    <a href="/report-details/attachments" className="text-sm font-semibold text-green-700">View all</a>
-                  </div>
-
-                  <div className="mt-5 space-y-4">
-                    {displayAttachments.map((file) => (
-                      <div key={file.name} className="rounded-2xl border border-slate-100 p-3 hover:bg-slate-50">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
-                              {file.icon}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="truncate font-semibold text-slate-900">{file.name}</div>
-                              <div className="text-sm text-slate-500">{file.meta}</div>
-                            </div>
-                          </div>
-                          <a
-                            href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
-                            download={file.name}
-                            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </div>
-                        {file.name.endsWith('.mp4') ? (
-                          <div className="mt-3">
-                            <div className="mb-2 text-xs font-semibold text-slate-600">Screen Recording — 00:41</div>
-                            <video
-                              controls
-                              className="w-full rounded-xl border border-slate-200 bg-black"
-                              src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-                            />
-                          </div>
+                    {/* Reported Bugs */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-slate-900">
+                          Reported Bugs ({realReport.bugs.length})
+                        </h2>
+                        {realReport.criticalBugCount > 0 ? (
+                          <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600 ring-1 ring-red-100">
+                            {realReport.criticalBugCount} Critical Bug{realReport.criticalBugCount === 1 ? '' : 's'}
+                          </span>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
-                </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Activity</h2>
+                      {realReport.bugs.length > 0 ? (
+                        <div className="mt-6 space-y-6">
+                          {realReport.bugs.map((bug: any, index: number) => (
+                            <div key={bug.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white">
+                                    #{index + 1}
+                                  </span>
+                                  <h3 className="font-bold text-slate-900">{bug.title}</h3>
+                                </div>
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                                    bug.severity === 'Critical'
+                                      ? 'bg-red-100 text-red-700'
+                                      : bug.severity === 'High'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-slate-200 text-slate-700'
+                                  }`}
+                                >
+                                  {bug.severity}
+                                </span>
+                              </div>
 
-                  <div className="mt-6 space-y-5">
-                    {activity.map((item, index) => (
-                      <div key={`${item.title}-${index}`} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${item.color}`}>
-                            <span className="text-base font-bold">.</span>
-                          </div>
-                          {index !== activity.length - 1 ? <div className="mt-2 h-full w-px bg-slate-200" /> : null}
+                              {bug.description ? (
+                                <p className="mt-3 text-xs leading-5 text-slate-600">{bug.description}</p>
+                              ) : null}
+
+                              {bug.stepsToReproduce && bug.stepsToReproduce.length > 0 ? (
+                                <div className="mt-4">
+                                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Steps to Reproduce:</div>
+                                  <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs text-slate-700">
+                                    {bug.stepsToReproduce.map((step: string, sIdx: number) => (
+                                      <li key={sIdx}>{step}</li>
+                                    ))}
+                                  </ol>
+                                </div>
+                              ) : null}
+
+                              {bug.attachmentUrl ? (
+                                <div className="mt-4 pt-3 border-t border-slate-200">
+                                  <a
+                                    href={bug.attachmentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 text-xs font-semibold text-green-700 hover:underline"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    View Attached Evidence
+                                  </a>
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
                         </div>
-                        <div className="pb-3">
-                          <div className="font-semibold text-slate-900">{item.title}</div>
-                          <div className="mt-1 text-sm text-slate-500">{item.author}</div>
-                          {item.detail ? <div className="mt-1 text-sm text-slate-700">{item.detail}</div> : null}
-                          <div className="mt-2 text-xs text-slate-400">{item.time}</div>
+                      ) : (
+                        <div className="mt-4 text-xs font-semibold text-slate-500">No specific bugs were logged in this test run.</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Scores & Tester Profile */}
+                  <div className="space-y-6">
+                    {/* Scores Card */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="text-base font-bold text-slate-900">Squash Quality Score</h3>
+                      <div className="mt-4">
+                        <SquashScore scores={scores} compact={false} />
+                      </div>
+                    </div>
+
+                    {/* Tester Info Card */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="text-base font-bold text-slate-900">Tester Details</h3>
+                      <div className="mt-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-600 font-bold text-white">
+                          {realReport.testerName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900">{realReport.testerName}</div>
+                          <div className="text-xs text-slate-500">{realReport.testerEmail || 'Verified Tester'}</div>
                         </div>
                       </div>
-                    ))}
+                      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Tests Completed:</span>
+                        <span className="font-bold text-slate-900">{realReport.testerTestsCompleted}</span>
+                      </div>
+                    </div>
                   </div>
-                </section>
-              </div>
-            </div>
-
-            <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700">
-                  Status: {status}
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (realReport) {
-                        await reviewSubmittedReport({ submissionId: realReport.id, assignmentId: realReport.assignmentId, status: 'changes_requested' });
-                      }
-                      setActionNotice('More information requested from tester.');
-                    }}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Request More Info
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActionNotice('Report assigned to developer queue.')}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Assign to Developer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (realReport) {
-                        await reviewSubmittedReport({ submissionId: realReport.id, assignmentId: realReport.assignmentId, status: 'approved' });
-                      }
-                      setStatus('Resolved');
-                      setActionNotice('Report marked as resolved and approved.');
-                    }}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
-                  >
-                    <ShieldCheck className="h-4 w-4" /> Mark as Resolved
-                  </button>
                 </div>
               </div>
-              {actionNotice ? <p className="mt-3 text-sm font-semibold text-green-700">{actionNotice}</p> : null}
-            </section>
+            )}
           </div>
         </main>
       </div>
+
       <RetestRequestModal
         open={retestOpen}
         onClose={() => setRetestOpen(false)}
         plan="Growth"
-        originalScore={displayOverallScore}
-        initialUrl="https://staging.fittrack.app"
+        originalScore={overallScore}
+        initialUrl={realReport?.jobPlatform || ''}
         onSubmit={handleRetestSubmit}
       />
     </div>
   );
 }
-

@@ -1,6 +1,5 @@
 import {
   BadgeCheck,
-  Bell,
   BriefcaseBusiness,
   ChevronDown,
   CircleDollarSign,
@@ -20,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import SquashScore from './components/SquashScore';
 import TesterBadge from './components/TesterBadge';
@@ -269,12 +269,12 @@ export default function SquashTesterDashboardPage() {
   const { session } = useAuth();
   const testerName = session?.name || 'Alex Tester';
   const testerFirstName = testerName.split(' ')[0] || testerName;
-  const testerInitial = testerName.charAt(0).toUpperCase() || 'T';
 
   const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
   const [assignmentsError, setAssignmentsError] = useState('');
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary>(emptyEarningsSummary);
   const [earningsError, setEarningsError] = useState('');
+  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
   const [specializations, setSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
     if (!raw) return ['township-network', 'zulu', 'ecommerce'];
@@ -325,6 +325,9 @@ export default function SquashTesterDashboardPage() {
         if (!mounted) return;
         setAssignmentsError(error.message || 'Could not load your accepted tests right now.');
         setEarningsError(error.message || 'Could not load your earnings right now.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingData(false);
       });
 
     return () => {
@@ -467,6 +470,14 @@ export default function SquashTesterDashboardPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
+  if (session?.source === 'supabase' && isLoadingData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading dashboard data...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
@@ -555,23 +566,7 @@ export default function SquashTesterDashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    2
-                  </span>
-                </a>
-                <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    {testerInitial}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
-                </a>
-              </div>
+              <TesterHeaderNav />
             </div>
           </header>
 

@@ -1,7 +1,6 @@
 import {
   AlertCircle,
   BadgeCheck,
-  Bell,
   BriefcaseBusiness,
   Camera,
   CheckCircle2,
@@ -20,6 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import { useAuth } from './auth';
 import { getTesterReportSubmissions, type TesterReportSubmission } from './lib/jobApi';
 
@@ -47,16 +47,14 @@ const emptyReports: TesterReportSubmission[] = [];
 
 export default function SquashTesterReportsPage() {
   const { session } = useAuth();
-  const testerName = session?.name || 'Thando M.';
   const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
   const [reportsError, setReportsError] = useState('');
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [loadingReports, setLoadingReports] = useState(session?.source === 'supabase');
 
   useEffect(() => {
     if (!session?.userId || session.source !== 'supabase') return;
 
     let mounted = true;
-    setLoadingReports(true);
     setReportsError('');
 
     getTesterReportSubmissions(session.userId)
@@ -227,6 +225,14 @@ export default function SquashTesterReportsPage() {
     return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
+  if (session?.source === 'supabase' && loadingReports) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading reports...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
@@ -290,23 +296,7 @@ export default function SquashTesterReportsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    2
-                  </span>
-                </a>
-                <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    {testerName.charAt(0)}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                    <div className="text-xs text-slate-500">Tester</div>
-                  </div>
-                </a>
-              </div>
+              <TesterHeaderNav />
             </div>
           </header>
 

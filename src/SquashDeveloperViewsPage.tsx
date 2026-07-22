@@ -1,7 +1,6 @@
 import {
   Activity,
   CheckCircle2,
-  Bell,
   ClipboardList,
   CreditCard,
   Download,
@@ -14,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import DeveloperHeaderNav from './components/DeveloperHeaderNav';
 import TesterBadge from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
@@ -48,11 +48,7 @@ type SubmissionItem = {
   videoDuration?: string;
 };
 
-type ActivityItem = {
-  text: string;
-  time: string;
-  color: string;
-};
+
 
 type AttachmentItem = {
   name: string;
@@ -145,15 +141,8 @@ const submissions: SubmissionItem[] = [
   { app: 'EduLearn Platform', tester: 'Nomsa L.', testsCompleted: 8, rating: 4.2, time: '3d ago', severity: 'Medium' },
 ];
 
-const activityItems: ActivityItem[] = [
-  { text: 'New job "EduLearn Platform" created', time: '2 hours ago', color: 'bg-green-100 text-green-600' },
-  { text: 'Critical bug reported in PayFlow Web App', time: '3 hours ago', color: 'bg-red-100 text-red-500' },
-  { text: 'Sipho N. submitted a report for FitTrack Mobile', time: '5 hours ago', color: 'bg-amber-100 text-amber-500' },
-  { text: '30 reports completed for HealthApp iOS', time: 'Yesterday', color: 'bg-green-100 text-green-600' },
-  { text: 'Payment of R12,450 processed', time: '2 days ago', color: 'bg-sky-100 text-sky-600' },
-  { text: 'Kasi Eats job reached tester capacity', time: '2 days ago', color: 'bg-violet-100 text-violet-600' },
-  { text: 'MoneyMap dashboard report marked resolved', time: '3 days ago', color: 'bg-emerald-100 text-emerald-600' },
-];
+
+
 
 const attachments: AttachmentItem[] = [
   {
@@ -199,8 +188,6 @@ function DeveloperShell({
   active: 'dashboard' | 'post-job' | 'reports' | 'billing';
   children: ReactNode;
 }) {
-  const { session } = useAuth();
-  const developerName = session?.name || 'Alex Developer';
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: Home, active: active === 'dashboard' },
@@ -258,23 +245,7 @@ function DeveloperShell({
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  </a>
-                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
-                      <div className="text-xs text-slate-500">Developer</div>
-                    </div>
-                  </a>
-                </div>
+                <DeveloperHeaderNav />
               </div>
             </div>
           </header>
@@ -630,6 +601,9 @@ export function SquashDeveloperSubmissionsPage() {
                             >
                               Reject
                             </button>
+                            <a href={`/report-details?submission=${report.id}`} className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                              View details
+                            </a>
                           </>
                         ) : (
                           <a href={`/report-details?submission=${report.id}`} className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -820,6 +794,40 @@ export function SquashDeveloperSubmissionsPage() {
 }
 
 export function SquashDeveloperActivityPage() {
+  const { session } = useAuth();
+  const userId = session?.userId || '';
+  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string; type: string; linkPath: string; status: string; createdAt: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    import('./lib/notificationApi').then(({ getUserNotifications, backfillDeveloperNotifications }) => {
+      backfillDeveloperNotifications(userId)
+        .then(() => getUserNotifications(userId))
+        .then((list) => { setNotifications(list); setLoading(false); })
+        .catch(() => setLoading(false));
+    });
+  }, [userId]);
+
+  function colorForType(type: string) {
+    if (type === 'report') return 'bg-amber-100 text-amber-600';
+    if (type === 'application') return 'bg-green-100 text-green-600';
+    if (type === 'payout') return 'bg-sky-100 text-sky-600';
+    if (type === 'security') return 'bg-red-100 text-red-500';
+    return 'bg-violet-100 text-violet-600';
+  }
+
+  function formatRelativeTime(dateStr: string) {
+    try {
+      const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      if (diff < 172800) return 'Yesterday';
+      return `${Math.floor(diff / 86400)} days ago`;
+    } catch { return 'Recently'; }
+  }
+
   return (
     <DeveloperShell
       title="All Activity"
@@ -827,26 +835,40 @@ export function SquashDeveloperActivityPage() {
       active="reports"
     >
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="space-y-5">
-          {activityItems.map((item, index) => (
-            <div key={`${item.text}-${index}`} className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.color}`}>
-                  <Activity className="h-4 w-4" />
-                </div>
-                {index !== activityItems.length - 1 ? <div className="mt-2 h-full w-px bg-slate-200" /> : null}
-              </div>
-              <div className="pb-2">
-                <div className="font-medium text-slate-800">{item.text}</div>
-                <div className="mt-1 text-sm text-slate-500">{item.time}</div>
-              </div>
+        {loading ? (
+          <div className="py-10 text-center text-sm font-semibold text-slate-500">Loading activity...</div>
+        ) : notifications.length === 0 ? (
+          <div className="py-14 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-50 ring-1 ring-slate-100">
+              <Activity className="h-6 w-6 text-slate-400" />
             </div>
-          ))}
-        </div>
+            <p className="mt-4 text-sm font-semibold text-slate-500">No activity yet.</p>
+            <p className="mt-1 text-xs text-slate-400">Actions like applications and report submissions will show up here.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {notifications.map((item, index) => (
+              <a key={item.id} href={item.linkPath} className="flex gap-4 group cursor-pointer">
+                <div className="flex flex-col items-center">
+                  <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorForType(item.type)}`}>
+                    <Activity className="h-4 w-4" />
+                  </div>
+                  {index !== notifications.length - 1 ? <div className="mt-2 h-full w-px bg-slate-200" /> : null}
+                </div>
+                <div className="pb-2">
+                  <div className="font-semibold text-slate-800 group-hover:text-green-700 transition">{item.title}</div>
+                  <div className="text-sm text-slate-600 mt-0.5">{item.body}</div>
+                  <div className="mt-1 text-xs text-slate-400">{formatRelativeTime(item.createdAt)}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </DeveloperShell>
   );
 }
+
 
 export function SquashReportAttachmentsPage() {
   return (

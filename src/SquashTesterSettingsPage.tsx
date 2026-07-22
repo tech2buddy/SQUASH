@@ -20,6 +20,7 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import { useAuth } from './auth';
 import { getTesterProfile, updateTesterProfile } from './lib/profileApi';
 
@@ -46,10 +47,10 @@ type SettingsState = {
 };
 
 const defaultSettings: SettingsState = {
-  fullName: 'Thando M.',
-  email: 'tester@example.com',
-  phone: '+27 72 000 1234',
-  city: 'Johannesburg',
+  fullName: '',
+  email: '',
+  phone: '',
+  city: '',
   preferredPayout: 'eft',
   preferredTime: 'Weekdays after 16:00',
   availableDays: ['Monday', 'Wednesday', 'Saturday'],
@@ -301,23 +302,7 @@ export default function SquashTesterSettingsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    2
-                  </span>
-                </a>
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    {settings.fullName.charAt(0) || 'T'}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{settings.fullName}</div>
-                    <div className="text-xs text-slate-500">Tester</div>
-                  </div>
-                </div>
-              </div>
+              <TesterHeaderNav />
             </div>
           </header>
 

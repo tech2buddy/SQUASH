@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { ApplicationStatus, AssignmentStatus, Database, JobStatus } from './supabase.types';
+import { createNotification } from './notificationApi';
 
 export type JobPackageKey = 'starter' | 'growth' | 'pro' | 'enterprise';
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -163,6 +164,17 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
     .single();
 
   if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
+
+  if (data?.id) {
+    createNotification({
+      userId: input.developerId,
+      title: 'Job Posted Successfully 🚀',
+      body: `Your testing job "${input.title}" is now live on the Job Board.`,
+      type: 'job',
+      linkPath: '/dashboard',
+    }).catch(() => {});
+  }
+
   return mapJob(data);
 }
 
@@ -413,12 +425,14 @@ export type TesterAssignment = {
   createdAt: string;
   updatedAt: string;
   jobTitle: string;
+  jobLogoUrl: string | null;
   jobPlatform: string;
   jobCategory: string;
   jobPackageKey: JobPackageKey;
   jobDescription: string | null;
   jobTasks: string | null;
   jobAppUrl: string | null;
+  jobFocusAreas: string | null;
 };
 
 function mapAssignment(row: {
@@ -430,7 +444,7 @@ function mapAssignment(row: {
   due_at: string | null;
   created_at: string;
   updated_at: string;
-}): Omit<TesterAssignment, 'jobTitle' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl'> {
+}): Omit<TesterAssignment, 'jobTitle' | 'jobLogoUrl' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl' | 'jobFocusAreas'> {
   return {
     id: row.id,
     jobId: row.job_id,
@@ -467,12 +481,14 @@ export async function getTesterAssignments(testerId: string): Promise<TesterAssi
     return {
       ...base,
       jobTitle: job?.title || 'Accepted test',
+      jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
       jobPackageKey: job?.packageKey || 'starter',
       jobDescription: job?.description || null,
       jobTasks: job?.tasks || null,
       jobAppUrl: job?.appUrl || null,
+      jobFocusAreas: job?.focusAreas || null,
     };
   });
 }
@@ -511,12 +527,14 @@ export async function getTesterAssignmentById(assignmentId: string, testerId: st
   return {
     ...mapAssignment(assignment),
     jobTitle: mappedJob?.title || 'Accepted test',
+    jobLogoUrl: mappedJob?.logoUrl || null,
     jobPlatform: mappedJob?.platform || 'App',
     jobCategory: mappedJob?.category || 'mobile-app-testing',
     jobPackageKey: mappedJob?.packageKey || 'starter',
     jobDescription: mappedJob?.description || null,
     jobTasks: mappedJob?.tasks || null,
     jobAppUrl: mappedJob?.appUrl || null,
+    jobFocusAreas: mappedJob?.focusAreas || null,
   };
 }
 
@@ -589,6 +607,35 @@ export async function submitAssignmentReport(input: SubmitAssignmentReportInput)
     .eq('tester_id', input.testerId);
 
   if (assignmentError) throw assignmentError;
+
+  if (data?.id) {
+    Promise.all([
+      supabase.from('jobs').select('developer_id, title').eq('id', input.jobId).maybeSingle(),
+      supabase.from('profiles').select('full_name').eq('id', input.testerId).maybeSingle(),
+    ]).then(([{ data: job }, { data: tester }]) => {
+      console.log('[SQUASH] Notification trigger — job:', job, 'tester:', tester);
+      if (job?.developer_id) {
+        const testerName = tester?.full_name || 'A tester';
+        const jobTitle = job.title || 'your app';
+        createNotification({
+          userId: job.developer_id,
+          title: 'New Test Report Submitted 🚀',
+          body: `${testerName} submitted a test report for ${jobTitle}.`,
+          type: 'report',
+          linkPath: `/report-details?submission=${data.id}`,
+        }).then((n) => {
+          console.log('[SQUASH] Developer notification created:', n);
+        }).catch((err) => {
+          console.error('[SQUASH] Failed to create developer notification:', err);
+        });
+      } else {
+        console.warn('[SQUASH] Could not find developer_id on job:', input.jobId);
+      }
+    }).catch((err) => {
+      console.error('[SQUASH] Failed to fetch job/tester info for notification:', err);
+    });
+  }
+
   return data;
 }
 
@@ -1050,6 +1097,98 @@ export async function getDeveloperDashboardSummary(developerId: string): Promise
     averageScore: scoreValues.length ? Math.round(scoreValues.reduce((sum, score) => sum + score, 0) / scoreValues.length) : 0,
     bugCounts,
     trend,
+  };
+}
+
+export type BugReportDetail = {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'Low' | 'Medium' | 'High' | 'Critical';
+  screenshotPath: string | null;
+  videoPath: string | null;
+  reproductionSteps: string[];
+};
+
+export type DeveloperSubmissionDetails = {
+  id: string;
+  assignmentId: string;
+  jobId: string;
+  jobTitle: string;
+  jobPlatform: string;
+  jobCategory: string;
+  testerId: string;
+  testerName: string;
+  testerEmail: string;
+  testerTestsCompleted?: number;
+  status: 'draft' | 'submitted' | 'changes_requested' | 'approved' | 'rejected';
+  summary: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  criticalBugCount: number;
+  scores: {
+    usability: number;
+    performance: number;
+    onboarding: number;
+    bugSeverity: number;
+    deviceCompatibility: number;
+  };
+  bugs: BugReportDetail[];
+};
+
+export async function getSubmissionDetails(submissionId: string): Promise<DeveloperSubmissionDetails | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data: submission, error: submissionError } = await supabase
+    .from('test_submissions')
+    .select('*')
+    .eq('id', submissionId)
+    .maybeSingle();
+
+  if (submissionError) throw submissionError;
+  if (!submission) return null;
+
+  const [{ data: job }, { data: profile }, { data: bugs }, { data: testerProfile }] = await Promise.all([
+    supabase.from('jobs').select('*').eq('id', submission.job_id).maybeSingle(),
+    supabase.from('profiles').select('full_name, email').eq('id', submission.tester_id).maybeSingle(),
+    supabase.from('bug_reports').select('*').eq('assignment_id', submission.assignment_id),
+    supabase.from('tester_profiles').select('tests_completed').eq('user_id', submission.tester_id).maybeSingle(),
+  ]);
+
+  const bugList = (bugs || []).map((b: any) => ({
+    id: b.id,
+    title: b.title || 'Bug Report',
+    description: b.description || '',
+    severity: b.severity || 'Medium',
+    screenshotPath: b.screenshot_path || null,
+    videoPath: b.video_path || null,
+    reproductionSteps: (b.reproduction_steps || '').split('\n').filter(Boolean),
+  }));
+
+  return {
+    id: submission.id,
+    assignmentId: submission.assignment_id,
+    jobId: submission.job_id,
+    jobTitle: job?.title || 'Bug Report Submission',
+    jobPlatform: job?.platform || 'App',
+    jobCategory: job?.category || 'mobile-app-testing',
+    testerId: submission.tester_id,
+    testerName: profile?.full_name || 'Tester',
+    testerEmail: profile?.email || '',
+    testerTestsCompleted: testerProfile?.tests_completed || 0,
+    status: submission.status,
+    summary: submission.summary,
+    submittedAt: submission.submitted_at,
+    createdAt: submission.created_at,
+    criticalBugCount: bugList.filter((b) => b.severity === 'Critical').length,
+    scores: {
+      usability: submission.usability_score || 0,
+      performance: submission.performance_score || 0,
+      onboarding: submission.onboarding_score || 0,
+      bugSeverity: submission.bug_severity_score || 0,
+      deviceCompatibility: submission.device_compatibility_score || 0,
+    },
+    bugs: bugList,
   };
 }
 

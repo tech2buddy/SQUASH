@@ -2,24 +2,99 @@ import {
   Bell,
   Bug,
   Camera,
+  CheckCircle2,
   ChevronDown,
   CircleDollarSign,
   ClipboardList,
+  Compass,
+  ExternalLink,
+  Eye,
+  FlaskConical,
   Home,
   Menu,
   Mic,
+  Monitor,
   PlayCircle,
   Search,
   Settings,
+  Shield,
   Square,
+  Users,
   Video,
   Upload,
   UserCircle2,
+  Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth';
+import MobileTabBar from './components/MobileTabBar';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
+
+type TestingTypeConfig = {
+  bg: string; border: string; text: string; dot: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  mission: string;
+  tips: string[];
+};
+
+const TESTING_TYPE_CONFIG: Record<string, TestingTypeConfig> = {
+  'Functional Testing': {
+    bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', dot: 'bg-blue-500',
+    Icon: Settings,
+    mission: 'Verify every feature works exactly as intended.',
+    tips: ['Follow each user flow step by step', 'Test edge cases and error states', 'Check that every button and link responds correctly', 'Document anything that fails or behaves unexpectedly'],
+  },
+  'Usability Testing': {
+    bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', dot: 'bg-violet-500',
+    Icon: Users,
+    mission: 'Is this app intuitive for a real person?',
+    tips: ['Think out loud as you navigate', 'Note your first moment of confusion', 'Does the flow feel natural and logical?', 'Would a first-time user figure this out alone?'],
+  },
+  'Exploratory Testing': {
+    bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', dot: 'bg-amber-500',
+    Icon: Compass,
+    mission: 'Go off-script. Break assumptions.',
+    tips: ['Try things the developer didn\'t expect', 'Enter unexpected or extreme inputs', 'Use the app in the wrong order', 'Look for hidden or broken states'],
+  },
+  'Regression Testing': {
+    bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', dot: 'bg-red-500',
+    Icon: FlaskConical,
+    mission: 'Make sure nothing that worked before is now broken.',
+    tips: ['Test all core user flows thoroughly', 'Check previously known working features', 'Look for anything that feels "off" vs before', 'Pay close attention to recent changes'],
+  },
+  'Feature Validation Testing': {
+    bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', dot: 'bg-yellow-500',
+    Icon: CheckCircle2,
+    mission: 'Does this new feature do exactly what it promises?',
+    tips: ['Test the happy path first', 'Then deliberately test edge cases', 'Compare behaviour to what was described', 'Note any gap between expectation and reality'],
+  },
+  'First Impression Testing': {
+    bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700', dot: 'bg-pink-500',
+    Icon: Eye,
+    mission: 'You have 5 minutes of fresh eyes. Use them.',
+    tips: ['Note your very first reaction — good or bad', 'Is the purpose of the app immediately clear?', 'What\'s confusing or unexpected in the first screen?', 'Would you continue using this app?'],
+  },
+  'Compatibility Testing': {
+    bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700', dot: 'bg-cyan-500',
+    Icon: Monitor,
+    mission: 'Does it work consistently on your device?',
+    tips: ['Note your exact device and OS version', 'Look for layout or rendering issues', 'Test on your screen size and resolution', 'Check performance on your connection type'],
+  },
+  'Accessibility Testing': {
+    bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', dot: 'bg-green-500',
+    Icon: Shield,
+    mission: 'Can someone with different abilities use this comfortably?',
+    tips: ['Are tap targets large enough to use easily?', 'Is all text readable at default size?', 'Are error messages clear and helpful?', 'Can the app be navigated without precise tapping?'],
+  },
+};
+
+const DEFAULT_TYPE_CONFIG: TestingTypeConfig = {
+  bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', dot: 'bg-slate-400',
+  Icon: Zap,
+  mission: 'Test thoroughly and report everything you find.',
+  tips: ['Follow the task checklist carefully', 'Note any bugs or unexpected behaviour', 'Screenshot or record any issues', 'Write a clear summary for the developer'],
+};
 
 export default function SquashActiveTestScreen() {
   const { session } = useAuth();
@@ -46,7 +121,6 @@ export default function SquashActiveTestScreen() {
     'Log out of the app',
   ];
 
-  const bottomNav = ['Home', 'Stats', 'Progress', 'Profile'];
   const [assignment, setAssignment] = useState<TesterAssignment | null>(null);
   const [assignmentError, setAssignmentError] = useState('');
   const [loadingAssignment, setLoadingAssignment] = useState(false);
@@ -416,7 +490,7 @@ export default function SquashActiveTestScreen() {
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 pb-48 lg:pb-0">
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
@@ -467,6 +541,9 @@ export default function SquashActiveTestScreen() {
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap items-center gap-3">
+                {assignment?.jobLogoUrl ? (
+                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm" />
+                ) : null}
                 <h1 className="text-3xl font-black tracking-tight text-slate-900">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
                   {assignment?.jobPlatform || 'Usability Test'}
@@ -484,83 +561,102 @@ export default function SquashActiveTestScreen() {
             </div>
 
             <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">App Preview</h2>
-                    <p className="mt-1 text-slate-600">{assignment?.jobDescription || 'Live app view or simulated test environment.'}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => window.open(assignment?.jobAppUrl || 'https://fittrack.app/download', '_blank', 'noopener,noreferrer')}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Open in New Tab
-                  </button>
-                </div>
+              <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                {/* Testing Type Banner */}
+                {(() => {
+                  const rawFocus = assignment?.jobFocusAreas || '';
+                  const firstLine = rawFocus.split('\n')[0] || '';
+                  const types = firstLine.split(',').map(t => t.trim()).filter(Boolean);
+                  const focusText = rawFocus.split('\n').slice(1).join('\n').trim();
+                  const primaryType = types[0] || '';
+                  const cfg = TESTING_TYPE_CONFIG[primaryType] || DEFAULT_TYPE_CONFIG;
+                  const PrimaryIcon = cfg.Icon;
 
-                <div className="mt-6 flex justify-center">
-                  <div className="w-full max-w-sm rounded-[40px] border-[10px] border-slate-900 bg-slate-900 p-2 shadow-xl">
-                    <div className="rounded-[32px] bg-white px-4 pb-4 pt-5">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-bold text-slate-900">Dashboard</div>
-                        <div className="h-8 w-8 rounded-full bg-slate-100" />
+                  return (
+                    <>
+                      {/* Coloured type header */}
+                      <div className={`${cfg.bg} ${cfg.border} border-b px-6 py-5`}>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${cfg.bg} border ${cfg.border}`}>
+                            <PrimaryIcon className={`h-5 w-5 ${cfg.text}`} />
+                          </div>
+                          <div>
+                            <div className={`text-xs font-bold uppercase tracking-widest ${cfg.text} opacity-70`}>Testing Brief</div>
+                            <div className={`text-lg font-black ${cfg.text}`}>{primaryType || 'Active Test'}</div>
+                          </div>
+                          {types.slice(1).map(t => {
+                            const c = TESTING_TYPE_CONFIG[t] || DEFAULT_TYPE_CONFIG;
+                            return (
+                              <span key={t} className={`rounded-full px-3 py-1 text-xs font-semibold ${c.bg} ${c.text} border ${c.border}`}>{t}</span>
+                            );
+                          })}
+                        </div>
+                        <p className={`mt-3 text-sm font-semibold italic ${cfg.text}`}>"{cfg.mission}"</p>
                       </div>
 
-                      <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-center">
-                        <div className="text-sm text-slate-500">Good morning, Thando</div>
-                        <div className="mt-4 text-sm font-semibold text-slate-600">Today&apos;s Progress</div>
-                        <div className="mt-3 text-4xl font-black text-slate-900">7,842</div>
-                        <div className="text-sm text-slate-500">/ 10,000 steps</div>
-
-                        <div className="mt-6 flex h-28 items-end justify-between gap-2 rounded-2xl bg-white px-3 pb-3 pt-5 shadow-sm">
-                          {[28, 50, 42, 60, 72, 64, 82].map((height, index) => (
-                            <div key={index} className="flex flex-1 flex-col items-center justify-end gap-2">
-                              <div
-                                className={`w-full rounded-t-xl ${index === 6 ? 'bg-green-600' : 'bg-green-400/80'}`}
-                                style={{ height: `${height}px` }}
+                      <div className="p-6 space-y-6">
+                        {/* Progress + Launch */}
+                        <div className="flex items-center gap-5">
+                          {/* Progress ring */}
+                          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+                            <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80">
+                              <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                              <circle
+                                cx="40" cy="40" r="32" fill="none"
+                                stroke="#16a34a" strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={`${2 * Math.PI * 32}`}
+                                strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
+                                className="transition-all duration-500"
                               />
-                              <span className="text-[10px] text-slate-400">
-                                {['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}
-                              </span>
+                            </svg>
+                            <div className="absolute text-center">
+                              <div className="text-lg font-black text-slate-900">{progressPercent}%</div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="mt-5 rounded-3xl border border-slate-200 p-4">
-                        <div className="text-sm font-bold text-slate-900">Today&apos;s Goals</div>
-                        <div className="mt-4 space-y-3 text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Steps</span>
-                            <span className="font-semibold text-slate-900">7,842 / 10,000</span>
                           </div>
-                          <div className="h-2 rounded-full bg-slate-100">
-                            <div className="h-2 w-[78%] rounded-full bg-green-600" />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Calories</span>
-                            <span className="font-semibold text-slate-900">430 / 600</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-100">
-                            <div className="h-2 w-[72%] rounded-full bg-green-500" />
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-slate-700">{completedTasks} of {taskState.length} tasks done</div>
+                            <div className="mt-2 h-2 rounded-full bg-slate-100">
+                              <div className="h-2 rounded-full bg-green-600 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => window.open(assignment?.jobAppUrl || '#', '_blank', 'noopener,noreferrer')}
+                              disabled={!assignment?.jobAppUrl}
+                              className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-40 transition"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Launch App to Test
+                            </button>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="mt-5 grid grid-cols-4 gap-2 rounded-2xl bg-slate-50 p-3 text-center text-[11px] text-slate-500">
-                        {bottomNav.map((item, index) => (
-                          <div
-                            key={item}
-                            className={`rounded-xl px-2 py-2 ${index === 0 ? 'bg-white font-semibold text-green-700 shadow-sm' : ''}`}
-                          >
-                            {item}
+                        {/* Focus Areas */}
+                        {(focusText || assignment?.jobDescription) && (
+                          <div className={`rounded-2xl border ${cfg.border} ${cfg.bg} px-4 py-4`}>
+                            <div className={`text-xs font-bold uppercase tracking-wider ${cfg.text} mb-2`}>Developer's Focus Areas</div>
+                            <p className="text-sm leading-6 text-slate-700">
+                              {focusText || assignment?.jobDescription}
+                            </p>
                           </div>
-                        ))}
+                        )}
+
+                        {/* Type-specific tips */}
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tips for {primaryType || 'this test'}</div>
+                          <div className="space-y-2">
+                            {cfg.tips.map((tip, i) => (
+                              <div key={i} className="flex items-start gap-2.5">
+                                <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />
+                                <span className="text-sm text-slate-600">{tip}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  );
+                })()}
               </section>
 
               <section className="space-y-6">
@@ -710,7 +806,11 @@ export default function SquashActiveTestScreen() {
                 <div className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Testing Notes</div>
                   <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {assignment?.jobDescription || 'Test the signup, goals, stats, and workout flow carefully. Focus on confusing steps, broken interactions, and anything that feels slow.'}
+                    {(() => {
+                      const raw = assignment?.jobFocusAreas || '';
+                      const focusText = raw.split('\n').slice(1).join('\n').trim();
+                      return focusText || assignment?.jobDescription || 'Test the app carefully. Focus on confusing steps, broken interactions, and anything that feels slow or unexpected.';
+                    })()}
                   </p>
                   <label className="mt-5 block">
                     <span className="mb-2 block text-sm font-semibold text-slate-700">Final report summary</span>
@@ -726,7 +826,7 @@ export default function SquashActiveTestScreen() {
               </section>
             </div>
 
-            <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="fixed bottom-[64px] inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:static lg:mt-6 lg:rounded-3xl lg:bg-white lg:p-5 lg:shadow-sm">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="w-full max-w-xl">
                   <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
@@ -762,6 +862,7 @@ export default function SquashActiveTestScreen() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
     </div>
   );
 }

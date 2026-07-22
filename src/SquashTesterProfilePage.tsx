@@ -1,6 +1,5 @@
 import {
   BadgeCheck,
-  Bell,
   BriefcaseBusiness,
   CircleDollarSign,
   ClipboardList,
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import TesterBadge from './components/TesterBadge';
 import { getSpecializationLabel, hasSaLanguageTag } from './components/testerSpecializations';
 import { useAuth } from './auth';
@@ -32,12 +32,12 @@ export default function SquashTesterProfilePage() {
   const [profileError, setProfileError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
-    if (!raw) return ['township-network', 'zulu', 'ecommerce', 'budget-android'];
+    if (!raw) return [];
     try {
       const parsed = JSON.parse(raw) as string[];
-      return Array.isArray(parsed) ? parsed : ['township-network', 'zulu', 'ecommerce', 'budget-android'];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return ['township-network', 'zulu', 'ecommerce', 'budget-android'];
+      return [];
     }
   });
 
@@ -93,19 +93,22 @@ export default function SquashTesterProfilePage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const testerName = profileDetails?.fullName || session?.name || 'Thando M.';
-  const testerEmail = profileDetails?.email || session?.email || 'tester@example.com';
-  const testerCity = profileDetails?.city || 'Johannesburg';
-  const testerPhone = profileDetails?.phone || '+27 72 000 1234';
-  const testsCompleted = profileDetails?.testsCompleted || 24;
-  const rating = profileDetails?.rating || 4.7;
-  const approvalRate = profileDetails?.approvalRate || 98;
+  const isRealAccount = session?.source === 'supabase';
+  const testerName = profileDetails?.fullName || session?.name || 'Tester';
+  const testerEmail = profileDetails?.email || session?.email || 'Add email';
+  const testerCity = profileDetails?.city || (isRealAccount ? 'Add city' : 'Johannesburg');
+  const testerPhone = profileDetails?.phone || (isRealAccount ? 'Add phone number' : '+27 72 000 1234');
+  const testsCompleted = profileDetails?.testsCompleted || (isRealAccount ? 0 : 24);
+  const rating = profileDetails?.rating || (isRealAccount ? 0 : 4.7);
+  const approvalRate = profileDetails?.approvalRate || (isRealAccount ? 0 : 98);
 
-  const recentWork = [
-    { app: 'FitTrack Mobile', type: 'Mobile App Testing', status: 'Approved', earned: 'R250' },
-    { app: 'HealthHub Web', type: 'Website Testing', status: 'Pending', earned: 'R370' },
-    { app: 'ShopEase iOS', type: 'E-commerce Testing', status: 'Approved', earned: 'R350' },
-  ];
+  const recentWork = isRealAccount
+    ? []
+    : [
+        { app: 'FitTrack Mobile', type: 'Mobile App Testing', status: 'Approved', earned: 'R250' },
+        { app: 'HealthHub Web', type: 'Website Testing', status: 'Pending', earned: 'R370' },
+        { app: 'ShopEase iOS', type: 'E-commerce Testing', status: 'Approved', earned: 'R350' },
+      ];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -169,23 +172,7 @@ export default function SquashTesterProfilePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    2
-                  </span>
-                </a>
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    {testerName.charAt(0)}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                    <div className="text-xs text-slate-500">Tester</div>
-                  </div>
-                </div>
-              </div>
+              <TesterHeaderNav />
             </div>
           </header>
 

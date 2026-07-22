@@ -1,7 +1,6 @@
 import {
   BadgeCheck,
   Banknote,
-  Bell,
   BriefcaseBusiness,
   CheckCircle2,
   ChevronDown,
@@ -20,16 +19,18 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
-  const testerName = session?.name || 'Thando M.';
+  const isRealAccount = session?.source === 'supabase';
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [earningsError, setEarningsError] = useState('');
   const [payoutNotice, setPayoutNotice] = useState('');
   const [requestingPayout, setRequestingPayout] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
 
   useEffect(() => {
     if (!session?.userId || session.source !== 'supabase') return;
@@ -42,6 +43,9 @@ export default function SquashTesterEarningsPage() {
       })
       .catch((error: Error) => {
         if (mounted) setEarningsError(error.message || 'Could not load earnings right now.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingData(false);
       });
 
     return () => {
@@ -115,10 +119,18 @@ export default function SquashTesterEarningsPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
+  if (session?.source === 'supabase' && isLoadingData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading earnings data...
+      </div>
+    );
+  }
+
   const summaryCards = [
     {
       title: 'Available Balance',
-      value: earningsSummary ? formatRand(earningsSummary.availableBalanceZar) : 'R3,250',
+      value: earningsSummary ? formatRand(earningsSummary.availableBalanceZar) : isRealAccount ? 'R0' : 'R3,250',
       note: 'Paid to bank within 24hrs of approval',
       icon: Wallet,
       iconBg: 'bg-green-50',
@@ -126,7 +138,7 @@ export default function SquashTesterEarningsPage() {
     },
     {
       title: 'Pending Payout',
-      value: earningsSummary ? formatRand(earningsSummary.pendingPayoutZar) : 'R620',
+      value: earningsSummary ? formatRand(earningsSummary.pendingPayoutZar) : isRealAccount ? 'R0' : 'R620',
       note: 'Requested and awaiting admin processing',
       icon: Clock3,
       iconBg: 'bg-amber-50',
@@ -134,7 +146,7 @@ export default function SquashTesterEarningsPage() {
     },
     {
       title: 'This Month',
-      value: earningsSummary ? formatRand(earningsSummary.pendingApprovalZar) : 'R1,120',
+      value: earningsSummary ? formatRand(earningsSummary.pendingApprovalZar) : isRealAccount ? 'R0' : 'R1,120',
       note: 'Waiting for developer approval',
       icon: Banknote,
       iconBg: 'bg-sky-50',
@@ -142,8 +154,8 @@ export default function SquashTesterEarningsPage() {
     },
     {
       title: 'Lifetime Earned',
-      value: earningsSummary ? formatRand(earningsSummary.lifetimeApprovedZar) : 'R8,740',
-      note: 'Since May 2025',
+      value: earningsSummary ? formatRand(earningsSummary.lifetimeApprovedZar) : isRealAccount ? 'R0' : 'R8,740',
+      note: isRealAccount ? 'Approved work over time' : 'Since May 2025',
       icon: BadgeCheck,
       iconBg: 'bg-emerald-50',
       iconColor: 'text-emerald-700',
@@ -153,38 +165,42 @@ export default function SquashTesterEarningsPage() {
   const payoutMethods = [
     {
       title: 'Bank Transfer (EFT)',
-      detail: 'FNB account ending 1234',
-      status: 'Primary',
+      detail: isRealAccount ? 'Add your bank details in profile settings' : 'FNB account ending 1234',
+      status: isRealAccount ? 'Setup needed' : 'Primary',
       icon: CreditCard,
-      active: true,
+      active: !isRealAccount,
     },
     {
       title: 'SnapScan',
-      detail: 'Connected to +27 72 000 1234',
-      status: 'Ready',
+      detail: isRealAccount ? 'Connect SnapScan when payouts go live' : 'Connected to +27 72 000 1234',
+      status: isRealAccount ? 'Available soon' : 'Ready',
       icon: Smartphone,
       active: false,
     },
     {
       title: 'Airtime top-up',
-      detail: 'Vodacom prepaid number saved',
-      status: 'Ready',
+      detail: isRealAccount ? 'Add a prepaid number in profile settings' : 'Vodacom prepaid number saved',
+      status: isRealAccount ? 'Setup needed' : 'Ready',
       icon: Phone,
       active: false,
     },
   ];
 
-  const pendingApprovals = earningsSummary?.earnings
-    .filter((item) => item.status === 'pending')
-    .map((item) => ({
-      app: item.jobTitle,
-      submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
-      amount: formatRand(item.amountZar),
-      status: 'Pending',
-    })) || [
-      { app: 'FitTrack Mobile App', submitted: '20 May 2025', amount: 'R250', status: 'Pending' },
-      { app: 'HealthHub Web', submitted: '18 May 2025', amount: 'R370', status: 'Pending' },
-    ];
+  const pendingApprovals = earningsSummary
+    ? earningsSummary.earnings
+        .filter((item) => item.status === 'pending')
+        .map((item) => ({
+          app: item.jobTitle,
+          submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
+          amount: formatRand(item.amountZar),
+          status: 'Pending',
+        }))
+    : isRealAccount
+      ? []
+      : [
+          { app: 'FitTrack Mobile App', submitted: '20 May 2025', amount: 'R250', status: 'Pending' },
+          { app: 'HealthHub Web', submitted: '18 May 2025', amount: 'R370', status: 'Pending' },
+        ];
 
   const actionNeededReports = earningsSummary?.earnings
     .filter((item) => item.status === 'changes_requested')
@@ -203,7 +219,8 @@ export default function SquashTesterEarningsPage() {
     { date: '05 May 2025', type: 'Test earning', description: 'ShopEase iOS App', amount: 'R350', status: 'Paid' },
   ];
 
-  const monthlyPoints = '0,92 16,70 33,78 50,48 66,56 83,34 100,18';
+  const monthlyPoints = isRealAccount && !earningsSummary ? '0,92 16,92 33,92 50,92 66,92 83,92 100,92' : '0,92 16,70 33,78 50,48 66,56 83,34 100,18';
+  const monthlyDots = monthlyPoints.split(' ').map((point) => point.split(',').map(Number));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -267,23 +284,7 @@ export default function SquashTesterEarningsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    2
-                  </span>
-                </a>
-                <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    {testerName.charAt(0)}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                    <div className="text-xs text-slate-500">Tester</div>
-                  </div>
-                </a>
-              </div>
+              <TesterHeaderNav />
             </div>
           </header>
 
@@ -369,8 +370,8 @@ export default function SquashTesterEarningsPage() {
                     </defs>
                     <polygon points={`0,100 ${monthlyPoints} 100,100`} fill="url(#earningsFill)" />
                     <polyline points={monthlyPoints} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    {[0, 16, 33, 50, 66, 83, 100].map((x, index) => (
-                      <circle key={x} cx={x} cy={[92, 70, 78, 48, 56, 34, 18][index]} r="2.2" fill="#16a34a" />
+                    {monthlyDots.map(([x, y]) => (
+                      <circle key={`${x}-${y}`} cx={x} cy={y} r="2.2" fill="#16a34a" />
                     ))}
                   </svg>
                   <div className="mt-3 grid grid-cols-4 gap-2 text-xs text-slate-500 sm:grid-cols-7">
@@ -494,7 +495,7 @@ export default function SquashTesterEarningsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(liveTransactions || transactions).map((item) => (
+                      {(liveTransactions || (isRealAccount ? [] : transactions)).map((item) => (
                         <tr key={`${item.date}-${item.description}`} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-6 py-4 text-slate-700">{item.date}</td>
                           <td className="px-6 py-4 text-slate-700">{item.type}</td>
@@ -522,6 +523,13 @@ export default function SquashTesterEarningsPage() {
                           </td>
                         </tr>
                       ))}
+                      {(liveTransactions || (isRealAccount ? [] : transactions)).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
+                            No earnings or payout transactions yet.
+                          </td>
+                        </tr>
+                      ) : null}
                     </tbody>
                   </table>
                 </div>

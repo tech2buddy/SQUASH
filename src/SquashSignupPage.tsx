@@ -1,5 +1,5 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
@@ -22,6 +22,21 @@ export default function SquashSignupPage() {
   const { signUp, signInWithOAuth } = useAuth();
   const navigate = useNavigate();
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
+
+  useEffect(() => {
+    const handleRestoreState = () => {
+      setSubmitting(false);
+      setNotice((prev) => (prev.includes('Redirecting') ? '' : prev));
+    };
+
+    window.addEventListener('focus', handleRestoreState);
+    window.addEventListener('pageshow', handleRestoreState);
+
+    return () => {
+      window.removeEventListener('focus', handleRestoreState);
+      window.removeEventListener('pageshow', handleRestoreState);
+    };
+  }, []);
 
   const submitSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,12 +92,24 @@ export default function SquashSignupPage() {
   const socialSignup = async (provider: 'google' | 'github') => {
     setSubmitting(true);
     setError('');
-    setNotice('');
+    setNotice('Redirecting to your social login provider...');
     try {
       await signInWithOAuth({ provider, role });
-      setNotice('Redirecting to your social login provider...');
+      setTimeout(() => {
+        setSubmitting(false);
+        setNotice('');
+      }, 4000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Social signup is not available yet.');
+      setNotice('');
+      const rawMsg = err instanceof Error ? err.message : String(err || '');
+      if (rawMsg.includes('provider is not enabled') || rawMsg.includes('Unsupported provider')) {
+        const providerName = provider === 'google' ? 'Google' : 'GitHub';
+        setError(
+          `${providerName} OAuth is not enabled in your Supabase project. To enable it, navigate to Authentication > Providers in your Supabase Dashboard and add your ${providerName} Client ID & Secret. You can also sign up with email/password above.`,
+        );
+      } else {
+        setError(rawMsg || 'Social signup is not available right now.');
+      }
       setSubmitting(false);
     }
   };
@@ -281,6 +308,7 @@ export default function SquashSignupPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <button
+              type="button"
               onClick={() => socialSignup('google')}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
@@ -288,6 +316,7 @@ export default function SquashSignupPage() {
               Sign up with Google
             </button>
             <button
+              type="button"
               onClick={() => socialSignup('github')}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >

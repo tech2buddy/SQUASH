@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  Bell,
   BriefcaseBusiness,
   CheckCircle2,
   ChevronDown,
@@ -20,11 +19,14 @@ import {
   TrendingUp,
   UserCircle2,
   Users,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import DeveloperHeaderNav from './components/DeveloperHeaderNav';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashCertified from './components/SquashCertified';
 import SquashScore from './components/SquashScore';
+import MobileTabBar from './components/MobileTabBar';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
 import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob } from './lib/jobApi';
@@ -59,7 +61,9 @@ export default function SquashDeveloperDashboard() {
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [databaseApplications, setDatabaseApplications] = useState<DeveloperApplication[]>([]);
   const [dashboardSummary, setDashboardSummary] = useState<DeveloperDashboardSummary | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [jobsError, setJobsError] = useState('');
+  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
 
   const hasLiveDashboard = session?.source === 'supabase' && dashboardSummary !== null;
   const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
@@ -210,6 +214,9 @@ export default function SquashDeveloperDashboard() {
       })
       .catch((error: Error) => {
         if (mounted) setJobsError(error.message || 'Could not load your live dashboard data right now.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingData(false);
       });
 
     return () => {
@@ -267,11 +274,11 @@ export default function SquashDeveloperDashboard() {
       ];
 
   const testerDemographics = [
-    { label: '18-24 (Students)', value: 52, color: 'bg-green-500' },
+    { label: '18-24 (Everyday Users)', value: 52, color: 'bg-green-500' },
     { label: '25-34 (Early Career)', value: 29, color: 'bg-emerald-400' },
     { label: '35+ (Senior Users)', value: 19, color: 'bg-sky-400' },
   ];
-  const submissionTrendValues = dashboardSummary && dashboardSummary.trend.some(Boolean) ? dashboardSummary.trend : [10, 16, 19, 23, 32, 38, 30];
+  const submissionTrendValues = dashboardSummary ? dashboardSummary.trend : [10, 16, 19, 23, 32, 38, 30];
   const submissionTrendLabels = ['20 May', '21 May', '22 May', '23 May', '24 May', '25 May', '26 May'];
   const trendMax = Math.max(1, ...submissionTrendValues);
   const trendPoints = submissionTrendValues
@@ -282,6 +289,20 @@ export default function SquashDeveloperDashboard() {
     })
     .join(' ');
   const trendAreaPoints = `0,100 ${trendPoints} 100,100`;
+  const dashboardActivity = session?.source === 'supabase'
+    ? [
+        ...databaseApplications.slice(0, 3).map((application) => ({
+          text: `${application.testerName} applied for ${application.jobTitle}`,
+          time: new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
+          color: 'bg-green-100 text-green-600',
+        })),
+        ...databaseJobs.slice(0, 2).map((job) => ({
+          text: `${job.title} was posted`,
+          time: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
+          color: 'bg-sky-100 text-sky-600',
+        })),
+      ]
+    : activity;
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard', active: true },
@@ -356,8 +377,42 @@ export default function SquashDeveloperDashboard() {
     setRetestTarget(null);
   };
 
+  if (session?.source === 'supabase' && isLoadingData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading dashboard data...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
+      {/* Mobile Nav Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative w-full max-w-xs bg-white p-6 shadow-2xl animate-in slide-in-from-left">
+            <button onClick={() => setIsMobileMenuOpen(false)} className="absolute right-4 top-4 rounded-xl p-2 text-slate-500 hover:bg-slate-100">
+              <X className="h-6 w-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-8">
+              <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-xl" />
+              <span className="text-xl font-black">SQUASH</span>
+            </div>
+            <nav className="space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a href={item.href} key={item.label} className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+                    <Icon className="h-5 w-5" />
+                    {item.label}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
         <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
@@ -423,14 +478,14 @@ export default function SquashDeveloperDashboard() {
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 pb-24 lg:pb-0">
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <button onClick={() => setIsMobileMenuOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
                     <Menu className="h-5 w-5" />
-                  </a>
+                  </button>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -440,23 +495,7 @@ export default function SquashDeveloperDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  </a>
-                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
-                      <div className="text-xs text-slate-500">Developer</div>
-                    </div>
-                  </a>
-                </div>
+                <DeveloperHeaderNav />
               </div>
 
               <div className="flex items-center justify-between gap-4 md:hidden">
@@ -478,7 +517,7 @@ export default function SquashDeveloperDashboard() {
                 <p className="mt-2 text-slate-600">Here&apos;s what&apos;s happening with your testing activity.</p>
               </div>
               <a href="/dashboard" className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                May 20 - May 28, 2024
+                {session?.source === 'supabase' ? 'Live dashboard' : 'May 20 - May 28, 2024'}
               </a>
             </div>
 
@@ -753,17 +792,23 @@ export default function SquashDeveloperDashboard() {
                     Tester Demographics
                   </div>
                   <div className="space-y-3">
-                    {testerDemographics.map((segment) => (
-                      <div key={segment.label}>
-                        <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                          <span>{segment.label}</span>
-                          <span className="font-semibold text-slate-800">{segment.value}%</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-slate-200">
-                          <div className={`h-1.5 rounded-full ${segment.color}`} style={{ width: `${segment.value}%` }} />
-                        </div>
+                    {session?.source === 'supabase' ? (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
+                        Demographics will appear after testers submit profile-backed reports for your jobs.
                       </div>
-                    ))}
+                    ) : (
+                      testerDemographics.map((segment) => (
+                        <div key={segment.label}>
+                          <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                            <span>{segment.label}</span>
+                            <span className="font-semibold text-slate-800">{segment.value}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-slate-200">
+                            <div className={`h-1.5 rounded-full ${segment.color}`} style={{ width: `${segment.value}%` }} />
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -834,20 +879,26 @@ export default function SquashDeveloperDashboard() {
                 </div>
 
                 <div className="mt-6 space-y-5">
-                  {activity.map((item) => {
-                    const ActivityIcon = getActivityIcon(item.text);
-                    return (
-                    <div key={item.text} className="flex gap-4">
-                      <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.color}`}>
-                        <ActivityIcon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-800">{item.text}</div>
-                        <div className="mt-1 text-sm text-slate-500">{item.time}</div>
-                      </div>
+                  {dashboardActivity.length > 0 ? (
+                    dashboardActivity.map((item) => {
+                      const ActivityIcon = getActivityIcon(item.text);
+                      return (
+                        <div key={item.text} className="flex gap-4">
+                          <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.color}`}>
+                            <ActivityIcon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-800">{item.text}</div>
+                            <div className="mt-1 text-sm text-slate-500">{item.time}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+                      No live activity yet. New jobs, applications and reports will appear here.
                     </div>
-                    );
-                  })}
+                  )}
                 </div>
               </div>
             </section>
@@ -910,6 +961,7 @@ export default function SquashDeveloperDashboard() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="developer" />
       <RetestRequestModal
         open={Boolean(retestTarget)}
         onClose={() => setRetestTarget(null)}

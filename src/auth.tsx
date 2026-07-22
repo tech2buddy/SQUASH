@@ -30,6 +30,8 @@ type AuthContextValue = {
   refreshSessionProfile: () => Promise<AuthSession | null>;
   activateRole: (role: UserRole) => Promise<AuthSession | null>;
   addRole: (role: WorkspaceRole) => Promise<AuthSession | null>;
+  resetPasswordForEmail: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -79,14 +81,58 @@ async function readAccountRoles(userId: string, fallbackRole: UserRole): Promise
   return normalizeRoles(roles.length > 0 ? roles : [fallbackRole]);
 }
 
-async function readProfileSession(userId: string, fallbackEmail: string): Promise<AuthSession | null> {
-  const { data, error } = await supabase
+async function readProfileSession(
+  userId: string,
+  fallbackEmail: string,
+  targetRole?: WorkspaceRole,
+): Promise<AuthSession | null> {
+  let { data, error } = await supabase
     .from('profiles')
     .select('id, role, full_name, email')
     .eq('id', userId)
     .maybeSingle();
 
   if (error) throw error;
+
+  if (!data) {
+    const { data: authUserData } = await supabase.auth.getUser();
+    const authUser = authUserData?.user;
+    if (authUser && authUser.id === userId) {
+      const defaultRole: UserRole = targetRole || (authUser.user_metadata?.role as WorkspaceRole) || 'developer';
+      const fullName =
+        authUser.user_metadata?.full_name ||
+        authUser.user_metadata?.name ||
+        fallbackEmail.split('@')[0] ||
+        'SQUASH User';
+
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          role: defaultRole,
+          full_name: fullName,
+          email: authUser.email || fallbackEmail,
+        })
+        .select('id, role, full_name, email')
+        .single();
+
+      if (!insertError && newProfile) {
+        data = newProfile;
+        if (defaultRole === 'developer') {
+          await supabase.from('developer_profiles').upsert({
+            user_id: userId,
+            company_name: fullName,
+            billing_email: authUser.email || fallbackEmail,
+          });
+        } else if (defaultRole === 'tester') {
+          await supabase.from('tester_profiles').upsert({
+            user_id: userId,
+          });
+        }
+      }
+    }
+  }
+
   if (!data) return null;
 
   const profile = data as ProfileRow;
@@ -126,17 +172,25 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/developer/submissions',
     '/developer/activity',
     '/report-details/attachments',
+    '/billing/payment-methods',
   ]);
   const testerRoutes = new Set([
     '/tester/dashboard',
     '/tester-jobs',
     '/active-test',
+    '/test-lab',
     '/tester/profile',
     '/tester/earnings',
     '/tester/payments',
     '/tester/reports',
     '/tester/submissions',
     '/tester/settings',
+    '/tester/menu',
+    '/tester/notifications',
+    '/tester/payout-method',
+    '/tester/leaderboard',
+    '/tester/level-benefits',
+    '/tester/referrals',
   ]);
   if (adminRoutes.has(pathname)) return 'admin';
   if (developerRoutes.has(pathname)) return 'developer';
@@ -283,7 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
-            redirectTo: `${window.location.origin}/login?role=${role}`,
+            redirectTo: `${window.location.origin}/auth/callback?role=${role}`,
             queryParams: {
               role,
             },
@@ -344,6 +398,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(nextSession);
         return nextSession;
       },
+      resetPasswordForEmail: async (email: string) => {
+        if (!isSupabaseConfigured) {
+          return;
+        }
+        const redirectTo = `${window.location.origin}/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+          redirectTo,
+        });
+        if (error) throw error;
+      },
+      updatePassword: async (newPassword: string) => {
+        if (!isSupabaseConfigured) {
+          return;
+        }
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+        if (error) throw error;
+      },
       logout: async () => {
         persistDemoSession(null);
         if (isSupabaseConfigured) {
@@ -365,4 +438,5 @@ export function useAuth() {
   }
   return ctx;
 }
+
 

@@ -12,12 +12,20 @@ import SquashPostJobPage from './SquashPostJobPage';
 import SquashPricingPage from './SquashPricingPage';
 import SquashReportDetailsPage from './SquashReportDetailsPage';
 import SquashSignupPage from './SquashSignupPage';
+import SquashResetPasswordPage from './SquashResetPasswordPage';
+import SquashAuthCallbackPage from './SquashAuthCallbackPage';
 import SquashTesterDashboardPage from './SquashTesterDashboardPage';
+import SquashTesterMyTestsPage from './SquashTesterMyTestsPage';
 import SquashTesterJobBoard from './SquashTesterJobBoard';
 import SquashTesterProfilePage from './SquashTesterProfilePage';
 import SquashTesterEarningsPage from './SquashTesterEarningsPage';
 import SquashTesterReportsPage from './SquashTesterReportsPage';
 import SquashTesterSettingsPage from './SquashTesterSettingsPage';
+import SquashTesterNotificationsPage from './SquashTesterNotificationsPage';
+import SquashTesterPayoutMethodPage from './SquashTesterPayoutMethodPage';
+import SquashTesterLevelBenefitsPage from './SquashTesterLevelBenefitsPage';
+import SquashTesterReferralsPage from './SquashTesterReferralsPage';
+import SquashTesterLeaderboardPage from './SquashTesterLeaderboardPage';
 import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
 import SquashApiDocsPage from './SquashApiDocsPage';
@@ -33,6 +41,7 @@ import SquashAdminJobsPage from './SquashAdminJobsPage';
 import SquashAdminJobDetailPage from './SquashAdminJobDetailPage';
 import SquashAdminReportsPage from './SquashAdminReportsPage';
 import SquashAdminSecurityPage from './SquashAdminSecurityPage';
+import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
 import {
   SquashDeveloperActivityPage,
   SquashDeveloperJobsPage,
@@ -96,6 +105,9 @@ export default function App() {
       <Route path="/certificate/:jobId" element={<SquashCertificatePage />} />
       <Route path="/login" element={<SquashLoginPage />} />
       <Route path="/signup" element={<SquashSignupPage />} />
+      <Route path="/forgot-password" element={<SquashResetPasswordPage mode="request" />} />
+      <Route path="/reset-password" element={<SquashResetPasswordPage mode="update" />} />
+      <Route path="/auth/callback" element={<SquashAuthCallbackPage />} />
       <Route path="/logout" element={<LogoutRoute />} />
       <Route path="/choose-workspace" element={<SquashChooseWorkspacePage />} />
       <Route path="/onboarding/:role" element={<SquashOnboardingPage />} />
@@ -235,7 +247,6 @@ export default function App() {
         }
       />
 
-
       <Route
         path="/admin"
         element={
@@ -374,6 +385,30 @@ export default function App() {
       />
 
       <Route
+        path="/billing/payment-methods"
+        element={
+          <ProtectedRoute allowedRole="developer">
+            <SquashUtilityPage
+              role="developer"
+              eyebrow="Billing setup"
+              title="Payment methods"
+              description="Add and manage payment methods for funding SQUASH testing jobs. Checkout storage is intentionally not active until the payment provider is connected."
+              icon={utilityIcons.CreditCard}
+              details={[
+                'Cards and EFT options will connect through the payment provider, not through local browser storage.',
+                'Only protected job totals are shown here. No tester payout or platform margin information is exposed.',
+                'Invoices and receipts will attach to completed payment records once checkout goes live.',
+              ]}
+              actions={[
+                { label: 'Back to Billing', href: '/billing', primary: true },
+                { label: 'Post a Job', href: '/post-job' },
+              ]}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/tester/dashboard"
         element={
           <ProtectedRoute allowedRole="tester">
@@ -390,7 +425,31 @@ export default function App() {
         }
       />
       <Route
+        path="/job-board"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterJobBoard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/active-test"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterMyTestsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/my-tests"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterMyTestsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/test-lab"
         element={
           <ProtectedRoute allowedRole="tester">
             <SquashActiveTestScreen />
@@ -445,6 +504,70 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/tester/menu"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashUtilityPage
+              role="tester"
+              eyebrow="Mobile navigation"
+              title="Tester menu"
+              description="Quick access to the main tester areas. This keeps the mobile menu useful while we build the full slide-out navigation."
+              icon={utilityIcons.Menu}
+              actions={[
+                { label: 'Dashboard', href: '/tester/dashboard', primary: true },
+                { label: 'Available Jobs', href: '/tester-jobs' },
+                { label: 'My Tests', href: '/active-test' },
+                { label: 'Reports', href: '/tester/reports' },
+                { label: 'Earnings', href: '/tester/earnings' },
+                { label: 'Profile', href: '/tester/profile' },
+                { label: 'Settings', href: '/tester/settings' },
+              ]}
+            />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/notifications"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterNotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/payout-method"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterPayoutMethodPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/leaderboard"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterLeaderboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/level-benefits"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterLevelBenefitsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tester/referrals"
+        element={
+          <ProtectedRoute allowedRole="tester">
+            <SquashTesterReferralsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
   );
@@ -454,10 +577,3 @@ export function routeBelongsToRole(pathname: string, role: UserRole): boolean {
   const target = routeRole(pathname);
   return target === 'public' || target === role;
 }
-
-
-
-
-
-
-

@@ -1,5 +1,5 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resolvePostLoginPath, routeRole, useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
@@ -20,6 +20,21 @@ export default function SquashLoginPage() {
   const navigate = useNavigate();
 
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
+
+  useEffect(() => {
+    const handleRestoreState = () => {
+      setSubmitting(false);
+      setNotice((prev) => (prev.includes('Redirecting') ? '' : prev));
+    };
+
+    window.addEventListener('focus', handleRestoreState);
+    window.addEventListener('pageshow', handleRestoreState);
+
+    return () => {
+      window.removeEventListener('focus', handleRestoreState);
+      window.removeEventListener('pageshow', handleRestoreState);
+    };
+  }, []);
 
 
   const submitLogin = async (e: React.FormEvent) => {
@@ -66,12 +81,24 @@ export default function SquashLoginPage() {
   const socialLogin = async (provider: 'google' | 'github') => {
     setSubmitting(true);
     setError('');
-    setNotice('');
+    setNotice('Redirecting to your social login provider...');
     try {
       await signInWithOAuth({ provider, role });
-      setNotice('Redirecting to your social login provider...');
+      setTimeout(() => {
+        setSubmitting(false);
+        setNotice('');
+      }, 4000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Social login is not available yet.');
+      setNotice('');
+      const rawMsg = err instanceof Error ? err.message : String(err || '');
+      if (rawMsg.includes('provider is not enabled') || rawMsg.includes('Unsupported provider')) {
+        const providerName = provider === 'google' ? 'Google' : 'GitHub';
+        setError(
+          `${providerName} OAuth is not enabled in your Supabase project. To enable it, navigate to Authentication > Providers in your Supabase Dashboard and add your ${providerName} Client ID & Secret. You can also sign in with email/password below.`,
+        );
+      } else {
+        setError(rawMsg || 'Social login is not available right now.');
+      }
       setSubmitting(false);
     }
   };
@@ -169,9 +196,9 @@ export default function SquashLoginPage() {
                 <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
                 Remember me
               </label>
-              <a href="/help-center" className="font-semibold text-green-700 hover:text-green-800">
+              <Link to="/forgot-password" className="font-semibold text-green-700 hover:text-green-800">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
@@ -190,6 +217,7 @@ export default function SquashLoginPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <button
+              type="button"
               onClick={() => socialLogin('google')}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
@@ -197,6 +225,7 @@ export default function SquashLoginPage() {
               Continue with Google
             </button>
             <button
+              type="button"
               onClick={() => socialLogin('github')}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >

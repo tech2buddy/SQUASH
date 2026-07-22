@@ -18,7 +18,9 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
+import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
 import type { LucideIcon } from 'lucide-react';
 
 type SummaryCard = {
@@ -171,15 +173,176 @@ function statusClasses(status: HistoryItem['status']) {
   return 'bg-green-50 text-green-700';
 }
 
+function formatRands(value: number) {
+  return `R${Math.round(value).toLocaleString('en-ZA')}`;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('en-ZA', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function jobPaymentStatus(status: DeveloperJob['status']): ActivePayment['status'] {
+  if (status === 'completed') return 'Completed';
+  if (status === 'in_review') return 'Awaiting Approval';
+  return 'In Progress';
+}
+
+function paymentTone(status: ActivePayment['status']) {
+  if (status === 'Completed') return 'bg-green-100 text-green-700';
+  if (status === 'Awaiting Approval') return 'bg-sky-100 text-sky-700';
+  return 'bg-amber-100 text-amber-700';
+}
+
 export default function SquashDeveloperBillingPage() {
   const { session } = useAuth();
   const developerName = session?.name || 'Dev Studio';
+  const isRealAccount = session?.source === 'supabase';
+  const [liveJobs, setLiveJobs] = useState<DeveloperJob[]>([]);
+  const [billingError, setBillingError] = useState('');
+  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isRealAccount || !session?.userId) {
+      setLiveJobs([]);
+      setBillingError('');
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    getDeveloperJobs(session.userId)
+      .then((jobs) => {
+        if (!isMounted) return;
+        setLiveJobs(jobs);
+        setBillingError('');
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBillingError('Could not load billing data right now.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingData(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isRealAccount, session?.userId]);
+
+  const liveBilling = useMemo(() => {
+    const total = liveJobs.reduce((sum, job) => sum + Number(job.totalAmountZar || 0), 0);
+    const fundedJobs = liveJobs.filter((job) => job.status !== 'draft' && job.status !== 'cancelled');
+    const pendingApproval = liveJobs.filter((job) => job.status === 'in_review').length;
+    const activeJobs = liveJobs.filter((job) => job.status === 'active' || job.status === 'in_review').length;
+
+    return { total, fundedJobs, pendingApproval, activeJobs };
+  }, [liveJobs]);
+
+  const visibleSummaryCards: SummaryCard[] = isRealAccount
+    ? [
+        {
+          title: 'Escrow Balance',
+          subtitle: '(Held)',
+          value: formatRands(
+            liveBilling.fundedJobs
+              .filter((job) => job.status === 'active' || job.status === 'in_review')
+              .reduce((sum, job) => sum + Number(job.totalAmountZar || 0), 0),
+          ),
+          note: 'Money held securely by SQUASH',
+          delta: `${liveBilling.activeJobs} active job${liveBilling.activeJobs === 1 ? '' : 's'}`,
+          icon: ShieldCheck,
+          iconBg: 'bg-green-50',
+          iconColor: 'text-green-700',
+        },
+        {
+          title: 'Total Spent',
+          value: formatRands(liveBilling.total),
+          note: 'Total value of posted jobs',
+          delta: `${liveJobs.length} job${liveJobs.length === 1 ? '' : 's'} created`,
+          icon: Wallet,
+          iconBg: 'bg-slate-50',
+          iconColor: 'text-slate-700',
+        },
+        {
+          title: 'Active Jobs',
+          subtitle: 'Funded',
+          value: `${liveBilling.activeJobs} Jobs`,
+          note: 'Payments currently protected',
+          delta: liveBilling.activeJobs ? 'Testing in motion' : 'No active jobs yet',
+          icon: BriefcaseBusiness,
+          iconBg: 'bg-green-50',
+          iconColor: 'text-green-700',
+        },
+        {
+          title: 'Pending',
+          subtitle: 'Approvals',
+          value: `${liveBilling.pendingApproval} Jobs`,
+          note: 'Waiting for your final approval',
+          delta: liveBilling.pendingApproval ? 'Action recommended' : 'Nothing pending',
+          icon: CircleHelp,
+          iconBg: 'bg-amber-50',
+          iconColor: 'text-amber-600',
+        },
+      ]
+    : summaryCards;
+
+  const visibleActivePayments: ActivePayment[] = isRealAccount
+    ? liveJobs
+        .filter((job) => job.status !== 'draft')
+        .slice(0, 6)
+        .map((job) => {
+          const status = jobPaymentStatus(job.status);
+          const progress = status === 'Completed' ? 100 : status === 'Awaiting Approval' ? 90 : 45;
+          return {
+            job: job.title,
+            type: job.category,
+            amount: formatRands(job.totalAmountZar),
+            status,
+            detail:
+              status === 'Completed'
+                ? 'Payment released after approval'
+                : status === 'Awaiting Approval'
+                  ? 'Review submissions'
+                  : 'Testing in progress',
+            progress,
+            action: status === 'Awaiting Approval' ? 'Review' : 'View',
+            tone: paymentTone(status),
+          };
+        })
+    : activePayments;
+
+  const visibleHistory: HistoryItem[] = isRealAccount
+    ? liveJobs
+        .filter((job) => job.status !== 'draft')
+        .slice(0, 8)
+        .map((job) => ({
+          date: formatDate(job.createdAt),
+          job: job.title,
+          amount: formatRands(job.totalAmountZar),
+          status: job.status === 'cancelled' ? 'Cancelled' : job.status === 'completed' ? 'Paid Out' : 'Completed',
+        }))
+    : history;
+
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/dashboard' },
     { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
     { label: 'Reports', icon: FileText, href: '/report-details' },
     { label: 'Billing', icon: CreditCard, active: true, href: '/billing' },
   ];
+
+  if (session?.source === 'supabase' && isLoadingData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading billing data...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -298,8 +461,14 @@ export default function SquashDeveloperBillingPage() {
               <div className="text-sm font-semibold text-slate-500">Dashboard &gt; Billing</div>
             </div>
 
+            {billingError ? (
+              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {billingError}
+              </div>
+            ) : null}
+
             <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map((card) => {
+              {visibleSummaryCards.map((card) => {
                 const Icon = card.icon;
                 return (
                   <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -351,7 +520,7 @@ export default function SquashDeveloperBillingPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {activePayments.map((payment) => (
+                        {visibleActivePayments.length > 0 ? visibleActivePayments.map((payment) => (
                           <tr key={payment.job} className="border-b border-slate-100 last:border-b-0">
                             <td className="px-6 py-5">
                               <div className="font-semibold text-slate-900">{payment.job}</div>
@@ -380,7 +549,13 @@ export default function SquashDeveloperBillingPage() {
                               </a>
                             </td>
                           </tr>
-                        ))}
+                        )) : (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
+                              No funded job payments yet. Posted jobs will appear here once payment is connected.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -423,7 +598,7 @@ export default function SquashDeveloperBillingPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {history.map((item) => (
+                        {visibleHistory.length > 0 ? visibleHistory.map((item) => (
                           <tr key={`${item.date}-${item.job}`} className="border-b border-slate-100 last:border-b-0">
                             <td className="px-6 py-4 text-slate-700">{item.date}</td>
                             <td className="px-6 py-4 font-semibold text-slate-900">{item.job}</td>
@@ -444,7 +619,13 @@ export default function SquashDeveloperBillingPage() {
                               </a>
                             </td>
                           </tr>
-                        ))}
+                        )) : (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
+                              No transaction history yet.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -505,7 +686,7 @@ export default function SquashDeveloperBillingPage() {
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                    Last charged: 12 May 2025 at 14:22
+                    {isRealAccount ? 'Payment method connection will be linked when checkout goes live.' : 'Last charged: 12 May 2025 at 14:22'}
                   </div>
 
                   <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
@@ -522,29 +703,29 @@ export default function SquashDeveloperBillingPage() {
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="inline-flex items-center gap-2">
                         <Receipt className="h-4 w-4 text-slate-400" />
-                        Test Cost
+                        Job package total
                       </span>
-                      <span className="font-semibold text-slate-900">R800</span>
+                      <span className="font-semibold text-slate-900">{isRealAccount ? formatRands(liveBilling.total) : 'R900'}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="inline-flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-slate-400" />
-                        Platform Fee (10%)
+                        <ShieldCheck className="h-4 w-4 text-slate-400" />
+                        Payment protection
                       </span>
-                      <span className="font-semibold text-slate-900">R80</span>
+                      <span className="font-semibold text-green-700">Included</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="inline-flex items-center gap-2">
                         <Landmark className="h-4 w-4 text-slate-400" />
-                        VAT (15%)
+                        Tax handling
                       </span>
-                      <span className="font-semibold text-slate-900">R120</span>
+                      <span className="font-semibold text-slate-900">Included where applicable</span>
                     </div>
                   </div>
                   <div className="my-5 border-t border-slate-200" />
                   <div className="flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
                     <span className="text-lg font-bold text-slate-900">Total Paid</span>
-                    <span className="text-2xl font-black text-green-700">R900</span>
+                    <span className="text-2xl font-black text-green-700">{isRealAccount ? formatRands(liveBilling.total) : 'R900'}</span>
                   </div>
                 </div>
 

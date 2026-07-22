@@ -1,5 +1,4 @@
 import {
-  Bell,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
@@ -16,12 +15,12 @@ import {
   SlidersHorizontal,
   Upload,
   X,
-  UserCircle2,
 } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
+import DeveloperHeaderNav from './components/DeveloperHeaderNav';
 import { useAuth } from './auth';
 import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
@@ -37,7 +36,6 @@ function parseTaskList(value: string) {
 
 export default function SquashPostJobPage() {
   const { session } = useAuth();
-  const developerName = session?.name || 'Alex Developer';
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
@@ -63,6 +61,7 @@ export default function SquashPostJobPage() {
   const [testTasks, setTestTasks] = useState<string[]>(defaultTestTasks);
   const [taskDraft, setTaskDraft] = useState('');
   const [focusAreas, setFocusAreas] = useState('');
+  const [testingTypes, setTestingTypes] = useState<string[]>([]);
   const [ageRange, setAgeRange] = useState('18 - 25');
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
@@ -114,6 +113,7 @@ export default function SquashPostJobPage() {
         tasksToComplete: string;
         taskDraft: string;
         focusAreas: string;
+        testingTypes: string[];
         ageRange: string;
         deviceType: string;
         experienceLevel: string;
@@ -146,6 +146,7 @@ export default function SquashPostJobPage() {
       if (draft.tasksToComplete) setTestTasks(parseTaskList(draft.tasksToComplete));
       if (draft.taskDraft) setTaskDraft(draft.taskDraft);
       if (draft.focusAreas) setFocusAreas(draft.focusAreas);
+      if (Array.isArray(draft.testingTypes)) setTestingTypes(draft.testingTypes);
       if (draft.ageRange) setAgeRange(draft.ageRange);
       if (draft.deviceType) setDeviceType(draft.deviceType);
       if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel);
@@ -186,6 +187,7 @@ export default function SquashPostJobPage() {
     tasksToComplete: taskChecklistText,
     taskDraft,
     focusAreas,
+    testingTypes,
     ageRange,
     deviceType,
     experienceLevel,
@@ -214,6 +216,7 @@ export default function SquashPostJobPage() {
     taskDraft,
     testerTierFilter,
     testersNeeded,
+    testingTypes,
     testType,
     url,
   ]);
@@ -240,6 +243,7 @@ export default function SquashPostJobPage() {
       appName,
       draftJobId,
       focusAreas,
+      testingTypes,
       liveSessionEnabled,
       preferredSpecializations.length,
       selectedPackage,
@@ -388,7 +392,7 @@ export default function SquashPostJobPage() {
       description: shortDescription,
       logoUrl: appLogoUrl || null,
       tasks: taskChecklistText,
-      focusAreas,
+      focusAreas: [testingTypes.join(', '), focusAreas].filter(Boolean).join('\n'),
       preferredSpecializations,
       liveSessionEnabled,
       liveSessionAt: liveSessionEnabled && liveSessionAt ? liveSessionAt : null,
@@ -570,23 +574,7 @@ export default function SquashPostJobPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  </a>
-                  <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{developerName}</div>
-                      <div className="text-xs text-slate-500">Developer</div>
-                    </div>
-                  </a>
-                </div>
+                <DeveloperHeaderNav />
               </div>
 
               <div className="md:hidden">
@@ -891,12 +879,54 @@ export default function SquashPostJobPage() {
                     </div>
                   </div>
 
+                  {/* Testing Types */}
                   <div className="mt-5">
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      What should testers look for?
+                      Type of Testing Required <span className="text-xs font-normal text-slate-400 ml-1">(select all that apply)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Functional Testing',
+                        'Usability Testing',
+                        'Exploratory Testing',
+                        'Regression Testing',
+                        'Feature Validation Testing',
+                        'First Impression Testing',
+                        'Compatibility Testing',
+                        'Accessibility Testing',
+                      ].map((type) => {
+                        const selected = testingTypes.includes(type);
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() =>
+                              setTestingTypes((prev) =>
+                                prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+                              )
+                            }
+                            className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${
+                              selected
+                                ? 'bg-green-600 border-green-600 text-white shadow-sm'
+                                : 'bg-white border-slate-200 text-slate-600 hover:border-green-400 hover:text-green-700'
+                            }`}
+                          >
+                            {selected ? '✓ ' : ''}{type}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {testingTypes.length === 0 && (
+                      <p className="mt-2 text-xs text-amber-600 font-medium">Select at least one testing type.</p>
+                    )}
+                  </div>
+
+                  <div className="mt-5">
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Additional Focus Areas <span className="text-xs font-normal text-slate-400 ml-1">(optional)</span>
                     </label>
                     <textarea
-                      rows={4}
+                      rows={3}
                       value={focusAreas}
                       onChange={(e) => setFocusAreas(e.target.value)}
                       placeholder="Example: checkout flow, confusing screens, slow loading, crashes, broken links..."

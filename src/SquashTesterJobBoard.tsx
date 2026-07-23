@@ -77,6 +77,9 @@ export default function SquashTesterJobBoard() {
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [applicationNotice, setApplicationNotice] = useState('');
   const [applicationError, setApplicationError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
+  const JOBS_PER_PAGE = 6;
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -255,13 +258,6 @@ export default function SquashTesterJobBoard() {
     Low: 'text-green-600',
   };
 
-  const severityDotClasses: Record<Severity, string> = {
-    Critical: 'bg-red-500',
-    High: 'bg-red-500',
-    Medium: 'bg-amber-400',
-    Low: 'bg-green-500',
-  };
-
   const filteredJobs = useMemo(() => {
     let result = jobs.filter((job) => severityFilter[job.severity]);
 
@@ -322,6 +318,47 @@ export default function SquashTesterJobBoard() {
     timeFilter,
   ]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, jobTypeFilter, platformFilter, testTypeFilter, timeFilter, searchText, sortBy, severityFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * JOBS_PER_PAGE;
+    return filteredJobs.slice(start, start + JOBS_PER_PAGE);
+  }, [filteredJobs, currentPage]);
+
+  const startItem = filteredJobs.length === 0 ? 0 : (currentPage - 1) * JOBS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * JOBS_PER_PAGE, filteredJobs.length);
+
+  const paginationItems = useMemo(() => {
+    const items: string[] = ['<-'];
+    if (totalPages <= 6) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(String(i));
+      }
+    } else {
+      items.push('1', '2', '3', '4', '5', '...', String(totalPages));
+    }
+    items.push('->');
+    return items;
+  }, [totalPages]);
+
+  const handlePageClick = (item: string) => {
+    if (item === '<-') {
+      setCurrentPage((p) => Math.max(1, p - 1));
+    } else if (item === '->') {
+      setCurrentPage((p) => Math.min(totalPages, p + 1));
+    } else if (item === '...') {
+      setCurrentPage((p) => Math.min(totalPages, p + 3));
+    } else {
+      const pageNum = Number(item);
+      if (!isNaN(pageNum)) {
+        setCurrentPage(pageNum);
+      }
+    }
+  };
+
   const resetFilters = () => {
     setSearchText('');
     setActiveTab('All Jobs');
@@ -336,40 +373,42 @@ export default function SquashTesterJobBoard() {
     setPlatformFilter('Any');
     setTestTypeFilter('Any');
     setTimeFilter('Any');
+    setCurrentPage(1);
     setFilterNotice('Filters reset.');
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
+    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
       <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
       
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr_280px]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr_280px]">
+        {/* Apple Translucent Left Sidebar */}
+        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
             <img
               src="/squash-logo.png"
               alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
+              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
             />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
+            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
               SQUASH
             </a>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-6">
+          <nav className="flex-1 space-y-1.5 px-4 py-6">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <a
                   href={item.href}
                   key={item.label}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
                     item.active
-                      ? 'bg-green-50 text-green-700'
-                      : 'text-slate-700 hover:bg-slate-50'
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
                   {item.label}
                 </a>
               );
@@ -377,78 +416,85 @@ export default function SquashTesterJobBoard() {
           </nav>
 
           <div className="space-y-4 p-4 pt-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Your Progress</div>
-              <div className="mt-5 flex justify-center">
-                <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-[10px] border-green-600/15">
-                  <div className="absolute inset-0 rotate-[20deg] rounded-full border-[10px] border-transparent border-r-green-600 border-t-green-600" />
+            <div className="apple-bento-card p-5">
+              <div className="text-base font-bold text-slate-900">Your Progress</div>
+              <div className="mt-4 flex justify-center">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-[8px] border-green-500/15">
+                  <div className="absolute inset-0 rotate-[20deg] rounded-full border-[8px] border-transparent border-r-green-500 border-t-green-500" />
                   <div className="text-center">
-                    <div className="text-2xl font-black text-slate-900">78%</div>
+                    <div className="text-xl font-extrabold text-slate-900">78%</div>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 text-center font-semibold text-slate-800">Level 3</div>
-              <div className="text-center text-sm text-slate-500">Quality Tester</div>
-              <a href="/tester/profile" className="mt-4 inline-block text-sm font-semibold text-green-700">View Profile -&gt;</a>
+              <div className="mt-3 text-center font-bold text-slate-900">Level 3</div>
+              <div className="text-center text-xs font-semibold text-slate-500">Quality Tester</div>
+              <a href="/tester/profile" className="mt-4 block text-center text-xs font-bold text-green-700 hover:underline">
+                View Profile →
+              </a>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Love testing?</div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+            <div className="apple-bento-card p-5">
+              <div className="text-base font-bold text-slate-900">Love testing?</div>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
                 Refer a friend and earn R100 when they complete a test.
               </p>
-              <a href="/tester/referrals" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
-                <Gift className="h-4 w-4" /> Refer Now -&gt;
+              <a href="/tester/referrals" className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-green-700 hover:underline">
+                <Gift className="h-4 w-4" /> Refer Now →
               </a>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0 pb-24 lg:pb-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        {/* Main Jobs Feed */}
+        <main className="min-w-0 pb-24 lg:pb-12">
+          {/* Apple Translucent Top Header */}
+          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
+            <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setIsMobileDrawerOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
+                  <button
+                    onClick={() => setIsMobileDrawerOpen(true)}
+                    className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
+                  >
                     <Menu className="h-5 w-5" />
                   </button>
-                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
+                  <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                      className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                       placeholder="Search jobs, apps, or developers..."
                     />
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200/80 bg-white p-2.5 text-slate-700 hover:bg-slate-50 transition apple-press-effect">
+                    <Bell className="h-4.5 w-4.5" />
+                    <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       2
                     </span>
                   </a>
-                  <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
+                  <a href="/tester/profile" className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 p-1.5 pr-4 shadow-2xs hover:bg-white transition apple-press-effect">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white font-bold text-xs">
+                      {testerName.charAt(0)}
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                      <div className="text-xs text-slate-500">Tester</div>
+                      <div className="text-xs font-bold text-slate-900 leading-tight">{testerName}</div>
+                      <div className="text-[10px] font-semibold text-slate-500">Tester</div>
                     </div>
                   </a>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 md:hidden">
-                <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="flex w-full items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                     placeholder="Search jobs, apps, or developers..."
                   />
                 </div>
@@ -456,40 +502,41 @@ export default function SquashTesterJobBoard() {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-up">
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-slate-900">Available Test Jobs</h1>
-                <p className="mt-2 text-slate-600">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Available Test Jobs</h1>
+                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
                   Browse and apply for test jobs. Earn money while helping improve amazing apps.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSortBy((prev) => (prev === 'Newest' ? 'Highest Pay' : 'Newest'))}
-                className="flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
+                className="flex w-fit items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect"
               >
-                Sort by: {sortBy} <ChevronDown className="h-4 w-4" />
+                Sort by: {sortBy} <ChevronDown className="h-3.5 w-3.5" />
               </button>
             </div>
 
-              <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 mt-8 flex overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {tabs.map((tab) => (
+            {/* Category Tabs */}
+            <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 flex overflow-x-auto gap-2.5 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {tabs.map((tab) => (
                 <button
                   key={tab.label}
                   type="button"
                   onClick={() => setActiveTab(tab.label)}
-                  className={`shrink-0 flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                  className={`shrink-0 flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 apple-press-effect ${
                     activeTab === tab.label
-                      ? 'border-green-200 bg-green-50 text-green-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                      : 'border-slate-200/80 bg-white text-slate-600 hover:bg-slate-100/60'
                   }`}
                 >
                   {tab.label}
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
                       activeTab === tab.label
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-white/20 text-white'
                         : 'bg-slate-100 text-slate-500'
                     }`}
                   >
@@ -499,81 +546,96 @@ export default function SquashTesterJobBoard() {
               ))}
             </div>
 
-            {databaseJobs.length > 0 ? (
-              <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-                Showing {databaseJobs.length} live Supabase job{databaseJobs.length === 1 ? '' : 's'}.
-              </div>
-            ) : null}
             {jobsError ? (
-              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              <div className="rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-xs font-bold text-red-700">
                 {jobsError}
               </div>
             ) : null}
             {applicationNotice ? (
-              <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+              <div className="rounded-2xl border border-green-200 bg-green-50/60 px-4 py-3 text-xs font-bold text-green-800">
                 {applicationNotice}
               </div>
             ) : null}
             {applicationError ? (
-              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              <div className="rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-xs font-bold text-red-700">
                 {applicationError}
               </div>
             ) : null}
 
-            <div className="mt-8 space-y-5">
-              {filteredJobs.map((job) => (
-                <div key={job.name} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            {/* Job Cards */}
+            <div className="space-y-4">
+              {paginatedJobs.map((job) => (
+                <div key={job.name} className="apple-bento-card p-5">
                   {/* Top row: logo + title + category + action */}
-                  <div className="flex items-start gap-3">
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-lg font-bold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
+                  <div className="flex items-start gap-3.5">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-base font-extrabold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
                       {job.logoUrl ? <img src={job.logoUrl} alt={`${job.name} logo`} className="h-full w-full object-cover" /> : job.name.charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-base font-bold text-slate-900">{job.name}</h2>
                         {(() => {
                           const category = getCategoryById(job.categoryId);
                           const CategoryIcon = category.icon;
                           return (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
                               <CategoryIcon className="h-3 w-3" style={{ color: category.color }} />
                               {category.name}
                             </span>
                           );
                         })()}
                         {job.badge ? (
-                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${job.badge === 'New' ? 'bg-green-100 text-green-700' : 'bg-sky-100 text-sky-700'}`}>
+                          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${job.badge === 'New' ? 'bg-green-100 text-green-800' : 'bg-sky-100 text-sky-800'}`}>
                             {job.badge}
                           </span>
                         ) : null}
                         {job.source === 'supabase' ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Live</span>
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Live</span>
                         ) : null}
                         {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
-                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">✓ Matches You</span>
+                          <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-extrabold text-green-800">✓ Matches You</span>
                         ) : null}
                       </div>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">{job.description}</p>
+                      {(() => {
+                        const isExpanded = Boolean(expandedJobs[job.name]);
+                        const isLong = job.description.length > 80;
+                        return (
+                          <div className="mt-1.5">
+                            <p className={`text-xs text-slate-500 font-medium leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>
+                              {job.description}
+                            </p>
+                            {isLong ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedJobs((prev) => ({ ...prev, [job.name]: !prev[job.name] }))}
+                                className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-green-700 hover:text-green-800 hover:underline transition"
+                              >
+                                {isExpanded ? 'View Less ▲' : 'View More ▼'}
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
                   {/* Tags row */}
                   {job.tags.length > 0 && (
-                    <div className="mt-2.5 flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="mt-3 flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                       {job.tags.map((tag) => (
-                        <span key={tag} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">{tag}</span>
+                        <span key={tag} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">{tag}</span>
                       ))}
                       {job.requiredSpecializations.slice(0, 2).map((id) => (
-                        <span key={`${job.name}-${id}`} className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">{getSpecializationLabel(id)}</span>
+                        <span key={`${job.name}-${id}`} className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">{getSpecializationLabel(id)}</span>
                       ))}
                     </div>
                   )}
 
                   {/* Pay + CTA row */}
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                     <div>
-                      <div className="text-xl font-black text-green-700">{job.pay}</div>
-                      <div className="text-[11px] text-slate-500">{job.testers} · {job.time}</div>
+                      <div className="text-xl font-extrabold text-slate-900">{job.pay}</div>
+                      <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{job.testers} · {job.time}</div>
                     </div>
                     {(() => {
                       const applicationStatus = job.jobId ? applicationByJobId[job.jobId] : undefined;
@@ -586,14 +648,14 @@ export default function SquashTesterJobBoard() {
                           type="button"
                           onClick={() => handleApply(job)}
                           disabled={Boolean(isApplying || isPending || isRejected)}
-                          className={`rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                          className={`rounded-full px-5 py-2.5 text-xs font-bold transition apple-press-effect ${
                             isAccepted
-                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              ? 'bg-green-600 text-white shadow-sm hover:bg-green-700'
                               : isPending
-                                ? 'cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+                                ? 'cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                                 : isRejected
                                   ? 'cursor-not-allowed bg-slate-100 text-slate-500'
-                                  : 'bg-green-600 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300'
+                                  : 'bg-slate-900 text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300'
                           }`}
                         >
                           {isApplying ? 'Applying…' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : 'Apply Now'}
@@ -601,45 +663,47 @@ export default function SquashTesterJobBoard() {
                       );
                     })()}
                   </div>
-
-                  {/* Metadata strip */}
-                  <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
-                    <span><span className="font-semibold text-slate-700">{job.type}</span> · Test Type</span>
-                    <span><span className="font-semibold text-slate-700">{job.deadline}</span> · Deadline</span>
-                    <span className="flex items-center gap-1">
-                      <span className={`h-2 w-2 rounded-full ${severityDotClasses[job.severity]}`} />
-                      <span className={`font-semibold ${severityClasses[job.severity]}`}>{job.severity}</span>
-                    </span>
-                    <span><span className="font-semibold text-slate-700">{job.posted}</span> · Posted</span>
-                  </div>
                 </div>
-
               ))}
               {filteredJobs.length === 0 ? (
-                <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm">
+                <div className="apple-bento-card p-8 text-center text-xs font-semibold text-slate-500">
                   No jobs matched your filters.
                 </div>
               ) : null}
             </div>
 
+            {/* Dynamic Page Buttons matching visual design */}
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-              <div className="flex items-center gap-2">
-                {['<-', '1', '2', '3', '4', '5', '...', '12', '->'].map((item, index) => (
-                  <a
-                    key={`${item}-${index}`}
-                    href={item === '<-' ? '/tester-jobs?page=1' : item === '->' ? '/tester-jobs?page=12' : item === '...' ? '/tester-jobs?page=6' : `/tester-jobs?page=${item}`}
-                    className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-semibold ${
-                      item === '1'
-                        ? 'border-green-600 bg-green-600 text-white'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {item}
-                  </a>
-                ))}
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 [&::-webkit-scrollbar]:hidden">
+                {paginationItems.map((item, index) => {
+                  const isCurrent = item === String(currentPage);
+                  const isPrevDisabled = item === '<-' && currentPage === 1;
+                  const isNextDisabled = item === '->' && currentPage === totalPages;
+                  const isDisabled = isPrevDisabled || isNextDisabled;
+
+                  return (
+                    <button
+                      key={`${item}-${index}`}
+                      type="button"
+                      onClick={() => handlePageClick(item)}
+                      disabled={isDisabled}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition apple-press-effect ${
+                        isCurrent
+                          ? 'border-green-600 bg-green-600 text-white shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="text-sm text-slate-500">
-                Showing 1 to {Math.min(filteredJobs.length, 10)} of {filteredJobs.length} jobs
+              <div className="text-sm font-medium text-slate-500">
+                {filteredJobs.length === 0
+                  ? '0 jobs found'
+                  : totalPages === 1
+                    ? `Showing all ${filteredJobs.length} ${filteredJobs.length === 1 ? 'job' : 'jobs'}`
+                    : `Showing ${startItem}–${endItem} of ${filteredJobs.length} jobs`}
               </div>
             </div>
           </div>

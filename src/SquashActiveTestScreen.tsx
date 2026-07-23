@@ -431,41 +431,44 @@ export default function SquashActiveTestScreen() {
   useEffect(
     () => () => {
       clearIntervals();
-      stopMediaStream();
+stopMediaStream();
       if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
     },
     [recordedVideoUrl],
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
+    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
+
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        {/* Apple Translucent Left Sidebar */}
+        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
             <img
               src="/squash-logo.png"
               alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
+              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
             />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
+            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
               SQUASH
             </a>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-6">
+          <nav className="flex-1 space-y-1.5 px-4 py-6">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <a
                   key={item.label}
                   href={item.href}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
                     item.active
-                      ? 'bg-green-50 text-green-700'
-                      : 'text-slate-700 hover:bg-slate-50'
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
                   {item.label}
                 </a>
               );
@@ -473,70 +476,74 @@ export default function SquashActiveTestScreen() {
           </nav>
 
           <div className="space-y-4 p-4 pt-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Active Test</div>
-              <div className="mt-4 rounded-2xl bg-green-50 p-4">
-                <div className="text-sm font-semibold text-green-700">{assignment?.jobTitle || 'FitTrack Mobile'}</div>
-                <div className="mt-1 text-sm text-slate-600">
+            <div className="apple-bento-card p-5">
+              <div className="text-base font-bold text-slate-900">Active Test</div>
+              <div className="mt-3 rounded-2xl bg-green-50/70 p-3.5 border border-green-200/60">
+                <div className="text-xs font-bold text-green-800">{assignment?.jobTitle || 'FitTrack Mobile'}</div>
+                <div className="mt-1 text-[11px] font-semibold text-slate-600">
                   {completedTasks} / {taskState.length} tasks done
                 </div>
               </div>
-              <a href="#task-list" className="mt-4 inline-block text-sm font-semibold text-green-700">Continue Test -&gt;</a>
+              <a href="#task-list" className="mt-3 block text-center text-xs font-bold text-green-700 hover:underline">
+                Continue Test →
+              </a>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Your Rating</div>
-              <div className="mt-3 text-3xl font-black text-slate-900">4.7 *</div>
-              <div className="mt-1 text-sm text-slate-500">From 28 reviews</div>
+            <div className="apple-bento-card p-5">
+              <div className="text-base font-bold text-slate-900">Your Rating</div>
+              <div className="mt-2 text-2xl font-extrabold text-slate-900">4.7 ★</div>
+              <div className="mt-0.5 text-xs text-slate-500 font-medium">From 28 reviews</div>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0 pb-48 lg:pb-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        {/* Main Content */}
+        <main className="min-w-0 pb-36 lg:pb-12">
+          {/* Apple Translucent Top Header */}
+          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
+            <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setIsMobileDrawerOpen(true)}
-                    className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                    className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
                   >
                     <Menu className="h-5 w-5" />
                   </button>
-                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
+                  <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                      className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                       placeholder="Search jobs, tests, reports..."
                     />
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200/80 bg-white p-2.5 text-slate-700 hover:bg-slate-50 transition apple-press-effect">
+                    <Bell className="h-4.5 w-4.5" />
+                    <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       2
                     </span>
                   </a>
-                  <a href="/tester/profile" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <UserCircle2 className="h-7 w-7" />
+                  <a href="/tester/profile" className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 p-1.5 pr-4 shadow-2xs hover:bg-white transition apple-press-effect">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white font-bold text-xs">
+                      {testerName.charAt(0)}
                     </div>
                     <div className="hidden sm:block">
-                      <div className="text-sm font-bold text-slate-900">{testerName}</div>
-                      <div className="text-xs text-slate-500">Tester</div>
+                      <div className="text-xs font-bold text-slate-900 leading-tight">{testerName}</div>
+                      <div className="text-[10px] font-semibold text-slate-500">Tester</div>
                     </div>
                   </a>
                 </div>
               </div>
 
               <div className="md:hidden">
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="flex w-full items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                     placeholder="Search jobs, tests, reports..."
                   />
                 </div>
@@ -544,29 +551,31 @@ export default function SquashActiveTestScreen() {
             </div>
           </header>
 
-          <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
+          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+            <div className="flex items-center justify-between gap-3 animate-fade-up">
+              <div className="flex min-w-0 items-center gap-3">
                 {assignment?.jobLogoUrl ? (
-                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-8 w-8 rounded-xl border border-slate-200 object-cover shadow-sm shrink-0" />
+                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-2xs shrink-0" />
                 ) : null}
-                <h1 className="truncate text-lg font-black tracking-tight text-slate-900 sm:text-2xl">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
-                <span className="hidden shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-semibold text-green-700 sm:inline">
-                  {assignment?.jobPlatform || 'Usability Test'}
-                </span>
+                <div>
+                  <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-extrabold text-slate-700 mt-1 inline-block">
+                    {assignment?.jobPlatform || 'Usability Test'}
+                  </span>
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                <div className="rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
                   ⏱ 18:24
                 </div>
-                <div className="flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm">
+                <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50/80 px-3.5 py-1.5 text-xs font-bold text-red-600 shadow-2xs">
                   <Mic className="h-3.5 w-3.5" /> REC
                 </div>
               </div>
             </div>
 
             <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <section className="apple-bento-card overflow-hidden">
                 {(() => {
                   // Derive testing type from platform label, with fuzzy matching
                   const platform = assignment?.jobPlatform || '';
@@ -581,29 +590,29 @@ export default function SquashActiveTestScreen() {
                   return (
                     <>
                       {/* Coloured banner */}
-                      <div className={`${cfg.bg} border-b ${cfg.border} px-4 pt-4 pb-3`}>
+                      <div className={`${cfg.bg} border-b ${cfg.border} px-5 pt-4 pb-3.5`}>
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 border ${cfg.border} shadow-sm`}>
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 border ${cfg.border} shadow-2xs`}>
                             <PrimaryIcon className={`h-5 w-5 ${cfg.text}`} />
                           </div>
                           <div>
-                            <div className={`text-[10px] font-bold uppercase tracking-[0.12em] ${cfg.text} opacity-60`}>Testing Brief</div>
-                            <div className={`text-base font-black ${cfg.text}`}>{typeLabel}</div>
+                            <div className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${cfg.text} opacity-70`}>Testing Brief</div>
+                            <div className={`text-base font-extrabold ${cfg.text}`}>{typeLabel}</div>
                           </div>
                         </div>
-                        <p className={`mt-2 text-xs font-semibold italic ${cfg.text} opacity-75 leading-relaxed`}>
+                        <p className={`mt-2 text-xs font-semibold italic ${cfg.text} opacity-80 leading-relaxed`}>
                           "{cfg.mission}"
                         </p>
                       </div>
 
                       {/* Progress + Launch */}
-                      <div className="px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+                      <div className="px-5 py-3.5 flex items-center gap-3 border-b border-slate-100">
                         <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
                           <svg className="h-11 w-11 -rotate-90" viewBox="0 0 80 80">
                             <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="9" />
                             <circle
                               cx="40" cy="40" r="32" fill="none"
-                              stroke="#16a34a" strokeWidth="9"
+                              stroke="#34c759" strokeWidth="9"
                               strokeLinecap="round"
                               strokeDasharray={`${2 * Math.PI * 32}`}
                               strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
@@ -611,12 +620,12 @@ export default function SquashActiveTestScreen() {
                             />
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[10px] font-black text-slate-900">{progressPercent}%</span>
+                            <span className="text-[10px] font-extrabold text-slate-900">{progressPercent}%</span>
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-semibold text-slate-700">{completedTasks}/{taskState.length} tasks done</span>
+                            <span className="text-xs font-bold text-slate-700">{completedTasks}/{taskState.length} tasks done</span>
                           </div>
                           <div className="h-1.5 rounded-full bg-slate-100">
                             <div className="h-1.5 rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
@@ -626,7 +635,7 @@ export default function SquashActiveTestScreen() {
                           type="button"
                           onClick={() => window.open(assignment?.jobAppUrl || '#', '_blank', 'noopener,noreferrer')}
                           disabled={!assignment?.jobAppUrl}
-                          className="shrink-0 flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-40 transition shadow-sm"
+                          className="shrink-0 flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-40 transition apple-press-effect"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Launch
@@ -635,20 +644,20 @@ export default function SquashActiveTestScreen() {
 
                       {/* What to look for */}
                       {focusText ? (
-                        <div className={`mx-3 mt-3 rounded-xl border ${cfg.border} ${cfg.bg} px-3 py-3`}>
-                          <div className={`text-[10px] font-bold uppercase tracking-[0.1em] ${cfg.text} mb-2`}>What to look for</div>
-                          <p className="text-xs leading-[1.7] text-slate-700 whitespace-pre-line">{focusText}</p>
+                        <div className={`mx-4 mt-4 rounded-2xl border ${cfg.border} ${cfg.bg} p-4`}>
+                          <div className={`text-[10px] font-extrabold uppercase tracking-[0.1em] ${cfg.text} mb-1.5`}>What to look for</div>
+                          <p className="text-xs leading-relaxed text-slate-700 font-medium whitespace-pre-line">{focusText}</p>
                         </div>
                       ) : null}
 
                       {/* Tips */}
-                      <div className="px-4 pt-3 pb-4">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 mb-2">Testing Tips</div>
+                      <div className="px-5 pt-4 pb-5">
+                        <div className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-2.5">Testing Tips</div>
                         <div className="space-y-2">
                           {cfg.tips.slice(0, 3).map((tip, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />
-                              <span className="text-xs leading-relaxed text-slate-600">{tip}</span>
+                              <span className="text-xs leading-relaxed text-slate-600 font-medium">{tip}</span>
                             </div>
                           ))}
                         </div>
@@ -658,30 +667,29 @@ export default function SquashActiveTestScreen() {
                 })()}
               </section>
 
-
               <section className="space-y-4">
-                <div id="task-list" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div id="task-list" className="apple-bento-card p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-bold text-slate-900">Your Tasks</h2>
                       {loadingAssignment ? <p className="mt-1 text-xs font-semibold text-slate-500">Loading assignment...</p> : null}
                       {assignmentError ? <p className="mt-1 text-xs font-semibold text-red-600">{assignmentError}</p> : null}
                     </div>
-                    <div className="rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
                       {completedTasks} / {taskState.length} Done
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3.5 space-y-2">
                     {tasks.map((task, index) => (
-                      <label key={task} className="flex items-start gap-3 rounded-xl border border-slate-100 px-3 py-3 hover:bg-slate-50">
+                      <label key={task} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-3.5 py-3 hover:bg-slate-100/60 transition cursor-pointer">
                         <input
                           type="checkbox"
                           checked={taskState[index]}
                           onChange={(e) => toggleTask(index, e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                          className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-slate-900 focus:ring-slate-900"
                         />
-                        <span className={`text-xs ${taskState[index] ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                        <span className={`text-xs ${taskState[index] ? 'font-bold text-slate-900 line-through opacity-60' : 'font-medium text-slate-700'}`}>
                           {task}
                         </span>
                       </label>
@@ -689,9 +697,9 @@ export default function SquashActiveTestScreen() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="apple-bento-card p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Bug className="h-4 w-4 text-red-500" />
+                    <Bug className="h-4.5 w-4.5 text-red-500" />
                     <h2 className="text-base font-bold text-slate-900">Report a Bug</h2>
                   </div>
 

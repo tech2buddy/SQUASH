@@ -116,30 +116,26 @@ export default function SquashTesterProfilePage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
-            />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
+        {/* Apple Translucent Left Sidebar */}
+        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
+            <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm" />
+            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
           </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
+          <nav className="flex-1 space-y-1.5 px-4 py-6">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <a
                   href={item.href}
                   key={item.label}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
+                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
+                    item.active
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
                   {item.label}
                 </a>
               );
@@ -147,33 +143,35 @@ export default function SquashTesterProfilePage() {
           </nav>
 
           <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-green-100 bg-green-50 p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Profile Strength</div>
-              <div className="mt-4 h-3 rounded-full bg-white">
-                <div className="h-3 w-[82%] rounded-full bg-green-600" />
+            <div className="apple-bento-card p-5">
+              <div className="text-base font-bold text-slate-900">Profile Strength</div>
+              <div className="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full w-[82%] rounded-full bg-green-500 transition-all duration-500" />
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
+              <p className="mt-3 text-xs leading-relaxed text-slate-600 font-medium">
                 Add more device and language details to unlock better matched tests.
               </p>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-4">
+        {/* Main Profile Content */}
+        <main className="min-w-0 pb-24 lg:pb-12">
+          {/* Apple Translucent Top Header */}
+          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                  className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
+                <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                     placeholder="Search jobs, reports, earnings..."
                   />
                 </div>
@@ -183,27 +181,27 @@ export default function SquashTesterProfilePage() {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
               <div>
-                <div className="inline-flex rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
-                  Tester profile
-                </div>
-                <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">Your SQUASH profile</h1>
-                <p className="mt-2 text-slate-600">
+                <span className="inline-flex rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
+                  Tester Profile
+                </span>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Your SQUASH Profile</h1>
+                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
                   Keep this sharp so developers can match you with the right tests.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2.5">
                 <a
                   href="/tester-jobs"
-                  className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
+                  className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect"
                 >
                   Find Tests
                 </a>
                 <a
                   href="/tester/settings"
-                  className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect"
                 >
                   Account Settings
                 </a>
@@ -211,23 +209,23 @@ export default function SquashTesterProfilePage() {
             </div>
 
             {profileError ? (
-              <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              <div className="rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-xs font-bold text-red-700">
                 {profileError}
               </div>
             ) : null}
 
-            <section className="mt-8 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="grid gap-6 xl:grid-cols-[1fr_1fr] animate-fade-up-delayed">
+              <div className="apple-bento-card p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] bg-slate-900 text-4xl font-black text-white shadow-sm">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-3xl font-extrabold text-white shadow-sm">
                     {testerName.charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl font-black text-slate-900">{testerName}</h2>
+                      <h2 className="text-xl font-bold text-slate-900">{testerName}</h2>
                       <TesterBadge testsCompleted={testsCompleted} rating={rating} />
                     </div>
-                    <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                    <div className="mt-3 grid gap-2 text-xs font-medium text-slate-500 sm:grid-cols-2">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-slate-400" />
                         {testerEmail}
@@ -245,11 +243,11 @@ export default function SquashTesterProfilePage() {
                         Weekdays after 16:00
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-1.5">
                       {topTags.map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
+                          className="rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-700"
                         >
                           {tag}
                         </span>
@@ -266,10 +264,10 @@ export default function SquashTesterProfilePage() {
                   ].map((item) => {
                     const Icon = item.icon;
                     return (
-                      <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <Icon className="h-5 w-5 text-green-700" />
-                        <div className="mt-3 text-2xl font-black text-slate-900">{item.value}</div>
-                        <div className="text-sm text-slate-500">{item.label}</div>
+                      <div key={item.label} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                        <Icon className="h-4.5 w-4.5 text-green-600" />
+                        <div className="mt-2 text-2xl font-extrabold text-slate-900">{item.value}</div>
+                        <div className="text-xs font-semibold text-slate-500 mt-0.5">{item.label}</div>
                       </div>
                     );
                   })}

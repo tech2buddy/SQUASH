@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=SF+Pro+Display:wght@500;600;700;800&display=swap');
 
 *,
 *::before,
@@ -7,12 +7,19 @@
 }
 
 :root {
+  --apple-bg: #f5f5f7;
+  --apple-card-bg: rgba(255, 255, 255, 0.82);
+  --apple-border: rgba(0, 0, 0, 0.06);
   --brand-green-50: #ecfdf3;
   --brand-green-600: #16a34a;
   --brand-green-700: #15803d;
-  --ink-900: #0f172a;
-  --ink-600: #475569;
-  --surface-soft: #f8fafc;
+  --apple-system-green: #34c759;
+  --apple-system-blue: #007aff;
+  --apple-system-orange: #ff9500;
+  --apple-system-purple: #af52de;
+  --ink-900: #1d1d1f;
+  --ink-600: #86868b;
+  --surface-soft: #f5f5f7;
 }
 
 
@@ -37,14 +44,18 @@ html,
 body,
 #app {
   margin: 0;
+  padding: 0;
+  width: 100%;
   min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 body {
   background: var(--surface-soft);
   color: var(--ink-900);
-  font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-rendering: geometricPrecision;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -54,27 +65,55 @@ h2,
 h3,
 h4,
 h5,
-h6 {
-  font-family: 'Sora', 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  letter-spacing: -0.02em;
-}
-
+h6,
 .font-black,
 .font-extrabold {
-  font-family: 'Sora', 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.025em;
 }
 
 a,
 button {
-  transition-duration: 180ms;
-  transition-timing-function: ease;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Apple Design Utilities */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.apple-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.apple-bento-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.apple-press-effect:active {
+  transform: scale(0.97);
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -83,10 +122,9 @@ button {
 }
 
 .animate-fade-up {
-  animation: fade-up 560ms ease both;
+  animation: fade-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-up-delayed {
-  animation: fade-up 680ms ease 90ms both;
+  animation: fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
 }
-

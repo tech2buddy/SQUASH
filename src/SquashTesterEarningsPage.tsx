@@ -226,32 +226,35 @@ export default function SquashTesterEarningsPage() {
   const monthlyDots = monthlyPoints.split(' ').map((point) => point.split(',').map(Number));
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
+    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        {/* Apple Translucent Left Sidebar */}
+        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
             <img
               src="/squash-logo.png"
               alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
+              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
             />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
+            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
               SQUASH
             </a>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-6">
+          <nav className="flex-1 space-y-1.5 px-4 py-6">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <a
                   href={item.href}
                   key={item.label}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
+                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
+                    item.active
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
                   {item.label}
                 </a>
               );
@@ -259,33 +262,35 @@ export default function SquashTesterEarningsPage() {
           </nav>
 
           <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-green-100 bg-green-50 p-5 shadow-sm">
+            <div className="apple-bento-card p-5">
               <div className="flex items-center gap-2 font-bold text-slate-900">
-                <ShieldCheck className="h-5 w-5 text-green-700" />
+                <ShieldCheck className="h-4.5 w-4.5 text-green-600" />
                 Secure payouts
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-medium">
                 Approved tester earnings are paid directly to your selected method.
               </p>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-4">
+        {/* Main Earnings Content */}
+        <main className="min-w-0 pb-24 lg:pb-12">
+          {/* Apple Translucent Top Header */}
+          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                  className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
+                <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
                     placeholder="Search earnings, payouts, reports..."
                   />
                 </div>
@@ -295,21 +300,21 @@ export default function SquashTesterEarningsPage() {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
               <div>
-                <div className="inline-flex rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
-                  Tester earnings
-                </div>
-                <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">Earnings & payouts</h1>
-                <p className="mt-2 text-slate-600">
+                <span className="inline-flex rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
+                  Tester Earnings
+                </span>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Earnings & Payouts</h1>
+                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
                   Track approved test earnings, pending approvals, and payout methods.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2.5">
                 <a
                   href="/tester-jobs"
-                  className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
+                  className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect"
                 >
                   Find More Tests
                 </a>
@@ -317,7 +322,7 @@ export default function SquashTesterEarningsPage() {
                   type="button"
                   onClick={handleRequestPayout}
                   disabled={requestingPayout}
-                  className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {requestingPayout ? 'Requesting...' : 'Request Payout'}
                 </button>
@@ -325,29 +330,30 @@ export default function SquashTesterEarningsPage() {
             </div>
 
             {earningsError ? (
-              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              <div className="rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-xs font-bold text-red-700">
                 {earningsError}
               </div>
             ) : null}
             {payoutNotice ? (
-              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+              <div className="rounded-2xl border border-green-200 bg-green-50/60 px-4 py-3 text-xs font-bold text-green-800">
                 {payoutNotice}
               </div>
             ) : null}
 
-            <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {/* Apple Bento Box Cards */}
+            <section className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4 animate-fade-up-delayed">
               {summaryCards.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div key={card.title} className="apple-bento-card p-5 flex flex-col justify-between">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="text-sm font-semibold text-slate-600">{card.title}</div>
-                        <div className="mt-2 text-3xl font-black text-slate-900">{card.value}</div>
-                        <div className="mt-2 text-sm leading-6 text-slate-500">{card.note}</div>
+                        <div className="text-xs font-bold text-slate-500">{card.title}</div>
+                        <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{card.value}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-400">{card.note}</div>
                       </div>
-                      <div className={`grid h-11 w-11 place-items-center rounded-2xl ${card.iconBg}`}>
-                        <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                      <div className={`grid h-10 w-10 place-items-center rounded-2xl ${card.iconBg}`}>
+                        <Icon className={`h-4.5 w-4.5 ${card.iconColor}`} />
                       </div>
                     </div>
                   </div>
@@ -355,33 +361,34 @@ export default function SquashTesterEarningsPage() {
               })}
             </section>
 
-            <section className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            {/* Graph + Payout Methods */}
+            <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+              <div className="apple-bento-card p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Earnings trend</h2>
-                    <p className="mt-1 text-sm text-slate-600">Approved and pending tester earnings this month.</p>
+                    <h2 className="text-base font-bold text-slate-900">Earnings Trend</h2>
+                    <p className="mt-0.5 text-xs font-medium text-slate-500">Approved and pending tester earnings this month.</p>
                   </div>
-                  <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-                    This Month <ChevronDown className="h-4 w-4" />
+                  <button className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition apple-press-effect">
+                    This Month <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </div>
 
-                <div className="mt-6 rounded-3xl border border-slate-100 bg-slate-50 p-5">
-                  <svg viewBox="0 0 100 100" className="h-56 w-full overflow-visible">
+                <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+                  <svg viewBox="0 0 100 100" className="h-52 w-full overflow-visible">
                     <defs>
                       <linearGradient id="earningsFill" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#16a34a" stopOpacity="0.22" />
-                        <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#34c759" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#34c759" stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     <polygon points={`0,100 ${monthlyPoints} 100,100`} fill="url(#earningsFill)" />
-                    <polyline points={monthlyPoints} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <polyline points={monthlyPoints} fill="none" stroke="#34c759" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
                     {monthlyDots.map(([x, y]) => (
-                      <circle key={`${x}-${y}`} cx={x} cy={y} r="2.2" fill="#16a34a" />
+                      <circle key={`${x}-${y}`} cx={x} cy={y} r="2" fill="#34c759" stroke="#ffffff" strokeWidth="1" />
                     ))}
                   </svg>
-                  <div className="mt-3 grid grid-cols-4 gap-2 text-xs text-slate-500 sm:grid-cols-7">
+                  <div className="mt-3 grid grid-cols-7 text-center text-[10px] font-semibold text-slate-400">
                     {['1 May', '6 May', '12 May', '18 May', '22 May', '27 May', '31 May'].map((label) => (
                       <span key={label}>{label}</span>
                     ))}
@@ -389,39 +396,41 @@ export default function SquashTesterEarningsPage() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900">Payout methods</h2>
-                <p className="mt-1 text-sm text-slate-600">Choose how approved earnings reach you.</p>
-                <div className="mt-5 space-y-4">
-                  {payoutMethods.map((method) => {
-                    const Icon = method.icon;
-                    return (
-                      <div
-                        key={method.title}
-                        className={`rounded-2xl border p-4 ${
-                          method.active ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3">
-                            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm">
-                              <Icon className="h-5 w-5 text-green-700" />
+              <div className="apple-bento-card p-6 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Payout Methods</h2>
+                  <p className="mt-0.5 text-xs font-medium text-slate-500">Choose how approved earnings reach you.</p>
+                  <div className="mt-4 space-y-3">
+                    {payoutMethods.map((method) => {
+                      const Icon = method.icon;
+                      return (
+                        <div
+                          key={method.title}
+                          className={`rounded-2xl border p-3.5 transition-all ${
+                            method.active ? 'border-green-300/80 bg-green-50/60' : 'border-slate-200/80 bg-slate-50/40'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-2xs">
+                                <Icon className="h-4.5 w-4.5 text-green-700" />
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-900">{method.title}</div>
+                                <div className="text-[11px] text-slate-500 font-medium">{method.detail}</div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="font-bold text-slate-900">{method.title}</div>
-                              <div className="mt-1 text-sm text-slate-600">{method.detail}</div>
-                            </div>
+                            <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-extrabold text-green-700 border border-green-200">
+                              {method.status}
+                            </span>
                           </div>
-                          <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-100">
-                            {method.status}
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-                <a href="/tester/profile" className="mt-5 inline-flex text-sm font-semibold text-green-700">
-                  Update payout details
+                <a href="/tester/profile" className="mt-4 block text-xs font-bold text-slate-900 hover:underline">
+                  Update Payout Details →
                 </a>
               </div>
             </section>

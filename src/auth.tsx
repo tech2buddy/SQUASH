@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
+import { createNotification } from './lib/notificationApi';
 
 export type UserRole = 'developer' | 'tester' | 'admin';
 export type WorkspaceRole = Exclude<UserRole, 'admin'>;
@@ -307,6 +308,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const profileSession = await readProfileSession(data.user.id, data.user.email ?? email);
         if (profileSession) {
+          createNotification({
+            userId: data.user.id,
+            title: 'Welcome to SQUASH! 🚀',
+            body: "We're excited to have you here. Let's get you set up!",
+            type: 'security',
+            linkPath: role === 'tester' ? '/tester/profile' : '/developer/settings',
+          }).catch(console.error);
+
+          if (role === 'tester') {
+            createNotification({
+              userId: data.user.id,
+              title: 'Profile Reminder 📝',
+              body: 'Complete your profile! Add your devices and specializations to unlock higher-paying jobs.',
+              type: 'security',
+              linkPath: '/tester/profile',
+            }).catch(console.error);
+          }
 
           setSession(profileSession);
         }

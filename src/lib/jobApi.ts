@@ -278,6 +278,32 @@ export async function applyToJob(jobId: string, testerId: string, note = ''): Pr
     throw error;
   }
 
+  if (data?.id) {
+    (async () => {
+      try {
+        const [
+          { data: job },
+          { data: tester }
+        ] = await Promise.all([
+          supabase.from('jobs').select('developer_id, title').eq('id', jobId).maybeSingle(),
+          supabase.from('profiles').select('full_name').eq('id', testerId).maybeSingle(),
+        ]);
+        
+        if (job?.developer_id) {
+          await createNotification({
+            userId: job.developer_id,
+            title: 'New Applicant 🚀',
+            body: `${tester?.full_name || 'A tester'} applied to test ${job.title || 'your app'}.`,
+            type: 'application',
+            linkPath: `/developer/reports`,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }
+
   return mapApplication(data);
 }
 
@@ -410,6 +436,33 @@ export async function reviewDeveloperApplication(
     if (assignmentError) {
       throw new Error(formatSupabaseError(assignmentError, 'Application accepted, but the active test assignment could not be created.'));
     }
+  }
+
+  if (data?.id) {
+    (async () => {
+      try {
+        const { data: job } = await supabase.from('jobs').select('title').eq('id', application.jobId).maybeSingle();
+        if (status === 'accepted') {
+          await createNotification({
+            userId: application.testerId,
+            title: 'Application Accepted 🎉',
+            body: `You've been approved to test ${job?.title || 'an app'}. Start testing now!`,
+            type: 'application',
+            linkPath: '/active-test',
+          });
+        } else if (status === 'rejected') {
+          await createNotification({
+            userId: application.testerId,
+            title: 'Application Update 🔄',
+            body: `Your application for ${job?.title || 'an app'} was not selected this time.`,
+            type: 'application',
+            linkPath: '/tester-jobs',
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
   }
 
   return mapApplication(data);
@@ -775,6 +828,44 @@ export async function reviewSubmittedReport(input: {
       .update({ status: nextAssignmentStatus })
       .eq('id', input.assignmentId);
     if (assignmentError) throw assignmentError;
+  }
+
+  if (data?.id) {
+    (async () => {
+      try {
+        const { data: assignment } = await supabase.from('test_assignments').select('tester_id, job_id').eq('id', input.assignmentId).maybeSingle();
+        if (assignment?.job_id && assignment.tester_id) {
+          const { data: job } = await supabase.from('jobs').select('title').eq('id', assignment.job_id).maybeSingle();
+          if (input.status === 'approved') {
+            await createNotification({
+              userId: assignment.tester_id,
+              title: 'Report Approved 💰',
+              body: `Your report for ${job?.title || 'an app'} was approved! Earnings have been credited to your wallet.`,
+              type: 'payout',
+              linkPath: '/tester/earnings',
+            });
+          } else if (input.status === 'changes_requested') {
+            await createNotification({
+              userId: assignment.tester_id,
+              title: 'Action Required ⚠️',
+              body: `The developer requested changes on your report for ${job?.title || 'an app'}.`,
+              type: 'report',
+              linkPath: '/active-test',
+            });
+          } else if (input.status === 'rejected') {
+            await createNotification({
+              userId: assignment.tester_id,
+              title: 'Report Rejected ❌',
+              body: `Unfortunately, your report for ${job?.title || 'an app'} did not meet the requirements.`,
+              type: 'report',
+              linkPath: '/active-test',
+            });
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
   }
 
   return data;

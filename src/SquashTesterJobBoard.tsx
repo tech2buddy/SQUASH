@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
 import MobileTabBar from './components/MobileTabBar';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import {
   TEST_CATEGORIES,
   getCategoryById,
@@ -470,21 +471,7 @@ export default function SquashTesterJobBoard() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200/80 bg-white p-2.5 text-slate-700 hover:bg-slate-50 transition apple-press-effect">
-                    <Bell className="h-4.5 w-4.5" />
-                    <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      2
-                    </span>
-                  </a>
-                  <a href="/tester/profile" className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 p-1.5 pr-4 shadow-2xs hover:bg-white transition apple-press-effect">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white font-bold text-xs">
-                      {testerName.charAt(0)}
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-xs font-bold text-slate-900 leading-tight">{testerName}</div>
-                      <div className="text-[10px] font-semibold text-slate-500">Tester</div>
-                    </div>
-                  </a>
+                <TesterHeaderNav />
                 </div>
               </div>
 

@@ -55,7 +55,6 @@ export default function SquashTesterJobBoard() {
   const { session } = useAuth();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const testerName = session?.name || 'Thando M.';
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('All Jobs');
   const [sortBy, setSortBy] = useState<'Newest' | 'Highest Pay'>('Newest');

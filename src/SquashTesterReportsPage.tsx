@@ -53,10 +53,10 @@ export default function SquashTesterReportsPage() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
   const [reportsError, setReportsError] = useState('');
-  const [loadingReports, setLoadingReports] = useState(session?.source === 'supabase');
+  const [loadingReports, setLoadingReports] = useState(true);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setReportsError('');
@@ -75,7 +75,7 @@ export default function SquashTesterReportsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -87,139 +87,58 @@ export default function SquashTesterReportsPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const demoSummaryCards = [
-    { title: 'Submitted', value: '36', note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
-    { title: 'Approved', value: '22', note: 'Payment released', icon: BadgeCheck, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-    { title: 'Pending', value: '8', note: 'Awaiting review', icon: Clock3, color: 'text-amber-700', bg: 'bg-amber-50' },
-    { title: 'Changes', value: '3', note: 'Need attention', icon: AlertCircle, color: 'text-sky-700', bg: 'bg-sky-50' },
-  ];
-
-  const demoReports: Array<{
-    title: string;
-    id: string;
-    app: string;
-    platform: string;
-    submitted: string;
-    status: ReportStatus;
-    earnings: string;
-    hasVideo: boolean;
-  }> = [
-    {
-      title: 'Login & Authentication',
-      id: 'Report #1248',
-      app: 'FitTrack Mobile App',
-      platform: 'Android',
-      submitted: '20 May 2025',
-      status: 'Pending Review',
-      earnings: 'R250',
-      hasVideo: true,
-    },
-    {
-      title: 'Workout Tracking',
-      id: 'Report #1245',
-      app: 'FitTrack Mobile App',
-      platform: 'Android',
-      submitted: '18 May 2025',
-      status: 'Approved',
-      earnings: 'R250 Paid',
-      hasVideo: false,
-    },
-    {
-      title: 'Profile & Settings',
-      id: 'Report #1240',
-      app: 'FitTrack Mobile App',
-      platform: 'iOS',
-      submitted: '16 May 2025',
-      status: 'Changes Requested',
-      earnings: 'R250',
-      hasVideo: true,
-    },
-    {
-      title: 'Onboarding Flow',
-      id: 'Report #1235',
-      app: 'HealthHub Web',
-      platform: 'Website',
-      submitted: '14 May 2025',
-      status: 'Approved',
-      earnings: 'R200 Paid',
-      hasVideo: false,
-    },
-  ];
-
-  const demoRequestedChanges = [
-    {
-      title: 'Profile & Settings',
-      app: 'FitTrack Mobile App',
-      comment: 'Please add the exact steps before the crash and attach the settings screenshot.',
-      due: 'Due today',
-    },
-    {
-      title: 'Checkout Validation',
-      app: 'ShopEase iOS',
-      comment: 'Developer asked for a shorter screen recording showing only the payment step.',
-      due: 'Due tomorrow',
-    },
-  ];
-
-  const isRealAccount = session?.source === 'supabase';
   const reports = useMemo(
     () =>
-      isRealAccount
-        ? realReports.map((report, index) => ({
-            title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
-            id: `Report #${String(index + 1).padStart(4, '0')}`,
-            app: report.jobTitle,
-            platform: report.jobPlatform,
-            submitted: formatDate(report.submittedAt || report.createdAt),
-            status: toReportStatus(report.status),
-            earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : formatRands(report.amountZar),
-            hasVideo: report.videoBugCount > 0,
-            bugCount: report.bugCount,
-          }))
-        : demoReports.map((report) => ({ ...report, bugCount: report.hasVideo ? 2 : 1 })),
-    [demoReports, isRealAccount, realReports],
+      realReports.map((report, index) => ({
+        title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
+        id: `Report #${String(index + 1).padStart(4, '0')}`,
+        app: report.jobTitle,
+        platform: report.jobPlatform,
+        submitted: formatDate(report.submittedAt || report.createdAt),
+        status: toReportStatus(report.status),
+        earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : formatRands(report.amountZar),
+        hasVideo: report.videoBugCount > 0,
+        bugCount: report.bugCount,
+      })),
+    [realReports],
   );
 
-  const summaryCards = isRealAccount
-    ? [
-        { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
-        {
-          title: 'Approved',
-          value: String(realReports.filter((report) => report.status === 'approved').length),
-          note: 'Payment released',
-          icon: BadgeCheck,
-          color: 'text-emerald-700',
-          bg: 'bg-emerald-50',
-        },
-        {
-          title: 'Pending',
-          value: String(realReports.filter((report) => report.status === 'submitted' || report.status === 'draft').length),
-          note: 'Awaiting review',
-          icon: Clock3,
-          color: 'text-amber-700',
-          bg: 'bg-amber-50',
-        },
-        {
-          title: 'Changes',
-          value: String(realReports.filter((report) => report.status === 'changes_requested').length),
-          note: 'Need attention',
-          icon: AlertCircle,
-          color: 'text-sky-700',
-          bg: 'bg-sky-50',
-        },
-      ]
-    : demoSummaryCards;
+  const summaryCards = [
+    { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
+    {
+      title: 'Approved',
+      value: String(realReports.filter((report) => report.status === 'approved').length),
+      note: 'Payment released',
+      icon: BadgeCheck,
+      color: 'text-emerald-700',
+      bg: 'bg-emerald-50',
+    },
+    {
+      title: 'Pending',
+      value: String(realReports.filter((report) => report.status === 'submitted' || report.status === 'draft').length),
+      note: 'Awaiting review',
+      icon: Clock3,
+      color: 'text-amber-700',
+      bg: 'bg-amber-50',
+    },
+    {
+      title: 'Changes',
+      value: String(realReports.filter((report) => report.status === 'changes_requested').length),
+      note: 'Need attention',
+      icon: AlertCircle,
+      color: 'text-sky-700',
+      bg: 'bg-sky-50',
+    },
+  ];
 
-  const requestedChanges = isRealAccount
-    ? realReports
-        .filter((report) => report.status === 'changes_requested')
-        .map((report) => ({
-          title: report.summary?.split('.')[0]?.slice(0, 36) || 'Report needs updates',
-          app: report.jobTitle,
-          comment: 'Developer requested more detail. Add clearer steps, evidence, or a short video before resubmitting.',
-          due: 'Action needed',
-        }))
-    : demoRequestedChanges;
+  const requestedChanges = realReports
+    .filter((report) => report.status === 'changes_requested')
+    .map((report) => ({
+      title: report.summary?.split('.')[0]?.slice(0, 36) || 'Report needs updates',
+      app: report.jobTitle,
+      comment: 'Developer requested more detail. Add clearer steps, evidence, or a short video before resubmitting.',
+      due: 'Action needed',
+    }));
 
   const statusClass = (status: ReportStatus) => {
     if (status === 'Approved') return 'bg-green-50 text-green-700 border-green-200';
@@ -229,7 +148,7 @@ export default function SquashTesterReportsPage() {
     return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
-  if (session?.source === 'supabase' && loadingReports) {
+  if (true && loadingReports) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading reports...

@@ -12,7 +12,6 @@ type AuthSession = {
   name: string;
   isAuthenticated: true;
   userId?: string;
-  source: 'supabase' | 'demo';
 };
 
 
@@ -35,8 +34,6 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
-const DEMO_STORAGE_KEY = 'squash_demo_auth_session_v1';
-
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 type ProfileRow = {
@@ -45,19 +42,6 @@ type ProfileRow = {
   full_name: string;
   email: string;
 };
-
-
-function persistDemoSession(session: AuthSession | null) {
-  try {
-    if (!session) {
-      window.localStorage.removeItem(DEMO_STORAGE_KEY);
-      return;
-    }
-    window.localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(session));
-  } catch {
-    // no-op: if storage is unavailable, session remains in-memory
-  }
-}
 
 function normalizeRoles(roles: UserRole[]): UserRole[] {
   return Array.from(new Set(roles)).filter(
@@ -147,7 +131,6 @@ async function readProfileSession(
     name: profile.full_name,
     userId: profile.id,
     isAuthenticated: true,
-    source: 'supabase',
   };
 }
 
@@ -239,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profileSession = await readProfileSession(data.session.user.id, data.session.user.email ?? '');
         if (!mounted) return;
         if (profileSession) {
-          persistDemoSession(null);
+
           setSession(profileSession);
         }
       } finally {
@@ -261,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profileSession = await readProfileSession(authSession.user.id, authSession.user.email ?? '');
         if (!mounted) return;
         if (profileSession) {
-          persistDemoSession(null);
+
           setSession(profileSession);
         }
       } finally {
@@ -294,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const profileSession = await readProfileSession(data.user.id, data.user.email ?? email);
         if (profileSession) {
-          persistDemoSession(null);
+
           setSession(profileSession);
         }
         return { session: profileSession };
@@ -324,7 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const profileSession = await readProfileSession(data.user.id, data.user.email ?? email);
         if (profileSession) {
-          persistDemoSession(null);
+
           setSession(profileSession);
         }
         return { session: profileSession };
@@ -355,7 +338,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const profileSession = await readProfileSession(data.user.id, data.user.email ?? session?.email ?? '');
         if (profileSession) {
-          persistDemoSession(null);
+
           setSession(profileSession);
         }
         return profileSession;
@@ -375,7 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return nextSession;
       },
       addRole: async (role) => {
-        if (!session?.userId || session.source !== 'supabase') {
+        if (!session?.userId || false) {
           throw new Error('Please log in with a real account before adding another workspace.');
         }
 
@@ -418,7 +401,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
       },
       logout: async () => {
-        persistDemoSession(null);
         if (isSupabaseConfigured) {
           await supabase.auth.signOut();
         }

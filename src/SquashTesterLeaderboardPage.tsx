@@ -21,23 +21,7 @@ import MobileTabBar from './components/MobileTabBar';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, type TesterEarningsSummary } from './lib/jobApi';
-
-type LeaderboardRow = {
-  rank: number;
-  name: string;
-  city: string;
-  approvedTests: number;
-  rating: number;
-  score: number;
-  specialty: string;
-};
-
-const demoLeaderboard: LeaderboardRow[] = [
-  { rank: 1, name: 'Lerato D.', city: 'Johannesburg', approvedTests: 64, rating: 4.9, score: 982, specialty: 'Low data testing' },
-  { rank: 2, name: 'Sipho N.', city: 'Durban', approvedTests: 42, rating: 4.8, score: 901, specialty: 'Mobile app testing' },
-  { rank: 3, name: 'Amina K.', city: 'Cape Town', approvedTests: 31, rating: 4.7, score: 842, specialty: 'E-commerce testing' },
-  { rank: 4, name: 'Neo M.', city: 'Pretoria', approvedTests: 18, rating: 4.4, score: 711, specialty: 'Website testing' },
-];
+import { getTesterLeaderboard, type TesterLeaderboardEntry } from './lib/profileApi';
 
 function rankIcon(rank: number) {
   if (rank === 1) return Crown;
@@ -56,19 +40,25 @@ export default function SquashTesterLeaderboardPage() {
   const { session } = useAuth();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const testerName = session?.name || 'Tester';
-  const isRealAccount = session?.source === 'supabase';
+  const [leaderboard, setLeaderboard] = useState<TesterLeaderboardEntry[]>([]);
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
-
     let mounted = true;
     setLoadError('');
-    getTesterEarningsSummary(session.userId)
-      .then((summary) => {
-        if (mounted) setEarningsSummary(summary);
+    setIsLoadingData(true);
+
+    Promise.all([
+      getTesterLeaderboard(),
+      session?.userId && session?.role === 'tester' ? getTesterEarningsSummary(session.userId) : Promise.resolve(null)
+    ])
+      .then(([leaderboardData, summaryData]) => {
+        if (mounted) {
+          setLeaderboard(leaderboardData);
+          if (summaryData) setEarningsSummary(summaryData);
+        }
       })
       .catch((error: Error) => {
         if (mounted) setLoadError(error.message || 'Could not load leaderboard data right now.');
@@ -80,13 +70,13 @@ export default function SquashTesterLeaderboardPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [session?.userId, session?.role]);
 
   const approvedTests = earningsSummary?.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length || 0;
   const rating = approvedTests > 0 ? 4.2 : 0;
   const currentTier = getTesterTier(approvedTests, rating);
   const qualityScore = approvedTests > 0 ? Math.round(approvedTests * 12 + rating * 80) : 0;
-  const leaderboardRows = isRealAccount ? [] : demoLeaderboard;
+  const leaderboardRows = leaderboard;
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -108,7 +98,7 @@ export default function SquashTesterLeaderboardPage() {
     [],
   );
 
-  if (session?.source === 'supabase' && isLoadingData) {
+  if (true && isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading leaderboard data...

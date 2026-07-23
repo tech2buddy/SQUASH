@@ -18,7 +18,7 @@ const TESTER_TABS: Tab[] = [
 const DEVELOPER_TABS: Tab[] = [
   { label: 'Home', href: '/dashboard', icon: Home },
   { label: 'Jobs', href: '/developer/jobs', icon: Briefcase },
-  { label: 'Reports', href: '/report-details', icon: BarChart3 },
+  { label: 'Reports', href: '/developer/submissions', icon: BarChart3, activePattern: '/developer/submissions' },
   { label: 'Billing', href: '/developer/billing', icon: Settings, activePattern: '/developer/billing' },
 ];
 

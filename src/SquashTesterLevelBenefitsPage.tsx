@@ -90,7 +90,7 @@ export default function SquashTesterLevelBenefitsPage() {
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setLoadError('');
@@ -105,7 +105,7 @@ export default function SquashTesterLevelBenefitsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const approvedTests = earningsSummary?.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length || 0;
   const rating = approvedTests > 0 ? 4.2 : 0;

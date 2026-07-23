@@ -13,36 +13,46 @@ import {
   ShieldCheck,
   UserCircle2,
   Users,
+  Award,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
 import MobileTabBar from './components/MobileTabBar';
+import { getTesterReferrals, type TesterReferralEntry } from './lib/profileApi';
 
-type ReferralStatus = 'Invited' | 'Signed Up' | 'Approved Work' | 'Reward Ready';
-
-type Referral = {
-  name: string;
-  email: string;
-  status: ReferralStatus;
-  detail: string;
-};
-
-const demoReferrals: Referral[] = [
-  { name: 'Pending invite', email: 'friend@example.com', status: 'Invited', detail: 'Waiting for signup' },
-  { name: 'New tester', email: 'tester@example.com', status: 'Signed Up', detail: 'Needs first approved report' },
-];
-
-function statusClasses(status: ReferralStatus) {
-  if (status === 'Reward Ready') return 'bg-green-50 text-green-700 ring-green-100';
-  if (status === 'Approved Work') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-  if (status === 'Signed Up') return 'bg-sky-50 text-sky-700 ring-sky-100';
+function statusClasses(status: string) {
+  if (status === 'reward_ready') return 'bg-green-50 text-green-700 ring-green-100';
+  if (status === 'approved_work') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+  if (status === 'signed_up') return 'bg-sky-50 text-sky-700 ring-sky-100';
   return 'bg-amber-50 text-amber-700 ring-amber-100';
 }
 
 export default function SquashTesterReferralsPage() {
   const { session } = useAuth();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [referrals, setReferrals] = useState<TesterReferralEntry[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    Promise.all([
+      session?.userId ? getTesterReferrals(session.userId) : Promise.resolve([]),
+    ])
+      .then(([referralData]) => {
+        if (mounted) {
+          setReferrals(referralData);
+        }
+      })
+      .catch(() => {
+        // Handle error silently or log
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.userId, session?.role]);
+
   const testerName = session?.name || 'Tester';
   const referralCode = useMemo(() => {
     const source = session?.userId || session?.email || 'tester';
@@ -52,7 +62,6 @@ export default function SquashTesterReferralsPage() {
   const [email, setEmail] = useState('');
   const [inviteNotice, setInviteNotice] = useState('');
   const [copied, setCopied] = useState(false);
-  const [referrals, setReferrals] = useState<Referral[]>(session?.source === 'supabase' ? [] : demoReferrals);
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
@@ -64,9 +73,9 @@ export default function SquashTesterReferralsPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const invitedCount = referrals.length;
-  const signedUpCount = referrals.filter((item) => item.status !== 'Invited').length;
-  const rewardReadyCount = referrals.filter((item) => item.status === 'Reward Ready').length;
+  const invitedCount = referrals.filter((r) => r.status === 'invited').length;
+  const signedUpCount = referrals.filter((r) => r.status === 'signed_up').length;
+  const rewardReadyCount = referrals.filter((r) => r.status === 'reward_ready').length;
 
   const copyLink = async () => {
     try {
@@ -87,7 +96,13 @@ export default function SquashTesterReferralsPage() {
     }
 
     setReferrals((prev) => [
-      { name: 'Invited tester', email: trimmed, status: 'Invited', detail: 'Invite prepared locally' },
+      {
+        name: 'Pending invite',
+        email: trimmed,
+        status: 'invited',
+        detail: 'Waiting for signup',
+        date: new Date().toISOString(),
+      },
       ...prev,
     ]);
     setEmail('');
@@ -200,9 +215,18 @@ export default function SquashTesterReferralsPage() {
                     <div key={`${referral.email}-${referral.status}`} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
                       <div className="flex min-w-0 items-start gap-4">
                         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-50 text-slate-600 ring-1 ring-slate-200"><Users className="h-5 w-5" /></div>
-                        <div className="min-w-0"><div className="font-bold text-slate-900">{referral.name}</div><div className="mt-1 text-sm text-slate-500">{referral.email}</div><div className="mt-1 text-sm text-slate-600">{referral.detail}</div></div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold text-slate-900">{referral.name}</div>
+                          <div className="text-xs text-slate-500">{referral.email}</div>
+                        </div>
                       </div>
-                      <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ring-1 ${statusClasses(referral.status)}`}>{referral.status}</span>
+                      <div className="text-right">
+                        <div className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${statusClasses(referral.status)}`}>
+                          {referral.status === 'reward_ready' && <Award className="h-3 w-3" />}
+                          {referral.status.replace('_', ' ').toUpperCase()}
+                        </div>
+                        <div className="mt-1 text-[10px] text-slate-400">{referral.detail}</div>
+                      </div>
                     </div>
                   ))}
                   {referrals.length === 0 ? <div className="px-6 py-10 text-center text-sm text-slate-500">No referrals prepared yet.</div> : null}

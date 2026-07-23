@@ -3,7 +3,6 @@ import {
   CheckCircle2,
   ClipboardList,
   CreditCard,
-  Download,
   FileText,
   Home,
   MapPin,
@@ -19,7 +18,7 @@ import MobileTabBar from './components/MobileTabBar';
 import TesterBadge from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
-import { getDeveloperApplications, getDeveloperSubmittedReports, reviewDeveloperApplication, reviewSubmittedReport, type DeveloperApplication, type DeveloperSubmissionReview } from './lib/jobApi';
+import { getDeveloperJobs, type DeveloperJob, getDeveloperApplications, getDeveloperSubmittedReports, reviewDeveloperApplication, type DeveloperApplication, type DeveloperSubmissionReview } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
 
 type NavItem = {
@@ -34,138 +33,15 @@ type DashboardJob = {
   type: string;
   categoryId: TestCategoryId;
   testers: string;
-  status: 'In Progress' | 'Reviewing' | 'Open';
+  status: 'In Progress' | 'Reviewing' | 'Open' | 'Completed';
   deadline: string;
   submissions: string;
   accent: string;
 };
 
-type SubmissionItem = {
-  app: string;
-  tester: string;
-  testsCompleted: number;
-  rating: number;
-  time: string;
-  severity: 'Critical' | 'Medium' | 'Low';
-  videoDuration?: string;
-};
 
 
 
-type AttachmentItem = {
-  name: string;
-  meta: string;
-  accent: string;
-  icon: string;
-};
-
-const jobs: DashboardJob[] = [
-  {
-    name: 'PayFlow Web App',
-    type: 'Web Application',
-    categoryId: 'website-testing',
-    testers: '24 / 30',
-    status: 'In Progress',
-    deadline: '28 May 2024',
-    submissions: '12 / 24',
-    accent: 'bg-slate-900 text-white',
-  },
-  {
-    name: 'FitTrack Mobile',
-    type: 'Mobile App',
-    categoryId: 'mobile-app-testing',
-    testers: '18 / 20',
-    status: 'In Progress',
-    deadline: '25 May 2024',
-    submissions: '8 / 18',
-    accent: 'bg-slate-800 text-white',
-  },
-  {
-    name: 'HealthApp iOS',
-    type: 'iOS Application',
-    categoryId: 'localization-testing',
-    testers: '30 / 30',
-    status: 'Reviewing',
-    deadline: '23 May 2024',
-    submissions: '30 / 30',
-    accent: 'bg-emerald-600 text-white',
-  },
-  {
-    name: 'EduLearn Platform',
-    type: 'Web Application',
-    categoryId: 'onboarding-testing',
-    testers: '10 / 15',
-    status: 'Open',
-    deadline: '05 Jun 2024',
-    submissions: '0 / 10',
-    accent: 'bg-violet-500 text-white',
-  },
-  {
-    name: 'ShopEasy Android',
-    type: 'Android App',
-    categoryId: 'ecommerce-testing',
-    testers: '5 / 20',
-    status: 'Open',
-    deadline: '10 Jun 2024',
-    submissions: '0 / 5',
-    accent: 'bg-red-500 text-white',
-  },
-  {
-    name: 'MoneyMap Dashboard',
-    type: 'Web Application',
-    categoryId: 'performance-testing',
-    testers: '12 / 16',
-    status: 'In Progress',
-    deadline: '14 Jun 2024',
-    submissions: '6 / 12',
-    accent: 'bg-indigo-500 text-white',
-  },
-  {
-    name: 'Kasi Eats',
-    type: 'Android App',
-    categoryId: 'low-data-testing',
-    testers: '8 / 12',
-    status: 'Open',
-    deadline: '16 Jun 2024',
-    submissions: '2 / 8',
-    accent: 'bg-orange-500 text-white',
-  },
-];
-
-const submissions: SubmissionItem[] = [
-  { app: 'PayFlow Web App', tester: 'Thando M.', testsCompleted: 14, rating: 4.3, time: '2h ago', severity: 'Critical', videoDuration: '00:41' },
-  { app: 'FitTrack Mobile', tester: 'Sipho N.', testsCompleted: 32, rating: 4.7, time: '5h ago', severity: 'Medium', videoDuration: '00:28' },
-  { app: 'HealthApp iOS', tester: 'Lerato D.', testsCompleted: 64, rating: 4.9, time: '6h ago', severity: 'Low', videoDuration: '00:55' },
-  { app: 'PayFlow Web App', tester: 'John K.', testsCompleted: 5, rating: 3.9, time: '1d ago', severity: 'Critical' },
-  { app: 'FitTrack Mobile', tester: 'Sarah W.', testsCompleted: 11, rating: 4.1, time: '1d ago', severity: 'Medium' },
-  { app: 'Kasi Eats', tester: 'Anele P.', testsCompleted: 23, rating: 4.6, time: '2d ago', severity: 'Low' },
-  { app: 'MoneyMap Dashboard', tester: 'Brendon R.', testsCompleted: 55, rating: 4.8, time: '2d ago', severity: 'Critical' },
-  { app: 'EduLearn Platform', tester: 'Nomsa L.', testsCompleted: 8, rating: 4.2, time: '3d ago', severity: 'Medium' },
-];
-
-
-
-
-const attachments: AttachmentItem[] = [
-  {
-    name: 'Screenshot_2024-05-26_10-42.png',
-    meta: 'PNG - 1.2 MB',
-    accent: 'bg-red-50 text-red-500',
-    icon: 'IMG',
-  },
-  {
-    name: 'Screen_Recording_2024-05-26.mp4',
-    meta: 'MP4 - 12.4 MB',
-    accent: 'bg-violet-50 text-violet-500',
-    icon: 'VID',
-  },
-  {
-    name: 'Repro_Steps_FitTrack.pdf',
-    meta: 'PDF - 690 KB',
-    accent: 'bg-sky-50 text-sky-600',
-    icon: 'PDF',
-  },
-];
 
 function getStatusClasses(status: DashboardJob['status']) {
   if (status === 'In Progress') return 'bg-green-100 text-green-700';
@@ -173,11 +49,7 @@ function getStatusClasses(status: DashboardJob['status']) {
   return 'bg-slate-100 text-slate-700';
 }
 
-function getSeverityClasses(severity: SubmissionItem['severity']) {
-  if (severity === 'Critical') return 'bg-red-50 text-red-600';
-  if (severity === 'Medium') return 'bg-amber-50 text-amber-600';
-  return 'bg-green-50 text-green-600';
-}
+
 
 function DeveloperShell({
   title,
@@ -265,148 +137,30 @@ function DeveloperShell({
 }
 
 export function SquashDeveloperJobsPage() {
-  return (
-    <DeveloperShell
-      title="All Active Jobs"
-      subtitle="Complete list of jobs posted by your team."
-      active="dashboard"
-    >
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-        {/* Mobile Cards List */}
-        <div className="divide-y divide-slate-100 md:hidden">
-          {jobs.map((job) => {
-            const category = getCategoryById(job.categoryId);
-            const CategoryIcon = category.icon;
-            return (
-              <div key={job.name} className="p-4 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold ${job.accent}`}>
-                      {job.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900">{job.name}</div>
-                      <div className="text-xs text-slate-500">{job.type}</div>
-                    </div>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
-                    {job.status}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-semibold text-slate-700">
-                    <CategoryIcon className="h-3 w-3" style={{ color: category.color }} />
-                    {category.name}
-                  </span>
-                  <span>Testers: <strong className="text-slate-900">{job.testers}</strong></span>
-                </div>
-                <div className="flex items-center justify-between pt-1 text-xs">
-                  <span className="text-slate-500">Submissions: {job.submissions} • Deadline: {job.deadline}</span>
-                  <Link
-                    to="/report-details"
-                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-                  >
-                    Open
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-                      <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
-                        <th className="px-5 py-3 font-medium">App / Job</th>
-                        <th className="px-5 py-3 font-medium">Category</th>
-                        <th className="px-5 py-3 font-medium">Testers</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Deadline</th>
-                <th className="px-5 py-3 font-medium">Submissions</th>
-                <th className="px-5 py-3 font-medium">Open</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.name} className="border-b border-slate-100 last:border-b-0">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold ${job.accent}`}>
-                        {job.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-900">{job.name}</div>
-                        <div className="text-sm text-slate-500">{job.type}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    {(() => {
-                      const category = getCategoryById(job.categoryId);
-                      const CategoryIcon = category.icon;
-                      return (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                          {category.name}
-                          {category.saExclusive ? (
-                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
-                          ) : null}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.testers}</td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.deadline}</td>
-                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.submissions}</td>
-                  <td className="px-5 py-3">
-                    <Link
-                      to="/report-details"
-                      className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </DeveloperShell>
-  );
-}
-
-export function SquashDeveloperSubmissionsPage() {
   const { session } = useAuth();
+  const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [applications, setApplications] = useState<DeveloperApplication[]>([]);
-  const [submittedReports, setSubmittedReports] = useState<DeveloperSubmissionReview[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [reports, setReports] = useState<DeveloperSubmissionReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+    if (!session?.userId || !session.roles.includes('developer')) return;
 
     let mounted = true;
-    setLoading(true);
-    setError('');
-
-    Promise.all([getDeveloperApplications(session.userId), getDeveloperSubmittedReports(session.userId)])
-      .then(([applicationItems, reportItems]) => {
-        if (!mounted) return;
-        setApplications(applicationItems);
-        setSubmittedReports(reportItems);
-      })
-      .catch((loadError: Error) => {
-        if (mounted) setError(loadError.message || 'Could not load tester applications right now.');
+    Promise.all([
+      getDeveloperJobs(session.userId),
+      getDeveloperApplications(session.userId),
+      getDeveloperSubmittedReports(session.userId),
+    ])
+      .then(([jobs, apps, reps]) => {
+        if (mounted) {
+          setDatabaseJobs(jobs);
+          setApplications(apps);
+          setReports(reps);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -415,50 +169,33 @@ export function SquashDeveloperSubmissionsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId, session?.roles]);
+  }, [session?.userId, session?.roles]);
 
-  const pendingCount = applications.filter((item) => item.status === 'pending').length;
-  const reviewCount = submittedReports.filter((item) => item.status === 'submitted').length;
-  const approvedCount = submittedReports.filter((item) => item.status === 'approved').length;
+  const jobs = useMemo(
+    () =>
+      databaseJobs.map((job) => {
+        const acceptedTesters = applications.filter((a) => a.jobId === job.id && a.status === 'accepted').length;
+        const submittedReports = reports.filter((r) => r.jobId === job.id).length;
+        return {
+          id: job.id,
+          name: job.title,
+          type: job.platform,
+          testers: `${acceptedTesters} / ${job.testersNeeded}`,
+          status: job.status === 'active' ? ('Open' as const) : job.status === 'completed' ? ('Completed' as const) : ('Reviewing' as const),
+          deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+          submissions: `${submittedReports} / ${job.testersNeeded}`,
+          accent: 'bg-green-600 text-white',
+          logoUrl: job.logoUrl,
+          categoryId: job.category as TestCategoryId,
+        };
+      }),
+    [databaseJobs, applications, reports],
+  );
 
   const latestApplications = useMemo(
     () => applications.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
     [applications],
   );
-
-
-  const latestReports = useMemo(
-    () => submittedReports.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
-    [submittedReports],
-  );
-
-  const handleReportReview = async (report: DeveloperSubmissionReview, status: 'approved' | 'changes_requested' | 'rejected') => {
-    setUpdatingId(report.id);
-    setError('');
-    setActionMessage('');
-
-    try {
-      const updated = await reviewSubmittedReport({
-        submissionId: report.id,
-        assignmentId: report.assignmentId,
-        status,
-      });
-      setSubmittedReports((current) =>
-        current.map((item) => (item.id === report.id ? { ...item, status: updated.status } : item)),
-      );
-      setActionMessage(
-        status === 'approved'
-          ? `${report.testerName}'s report for ${report.jobTitle} was approved.`
-          : status === 'changes_requested'
-            ? `Changes requested from ${report.testerName} for ${report.jobTitle}.`
-            : `${report.testerName}'s report for ${report.jobTitle} was rejected.`,
-      );
-    } catch (reviewError) {
-      setError(reviewError instanceof Error ? reviewError.message : 'Could not update this report right now.');
-    } finally {
-      setUpdatingId(null);
-    }
-  };
 
   const handleReview = async (application: DeveloperApplication, status: 'accepted' | 'rejected') => {
     setUpdatingId(application.id);
@@ -492,6 +229,321 @@ export function SquashDeveloperSubmissionsPage() {
 
   return (
     <DeveloperShell
+      title="All Active Jobs"
+      subtitle="Complete list of jobs posted by your team."
+      active="dashboard"
+    >
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="p-6 text-center text-sm font-semibold text-slate-500">Loading jobs...</div>
+        ) : jobs.length === 0 ? (
+          <div className="p-6 text-center text-sm font-semibold text-slate-500">No active jobs found.</div>
+        ) : (
+          <>
+        {/* Mobile Cards List */}
+        <div className="divide-y divide-slate-100 md:hidden">
+          {jobs.map((job) => {
+            const category = getCategoryById(job.categoryId);
+            const CategoryIcon = category.icon;
+            return (
+              <div key={job.name} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold overflow-hidden ${job.accent}`}>
+                      {job.logoUrl ? (
+                        <img src={job.logoUrl} alt={job.name} className="h-full w-full object-cover" />
+                      ) : (
+                        job.name.charAt(0)
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900">{job.name}</div>
+                      <div className="text-xs text-slate-500">{job.type}</div>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
+                    {job.status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-semibold text-slate-700">
+                    <CategoryIcon className="h-3 w-3" style={{ color: category.color }} />
+                    {category.name}
+                  </span>
+                  <span>Testers: <strong className="text-slate-900">{job.testers}</strong></span>
+                </div>
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <span className="text-slate-500">Submissions: {job.submissions} • Deadline: {job.deadline}</span>
+                  <Link
+                    to={`/developer/submissions?job=${job.id}`}
+                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
+                  >
+                    View reports
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+                      <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
+                        <th className="px-5 py-3 font-medium">App / Job</th>
+                        <th className="px-5 py-3 font-medium">Category</th>
+                        <th className="px-5 py-3 font-medium">Testers</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Deadline</th>
+                <th className="px-5 py-3 font-medium">Submissions</th>
+                <th className="px-5 py-3 font-medium">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => (
+                <tr key={job.name} className="border-b border-slate-100 last:border-b-0">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold overflow-hidden ${job.accent}`}>
+                        {job.logoUrl ? (
+                          <img src={job.logoUrl} alt={job.name} className="h-full w-full object-cover" />
+                        ) : (
+                          job.name.charAt(0)
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-900">{job.name}</div>
+                        <div className="text-sm text-slate-500">{job.type}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    {(() => {
+                      const category = getCategoryById(job.categoryId);
+                      const CategoryIcon = category.icon;
+                      return (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                          {category.name}
+                          {category.saExclusive ? (
+                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
+                          ) : null}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.testers}</td>
+                  <td className="px-5 py-3">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
+                      {job.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.deadline}</td>
+                  <td className="px-5 py-3 text-sm font-medium text-slate-700">{job.submissions}</td>
+                  <td className="px-5 py-3">
+                    <Link
+                      to={`/developer/submissions?job=${job.id}`}
+                      className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      View reports
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        </>
+        )}
+      </div>
+
+      {actionMessage ? (
+        <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+          {actionMessage}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {error}
+          {error.toLowerCase().includes('permission') ? (
+            <span className="block pt-1 text-xs font-medium text-red-600">
+              Run supabase/phase4_developer_applicant_review.sql in Supabase so developers can read applicants for their own jobs.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <section className="mt-6 rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Applicants Waiting For You</h2>
+            <p className="mt-1 text-sm text-slate-500">Accepting an applicant creates their active test assignment.</p>
+          </div>
+          <a href="/post-job" className="inline-flex w-fit rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+            Post another job
+          </a>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-sm font-semibold text-slate-500">Loading tester applications...</div>
+        ) : latestApplications.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {latestApplications.map((application) => {
+              const category = getCategoryById(application.jobCategory as TestCategoryId);
+              const CategoryIcon = category.icon;
+              const specializationLabels = application.testerSpecializations.slice(0, 3).map(getSpecializationLabel);
+              const isUpdating = updatingId === application.id;
+
+              return (
+                <div key={application.id} className="p-5">
+                  <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr_auto] xl:items-center">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-black text-white">
+                          {application.testerName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900">{application.testerName}</div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                            <span>{application.testerEmail || 'Email hidden'}</span>
+                            <span className="hidden sm:inline">-</span>
+                            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {application.testerCity}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <TesterBadge testsCompleted={application.testerTestsCompleted} rating={application.testerRating} />
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          {application.testerRating.toFixed(1)} stars
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          {application.testerTestsCompleted} tests
+                        </span>
+                      </div>
+                      {specializationLabels.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {specializationLabels.map((label) => (
+                            <span key={label} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="text-sm font-semibold text-slate-500">Applied for</div>
+                      <div className="mt-1 font-bold text-slate-900">{application.jobTitle}</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                          {category.name}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          {application.jobPlatform}
+                        </span>
+                      </div>
+                      <div className="mt-3 text-xs text-slate-500">
+                        Applied {new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row xl:flex-col xl:items-stretch">
+                      <span className={`inline-flex justify-center rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${getApplicationStatusClasses(application.status)}`}>
+                        {application.status.replace('_', ' ')}
+                      </span>
+                      {application.status === 'pending' ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isUpdating}
+                            onClick={() => handleReview(application, 'accepted')}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            {isUpdating ? 'Saving...' : 'Accept'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isUpdating}
+                            onClick={() => handleReview(application, 'rejected')}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            {isUpdating ? 'Saving...' : 'Reject'}
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-6">
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+              <div className="text-lg font-bold text-slate-900">No new applications yet</div>
+              <p className="mt-2 text-sm text-slate-600">When testers apply to your jobs, they'll appear here for review.</p>
+            </div>
+          </div>
+        )}
+      </section>
+    </DeveloperShell>
+  );
+}
+
+export function SquashDeveloperSubmissionsPage() {
+  const { session } = useAuth();
+  const jobId = new URLSearchParams(window.location.search).get('job');
+  const [applications, setApplications] = useState<DeveloperApplication[]>([]);
+  const [submittedReports, setSubmittedReports] = useState<DeveloperSubmissionReview[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!session?.userId || false || !session.roles.includes('developer')) return;
+
+    let mounted = true;
+    setLoading(true);
+    setError('');
+
+    Promise.all([getDeveloperApplications(session.userId), getDeveloperSubmittedReports(session.userId)])
+      .then(([applicationItems, reportItems]) => {
+        if (!mounted) return;
+        setApplications(applicationItems);
+        setSubmittedReports(reportItems);
+      })
+      .catch((loadError: Error) => {
+        if (mounted) setError(loadError.message || 'Could not load tester applications right now.');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [("supabase"), session?.userId, session?.roles]);
+
+  const pendingCount = applications.filter((item) => item.status === 'pending').length;
+  const reviewCount = submittedReports.filter((item) => item.status === 'submitted').length;
+  const approvedCount = submittedReports.filter((item) => item.status === 'approved').length;
+
+  const latestReports = useMemo(
+    () => {
+      const sorted = submittedReports.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      return jobId ? sorted.filter((r) => r.jobId === jobId) : sorted;
+    },
+    [submittedReports, jobId],
+  );
+
+  const jobTitle = jobId && latestReports.length > 0 ? latestReports[0].jobTitle : null;
+
+  return (
+    <DeveloperShell
       title="Tester Applications"
       subtitle="Review testers who applied to your jobs and move approved testers into active assignments."
       active="reports"
@@ -520,32 +572,20 @@ export function SquashDeveloperSubmissionsPage() {
           })}
         </section>
 
-        {actionMessage ? (
-          <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
-            {actionMessage}
-          </div>
-        ) : null}
-
         {error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
             {error}
-            {error.toLowerCase().includes('permission') ? (
-              <span className="block pt-1 text-xs font-medium text-red-600">
-                Run supabase/phase4_developer_applicant_review.sql in Supabase so developers can read applicants for their own jobs.
-              </span>
-            ) : null}
           </div>
         ) : null}
 
         <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Submitted Reports</h2>
-              <p className="mt-1 text-sm text-slate-500">Review completed tester submissions and decide what happens next.</p>
+              <h2 className="text-xl font-bold text-slate-900">
+                {jobTitle ? `Reports for ${jobTitle}` : 'Submitted Reports'}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">Click any submission to view its full report.</p>
             </div>
-            <a href={latestReports[0] ? `/report-details?submission=${latestReports[0].id}` : "/report-details"} className="inline-flex w-fit rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-              Open report details
-            </a>
           </div>
 
           {loading ? (
@@ -555,7 +595,6 @@ export function SquashDeveloperSubmissionsPage() {
               {latestReports.map((report) => {
                 const category = getCategoryById(report.jobCategory as TestCategoryId);
                 const CategoryIcon = category.icon;
-                const isUpdating = updatingId === report.id;
                 const statusClass =
                   report.status === 'approved'
                     ? 'bg-green-50 text-green-700 ring-green-100'
@@ -566,99 +605,51 @@ export function SquashDeveloperSubmissionsPage() {
                         : 'bg-sky-50 text-sky-700 ring-sky-100';
 
                 return (
-                  <div key={report.id} className="p-5">
-                    <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr_auto] xl:items-start">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-600 text-sm font-black text-white">
-                            {report.testerName.charAt(0).toUpperCase()}
-                          </div>
+                  <Link
+                    key={report.id}
+                    to={`/report-details?submission=${report.id}`}
+                    className="block p-5 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-green-600 text-sm font-black text-white">
+                        {report.testerName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <div className="font-bold text-slate-900">{report.jobTitle}</div>
-                            <div className="mt-1 text-sm text-slate-500">Submitted by {report.testerName}</div>
+                            <div className="text-sm text-slate-500">Submitted by {report.testerName}</div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                              <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
+                              {category.name}
+                            </span>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ring-1 ${statusClass}`}>
+                              {report.status.replace('_', ' ')}
+                            </span>
                           </div>
                         </div>
-                        <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
                           {report.summary || 'Tester submitted this report without a written summary.'}
                         </p>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <TesterBadge testsCompleted={report.testerTestsCompleted} rating={report.testerRating} />
                           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {report.bugCount} bug report{report.bugCount === 1 ? '' : 's'}
+                            {report.bugCount} bug{report.bugCount === 1 ? '' : 's'}
                           </span>
-                          {report.videoBugCount > 0 ? (
-                            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
-                              {report.videoBugCount} video
-                            </span>
-                          ) : null}
                           {report.criticalBugCount > 0 ? (
                             <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
                               {report.criticalBugCount} critical
                             </span>
                           ) : null}
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                            {category.name}
-                          </span>
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ring-1 ${statusClass}`}>
-                            {report.status.replace('_', ' ')}
+                          <span className="text-xs text-slate-400">
+                            {new Date(report.submittedAt || report.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-600">
-                          <div><span className="font-semibold text-slate-900">Usability</span><br />{report.scores.usability}/100</div>
-                          <div><span className="font-semibold text-slate-900">Performance</span><br />{report.scores.performance}/100</div>
-                          <div><span className="font-semibold text-slate-900">Onboarding</span><br />{report.scores.onboarding}/100</div>
-                          <div><span className="font-semibold text-slate-900">Compatibility</span><br />{report.scores.deviceCompatibility}/100</div>
-                        </div>
-                        <div className="mt-3 text-xs text-slate-500">
-                          Submitted {new Date(report.submittedAt || report.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:flex-row xl:flex-col">
-                        {report.status === 'submitted' ? (
-                          <>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReportReview(report, 'approved')}
-                              className="inline-flex justify-center rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-                            >
-                              {isUpdating ? 'Saving...' : 'Approve'}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReportReview(report, 'changes_requested')}
-                              className="inline-flex justify-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-60"
-                            >
-                              Request changes
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReportReview(report, 'rejected')}
-                              className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            >
-                              Reject
-                            </button>
-                            <a href={`/report-details?submission=${report.id}`} className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                              View details
-                            </a>
-                          </>
-                        ) : (
-                          <a href={`/report-details?submission=${report.id}`} className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                            View details
-                          </a>
-                        )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -672,168 +663,6 @@ export function SquashDeveloperSubmissionsPage() {
           )}
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Applicants Waiting For You</h2>
-              <p className="mt-1 text-sm text-slate-500">Accepting an applicant creates their active test assignment.</p>
-            </div>
-            <a href="/post-job" className="inline-flex w-fit rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
-              Post another job
-            </a>
-          </div>
-
-          {loading ? (
-            <div className="p-6 text-sm font-semibold text-slate-500">Loading tester applications...</div>
-          ) : latestApplications.length > 0 ? (
-            <div className="divide-y divide-slate-100">
-              {latestApplications.map((application) => {
-                const category = getCategoryById(application.jobCategory as TestCategoryId);
-                const CategoryIcon = category.icon;
-                const specializationLabels = application.testerSpecializations.slice(0, 3).map(getSpecializationLabel);
-                const isUpdating = updatingId === application.id;
-
-                return (
-                  <div key={application.id} className="p-5">
-                    <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr_auto] xl:items-center">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-black text-white">
-                            {application.testerName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900">{application.testerName}</div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                              <span>{application.testerEmail || 'Email hidden'}</span>
-                              <span className="hidden sm:inline">-</span>
-                              <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {application.testerCity}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <TesterBadge testsCompleted={application.testerTestsCompleted} rating={application.testerRating} />
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            {application.testerRating.toFixed(1)} stars
-                          </span>
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            {application.testerTestsCompleted} tests
-                          </span>
-                        </div>
-                        {specializationLabels.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {specializationLabels.map((label) => (
-                              <span key={label} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <div className="text-sm font-semibold text-slate-500">Applied for</div>
-                        <div className="mt-1 font-bold text-slate-900">{application.jobTitle}</div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                            {category.name}
-                          </span>
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            {application.jobPlatform}
-                          </span>
-                        </div>
-                        <div className="mt-3 text-xs text-slate-500">
-                          Applied {new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:flex-row xl:flex-col xl:items-stretch">
-                        <span className={`inline-flex justify-center rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${getApplicationStatusClasses(application.status)}`}>
-                          {application.status.replace('_', ' ')}
-                        </span>
-                        {application.status === 'pending' ? (
-                          <>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReview(application, 'accepted')}
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                              {isUpdating ? 'Saving...' : 'Accept'}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReview(application, 'rejected')}
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              Reject
-                            </button>
-                          </>
-                        ) : (
-                          <a href="/report-details" className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                            View details
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-6">
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-                <div className="text-lg font-bold text-slate-900">No real applications yet</div>
-                <p className="mt-2 text-sm text-slate-600">
-                  When testers click Apply Now on your live jobs, they will appear here for review.
-                </p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="text-xl font-bold text-slate-900">Report Submissions</h2>
-            <p className="mt-1 text-sm text-slate-500">Submitted tester reports will appear here as your jobs progress.</p>
-          </div>
-          <div className="space-y-3 p-4">
-            {submissions.map((item) => (
-              <div
-                key={`${item.app}-${item.tester}-${item.time}`}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="font-semibold text-slate-900">{item.app}</div>
-                  <div className="text-sm text-slate-500">Submitted by {item.tester}</div>
-                  <div className="mt-1 text-xs text-slate-400">{item.time}</div>
-                  <div className="mt-2">
-                    <TesterBadge testsCompleted={item.testsCompleted} rating={item.rating} />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {item.videoDuration ? (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                      Screen Recording - {item.videoDuration}
-                    </span>
-                  ) : null}
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getSeverityClasses(item.severity)}`}>
-                    {item.severity}
-                  </span>
-                  <a
-                    href="/report-details"
-                    className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Open report
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
     </DeveloperShell>
   );
@@ -924,52 +753,8 @@ export function SquashReportAttachmentsPage() {
       active="reports"
     >
       <div className="space-y-4">
-        {attachments.map((file) => (
-          <div key={file.name} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-bold ${file.accent}`}>
-                  {file.icon}
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-slate-900">{file.name}</div>
-                  <div className="text-sm text-slate-500">{file.meta}</div>
-                </div>
-              </div>
-              <a
-                href={`data:text/plain;charset=utf-8,${encodeURIComponent(file.name)}`}
-                download={file.name}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </a>
-            </div>
-            {file.meta.includes('MP4') ? (
-              <div className="mt-3">
-                <div className="mb-2 text-xs font-semibold text-slate-600">
-                  Screen Recording — 00:41
-                </div>
-                <video
-                  controls
-                  className="w-full rounded-xl border border-slate-200 bg-black"
-                  src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-                />
-              </div>
-            ) : null}
-          </div>
-        ))}
-
-        <a
-          href="/report-details"
-          className="mt-4 inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Back to report details
-        </a>
+        <div className="p-6 text-center text-sm font-semibold text-slate-500">No attachments found for this report.</div>
       </div>
     </DeveloperShell>
   );
 }
-
-
-

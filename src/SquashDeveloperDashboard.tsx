@@ -30,9 +30,10 @@ import SquashScore from './components/SquashScore';
 import MobileTabBar from './components/MobileTabBar';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
-import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob } from './lib/jobApi';
+import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, getDeveloperSubmittedReports, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob, type DeveloperSubmissionReview } from './lib/jobApi';
 
 type DashboardJob = {
+  id: string;
   name: string;
   type: string;
   testers: string;
@@ -61,12 +62,13 @@ export default function SquashDeveloperDashboard() {
   const developerFirstName = developerName.split(' ')[0] || developerName;
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [databaseApplications, setDatabaseApplications] = useState<DeveloperApplication[]>([]);
+  const [databaseReports, setDatabaseReports] = useState<DeveloperSubmissionReview[]>([]);
   const [dashboardSummary, setDashboardSummary] = useState<DeveloperDashboardSummary | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [jobsError, setJobsError] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const hasLiveDashboard = session?.source === 'supabase' && dashboardSummary !== null;
+  const hasLiveDashboard = true && dashboardSummary !== null;
   const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
 
   const stats = [
@@ -108,109 +110,45 @@ export default function SquashDeveloperDashboard() {
     },
   ];
 
-  const mockJobs: DashboardJob[] = [
-    {
-      name: 'PayFlow Web App',
-      type: 'Web Application',
-      testers: '24 / 30',
-      status: 'In Progress',
-      deadline: '28 May 2024',
-      deadlineNote: '3 days left',
-      submissions: '12 / 24',
-      accent: 'bg-slate-900 text-white',
-      categoryId: 'website-testing',
-      plan: 'Growth',
-    },
-    {
-      name: 'FitTrack Mobile',
-      type: 'Mobile App',
-      testers: '18 / 20',
-      status: 'In Progress',
-      deadline: '25 May 2024',
-      deadlineNote: 'Today',
-      submissions: '8 / 18',
-      accent: 'bg-slate-800 text-white',
-      categoryId: 'mobile-app-testing',
-      plan: 'Pro',
-    },
-    {
-      name: 'HealthApp iOS',
-      type: 'iOS Application',
-      testers: '30 / 30',
-      status: 'Completed',
-      deadline: '23 May 2024',
-      deadlineNote: 'Overdue',
-      submissions: '30 / 30',
-      accent: 'bg-emerald-600 text-white',
-      categoryId: 'localization-testing',
-      completed: true,
-      certifiedAt: '2026-03-20',
-      plan: 'Growth',
-      score: {
-        usability: 84,
-        performance: 80,
-        onboarding: 79,
-        bugSeverity: 87,
-        deviceCompatibility: 83,
-      },
-    },
-    {
-      name: 'EduLearn Platform',
-      type: 'Web Application',
-      testers: '10 / 15',
-      status: 'Open',
-      deadline: '05 Jun 2024',
-      deadlineNote: '9 days left',
-      submissions: '0 / 10',
-      accent: 'bg-violet-500 text-white',
-      categoryId: 'onboarding-testing',
-      plan: 'Starter',
-    },
-    {
-      name: 'ShopEasy Android',
-      type: 'Android App',
-      testers: '5 / 20',
-      status: 'Open',
-      deadline: '10 Jun 2024',
-      deadlineNote: '14 days left',
-      submissions: '0 / 5',
-      accent: 'bg-red-500 text-white',
-      categoryId: 'ecommerce-testing',
-      plan: 'Starter',
-    },
-  ];
+
 
   const databaseDashboardJobs = useMemo(
     () =>
-      databaseJobs.map<DashboardJob>((job) => ({
-        name: job.title,
-        type: job.platform,
-        testers: `0 / ${job.testersNeeded}`,
-        status: job.status === 'active' ? ('Open' as const) : job.status === 'completed' ? ('Completed' as const) : ('Reviewing' as const),
-        deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
-        deadlineNote: 'Newly published',
-        submissions: `0 / ${job.testersNeeded}`,
-        accent: 'bg-green-600 text-white',
-        logoUrl: job.logoUrl,
-        categoryId: job.category as TestCategoryId,
-        plan: job.packageKey === 'starter' ? ('Starter' as const) : job.packageKey === 'growth' ? ('Growth' as const) : ('Pro' as const),
-      })),
-    [databaseJobs],
+      databaseJobs.map<DashboardJob>((job) => {
+        const acceptedTesters = databaseApplications.filter((a) => a.jobId === job.id && a.status === 'accepted').length;
+        const submittedReports = databaseReports.filter((r) => r.jobId === job.id).length;
+        return {
+          id: job.id,
+          name: job.title,
+          type: job.platform,
+          testers: `${acceptedTesters} / ${job.testersNeeded}`,
+          status: job.status === 'active' ? ('Open' as const) : job.status === 'completed' ? ('Completed' as const) : ('Reviewing' as const),
+          deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+          deadlineNote: 'Newly published',
+          submissions: `${submittedReports} / ${job.testersNeeded}`,
+          accent: 'bg-green-600 text-white',
+          logoUrl: job.logoUrl,
+          categoryId: job.category as TestCategoryId,
+          plan: job.packageKey === 'starter' ? ('Starter' as const) : job.packageKey === 'growth' ? ('Growth' as const) : ('Pro' as const),
+        };
+      }),
+    [databaseJobs, databaseApplications, databaseReports],
   );
 
-  const jobs = useMemo<DashboardJob[]>(() => (session?.source === 'supabase' ? databaseDashboardJobs : mockJobs), [databaseDashboardJobs, mockJobs, session?.source]);
+  const jobs = databaseDashboardJobs;
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+    if (!session?.userId || !session.roles.includes('developer')) return;
 
     let mounted = true;
     setJobsError('');
 
-    Promise.all([getDeveloperJobs(session.userId), getDeveloperApplications(session.userId), getDeveloperDashboardSummary(session.userId)])
-      .then(([jobItems, applicationItems, summary]) => {
+    Promise.all([getDeveloperJobs(session.userId), getDeveloperApplications(session.userId), getDeveloperSubmittedReports(session.userId), getDeveloperDashboardSummary(session.userId)])
+      .then(([jobItems, applicationItems, reportItems, summary]) => {
         if (!mounted) return;
         setDatabaseJobs(jobItems);
         setDatabaseApplications(applicationItems);
+        setDatabaseReports(reportItems);
         setDashboardSummary(summary);
       })
       .catch((error: Error) => {
@@ -223,7 +161,7 @@ export default function SquashDeveloperDashboard() {
     return () => {
       mounted = false;
     };
-  }, [session?.role, session?.source, session?.userId]);
+  }, [session?.role, session?.userId]);
 
   const [tierFilter, setTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
   const [retestTarget, setRetestTarget] = useState<(typeof jobs)[number] | null>(null);
@@ -290,7 +228,7 @@ export default function SquashDeveloperDashboard() {
     })
     .join(' ');
   const trendAreaPoints = `0,100 ${trendPoints} 100,100`;
-  const dashboardActivity = session?.source === 'supabase'
+  const dashboardActivity = true
     ? [
         ...databaseApplications.slice(0, 3).map((application) => ({
           text: `${application.testerName} applied for ${application.jobTitle}`,
@@ -378,7 +316,7 @@ export default function SquashDeveloperDashboard() {
     setRetestTarget(null);
   };
 
-  if (session?.source === 'supabase' && isLoadingData) {
+  if (true && isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading dashboard data...
@@ -514,7 +452,7 @@ export default function SquashDeveloperDashboard() {
                 <p className="text-xs text-slate-500 mt-0.5 lg:text-base lg:mt-2">Here&apos;s what&apos;s happening with your testing activity.</p>
               </div>
               <a href="/dashboard" className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
-                {session?.source === 'supabase' ? 'Live' : 'May 20–28, 2024'}
+                {true ? 'Live' : 'May 20–28, 2024'}
               </a>
             </div>
 
@@ -640,8 +578,8 @@ export default function SquashDeveloperDashboard() {
                         <div className="pt-1 flex items-center justify-between">
                           <div className="text-xs text-slate-500">{job.deadlineNote}</div>
                           <div className="flex items-center gap-2">
-                            <Link to="/report-details" className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                              Details
+                            <Link to={`/developer/submissions?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                              View reports
                             </Link>
                             {job.completed ? (
                               <button
@@ -813,7 +751,7 @@ export default function SquashDeveloperDashboard() {
                         </span>
                       </a>
                     ))
-                  ) : session?.source === 'supabase' ? (
+                  ) : true ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
                       No live applications yet.
                     </div>
@@ -868,7 +806,7 @@ export default function SquashDeveloperDashboard() {
                     Tester Demographics
                   </div>
                   <div className="space-y-3">
-                    {session?.source === 'supabase' ? (
+                    {true ? (
                       <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
                         Demographics will appear after testers submit profile-backed reports for your jobs.
                       </div>

@@ -152,7 +152,7 @@ export default function SquashActiveTestScreen() {
 
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setLoadingAssignment(true);
@@ -205,7 +205,7 @@ export default function SquashActiveTestScreen() {
     return () => {
       mounted = false;
     };
-  }, [assignmentId, session?.source, session?.userId]);
+  }, [assignmentId, ("supabase"), session?.userId]);
 
   const toggleTask = (index: number, checked: boolean) => {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
@@ -365,7 +365,7 @@ export default function SquashActiveTestScreen() {
     });
     window.localStorage.setItem('squash_bug_reports', JSON.stringify(existingReports));
 
-    if (assignment && session?.userId && session.source === 'supabase') {
+    if (assignment && session?.userId && true) {
       try {
         await saveAssignmentBugReport({
           assignmentId: assignment.id,
@@ -402,7 +402,7 @@ export default function SquashActiveTestScreen() {
       setProgressNotice(`Complete all tasks before submitting (${completedTasks}/${taskState.length}).`);
       return;
     }
-    if (assignment && session?.userId && session.source === 'supabase') {
+    if (assignment && session?.userId && true) {
       try {
         await submitAssignmentReport({
           assignmentId: assignment.id,

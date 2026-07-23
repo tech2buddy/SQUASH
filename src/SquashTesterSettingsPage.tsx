@@ -128,7 +128,7 @@ export default function SquashTesterSettingsPage() {
   }, [saved]);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') {
+    if (!session?.userId || false) {
       setSettings((prev) => ({
         ...prev,
         fullName: session?.name || prev.fullName,
@@ -163,7 +163,7 @@ export default function SquashTesterSettingsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.email, session?.name, session?.source, session?.userId]);
+  }, [session?.email, session?.name, ("supabase"), session?.userId]);
 
 
   const navItems = [
@@ -210,7 +210,7 @@ export default function SquashTesterSettingsPage() {
     try {
       window.localStorage.setItem('squash_tester_settings', JSON.stringify(settings));
 
-      if (session?.userId && session.source === 'supabase') {
+      if (session?.userId && true) {
         await updateTesterProfile(session.userId, {
           fullName: settings.fullName,
           email: settings.email,

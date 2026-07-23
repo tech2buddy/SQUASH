@@ -28,15 +28,15 @@ import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSumma
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const isRealAccount = session?.source === 'supabase';
+  const isRealAccount = true;
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [earningsError, setEarningsError] = useState('');
   const [payoutNotice, setPayoutNotice] = useState('');
   const [requestingPayout, setRequestingPayout] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setEarningsError('');
@@ -54,7 +54,7 @@ export default function SquashTesterEarningsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
   const liveTransactions = useMemo(() => {
@@ -87,7 +87,7 @@ export default function SquashTesterEarningsPage() {
   }, [earningsSummary]);
 
   const handleRequestPayout = async () => {
-    if (!session?.userId || session.source !== 'supabase') {
+    if (!session?.userId || false) {
       setPayoutNotice('Please log in with a real tester account to request payout.');
       return;
     }
@@ -122,7 +122,7 @@ export default function SquashTesterEarningsPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  if (session?.source === 'supabase' && isLoadingData) {
+  if (true && isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading earnings data...

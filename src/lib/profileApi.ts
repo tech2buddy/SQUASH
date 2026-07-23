@@ -151,3 +151,57 @@ export async function updateDeveloperProfile(userId: string, values: DeveloperPr
   if (error) throw error;
 }
 
+
+export type TesterLeaderboardEntry = {
+  rank: number;
+  name: string;
+  city: string;
+  rating: number;
+  testsCompleted: number;
+  approvedTests: number;
+  approvalRate: number;
+  score: number;
+  specialty: string;
+};
+
+export async function getTesterLeaderboard(): Promise<TesterLeaderboardEntry[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('tester_profiles')
+    .select('rating, tests_completed, approval_rate, profiles!inner(full_name)')
+    .order('rating', { ascending: false })
+    .order('tests_completed', { ascending: false })
+    .limit(10);
+
+  if (error) throw error;
+
+  return (data || []).map((row: any, index: number) => {
+    const testsCompleted = row.tests_completed || 0;
+    const rating = row.rating || 0;
+    return {
+      rank: index + 1,
+      name: row.profiles?.full_name || 'Anonymous Tester',
+      city: row.profiles?.city || 'South Africa',
+      rating,
+      testsCompleted,
+      approvedTests: testsCompleted,
+      approvalRate: row.approval_rate || 0,
+      score: Math.round(testsCompleted * 12 + rating * 80),
+      specialty: 'Testing',
+    };
+  });
+}
+
+export type TesterReferralEntry = {
+  name: string;
+  email: string;
+  status: 'invited' | 'signed_up' | 'approved_work' | 'reward_ready' | 'pending' | 'completed';
+  detail: string;
+  date: string;
+};
+
+export async function getTesterReferrals(_userId: string): Promise<TesterReferralEntry[]> {
+  // TODO: Implement actual referrals table in Supabase
+  return [];
+}

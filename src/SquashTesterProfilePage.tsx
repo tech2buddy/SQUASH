@@ -49,7 +49,7 @@ export default function SquashTesterProfilePage() {
   }, [specializations]);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setProfileError('');
@@ -67,12 +67,12 @@ export default function SquashTesterProfilePage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
-      if (session?.userId && session.source === 'supabase') {
+      if (session?.userId && true) {
         replaceTesterSpecializations(session.userId, next).catch((error: Error) => {
           setProfileError(error.message || 'Could not save specialization changes right now.');
         });
@@ -96,7 +96,7 @@ export default function SquashTesterProfilePage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  const isRealAccount = session?.source === 'supabase';
+  const isRealAccount = true;
   const testerName = profileDetails?.fullName || session?.name || 'Tester';
   const testerEmail = profileDetails?.email || session?.email || 'Add email';
   const testerCity = profileDetails?.city || (isRealAccount ? 'Add city' : 'Johannesburg');

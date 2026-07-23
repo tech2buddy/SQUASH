@@ -202,10 +202,10 @@ function paymentTone(status: ActivePayment['status']) {
 export default function SquashDeveloperBillingPage() {
   const { session } = useAuth();
   const developerName = session?.name || 'Dev Studio';
-  const isRealAccount = session?.source === 'supabase';
+  const isRealAccount = true;
   const [liveJobs, setLiveJobs] = useState<DeveloperJob[]>([]);
   const [billingError, setBillingError] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -338,7 +338,7 @@ export default function SquashDeveloperBillingPage() {
     { label: 'Billing', icon: CreditCard, active: true, href: '/billing' },
   ];
 
-  if (session?.source === 'supabase' && isLoadingData) {
+  if (true && isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading billing data...

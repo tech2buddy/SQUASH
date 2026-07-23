@@ -105,7 +105,7 @@ export default function SquashTesterMyTestsPage() {
   const [activeTab, setActiveTab] = useState<LabTab>('all');
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') {
+    if (!session?.userId || false) {
       setLoading(false);
       return;
     }
@@ -129,7 +129,7 @@ export default function SquashTesterMyTestsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const counts = useMemo(() => {
     return {

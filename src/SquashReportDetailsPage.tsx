@@ -33,9 +33,13 @@ function formatDateTime(value: string | null) {
 export default function SquashReportDetailsPage() {
   const { session } = useAuth();
   const developerName = session?.name || 'Developer';
-  const submissionId = new URLSearchParams(window.location.search).get('submission');
+  const params = new URLSearchParams(window.location.search);
+  const submissionId = params.get('submission');
+  const jobId = params.get('job');
 
+  const [jobTitle, setJobTitle] = useState<string | null>(null);
   const [realReport, setRealReport] = useState<DeveloperSubmissionDetails | null>(null);
+  const [noReportsForJob, setNoReportsForJob] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportError, setReportError] = useState('');
   const [actionNotice, setActionNotice] = useState('');
@@ -44,7 +48,7 @@ export default function SquashReportDetailsPage() {
 
   useEffect(() => {
     const currentUserId = session?.userId;
-    if (!currentUserId || session.source !== 'supabase' || !session.roles.includes('developer')) return;
+    if (!currentUserId || false || !session.roles.includes('developer')) return;
 
     let mounted = true;
     setLoadingReport(true);
@@ -53,12 +57,25 @@ export default function SquashReportDetailsPage() {
     const loadData = async () => {
       try {
         let targetId = submissionId;
+
         if (!targetId) {
+          // Filter by specific job if ?job= param is present
           const allReports = await getDeveloperSubmittedReports(currentUserId);
           if (!mounted) return;
-          if (allReports.length > 0) {
-            targetId = allReports[0].id;
+
+          const filtered = jobId ? allReports.filter((r) => r.jobId === jobId) : allReports;
+
+          if (filtered.length > 0) {
+            targetId = filtered[0].id;
+            if (jobId) setJobTitle(filtered[0].jobTitle || null);
           } else {
+            // No reports for this job — show proper empty state
+            if (jobId) {
+              // Try to get the job title from the full list
+              const jobReport = allReports.find((r) => r.jobId === jobId);
+              setJobTitle(jobReport?.jobTitle || null);
+              setNoReportsForJob(true);
+            }
             setRealReport(null);
             return;
           }
@@ -69,6 +86,7 @@ export default function SquashReportDetailsPage() {
 
         if (details) {
           setRealReport(details);
+          if (jobId) setJobTitle(details.jobTitle || null);
         } else {
           setReportError('The specified report could not be found.');
         }
@@ -86,7 +104,7 @@ export default function SquashReportDetailsPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.roles, session?.source, session?.userId, submissionId]);
+  }, [session?.roles, session?.userId, submissionId, jobId]);
 
   const handleReviewAction = async (newStatus: 'approved' | 'changes_requested' | 'rejected') => {
     if (!realReport) return;
@@ -225,6 +243,32 @@ export default function SquashReportDetailsPage() {
             {loadingReport ? (
               <div className="flex min-h-[400px] items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-600">
                 Loading report details...
+              </div>
+            ) : noReportsForJob ? (
+              <div className="mx-auto max-w-2xl rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-50 text-green-600 ring-1 ring-green-100">
+                  <ClipboardList className="h-8 w-8" />
+                </div>
+                <h2 className="mt-4 text-2xl font-black text-slate-900">
+                  No Reports for {jobTitle || 'This Job'} Yet
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Accepted testers haven't submitted any reports for this job yet. Once they complete testing, their bug reports and scores will appear here.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link
+                    to="/developer/jobs"
+                    className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                  >
+                    View Active Jobs
+                  </Link>
+                  <Link
+                    to="/developer/submissions"
+                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    All Submissions
+                  </Link>
+                </div>
               </div>
             ) : !realReport ? (
               <div className="mx-auto max-w-2xl rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">

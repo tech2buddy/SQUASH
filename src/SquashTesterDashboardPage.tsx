@@ -49,179 +49,7 @@ type StatCard = {
   iconColor: string;
 };
 
-const demoStats: StatCard[] = [
-  {
-    title: 'Available Balance',
-    value: 'R3,250',
-    note: 'Paid to bank within 24hrs of approval',
-    change: '+R450 this month',
-    icon: Wallet,
-    iconBg: 'bg-green-50',
-    iconColor: 'text-green-700',
-  },
-  {
-    title: 'Pending Payout',
-    value: 'R620',
-    note: 'Awaiting release',
-    change: '2 submissions pending',
-    icon: Clock3,
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-700',
-  },
-  {
-    title: 'Tests Completed',
-    value: '24',
-    note: 'Total tests completed',
-    change: '+6 this month',
-    icon: ClipboardList,
-    iconBg: 'bg-sky-50',
-    iconColor: 'text-sky-700',
-  },
-  {
-    title: 'Approval Rate',
-    value: '98%',
-    note: 'Excellent consistency',
-    change: 'Top performer',
-    icon: BadgeCheck,
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-700',
-  },
-  {
-    title: 'Member Since',
-    value: 'May 2025',
-    note: 'You are a valued member',
-    change: 'Level 2 Tester',
-    icon: CalendarDays,
-    iconBg: 'bg-indigo-50',
-    iconColor: 'text-indigo-700',
-  },
-];
 
-const demoAvailableTests: Array<{
-  name: string;
-  meta: string;
-  difficulty: Difficulty;
-  amount: string;
-}> = [
-  {
-    name: 'FitTrack Mobile App',
-    meta: 'Android - Functional Testing',
-    difficulty: 'Easy',
-    amount: 'R250',
-  },
-  {
-    name: 'FoodOrder Web Platform',
-    meta: 'Web - Usability Testing',
-    difficulty: 'Medium',
-    amount: 'R400',
-  },
-  {
-    name: 'ShopEase iOS App',
-    meta: 'iOS - Bug Hunting',
-    difficulty: 'Hard',
-    amount: 'R350',
-  },
-];
-
-const demoMyTests = [
-  {
-    name: 'TravelBuddy App',
-    type: 'Exploratory Testing',
-    progress: 50,
-    due: 'Due: 27 May',
-  },
-  {
-    name: 'BookStore Web',
-    type: 'Usability Testing',
-    progress: 30,
-    due: 'Due: 29 May',
-  },
-];
-
-// TODO: Replace with Supabase query
-const demoCompletedTests = [
-  {
-    name: 'HealthHub Web',
-    type: 'Usability Testing',
-    score: {
-      usability: 82,
-      performance: 74,
-      onboarding: 79,
-      bugSeverity: 88,
-      deviceCompatibility: 81,
-    },
-  },
-  {
-    name: 'ShopEase iOS App',
-    type: 'Bug Hunting',
-    score: {
-      usability: 78,
-      performance: 70,
-      onboarding: 73,
-      bugSeverity: 85,
-      deviceCompatibility: 76,
-    },
-  },
-];
-
-const demoApprovals = [
-  {
-    name: 'FitTrack Mobile App',
-    date: 'Submitted on 20 May',
-    amount: 'R250',
-    status: 'Pending',
-  },
-  {
-    name: 'HealthHub Web',
-    date: 'Submitted on 18 May',
-    amount: 'R370',
-    status: 'Pending',
-  },
-];
-
-const demoTransactions: Array<{
-  date: string;
-  type: string;
-  description: string;
-  amount: string;
-  status: TransactionStatus;
-}> = [
-  {
-    date: '20 May 2025',
-    type: 'Earning',
-    description: 'FitTrack Mobile App',
-    amount: 'R250',
-    status: 'Pending',
-  },
-  {
-    date: '18 May 2025',
-    type: 'Earning',
-    description: 'HealthHub Web',
-    amount: 'R370',
-    status: 'Pending',
-  },
-  {
-    date: '10 May 2025',
-    type: 'Payout',
-    description: 'Bank Transfer',
-    amount: '-R450',
-    status: 'Paid',
-  },
-  {
-    date: '05 May 2025',
-    type: 'Earning',
-    description: 'ShopEase iOS App',
-    amount: 'R350',
-    status: 'Approved',
-  },
-  {
-    date: '01 May 2025',
-    type: 'Bonus',
-    description: 'Welcome Bonus',
-    amount: 'R100',
-    status: 'Paid',
-  },
-];
 
 const monthlyEarnings = [120, 140, 210, 260, 240, 300, 450];
 const monthlyLabels = ['1 May', '6 May', '12 May', '18 May', '22 May', '27 May', '31 May'];
@@ -277,7 +105,7 @@ export default function SquashTesterDashboardPage() {
   const [assignmentsError, setAssignmentsError] = useState('');
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary>(emptyEarningsSummary);
   const [earningsError, setEarningsError] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(session?.source === 'supabase');
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [specializations, setSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
     if (!raw) return ['township-network', 'zulu', 'ecommerce'];
@@ -294,7 +122,7 @@ export default function SquashTesterDashboardPage() {
   }, [specializations]);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     getTesterSpecializations(session.userId)
@@ -308,11 +136,11 @@ export default function SquashTesterDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     let mounted = true;
     setAssignmentsError('');
@@ -336,12 +164,12 @@ export default function SquashTesterDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
-      if (session?.userId && session.source === 'supabase') {
+      if (session?.userId && true) {
         replaceTesterSpecializations(session.userId, next).catch(() => {
           // Keep the UI responsive; the Settings/Profile page can retry later.
         });
@@ -355,7 +183,7 @@ export default function SquashTesterDashboardPage() {
     [specializations],
   );
 
-  const isRealAccount = session?.source === 'supabase';
+  const isRealAccount = true;
   const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
   const submittedAssignmentCount = assignments.filter((assignment) => assignment.status === 'submitted').length;
   const approvedAssignmentCount = assignments.filter((assignment) => assignment.status === 'approved').length;
@@ -409,59 +237,53 @@ export default function SquashTesterDashboardPage() {
       iconColor: 'text-indigo-700',
     },
   ];
-  const dashboardStats = isRealAccount ? realStats : demoStats;
-  const dashboardAvailableTests = isRealAccount ? [] : demoAvailableTests;
-  const dashboardApprovals = isRealAccount
-    ? [...changesRequestedItems, ...pendingItems].slice(0, 3).map((item) => ({
-        name: item.jobTitle,
-        date: `Submitted on ${formatDate(item.submittedAt)}`,
-        amount: formatRands(item.amountZar),
-        status: item.status === 'changes_requested' ? 'Changes Requested' : 'Pending',
-      }))
-    : demoApprovals;
-  const dashboardTransactions = isRealAccount
-    ? [
-        ...earningsSummary.earnings.map((item) => ({
-          date: formatDate(item.submittedAt),
-          type: 'Earning',
-          description: item.jobTitle,
-          amount: formatRands(item.amountZar),
-          status:
-            item.status === 'approved'
-              ? 'Approved'
-              : item.status === 'paid'
-                ? 'Paid'
-                : item.status === 'changes_requested'
-                  ? 'Changes Requested'
-                  : item.status === 'rejected'
-                    ? 'Rejected'
-                    : 'Pending',
-        })),
-        ...earningsSummary.payouts.map((payout) => ({
-          date: formatDate(payout.createdAt),
-          type: 'Payout',
-          description: payout.status === 'paid' ? 'Paid to payout method' : 'Payout request',
-          amount: `-${formatRands(payout.amountZar)}`,
-          status: payout.status === 'paid' ? 'Paid' : 'Pending',
-        })),
-      ].slice(0, 6) as Array<{ date: string; type: string; description: string; amount: string; status: TransactionStatus }>
-    : demoTransactions;
-  const dashboardCompletedTests = isRealAccount
-    ? earningsSummary.earnings
-        .filter((item) => item.status === 'approved' || item.status === 'paid')
-        .slice(0, 3)
-        .map((item) => ({
-          name: item.jobTitle,
-          type: 'Approved Report',
-          score: {
-            usability: 78,
-            performance: 74,
-            onboarding: 80,
-            bugSeverity: 82,
-            deviceCompatibility: 76,
-          },
-        }))
-    : demoCompletedTests;
+  const dashboardStats = realStats;
+  const dashboardAvailableTests: any[] = [];
+  const dashboardApprovals = [...changesRequestedItems, ...pendingItems].slice(0, 3).map((item) => ({
+    name: item.jobTitle,
+    date: `Submitted on ${formatDate(item.submittedAt)}`,
+    amount: formatRands(item.amountZar),
+    status: item.status === 'changes_requested' ? 'Changes Requested' : 'Pending',
+  }));
+  const dashboardTransactions = [
+    ...earningsSummary.earnings.map((item) => ({
+      date: formatDate(item.submittedAt),
+      type: 'Earning',
+      description: item.jobTitle,
+      amount: formatRands(item.amountZar),
+      status:
+        item.status === 'approved'
+          ? 'Approved'
+          : item.status === 'paid'
+            ? 'Paid'
+            : item.status === 'changes_requested'
+              ? 'Changes Requested'
+              : item.status === 'rejected'
+                ? 'Rejected'
+                : 'Pending',
+    })),
+    ...earningsSummary.payouts.map((payout) => ({
+      date: formatDate(payout.createdAt),
+      type: 'Payout',
+      description: payout.status === 'paid' ? 'Paid to payout method' : 'Payout request',
+      amount: `-${formatRands(payout.amountZar)}`,
+      status: payout.status === 'paid' ? 'Paid' : 'Pending',
+    })),
+  ].slice(0, 6) as Array<{ date: string; type: string; description: string; amount: string; status: TransactionStatus }>;
+  const dashboardCompletedTests = earningsSummary.earnings
+    .filter((item) => item.status === 'approved' || item.status === 'paid')
+    .slice(0, 3)
+    .map((item) => ({
+      name: item.jobTitle,
+      type: 'Approved Report',
+      score: {
+        usability: 78,
+        performance: 74,
+        onboarding: 80,
+        bugSeverity: 82,
+        deviceCompatibility: 76,
+      },
+    }));
 
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/tester/dashboard', active: true },
@@ -473,7 +295,7 @@ export default function SquashTesterDashboardPage() {
     { label: 'Settings', icon: Settings, href: '/tester/settings' },
   ];
 
-  if (session?.source === 'supabase' && isLoadingData) {
+  if (true && isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading dashboard data...
@@ -689,25 +511,13 @@ export default function SquashTesterDashboardPage() {
                           </a>
                         </div>
                       );
-                    })}
-                    {activeAssignments.length === 0
-                      ? (isRealAccount ? [] : demoMyTests).map((test) => (
-                          <div key={test.name} className="flex items-center justify-between gap-3 py-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-900 truncate">{test.name}</div>
-                              <div className="text-[11px] text-slate-500">{test.type}</div>
-                            </div>
-                            <div className="flex shrink-0 items-center gap-2">
-                              <div className="w-20">
-                                <div className="h-1.5 rounded-full bg-slate-100">
-                                  <div className="h-1.5 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
-                                </div>
-                              </div>
-                              <div className="text-xs font-semibold text-slate-600">{test.progress}%</div>
-                            </div>
-                          </div>
-                        ))
-                      : null}
+                    })}                    {activeAssignments.length === 0 && !assignmentsError && !isLoadingData ? (
+                      <div className="py-6 text-center">
+                        <ClipboardList className="mx-auto h-8 w-8 text-slate-300" />
+                        <div className="mt-2 text-sm font-semibold text-slate-700">No active tests</div>
+                        <div className="mt-1 text-xs text-slate-500">Check Available Jobs to find new opportunities.</div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="px-4 py-3 text-center">

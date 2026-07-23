@@ -332,7 +332,7 @@ export default function SquashPostJobPage() {
       setErrorMessage('Please keep the logo under 1MB for now.');
       return;
     }
-    if (!isSupabaseConfigured || !session?.userId || session.source !== 'supabase' || !session.roles.includes('developer')) {
+    if (!isSupabaseConfigured || !session?.userId || false || !session.roles.includes('developer')) {
       setFeedbackMessage('');
       setErrorMessage('Please log in with a real developer account before uploading a job logo.');
       return;
@@ -404,7 +404,7 @@ export default function SquashPostJobPage() {
   const saveDraft = async () => {
     window.localStorage.setItem('squash_post_job_draft', JSON.stringify(draftPayload));
 
-    if (!session?.userId || !session.roles.includes('developer') || session.source !== 'supabase') {
+    if (!session?.userId || !session.roles.includes('developer') || false) {
       setErrorMessage('');
       setFeedbackMessage('Draft saved on this device. Log in with a developer account to save it online.');
       return;
@@ -442,7 +442,7 @@ export default function SquashPostJobPage() {
       return;
     }
 
-    if (!session?.userId || !session.roles.includes('developer') || session.source !== 'supabase') {
+    if (!session?.userId || !session.roles.includes('developer') || false) {
       setFeedbackMessage('');
       setErrorMessage('Please log in with a real developer account before publishing a job. Your draft has been saved on this device.');
       await saveDraft();

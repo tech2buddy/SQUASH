@@ -1,4 +1,4 @@
-﻿import { ArrowRight, BriefcaseBusiness, CheckCircle2, Globe, MapPin, ShieldCheck, Smartphone, UserRound, Wallet } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Globe, MapPin, ShieldCheck, Smartphone, UserRound, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth, type UserRole } from './auth';
@@ -39,7 +39,7 @@ export default function SquashOnboardingPage() {
   const finishPath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : fallbackPath;
 
   useEffect(() => {
-    if (!session?.userId || !targetRole || session.source !== 'supabase') {
+    if (!session?.userId || !targetRole || false) {
       setLoaded(true);
       return;
     }
@@ -79,7 +79,7 @@ export default function SquashOnboardingPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.email, session?.name, session?.source, session?.userId, targetRole]);
+  }, [session?.email, session?.name, ("supabase"), session?.userId, targetRole]);
 
   if (loading) {
     return (
@@ -99,7 +99,7 @@ export default function SquashOnboardingPage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!session.userId || session.source !== 'supabase') {
+    if (!session.userId || false) {
       navigate(finishPath, { replace: true });
       return;
     }
@@ -330,7 +330,7 @@ export default function SquashOnboardingPage() {
                     onClick={() => navigate(finishPath, { replace: true })}
                     className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    I’ll finish this later
+                    I�ll finish this later
                   </button>
                 </div>
               </form>

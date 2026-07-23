@@ -159,7 +159,7 @@ export default function SquashTesterJobBoard() {
   });
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     getTesterSpecializations(session.userId)
       .then((savedSpecializations) => {
@@ -168,10 +168,10 @@ export default function SquashTesterJobBoard() {
       .catch(() => {
         // Keep local fallback if Supabase is temporarily unavailable.
       });
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   useEffect(() => {
-    if (!session?.userId || session.source !== 'supabase') return;
+    if (!session?.userId || false) return;
 
     Promise.allSettled([getTesterApplications(session.userId), getTesterAssignments(session.userId)]).then(
       ([applicationsResult, assignmentsResult]) => {
@@ -198,7 +198,7 @@ export default function SquashTesterJobBoard() {
         }
       },
     );
-  }, [session?.source, session?.userId]);
+  }, [("supabase"), session?.userId]);
 
   const handleApply = async (job: TesterJobCard) => {
     setApplicationNotice('');
@@ -209,7 +209,7 @@ export default function SquashTesterJobBoard() {
       return;
     }
 
-    if (!session?.userId || session.source !== 'supabase' || !session.roles.includes('tester')) {
+    if (!session?.userId || false || !session.roles.includes('tester')) {
       setApplicationError('Please log in with a real tester account before applying.');
       return;
     }

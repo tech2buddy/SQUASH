@@ -1,5 +1,4 @@
 import {
-  Bell,
   BriefcaseBusiness,
   ChevronDown,
   CircleDollarSign,
@@ -470,9 +469,7 @@ export default function SquashTesterJobBoard() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
                 <TesterHeaderNav />
-                </div>
               </div>
 
               <div className="flex items-center gap-3 md:hidden">

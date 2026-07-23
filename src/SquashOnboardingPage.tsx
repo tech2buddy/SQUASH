@@ -330,7 +330,7 @@ export default function SquashOnboardingPage() {
                     onClick={() => navigate(finishPath, { replace: true })}
                     className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    I’ll finish this later
+                    Ill finish this later
                   </button>
                 </div>
               </form>

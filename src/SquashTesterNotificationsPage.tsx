@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import TesterHeaderNav from './components/TesterHeaderNav';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
+import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import {
   getUserNotifications,
@@ -54,6 +56,7 @@ function typeIcon(type: AppNotification['type']) {
 
 export default function SquashTesterNotificationsPage() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const userId = session?.userId || 'tester_guest';
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [filter, setFilter] = useState<FilterType>('All');
@@ -147,7 +150,13 @@ export default function SquashTesterNotificationsPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden"><Menu className="h-5 w-5" /></a>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search notifications..." />
@@ -268,6 +277,8 @@ export default function SquashTesterNotificationsPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/notifications" />
     </div>
   );
 }

@@ -19,6 +19,8 @@ import {
   Wifi,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import TesterHeaderNav from './components/TesterHeaderNav';
 import TesterBadge from './components/TesterBadge';
@@ -28,6 +30,7 @@ import { getTesterProfile, getTesterSpecializations, replaceTesterSpecialization
 
 export default function SquashTesterProfilePage() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [profileDetails, setProfileDetails] = useState<TesterPublicProfile | null>(null);
   const [profileError, setProfileError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>(() => {
@@ -160,9 +163,13 @@ export default function SquashTesterProfilePage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
                   <Menu className="h-5 w-5" />
-                </a>
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
@@ -404,6 +411,8 @@ export default function SquashTesterProfilePage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/profile" />
     </div>
   );
 }

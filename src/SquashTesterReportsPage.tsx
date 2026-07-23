@@ -19,7 +19,10 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import TesterHeaderNav from './components/TesterHeaderNav';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { useAuth } from './auth';
 import { getTesterReportSubmissions, type TesterReportSubmission } from './lib/jobApi';
 
@@ -47,6 +50,7 @@ const emptyReports: TesterReportSubmission[] = [];
 
 export default function SquashTesterReportsPage() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
   const [reportsError, setReportsError] = useState('');
   const [loadingReports, setLoadingReports] = useState(session?.source === 'supabase');
@@ -252,8 +256,8 @@ export default function SquashTesterReportsPage() {
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <a
-                  href={item.href}
+                <Link
+                  to={item.href}
                   key={item.label}
                   className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
@@ -261,7 +265,7 @@ export default function SquashTesterReportsPage() {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -284,9 +288,13 @@ export default function SquashTesterReportsPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
                   <Menu className="h-5 w-5" />
-                </a>
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
@@ -364,7 +372,55 @@ export default function SquashTesterReportsPage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Cards List */}
+                <div className="divide-y divide-slate-100 md:hidden">
+                  {loadingReports ? (
+                    <div className="px-5 py-8 text-center text-sm font-semibold text-slate-500">
+                      Loading your real submissions...
+                    </div>
+                  ) : null}
+                  {reportsError ? (
+                    <div className="px-5 py-8 text-center text-sm font-semibold text-red-600">
+                      {reportsError}
+                    </div>
+                  ) : null}
+                  {!loadingReports && !reportsError && reports.length === 0 ? (
+                    <div className="px-5 py-8 text-center text-sm leading-6 text-slate-600">
+                      You have not submitted any reports yet.
+                    </div>
+                  ) : null}
+                  {reports.map((report) => (
+                    <div key={report.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{report.title}</div>
+                          <div className="text-xs text-slate-500">{report.id} • {report.app} ({report.platform})</div>
+                        </div>
+                        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass(report.status)}`}>
+                          {report.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 text-sm">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                            <Camera className="h-3 w-3" />
+                            {report.bugCount > 0 ? `${report.bugCount} bugs` : 'Report'}
+                          </span>
+                          {report.hasVideo ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">
+                              <Video className="h-3 w-3" />
+                              Video
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="font-bold text-slate-900">{report.earnings}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -514,6 +570,8 @@ export default function SquashTesterReportsPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/reports" />
     </div>
   );
 }

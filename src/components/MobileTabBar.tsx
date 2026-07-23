@@ -1,5 +1,5 @@
 import { Home, ClipboardList, PlayCircle, UserCircle2, Briefcase, BarChart3, Settings } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 type Tab = {
   label: string;
@@ -35,16 +35,16 @@ export default function MobileTabBar({ role }: { role: 'tester' | 'developer' })
           : location.pathname === tab.href || location.pathname.startsWith(tab.href + '/');
 
         return (
-          <a
+          <Link
             key={tab.label}
-            href={tab.href}
+            to={tab.href}
             className={`flex flex-col items-center gap-1 rounded-2xl p-2 min-w-[64px] transition ${
               isActive ? 'text-green-600' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <Icon className={`h-6 w-6 ${isActive ? 'fill-green-100 text-green-600' : ''}`} />
             <span className="text-[10px] font-bold">{tab.label}</span>
-          </a>
+          </Link>
         );
       })}
     </div>

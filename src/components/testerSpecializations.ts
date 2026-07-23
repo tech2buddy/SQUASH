@@ -21,6 +21,7 @@ export const SPECIALIZATION_GROUPS: SpecializationGroup[] = [
       { id: 'iphone-12-plus', label: 'iPhone (newer models 12+)' },
       { id: 'huawei-honor', label: 'Huawei/Honor devices' },
       { id: 'budget-android', label: 'Budget Android (under R2,000)' },
+      { id: 'desktop-laptop', label: 'Desktop / Laptop' },
     ],
   },
   {
@@ -30,6 +31,7 @@ export const SPECIALIZATION_GROUPS: SpecializationGroup[] = [
       { id: 'township-network', label: 'Township/informal settlement network' },
       { id: 'rural-network', label: 'Rural area network' },
       { id: '2g-3g-only', label: '2G/3G only testing' },
+      { id: 'lte-4g-5g', label: 'LTE / 4G / 5G testing' },
       { id: 'load-shedding', label: 'Load shedding conditions testing' },
     ],
   },
@@ -41,6 +43,7 @@ export const SPECIALIZATION_GROUPS: SpecializationGroup[] = [
       { id: 'xhosa', label: 'Xhosa / isiXhosa' },
       { id: 'sotho', label: 'Sotho / Sesotho' },
       { id: 'afrikaans', label: 'Afrikaans' },
+      { id: 'english', label: 'English' },
       { id: 'venda', label: 'Venda / Tshivenda' },
       { id: 'tsonga', label: 'Tsonga / Xitsonga' },
     ],

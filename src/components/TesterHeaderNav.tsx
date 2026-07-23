@@ -9,8 +9,8 @@ import {
   RefreshCw,
   Search,
   Settings,
-  Sparkles,
   UserCircle2,
+  Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -251,7 +251,7 @@ export default function TesterHeaderNav() {
               <div className="text-sm font-bold text-slate-900">{testerName}</div>
               <div className="text-xs text-slate-500 truncate">{testerEmail}</div>
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold text-green-800">
-                <Sparkles className="h-3 w-3" />
+                <Zap className="h-3 w-3" />
                 Tester Workspace
               </div>
             </div>

@@ -21,6 +21,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
 import DeveloperHeaderNav from './components/DeveloperHeaderNav';
+import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
@@ -1273,6 +1274,7 @@ export default function SquashPostJobPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="developer" />
     </div>
   );
 }

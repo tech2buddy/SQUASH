@@ -19,6 +19,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
 import type { LucideIcon } from 'lucide-react';
@@ -508,7 +510,53 @@ export default function SquashDeveloperBillingPage() {
                     </button>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Mobile Card List */}
+                  <div className="divide-y divide-slate-100 md:hidden">
+                    {visibleActivePayments.length > 0 ? (
+                      visibleActivePayments.map((payment) => (
+                        <div key={payment.job} className="p-4 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-bold text-slate-900">{payment.job}</div>
+                              <div className="text-xs text-slate-500">{payment.type}</div>
+                            </div>
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${payment.tone}`}>
+                              {payment.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500">Amount:</span>
+                            <span className="font-bold text-slate-900">{payment.amount}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                              <span>Progress</span>
+                              <span>{payment.progress}%</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-100">
+                              <div className="h-2 rounded-full bg-green-600" style={{ width: `${payment.progress}%` }} />
+                            </div>
+                          </div>
+                          <div className="pt-1 flex justify-end">
+                            <Link
+                              to="/report-details"
+                              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm"
+                            >
+                              {payment.action}
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-sm text-slate-500">
+                        No funded job payments yet. Posted jobs will appear here once payment is connected.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
                         <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -540,13 +588,13 @@ export default function SquashDeveloperBillingPage() {
                               </div>
                             </td>
                             <td className="px-6 py-5">
-                              <a
-                                href="/report-details"
+                              <Link
+                                to="/report-details"
                                 className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                               >
                                 {payment.action}
                                 <ArrowRight className="h-3.5 w-3.5" />
-                              </a>
+                              </Link>
                             </td>
                           </tr>
                         )) : (
@@ -586,7 +634,42 @@ export default function SquashDeveloperBillingPage() {
                     </button>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Mobile Card List */}
+                  <div className="divide-y divide-slate-100 md:hidden">
+                    {visibleHistory.length > 0 ? (
+                      visibleHistory.map((item) => (
+                        <div key={`${item.date}-${item.job}`} className="p-4 space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-bold text-slate-900">{item.job}</div>
+                              <div className="text-xs text-slate-500">{item.date}</div>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(item.status)}`}>
+                              {item.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="font-black text-slate-900 text-sm">{item.amount}</span>
+                            <a
+                              href={`data:text/plain;charset=utf-8,${encodeURIComponent(`Invoice for ${item.job}`)}`}
+                              download={`invoice-${item.job.replaceAll(' ', '-').toLowerCase()}.txt`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              PDF
+                            </a>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-sm text-slate-500">
+                        No transaction history yet.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
                         <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -843,6 +926,7 @@ export default function SquashDeveloperBillingPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="developer" />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
+import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import {
   getDeveloperSubmittedReports,
@@ -442,6 +443,7 @@ export default function SquashReportDetailsPage() {
         initialUrl={realReport?.jobPlatform || ''}
         onSubmit={handleRetestSubmit}
       />
+      <MobileTabBar role={session?.role === 'tester' ? 'tester' : 'developer'} />
     </div>
   );
 }

@@ -17,6 +17,8 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import TesterBadge, { getTesterTier, type TesterTier } from './components/TesterBadge';
 import { useAuth } from './auth';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { getTesterEarningsSummary, type TesterEarningsSummary } from './lib/jobApi';
 
 type TierCard = {
@@ -82,6 +84,7 @@ function nextTierCopy(tier: TesterTier, approvedTests: number) {
 
 export default function SquashTesterLevelBenefitsPage() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const testerName = session?.name || 'Tester';
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -157,7 +160,13 @@ export default function SquashTesterLevelBenefitsPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden"><Menu className="h-5 w-5" /></a>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search levels, badges, benefits..." />
@@ -272,6 +281,8 @@ export default function SquashTesterLevelBenefitsPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/level-benefits" />
     </div>
   );
 }

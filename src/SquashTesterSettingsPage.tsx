@@ -20,7 +20,10 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import TesterHeaderNav from './components/TesterHeaderNav';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { useAuth } from './auth';
 import { getTesterProfile, updateTesterProfile } from './lib/profileApi';
 
@@ -102,6 +105,7 @@ function ToggleSwitch({ enabled, onChange, label }: { enabled: boolean; onChange
 
 export default function SquashTesterSettingsPage() {
   const { session, refreshSessionProfile } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const starter = useMemo(
     () => ({
       ...defaultSettings,
@@ -259,8 +263,8 @@ export default function SquashTesterSettingsPage() {
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <a
-                  href={item.href}
+                <Link
+                  to={item.href}
                   key={item.label}
                   className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
@@ -268,7 +272,7 @@ export default function SquashTesterSettingsPage() {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -290,9 +294,13 @@ export default function SquashTesterSettingsPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
                   <Menu className="h-5 w-5" />
-                </a>
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
@@ -608,8 +616,8 @@ export default function SquashTesterSettingsPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/settings" />
     </div>
   );
 }
-
-

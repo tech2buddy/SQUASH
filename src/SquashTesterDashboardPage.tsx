@@ -1,6 +1,7 @@
 import {
   BadgeCheck,
   BriefcaseBusiness,
+  CalendarDays,
   ChevronDown,
   CircleDollarSign,
   ClipboardList,
@@ -12,7 +13,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   Star,
   UserCircle2,
   Wallet,
@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import TesterHeaderNav from './components/TesterHeaderNav';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import SquashScore from './components/SquashScore';
 import TesterBadge from './components/TesterBadge';
@@ -89,9 +91,9 @@ const demoStats: StatCard[] = [
     value: 'May 2025',
     note: 'You are a valued member',
     change: 'Level 2 Tester',
-    icon: Sparkles,
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-700',
+    icon: CalendarDays,
+    iconBg: 'bg-indigo-50',
+    iconColor: 'text-indigo-700',
   },
 ];
 
@@ -269,6 +271,7 @@ export default function SquashTesterDashboardPage() {
   const { session } = useAuth();
   const testerName = session?.name || 'Alex Tester';
   const testerFirstName = testerName.split(' ')[0] || testerName;
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
   const [assignmentsError, setAssignmentsError] = useState('');
@@ -401,9 +404,9 @@ export default function SquashTesterDashboardPage() {
       value: 'Active',
       note: 'Real SQUASH account',
       change: activeAssignments.length > 0 ? 'Testing in progress' : 'Ready for jobs',
-      icon: Sparkles,
-      iconBg: 'bg-violet-50',
-      iconColor: 'text-violet-700',
+      icon: CalendarDays,
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-700',
     },
   ];
   const dashboardStats = isRealAccount ? realStats : demoStats;
@@ -554,9 +557,13 @@ export default function SquashTesterDashboardPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
                   <Menu className="h-5 w-5" />
-                </a>
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
@@ -570,27 +577,29 @@ export default function SquashTesterDashboardPage() {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div>
-              <h1 className="text-4xl font-black tracking-tight text-slate-900">Welcome back, {testerFirstName}!</h1>
-              <p className="mt-2 text-slate-600">Here is what is happening with your testing journey.</p>
+          <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-slate-900 lg:text-4xl">Welcome back, {testerFirstName}!</h1>
+                <p className="text-xs text-slate-500 mt-0.5 lg:text-base lg:mt-2">Here is what is happening with your testing journey.</p>
+              </div>
             </div>
 
-            <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <section className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
               {dashboardStats.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-600">{card.title}</div>
-                        <div className="mt-2 text-3xl font-black text-slate-900">{card.value}</div>
-                        <div className="mt-2 text-sm text-slate-500">{card.note}</div>
-                        <div className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                  <div key={card.title} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-semibold text-slate-500 truncate">{card.title}</div>
+                        <div className="mt-1 text-xl font-black text-slate-900">{card.value}</div>
+                        <div className="mt-1 text-[10px] text-slate-400 leading-tight truncate">{card.note}</div>
+                        <div className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                           {card.change}
                         </div>
                       </div>
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconBg}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
                         <Icon className={`h-5 w-5 ${card.iconColor}`} />
                       </div>
                     </div>
@@ -599,154 +608,142 @@ export default function SquashTesterDashboardPage() {
               })}
             </section>
 
-            <section className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-              <div className="space-y-6">
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
+            <section className="mt-4 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900">Available Tests</h2>
-                      <p className="mt-2 text-sm text-slate-600">New opportunities matching your skills.</p>
+                      <h2 className="text-base font-bold text-slate-900">Available Tests</h2>
+                      <p className="text-xs text-slate-500">New opportunities matching your skills.</p>
                     </div>
-                    <a href="/tester-jobs" className="w-fit rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                      View All Tests
+                    <a href="/tester-jobs" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                      View All
                     </a>
                   </div>
 
                   <div className="divide-y divide-slate-100">
                     {dashboardAvailableTests.map((test) => (
-                      <div key={test.name} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
+                      <div key={test.name} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-900">{test.name}</div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                            <span>{test.meta}</span>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getDifficultyClasses(test.difficulty)}`}>
+                          <div className="text-sm font-semibold text-slate-900 truncate">{test.name}</div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+                            <span className="truncate">{test.meta}</span>
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${getDifficultyClasses(test.difficulty)}`}>
                               {test.difficulty}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex shrink-0 items-center gap-2">
                           <div className="text-right">
-                            <div className="text-2xl font-black text-slate-900">{test.amount}</div>
-                            <div className="text-sm text-slate-500">Earn</div>
+                            <div className="text-sm font-black text-slate-900">{test.amount}</div>
                           </div>
-                          <a href="/tester-jobs" className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                          <a href="/tester-jobs" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                             View
                           </a>
                         </div>
                       </div>
                     ))}
                     {dashboardAvailableTests.length === 0 ? (
-                      <div className="px-6 py-8 text-sm leading-6 text-slate-600">
-                        Open the Available Jobs page to browse real jobs posted by developers. Matching jobs will appear here once we add personalized recommendations.
+                      <div className="px-4 py-5 text-xs leading-5 text-slate-500">
+                        Open the Available Jobs page to browse real jobs. Personalised matches will appear here soon.
                       </div>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-200 px-6 py-5">
-                    <h2 className="text-2xl font-bold text-slate-900">My Test Progress</h2>
-                    <p className="mt-2 text-sm text-slate-600">Track your active tests and deadlines.</p>
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">My Test Progress</h2>
+                      <p className="text-xs text-slate-500">Track your active tests and deadlines.</p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-6 border-b border-slate-100 px-6 py-4 text-sm font-semibold text-slate-500">
+                  <div className="flex gap-4 border-b border-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">
                     <span className="text-green-700">In Progress ({isRealAccount ? activeAssignments.length : Math.max(assignments.length, 2)})</span>
                     <span>Submitted ({isRealAccount ? submittedAssignmentCount : 3})</span>
                     <span>Approved ({isRealAccount ? approvedAssignmentCount : 19})</span>
                   </div>
 
-                  <div className="divide-y divide-slate-100 px-6">
+                  <div className="divide-y divide-slate-100 px-4">
                     {assignmentsError ? (
-                      <div className="py-4 text-sm font-semibold text-red-600">{assignmentsError}</div>
+                      <div className="py-3 text-xs font-semibold text-red-600">{assignmentsError}</div>
                     ) : null}
                     {activeAssignments.map((assignment) => {
                       const category = getCategoryById(assignment.jobCategory as TestCategoryId);
                       const CategoryIcon = category.icon;
                       return (
-                        <div key={assignment.id} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-semibold text-slate-900">{assignment.jobTitle}</div>
-                              <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-100">
-                                Accepted
-                              </span>
+                        <div key={assignment.id} className="flex items-center justify-between gap-3 py-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900 truncate">{assignment.jobTitle}</div>
+                              <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 ring-1 ring-green-100">Accepted</span>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                              <span className="inline-flex items-center gap-1.5">
-                                <CategoryIcon className="h-4 w-4" style={{ color: category.color }} />
-                                {category.name}
-                              </span>
-                              <span>{assignment.jobPlatform}</span>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+                              <CategoryIcon className="h-3 w-3" style={{ color: category.color }} />
+                              {category.name} · {assignment.jobPlatform}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 md:justify-end">
-                            <div className="hidden w-full max-w-[140px] sm:block">
-                              <div className="h-2 rounded-full bg-slate-100">
-                                <div className="h-2 w-[12%] rounded-full bg-green-600" />
-                              </div>
-                            </div>
-                            <a href={`/active-test?assignment=${assignment.id}`} className="rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
-                              Start Test
-                            </a>
-                          </div>
+                          <a href={`/active-test?assignment=${assignment.id}`} className="shrink-0 rounded-xl bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700">
+                            Start Test
+                          </a>
                         </div>
                       );
                     })}
                     {activeAssignments.length === 0
                       ? (isRealAccount ? [] : demoMyTests).map((test) => (
-                          <div key={test.name} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-                            <div>
-                              <div className="font-semibold text-slate-900">{test.name}</div>
-                              <div className="mt-1 text-sm text-slate-500">{test.type}</div>
+                          <div key={test.name} className="flex items-center justify-between gap-3 py-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-slate-900 truncate">{test.name}</div>
+                              <div className="text-[11px] text-slate-500">{test.type}</div>
                             </div>
-                            <div className="flex items-center gap-4 md:min-w-[280px] md:justify-end">
-                              <div className="w-full max-w-[140px]">
-                                <div className="h-2 rounded-full bg-slate-100">
-                                  <div className="h-2 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
+                            <div className="flex shrink-0 items-center gap-2">
+                              <div className="w-20">
+                                <div className="h-1.5 rounded-full bg-slate-100">
+                                  <div className="h-1.5 rounded-full bg-green-600" style={{ width: `${test.progress}%` }} />
                                 </div>
                               </div>
-                              <div className="text-sm font-semibold text-slate-700">{test.progress}%</div>
-                              <div className="text-sm text-slate-500">{test.due}</div>
+                              <div className="text-xs font-semibold text-slate-600">{test.progress}%</div>
                             </div>
                           </div>
                         ))
                       : null}
                   </div>
 
-                  <div className="px-6 py-4 text-center text-sm font-semibold text-slate-700">
-                    <a href="/active-test" className="hover:text-green-700">View All My Tests -&gt;</a>
+                  <div className="px-4 py-3 text-center">
+                    <a href="/active-test" className="text-xs font-semibold text-green-700 hover:underline">View All My Tests →</a>
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-200 px-6 py-5">
-                    <h2 className="text-2xl font-bold text-slate-900">Completed Tests</h2>
-                    <p className="mt-2 text-sm text-slate-600">Your latest completed tests and Squash Scores.</p>
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-4 py-3">
+                    <h2 className="text-base font-bold text-slate-900">Completed Tests</h2>
+                    <p className="text-xs text-slate-500">Your latest completed tests and Squash Scores.</p>
                   </div>
-                  <div className="divide-y divide-slate-100 px-6">
+                  <div className="divide-y divide-slate-100 px-4">
                     {dashboardCompletedTests.map((test) => (
-                      <div key={test.name} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div key={test.name} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <div className="font-semibold text-slate-900">{test.name}</div>
-                          <div className="text-sm text-slate-500">{test.type}</div>
+                          <div className="text-sm font-semibold text-slate-900">{test.name}</div>
+                          <div className="text-[11px] text-slate-500">{test.type}</div>
                         </div>
                         <SquashScore scores={test.score} compact />
                       </div>
                     ))}
                     {dashboardCompletedTests.length === 0 ? (
-                      <div className="py-6 text-sm leading-6 text-slate-600">
-                        No approved reports yet. Once a developer approves your submitted test, it will appear here with a Squash Score.
+                      <div className="py-4 text-xs leading-5 text-slate-500">
+                        No approved reports yet. Once a developer approves your test, it will appear here with a Squash Score.
                       </div>
                     ) : null}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-slate-900">Earnings Overview</h2>
-                    <div className="text-sm font-semibold text-slate-500">This Month</div>
+                    <h2 className="text-base font-bold text-slate-900">Earnings Overview</h2>
+                    <div className="text-xs font-semibold text-slate-500">This Month</div>
                   </div>
 
                   <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-4">
@@ -788,52 +785,52 @@ export default function SquashTesterDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Payout Method</h2>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h2 className="text-base font-bold text-slate-900">Payout Method</h2>
 
-                  <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="text-sm font-semibold text-slate-600">Available payout methods</div>
-                    <div className="mt-4 space-y-3">
-                      <label className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-                        <input type="radio" name="payout-method" defaultChecked className="h-4 w-4 accent-green-600" />
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-[11px] font-semibold text-slate-500 mb-2">Available payout methods</div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2.5 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+                        <input type="radio" name="payout-method" defaultChecked className="h-3.5 w-3.5 accent-green-600" />
                         Bank Transfer (EFT)
                       </label>
-                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                        <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
+                      <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+                        <input type="radio" name="payout-method" className="h-3.5 w-3.5 accent-green-600" />
                         SnapScan
                       </label>
-                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                        <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
+                      <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+                        <input type="radio" name="payout-method" className="h-3.5 w-3.5 accent-green-600" />
                         Airtime top-up
                       </label>
                     </div>
                   </div>
 
-                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                    Last payout: 10 May 2025 - R450
+                  <div className="mt-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                    Last payout: 10 May 2025 · R450
                   </div>
-                  <a href="/tester/payout-method" className="mt-3 inline-block text-sm font-semibold text-sky-700">
+                  <a href="/tester/payout-method" className="mt-2 inline-block text-xs font-semibold text-sky-700">
                     Change Payout Method
                   </a>
                 </div>
 
-                <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Pending Approvals</h2>
-                  <p className="mt-2 text-sm text-slate-600">Submissions waiting for approval or your updates.</p>
-                  <div className="mt-5 space-y-4">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+                  <h2 className="text-base font-bold text-slate-900">Pending Approvals</h2>
+                  <p className="mt-0.5 text-xs text-slate-500">Submissions waiting for approval or your updates.</p>
+                  <div className="mt-3 space-y-2.5">
                     {earningsError ? (
-                      <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-600">{earningsError}</div>
+                      <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{earningsError}</div>
                     ) : null}
                     {dashboardApprovals.map((item) => (
-                      <div key={item.name} className="rounded-2xl border border-sky-100 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-semibold text-slate-900">{item.name}</div>
-                            <div className="mt-1 text-sm text-slate-500">{item.date}</div>
+                      <div key={item.name} className="rounded-xl border border-sky-100 bg-white p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{item.name}</div>
+                            <div className="text-[11px] text-slate-500">{item.date}</div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-bold text-slate-900">{item.amount}</div>
-                            <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                          <div className="shrink-0 text-right">
+                            <div className="text-sm font-bold text-slate-900">{item.amount}</div>
+                            <div className="mt-0.5 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                               {item.status}
                             </div>
                           </div>
@@ -841,28 +838,51 @@ export default function SquashTesterDashboardPage() {
                       </div>
                     ))}
                     {dashboardApprovals.length === 0 ? (
-                      <div className="rounded-2xl border border-sky-100 bg-white p-4 text-sm leading-6 text-slate-600">
+                      <div className="rounded-xl border border-sky-100 bg-white p-3 text-xs leading-5 text-slate-500">
                         No reports are waiting for approval or changes right now.
                       </div>
                     ) : null}
                   </div>
-                  <a href="/tester/submissions" className="mt-4 inline-block text-sm font-semibold text-sky-700">
-                    View All Submissions -&gt;
+                  <a href="/tester/submissions" className="mt-3 inline-block text-xs font-semibold text-sky-700">
+                    View All Submissions →
                   </a>
                 </div>
               </div>
             </section>
 
-            <section className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-              <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-                  <h2 className="text-2xl font-bold text-slate-900">Transaction History</h2>
-                  <button className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                    This Month <ChevronDown className="inline h-4 w-4" />
+            <section className="mt-4 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                  <h2 className="text-base font-bold text-slate-900">Transaction History</h2>
+                  <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
+                    This Month <ChevronDown className="inline h-3.5 w-3.5" />
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Cards List */}
+                <div className="divide-y divide-slate-100 md:hidden">
+                  {dashboardTransactions.map((item) => (
+                    <div key={`${item.date}-${item.description}`} className="p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{item.description}</div>
+                          <div className="text-xs text-slate-500">{item.date} • {item.type}</div>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClasses(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <span className={`font-black text-sm ${item.amount.startsWith('-') ? 'text-red-600' : 'text-slate-900'}`}>
+                          {item.amount}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -925,17 +945,17 @@ export default function SquashTesterDashboardPage() {
                 </div>
 
                 <div className="mt-6 space-y-3 text-slate-700">
-                  <div className="inline-flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-green-700" />
-                    Complete tests consistently
+                  <div className="flex items-center gap-2 text-sm">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-green-700" />
+                    <span>Complete tests consistently</span>
                   </div>
-                  <div className="inline-flex items-center gap-2">
-                    <BadgeCheck className="h-4 w-4 text-green-700" />
-                    Keep approval rate above 90%
+                  <div className="flex items-center gap-2 text-sm">
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-green-700" />
+                    <span>Keep approval rate above 90%</span>
                   </div>
-                  <div className="inline-flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-green-700" />
-                    Stay active every month
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock3 className="h-4 w-4 shrink-0 text-green-700" />
+                    <span>Stay active every month</span>
                   </div>
                 </div>
 
@@ -971,6 +991,8 @@ export default function SquashTesterDashboardPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/dashboard" />
     </div>
   );
 }

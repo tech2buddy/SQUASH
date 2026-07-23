@@ -29,6 +29,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth';
 import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 
 type TestingTypeConfig = {
@@ -98,6 +99,7 @@ const DEFAULT_TYPE_CONFIG: TestingTypeConfig = {
 
 export default function SquashActiveTestScreen() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const testerName = session?.name || 'Thando M.';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -495,9 +497,13 @@ export default function SquashActiveTestScreen() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileDrawerOpen(true)}
+                    className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                  >
                     <Menu className="h-5 w-5" />
-                  </a>
+                  </button>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
@@ -538,120 +544,113 @@ export default function SquashActiveTestScreen() {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap items-center gap-3">
+          <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
                 {assignment?.jobLogoUrl ? (
-                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm" />
+                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-8 w-8 rounded-xl border border-slate-200 object-cover shadow-sm shrink-0" />
                 ) : null}
-                <h1 className="text-3xl font-black tracking-tight text-slate-900">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                <h1 className="truncate text-lg font-black tracking-tight text-slate-900 sm:text-2xl">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
+                <span className="hidden shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-semibold text-green-700 sm:inline">
                   {assignment?.jobPlatform || 'Usability Test'}
                 </span>
               </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
-                  Time Left: <span className="text-slate-900">18:24</span>
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                  ⏱ 18:24
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm">
-                  <Mic className="h-4 w-4" /> LIVE Recording
+                <div className="flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm">
+                  <Mic className="h-3.5 w-3.5" /> REC
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                {/* Testing Type Banner */}
+            <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+              <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 {(() => {
-                  const rawFocus = assignment?.jobFocusAreas || '';
-                  const firstLine = rawFocus.split('\n')[0] || '';
-                  const types = firstLine.split(',').map(t => t.trim()).filter(Boolean);
-                  const focusText = rawFocus.split('\n').slice(1).join('\n').trim();
-                  const primaryType = types[0] || '';
-                  const cfg = TESTING_TYPE_CONFIG[primaryType] || DEFAULT_TYPE_CONFIG;
+                  // Derive testing type from platform label, with fuzzy matching
+                  const platform = assignment?.jobPlatform || '';
+                  const matchedKey = Object.keys(TESTING_TYPE_CONFIG).find(k =>
+                    platform.toLowerCase().includes(k.toLowerCase().split(' ')[0])
+                  ) || '';
+                  const cfg = TESTING_TYPE_CONFIG[matchedKey] || DEFAULT_TYPE_CONFIG;
                   const PrimaryIcon = cfg.Icon;
+                  const typeLabel = matchedKey || platform || 'Active Test';
+                  const focusText = assignment?.jobFocusAreas || assignment?.jobDescription || '';
 
                   return (
                     <>
-                      {/* Coloured type header */}
-                      <div className={`${cfg.bg} ${cfg.border} border-b px-6 py-5`}>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${cfg.bg} border ${cfg.border}`}>
+                      {/* Coloured banner */}
+                      <div className={`${cfg.bg} border-b ${cfg.border} px-4 pt-4 pb-3`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 border ${cfg.border} shadow-sm`}>
                             <PrimaryIcon className={`h-5 w-5 ${cfg.text}`} />
                           </div>
                           <div>
-                            <div className={`text-xs font-bold uppercase tracking-widest ${cfg.text} opacity-70`}>Testing Brief</div>
-                            <div className={`text-lg font-black ${cfg.text}`}>{primaryType || 'Active Test'}</div>
+                            <div className={`text-[10px] font-bold uppercase tracking-[0.12em] ${cfg.text} opacity-60`}>Testing Brief</div>
+                            <div className={`text-base font-black ${cfg.text}`}>{typeLabel}</div>
                           </div>
-                          {types.slice(1).map(t => {
-                            const c = TESTING_TYPE_CONFIG[t] || DEFAULT_TYPE_CONFIG;
-                            return (
-                              <span key={t} className={`rounded-full px-3 py-1 text-xs font-semibold ${c.bg} ${c.text} border ${c.border}`}>{t}</span>
-                            );
-                          })}
                         </div>
-                        <p className={`mt-3 text-sm font-semibold italic ${cfg.text}`}>"{cfg.mission}"</p>
+                        <p className={`mt-2 text-xs font-semibold italic ${cfg.text} opacity-75 leading-relaxed`}>
+                          "{cfg.mission}"
+                        </p>
                       </div>
 
-                      <div className="p-6 space-y-6">
-                        {/* Progress + Launch */}
-                        <div className="flex items-center gap-5">
-                          {/* Progress ring */}
-                          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
-                            <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80">
-                              <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                              <circle
-                                cx="40" cy="40" r="32" fill="none"
-                                stroke="#16a34a" strokeWidth="8"
-                                strokeLinecap="round"
-                                strokeDasharray={`${2 * Math.PI * 32}`}
-                                strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
-                                className="transition-all duration-500"
-                              />
-                            </svg>
-                            <div className="absolute text-center">
-                              <div className="text-lg font-black text-slate-900">{progressPercent}%</div>
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-slate-700">{completedTasks} of {taskState.length} tasks done</div>
-                            <div className="mt-2 h-2 rounded-full bg-slate-100">
-                              <div className="h-2 rounded-full bg-green-600 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => window.open(assignment?.jobAppUrl || '#', '_blank', 'noopener,noreferrer')}
-                              disabled={!assignment?.jobAppUrl}
-                              className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-40 transition"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Launch App to Test
-                            </button>
+                      {/* Progress + Launch */}
+                      <div className="px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+                          <svg className="h-11 w-11 -rotate-90" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="9" />
+                            <circle
+                              cx="40" cy="40" r="32" fill="none"
+                              stroke="#16a34a" strokeWidth="9"
+                              strokeLinecap="round"
+                              strokeDasharray={`${2 * Math.PI * 32}`}
+                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
+                              className="transition-all duration-500"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[10px] font-black text-slate-900">{progressPercent}%</span>
                           </div>
                         </div>
-
-                        {/* Focus Areas */}
-                        {(focusText || assignment?.jobDescription) && (
-                          <div className={`rounded-2xl border ${cfg.border} ${cfg.bg} px-4 py-4`}>
-                            <div className={`text-xs font-bold uppercase tracking-wider ${cfg.text} mb-2`}>Developer's Focus Areas</div>
-                            <p className="text-sm leading-6 text-slate-700">
-                              {focusText || assignment?.jobDescription}
-                            </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-slate-700">{completedTasks}/{taskState.length} tasks done</span>
                           </div>
-                        )}
-
-                        {/* Type-specific tips */}
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tips for {primaryType || 'this test'}</div>
-                          <div className="space-y-2">
-                            {cfg.tips.map((tip, i) => (
-                              <div key={i} className="flex items-start gap-2.5">
-                                <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />
-                                <span className="text-sm text-slate-600">{tip}</span>
-                              </div>
-                            ))}
+                          <div className="h-1.5 rounded-full bg-slate-100">
+                            <div className="h-1.5 rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                           </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => window.open(assignment?.jobAppUrl || '#', '_blank', 'noopener,noreferrer')}
+                          disabled={!assignment?.jobAppUrl}
+                          className="shrink-0 flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-40 transition shadow-sm"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Launch
+                        </button>
+                      </div>
+
+                      {/* What to look for */}
+                      {focusText ? (
+                        <div className={`mx-3 mt-3 rounded-xl border ${cfg.border} ${cfg.bg} px-3 py-3`}>
+                          <div className={`text-[10px] font-bold uppercase tracking-[0.1em] ${cfg.text} mb-2`}>What to look for</div>
+                          <p className="text-xs leading-[1.7] text-slate-700 whitespace-pre-line">{focusText}</p>
+                        </div>
+                      ) : null}
+
+                      {/* Tips */}
+                      <div className="px-4 pt-3 pb-4">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 mb-2">Testing Tips</div>
+                        <div className="space-y-2">
+                          {cfg.tips.slice(0, 3).map((tip, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />
+                              <span className="text-xs leading-relaxed text-slate-600">{tip}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </>
@@ -659,30 +658,30 @@ export default function SquashActiveTestScreen() {
                 })()}
               </section>
 
-              <section className="space-y-6">
-                <div id="task-list" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+
+              <section className="space-y-4">
+                <div id="task-list" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900">Your Tasks</h2>
-                      <p className="mt-1 text-slate-600">Complete each step before submitting your report.</p>
-                    {loadingAssignment ? <p className="mt-2 text-sm font-semibold text-slate-500">Loading accepted assignment...</p> : null}
-                    {assignmentError ? <p className="mt-2 text-sm font-semibold text-red-600">{assignmentError}</p> : null}
+                      <h2 className="text-base font-bold text-slate-900">Your Tasks</h2>
+                      {loadingAssignment ? <p className="mt-1 text-xs font-semibold text-slate-500">Loading assignment...</p> : null}
+                      {assignmentError ? <p className="mt-1 text-xs font-semibold text-red-600">{assignmentError}</p> : null}
                     </div>
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                    <div className="rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
                       {completedTasks} / {taskState.length} Done
                     </div>
                   </div>
 
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-3 space-y-2">
                     {tasks.map((task, index) => (
-                      <label key={task} className="flex items-start gap-3 rounded-2xl border border-slate-100 px-4 py-4 hover:bg-slate-50">
+                      <label key={task} className="flex items-start gap-3 rounded-xl border border-slate-100 px-3 py-3 hover:bg-slate-50">
                         <input
                           type="checkbox"
                           checked={taskState[index]}
                           onChange={(e) => toggleTask(index, e.target.checked)}
-                          className="mt-1 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
                         />
-                        <span className={`text-sm ${taskState[index] ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                        <span className={`text-xs ${taskState[index] ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
                           {task}
                         </span>
                       </label>
@@ -690,179 +689,144 @@ export default function SquashActiveTestScreen() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Bug className="h-5 w-5 text-red-500" />
-                    <h2 className="text-2xl font-bold text-slate-900">Report a Bug</h2>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bug className="h-4 w-4 text-red-500" />
+                    <h2 className="text-base font-bold text-slate-900">Report a Bug</h2>
                   </div>
 
-                  <div className="mt-5">
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">Description</label>
-                    <textarea
-                      rows={4}
-                      value={bugDescription}
-                      onChange={(e) => setBugDescription(e.target.value)}
-                      placeholder="Describe the issue you found..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
-                    />
-                  </div>
+                  <textarea
+                    rows={3}
+                    value={bugDescription}
+                    onChange={(e) => setBugDescription(e.target.value)}
+                    placeholder="Describe the issue you found..."
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-green-500"
+                  />
 
-                  <div className="mt-5 grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">Severity</label>
-                      <div className="relative">
-                        <select
-                          value={severity}
-                          onChange={(e) => setSeverity(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-green-500"
-                        >
-                          <option>Critical</option>
-                          <option>High</option>
-                          <option>Medium</option>
-                          <option>Low</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <select
+                        value={severity}
+                        onChange={(e) => setSeverity(e.target.value)}
+                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2 pr-8 text-xs text-slate-600 outline-none transition focus:border-green-500"
+                      >
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                     </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">Evidence</label>
-                      <div className="space-y-3">
-                        <button
-                          type="button"
-                          onClick={() => setBugNotice('Screenshot attached.')}
-                          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-                        >
-                          <Upload className="h-4 w-4" /> Upload Image
-                        </button>
-
-                        <div className="flex flex-wrap gap-2">
-                          {!isRecording ? (
-                            <button
-                              type="button"
-                              onClick={startRecordingWithCountdown}
-                              className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
-                            >
-                              <Video className="h-4 w-4" /> Record Bug
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => stopRecording(false)}
-                              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              <Square className="h-4 w-4" /> Stop Recording
-                            </button>
-                          )}
-
-                          {recordCountdown !== null ? (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                              Starting in {recordCountdown}...
-                            </span>
-                          ) : null}
-
-                          {isRecording ? (
-                            <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
-                              ● REC - Recording bug... {formatDuration(recordingSecondsLeft)}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {recordedVideoUrl ? (
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                            <div className="mb-2 text-xs font-semibold text-slate-600">
-                              Screen Recording - {formatDuration(recordedVideoDuration)}
-                            </div>
-                            <video
-                              controls
-                              src={recordedVideoUrl}
-                              className="max-h-40 w-full rounded-xl border border-slate-200 bg-black/90"
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setBugNotice('Screenshot attached.')}
+                      className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Upload
+                    </button>
+                    {!isRecording ? (
+                      <button
+                        type="button"
+                        onClick={startRecordingWithCountdown}
+                        className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100"
+                      >
+                        <Video className="h-3.5 w-3.5" /> Record
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => stopRecording(false)}
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        <Square className="h-3.5 w-3.5" /> Stop
+                      </button>
+                    )}
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-3">
+                  {recordCountdown !== null ? (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">Starting in {recordCountdown}...</p>
+                  ) : null}
+                  {isRecording ? (
+                    <p className="mt-2 text-xs font-semibold text-red-600">● REC {formatDuration(recordingSecondsLeft)}</p>
+                  ) : null}
+
+                  {recordedVideoUrl ? (
+                    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <div className="mb-1.5 text-[11px] font-semibold text-slate-600">Recording — {formatDuration(recordedVideoDuration)}</div>
+                      <video controls src={recordedVideoUrl} className="max-h-32 w-full rounded-lg border border-slate-200 bg-black/90" />
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 flex gap-2">
                     <button
                       type="button"
                       onClick={() => setBugNotice('Screenshot captured.')}
-                      className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
-                      <Camera className="h-4 w-4" /> Capture Screenshot
+                      <Camera className="h-3.5 w-3.5" /> Screenshot
                     </button>
                     <button
                       type="button"
                       onClick={saveBugReport}
-                      className="rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                      className="flex-1 rounded-xl bg-red-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-600"
                     >
                       Save Bug Report
                     </button>
                   </div>
-                  {bugNotice ? <p className="mt-3 text-sm font-semibold text-green-700">{bugNotice}</p> : null}
+                  {bugNotice ? <p className="mt-2 text-xs font-semibold text-green-700">{bugNotice}</p> : null}
                 </div>
 
-                <div className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
-                  <div className="text-lg font-bold text-slate-900">Testing Notes</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {(() => {
-                      const raw = assignment?.jobFocusAreas || '';
-                      const focusText = raw.split('\n').slice(1).join('\n').trim();
-                      return focusText || assignment?.jobDescription || 'Test the app carefully. Focus on confusing steps, broken interactions, and anything that feels slow or unexpected.';
-                    })()}
-                  </p>
-                  <label className="mt-5 block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-700">Final report summary</span>
+                <div className="rounded-2xl border border-green-100 bg-green-50 p-4 shadow-sm">
+                  <div className="text-sm font-bold text-slate-900 mb-1">Testing Notes</div>
+                  <label>
+                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">Final report summary</span>
                     <textarea
-                      rows={4}
+                      rows={3}
                       value={reportSummary}
                       onChange={(e) => setReportSummary(e.target.value)}
                       placeholder="Summarize what worked, what felt confusing, and any important notes for the developer..."
-                      className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
+                      className="w-full rounded-xl border border-green-100 bg-white px-3 py-2.5 text-xs outline-none transition focus:border-green-500"
                     />
                   </label>
                 </div>
               </section>
             </div>
 
-            <section className="fixed bottom-[64px] inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:static lg:mt-6 lg:rounded-3xl lg:bg-white lg:p-5 lg:shadow-sm">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="w-full max-w-xl">
-                  <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
+            <section className="fixed bottom-[64px] inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:static lg:mt-4 lg:rounded-2xl lg:bg-white lg:px-5 lg:py-4 lg:shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
                     <span>Progress</span>
-                    <span className="font-semibold text-slate-900">
-                      {completedTasks} / {taskState.length} Tasks Completed
-                    </span>
+                    <span className="font-semibold text-slate-700">{completedTasks}/{taskState.length} done</span>
                   </div>
-                  <div className="h-3 rounded-full bg-slate-100">
-                    <div className="h-3 rounded-full bg-green-600 transition-all" style={{ width: `${progressPercent}%` }} />
+                  <div className="h-2 rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-green-600 transition-all" style={{ width: `${progressPercent}%` }} />
                   </div>
                 </div>
-
-                <div className="flex flex-wrap gap-3">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={saveProgress}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    Save Progress
+                    Save
                   </button>
                   <button
                     type="button"
                     onClick={submitTest}
-                    className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700"
+                    className="rounded-xl bg-green-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-green-700"
                   >
                     Submit Test
                   </button>
                 </div>
               </div>
-              {progressNotice ? <p className="mt-3 text-sm font-semibold text-green-700">{progressNotice}</p> : null}
+              {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-green-700">{progressNotice}</p> : null}
             </section>
           </div>
         </main>
       </div>
       <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/active-test" />
     </div>
   );
 }

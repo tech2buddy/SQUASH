@@ -20,11 +20,14 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import TesterHeaderNav from './components/TesterHeaderNav';
+import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const isRealAccount = session?.source === 'supabase';
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [earningsError, setEarningsError] = useState('');
@@ -272,9 +275,13 @@ export default function SquashTesterEarningsPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/tester/menu" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
+                >
                   <Menu className="h-5 w-5" />
-                </a>
+                </button>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
                   <Search className="h-4 w-4 text-slate-400" />
                   <input
@@ -483,7 +490,48 @@ export default function SquashTesterEarningsPage() {
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Cards List */}
+                <div className="divide-y divide-slate-100 md:hidden">
+                  {(liveTransactions || (isRealAccount ? [] : transactions)).length === 0 ? (
+                    <div className="px-5 py-8 text-center text-sm text-slate-500">
+                      No earnings or payout transactions yet.
+                    </div>
+                  ) : null}
+                  {(liveTransactions || (isRealAccount ? [] : transactions)).map((item) => (
+                    <div key={`${item.date}-${item.description}`} className="p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{item.description}</div>
+                          <div className="text-xs text-slate-500">{item.date} • {item.type}</div>
+                        </div>
+                        <span
+                          className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            item.status === 'Paid'
+                              ? 'bg-green-50 text-green-700'
+                              : item.status === 'Approved'
+                                ? 'bg-sky-50 text-sky-700'
+                                : item.status === 'Action Needed'
+                                  ? 'bg-sky-50 text-sky-700'
+                                  : item.status === 'Rejected'
+                                    ? 'bg-red-50 text-red-600'
+                                    : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {item.status === 'Paid' ? <CheckCircle2 className="h-3 w-3" /> : null}
+                          {item.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <span className={`font-black text-sm ${item.amount.startsWith('-') ? 'text-red-600' : 'text-slate-900'}`}>
+                          {item.amount}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -558,6 +606,8 @@ export default function SquashTesterEarningsPage() {
           </div>
         </main>
       </div>
+      <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/earnings" />
     </div>
   );
 }

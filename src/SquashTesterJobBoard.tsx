@@ -12,12 +12,12 @@ import {
   SlidersHorizontal,
   Star,
   UserCircle2,
-  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
 import MobileTabBar from './components/MobileTabBar';
+import TesterMobileDrawer from './components/TesterMobileDrawer';
 import {
   TEST_CATEGORIES,
   getCategoryById,
@@ -53,6 +53,7 @@ type TesterJobCard = {
 
 export default function SquashTesterJobBoard() {
   const { session } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const testerName = session?.name || 'Thando M.';
   const [searchText, setSearchText] = useState('');
@@ -69,7 +70,6 @@ export default function SquashTesterJobBoard() {
   const [testTypeFilter, setTestTypeFilter] = useState('Any');
   const [timeFilter, setTimeFilter] = useState('Any');
   const [filterNotice, setFilterNotice] = useState('');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [jobsError, setJobsError] = useState('');
   const [applicationByJobId, setApplicationByJobId] = useState<Record<string, string>>({});
@@ -341,32 +341,8 @@ export default function SquashTesterJobBoard() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      {/* Mobile Nav Drawer */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className="relative w-full max-w-xs bg-white p-6 shadow-2xl animate-in slide-in-from-left">
-            <button onClick={() => setIsMobileMenuOpen(false)} className="absolute right-4 top-4 rounded-xl p-2 text-slate-500 hover:bg-slate-100">
-              <X className="h-6 w-6" />
-            </button>
-            <div className="flex items-center gap-3 mb-8">
-              <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-xl" />
-              <span className="text-xl font-black">SQUASH</span>
-            </div>
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <a href={item.href} key={item.label} className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </a>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-      )}
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
+      
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr_280px]">
         <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
@@ -433,7 +409,7 @@ export default function SquashTesterJobBoard() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setIsMobileMenuOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
+                  <button onClick={() => setIsMobileDrawerOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
                     <Menu className="h-5 w-5" />
                   </button>
                   <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
@@ -497,13 +473,13 @@ export default function SquashTesterJobBoard() {
               </button>
             </div>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 mt-8 flex overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {tabs.map((tab) => (
                 <button
                   key={tab.label}
                   type="button"
                   onClick={() => setActiveTab(tab.label)}
-                  className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                  className={`shrink-0 flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
                     activeTab === tab.label
                       ? 'border-green-200 bg-green-50 text-green-700'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -546,120 +522,98 @@ export default function SquashTesterJobBoard() {
 
             <div className="mt-8 space-y-5">
               {filteredJobs.map((job) => (
-                <div key={job.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex gap-4">
-                      <div className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
-                        {job.logoUrl ? <img src={job.logoUrl} alt={`${job.name} logo`} className="h-full w-full object-cover" /> : job.name.charAt(0)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h2 className="text-2xl font-bold text-slate-900">{job.name}</h2>
-                          {(() => {
-                            const category = getCategoryById(job.categoryId);
-                            const CategoryIcon = category.icon;
-                            return (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                                <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                                {category.name}
-                                {category.saExclusive ? (
-                                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">SA 🇿🇦</span>
-                                ) : null}
-                              </span>
-                            );
-                          })()}
-                          {job.badge ? (
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${job.badge === 'New' ? 'bg-green-100 text-green-700' : 'bg-sky-100 text-sky-700'}`}>
-                              {job.badge}
-                            </span>
-                          ) : null}
-                          {job.source === 'supabase' ? (
-                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                              Live Job
-                            </span>
-                          ) : null}
-                          {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
-                            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                              Matches Your Profile
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-2 text-slate-600">{job.description}</p>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {job.tags.map((tag) => (
-                            <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                              {tag}
-                            </span>
-                          ))}
-                          {job.requiredSpecializations.slice(0, 2).map((id) => (
-                            <span key={`${job.name}-${id}`} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-                              {getSpecializationLabel(id)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                <div key={job.name} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  {/* Top row: logo + title + category + action */}
+                  <div className="flex items-start gap-3">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-lg font-bold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
+                      {job.logoUrl ? <img src={job.logoUrl} alt={`${job.name} logo`} className="h-full w-full object-cover" /> : job.name.charAt(0)}
                     </div>
-
-                    <div className="flex flex-row items-end justify-between gap-4 lg:min-w-[180px] lg:flex-col lg:items-end">
-                      <div className="text-right">
-                        <div className="text-3xl font-black text-green-700">{job.pay}</div>
-                        <div className="text-sm text-slate-500">per test</div>
-                        <div className="mt-1 text-sm text-slate-500">{job.testers}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <h2 className="text-base font-bold text-slate-900">{job.name}</h2>
+                        {(() => {
+                          const category = getCategoryById(job.categoryId);
+                          const CategoryIcon = category.icon;
+                          return (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                              <CategoryIcon className="h-3 w-3" style={{ color: category.color }} />
+                              {category.name}
+                            </span>
+                          );
+                        })()}
+                        {job.badge ? (
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${job.badge === 'New' ? 'bg-green-100 text-green-700' : 'bg-sky-100 text-sky-700'}`}>
+                            {job.badge}
+                          </span>
+                        ) : null}
+                        {job.source === 'supabase' ? (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Live</span>
+                        ) : null}
+                        {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">✓ Matches You</span>
+                        ) : null}
                       </div>
-                      {(() => {
-                        const applicationStatus = job.jobId ? applicationByJobId[job.jobId] : undefined;
-                        const isAccepted = applicationStatus === 'accepted';
-                        const isPending = applicationStatus === 'pending';
-                        const isRejected = applicationStatus === 'rejected';
-                        const isApplying = job.jobId && applyingJobId === job.jobId;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => handleApply(job)}
-                            disabled={Boolean(isApplying || isPending || isRejected)}
-                            className={`rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
-                              isAccepted
-                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                : isPending
-                                  ? 'cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-amber-100'
-                                  : isRejected
-                                    ? 'cursor-not-allowed bg-slate-100 text-slate-500'
-                                    : 'bg-green-600 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300'
-                            }`}
-                          >
-                            {isApplying ? 'Applying...' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : 'Apply Now'}
-                          </button>
-                        );
-                      })()}
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">{job.description}</p>
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 text-sm text-slate-600 md:grid-cols-5">
+                  {/* Tags row */}
+                  {job.tags.length > 0 && (
+                    <div className="mt-2.5 flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      {job.tags.map((tag) => (
+                        <span key={tag} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">{tag}</span>
+                      ))}
+                      {job.requiredSpecializations.slice(0, 2).map((id) => (
+                        <span key={`${job.name}-${id}`} className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">{getSpecializationLabel(id)}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pay + CTA row */}
+                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
                     <div>
-                      <div className="font-semibold text-slate-900">{job.type}</div>
-                      <div className="mt-1">Test Type</div>
+                      <div className="text-xl font-black text-green-700">{job.pay}</div>
+                      <div className="text-[11px] text-slate-500">{job.testers} · {job.time}</div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-slate-900">{job.time}</div>
-                      <div className="mt-1">Est. Time</div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900">{job.deadline}</div>
-                      <div className="mt-1">Deadline</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${severityDotClasses[job.severity]}`} />
-                      <div>
-                        <div className={`font-semibold ${severityClasses[job.severity]}`}>{job.severity}</div>
-                        <div className="mt-1 text-slate-500">Priority</div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900">{job.posted}</div>
-                      <div className="mt-1">Posted</div>
-                    </div>
+                    {(() => {
+                      const applicationStatus = job.jobId ? applicationByJobId[job.jobId] : undefined;
+                      const isAccepted = applicationStatus === 'accepted';
+                      const isPending = applicationStatus === 'pending';
+                      const isRejected = applicationStatus === 'rejected';
+                      const isApplying = job.jobId && applyingJobId === job.jobId;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleApply(job)}
+                          disabled={Boolean(isApplying || isPending || isRejected)}
+                          className={`rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                            isAccepted
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : isPending
+                                ? 'cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+                                : isRejected
+                                  ? 'cursor-not-allowed bg-slate-100 text-slate-500'
+                                  : 'bg-green-600 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300'
+                          }`}
+                        >
+                          {isApplying ? 'Applying…' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : 'Apply Now'}
+                        </button>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Metadata strip */}
+                  <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
+                    <span><span className="font-semibold text-slate-700">{job.type}</span> · Test Type</span>
+                    <span><span className="font-semibold text-slate-700">{job.deadline}</span> · Deadline</span>
+                    <span className="flex items-center gap-1">
+                      <span className={`h-2 w-2 rounded-full ${severityDotClasses[job.severity]}`} />
+                      <span className={`font-semibold ${severityClasses[job.severity]}`}>{job.severity}</span>
+                    </span>
+                    <span><span className="font-semibold text-slate-700">{job.posted}</span> · Posted</span>
                   </div>
                 </div>
+
               ))}
               {filteredJobs.length === 0 ? (
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm">
@@ -846,6 +800,7 @@ export default function SquashTesterJobBoard() {
         </aside>
       </div>
       <MobileTabBar role="tester" />
+      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester-jobs" />
     </div>
   );
 }

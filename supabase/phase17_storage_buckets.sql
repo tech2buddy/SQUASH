@@ -34,11 +34,11 @@ with check (
   and auth.role() = 'authenticated'
   and (
     -- Extract tester_id from path pattern: bug-screenshots/{tester_id}/{job_id}/{filename}
-    split_part(storage.foldername(name), '/', 1) = auth.uid()::text
+    (storage.foldername(name))[1] = auth.uid()::text
     or exists (
       select 1 from public.test_assignments ta
       where ta.tester_id = auth.uid()
-      and ta.id::text = split_part(storage.foldername(name), '/', 2)
+      and ta.id::text = (storage.foldername(name))[2]
     )
   )
 );
@@ -49,11 +49,11 @@ on storage.objects for select
 using (
   bucket_id = 'bug-screenshots'
   and (
-    auth.uid()::text = split_part(storage.foldername(name), '/', 1) -- tester who uploaded
+    auth.uid()::text = (storage.foldername(name))[1] -- tester who uploaded
     or exists (
       -- Developer who owns the job
       select 1 from public.jobs j
-      where j.id::text = split_part(storage.foldername(name), '/', 2)
+      where j.id::text = (storage.foldername(name))[2]
       and j.developer_id = auth.uid()
     )
     or public.is_admin()
@@ -65,7 +65,7 @@ create policy "screenshots_delete_own"
 on storage.objects for delete
 using (
   bucket_id = 'bug-screenshots'
-  and split_part(storage.foldername(name), '/', 1) = auth.uid()::text
+  and (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- RLS Policies for bug-videos bucket
@@ -77,11 +77,11 @@ with check (
   and auth.role() = 'authenticated'
   and (
     -- Extract tester_id from path pattern: bug-videos/{tester_id}/{job_id}/{filename}
-    split_part(storage.foldername(name), '/', 1) = auth.uid()::text
+    (storage.foldername(name))[1] = auth.uid()::text
     or exists (
       select 1 from public.test_assignments ta
       where ta.tester_id = auth.uid()
-      and ta.id::text = split_part(storage.foldername(name), '/', 2)
+      and ta.id::text = (storage.foldername(name))[2]
     )
   )
 );
@@ -92,11 +92,11 @@ on storage.objects for select
 using (
   bucket_id = 'bug-videos'
   and (
-    auth.uid()::text = split_part(storage.foldername(name), '/', 1) -- tester who uploaded
+    auth.uid()::text = (storage.foldername(name))[1] -- tester who uploaded
     or exists (
       -- Developer who owns the job
       select 1 from public.jobs j
-      where j.id::text = split_part(storage.foldername(name), '/', 2)
+      where j.id::text = (storage.foldername(name))[2]
       and j.developer_id = auth.uid()
     )
     or public.is_admin()
@@ -108,7 +108,7 @@ create policy "videos_delete_own"
 on storage.objects for delete
 using (
   bucket_id = 'bug-videos'
-  and split_part(storage.foldername(name), '/', 1) = auth.uid()::text
+  and (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- Grant necessary permissions

@@ -1,16 +1,16 @@
 # Graph Report - SQUASH  (2026-07-24)
 
 ## Corpus Check
-- 102 files · ~325,873 words
+- 102 files · ~326,095 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 643 nodes · 1167 edges · 42 communities (31 shown, 11 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.55)
+- 643 nodes · 1128 edges · 51 communities (40 shown, 11 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1840b174`
+- Built from commit: `4d5627f3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -34,6 +34,9 @@
 - SquashTesterDashboardPage.tsx
 - SquashOnboardingPage.tsx
 - testerSpecializations.ts
+- adminApi.ts
+- SquashAdminPayoutsPage.tsx
+- supabase.ts
 - SquashTesterNotificationsPage.tsx
 - phase15_user_settings.sql
 - send-email.ts
@@ -46,43 +49,48 @@
 - phase7_admin_user_controls.sql
 - phase9_job_logos.sql
 - TesterLayout.tsx
+- SquashAdminJobsPage.tsx
+- SquashAdminUserProfilePage.tsx
+- SquashAdminJobDetailPage.tsx
+- SquashAdminUsersPage.tsx
+- SquashAdminReportsPage.tsx
 
 ## God Nodes (most connected - your core abstractions)
-1. `useAuth()` - 54 edges
+1. `useAuth()` - 49 edges
 2. `compilerOptions` - 16 edges
 3. `SquashAdminDashboardPage()` - 15 edges
 4. `createNotification()` - 13 edges
 5. `getTesterProfile()` - 11 edges
-6. `getCategoryById()` - 11 edges
-7. `formatSupabaseError()` - 11 edges
-8. `public.set_updated_at()` - 11 edges
-9. `getDeveloperJobs()` - 10 edges
-10. `getDeveloperSubmittedReports()` - 10 edges
+6. `formatSupabaseError()` - 11 edges
+7. `public.set_updated_at()` - 11 edges
+8. `public.tester_profiles` - 10 edges
+9. `SQUASH Platform: System Architecture & Dashboard Workflow Documentation` - 9 edges
+10. `mapJob()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `SquashDeveloperApplicationsPage()` --indirect_call--> `getSpecializationLabel()`  [INFERRED]
-  src/SquashDeveloperViewsPage.tsx → src/components/testerSpecializations.ts
 - `SquashActiveTestScreen()` --calls--> `useAuth()`  [EXTRACTED]
   src/SquashActiveTestScreen.tsx → src/auth.tsx
 - `SquashAdminDashboardPage()` --calls--> `useAuth()`  [EXTRACTED]
   src/SquashAdminDashboardPage.tsx → src/auth.tsx
-- `SquashAdminJobDetailPage()` --calls--> `useAuth()`  [EXTRACTED]
-  src/SquashAdminJobDetailPage.tsx → src/auth.tsx
-- `SquashAdminJobsPage()` --calls--> `useAuth()`  [EXTRACTED]
-  src/SquashAdminJobsPage.tsx → src/auth.tsx
+- `SquashAdminDashboardPage()` --calls--> `getAdminJobs()`  [EXTRACTED]
+  src/SquashAdminDashboardPage.tsx → src/lib/adminApi.ts
+- `SquashAdminDashboardPage()` --calls--> `getAdminOverview()`  [EXTRACTED]
+  src/SquashAdminDashboardPage.tsx → src/lib/adminApi.ts
+- `SquashAdminDashboardPage()` --calls--> `getAdminPayoutQueue()`  [EXTRACTED]
+  src/SquashAdminDashboardPage.tsx → src/lib/adminApi.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (42 total, 11 thin omitted)
+## Communities (51 total, 11 thin omitted)
 
 ### Community 0 - "useAuth"
 Cohesion: 0.07
-Nodes (60): getCategoryById(), getCategoryByName(), TODO: Replace with Supabase query, TEST_CATEGORIES, TestCategory, TestCategoryId, applyToJob(), BugReportDetail (+52 more)
+Nodes (56): getCategoryById(), getCategoryByName(), TODO: Replace with Supabase query, TEST_CATEGORIES, TestCategory, TestCategoryId, applyToJob(), BugReportDetail (+48 more)
 
 ### Community 1 - "auth.tsx"
-Cohesion: 0.08
-Nodes (39): AuthContext, AuthContextValue, AuthProvider(), AuthResult, AuthSession, defaultSessionPath(), isSafeInternalPath(), normalizeRoles() (+31 more)
+Cohesion: 0.10
+Nodes (32): AuthContext, AuthContextValue, AuthProvider(), AuthResult, AuthSession, defaultSessionPath(), isSafeInternalPath(), normalizeRoles() (+24 more)
 
 ### Community 2 - "testLab.tsx"
 Cohesion: 0.06
@@ -94,7 +102,7 @@ Nodes (32): lucide-react, dependencies, lucide-react, react, react-dom, react-ic
 
 ### Community 4 - "PublicFooter.tsx"
 Cohesion: 0.06
-Nodes (21): NavItem, sendEmail(), footerLinks, PublicPage, IconItem, SquashAboutPage(), checklist, emptyDraft() (+13 more)
+Nodes (23): NavItem, sendEmail(), footerLinks, PublicPage, IconItem, SquashAboutPage(), checklist, emptyDraft() (+15 more)
 
 ### Community 5 - "schema.sql"
 Cohesion: 0.16
@@ -105,8 +113,8 @@ Cohesion: 0.12
 Nodes (22): getRetestPrice(), Plan, RetestRequestModal(), RetestSubmission, addMonths(), isCertificationExpired(), SquashCertified(), clampScore() (+14 more)
 
 ### Community 7 - "adminApi.ts"
-Cohesion: 0.05
-Nodes (68): AdminActivityLog, AdminJobRow, AdminOverview, AdminPayoutRow, AdminPolicyRow, AdminReportRow, AdminUserDetail, AdminUserRow (+60 more)
+Cohesion: 0.20
+Nodes (14): AdminActivityLog, getAdminActivityLogs(), getRecentAdminUsers(), emptyOverview, formatDate(), formatRand(), JobFilter, jobStatusClass() (+6 more)
 
 ### Community 8 - "notificationApi.ts"
 Cohesion: 0.30
@@ -134,11 +142,23 @@ Nodes (14): ActivePayment, activePayments, EscrowStep, escrowSteps, formatDate()
 
 ### Community 17 - "SquashOnboardingPage.tsx"
 Cohesion: 0.07
-Nodes (48): DeveloperProfileSettings, getDeveloperProfile(), getTesterProfile(), getTesterSpecializations(), getTopTesters(), getUserSettings(), TODO: Implement actual referrals table in Supabase, replaceTesterSpecializations() (+40 more)
+Nodes (44): DeveloperProfileSettings, getDeveloperProfile(), getTesterProfile(), getTesterSpecializations(), getUserSettings(), TODO: Implement actual referrals table in Supabase, replaceTesterSpecializations(), TesterLeaderboardEntry (+36 more)
 
 ### Community 18 - "testerSpecializations.ts"
 Cohesion: 0.29
 Nodes (9): FeaturedTesterCard(), SpecializationChecklist(), getSpecializationIds(), getSpecializationLabel(), hasSaLanguageTag(), TODO: Replace with Supabase query, SPECIALIZATION_GROUPS, SpecializationGroup (+1 more)
+
+### Community 19 - "adminApi.ts"
+Cohesion: 0.26
+Nodes (11): AdminPolicyRow, getAdminPolicies(), isMissingTableError(), saveAdminPolicy(), writeAdminActivity(), JobStatus, Json, PayoutStatus (+3 more)
+
+### Community 20 - "SquashAdminPayoutsPage.tsx"
+Cohesion: 0.26
+Nodes (11): AdminOverview, AdminPayoutRow, countTable(), getAdminOverview(), getAdminPayoutQueue(), updateAdminPayoutStatus(), emptyOverview, formatDate() (+3 more)
+
+### Community 21 - "supabase.ts"
+Cohesion: 0.29
+Nodes (7): getPublishedPolicyBySlug(), PublicPolicy, supabase, supabaseAnonKey, supabaseUrl, Database, SquashInfoPage()
 
 ### Community 22 - "SquashTesterNotificationsPage.tsx"
 Cohesion: 0.53
@@ -156,25 +176,45 @@ Nodes (5): buildCommand, framework, outputDirectory, rewrites, $schema
 Cohesion: 0.67
 Nodes (3): public.jobs, public.test_lab_sessions, test_lab_sessions_set_updated_at
 
+### Community 45 - "SquashAdminJobsPage.tsx"
+Cohesion: 0.36
+Nodes (8): getAdminJobs(), formatDate(), formatRand(), JobFilter, packageClass(), PackageFilter, SquashAdminJobsPage(), statusClass()
+
+### Community 46 - "SquashAdminUserProfilePage.tsx"
+Cohesion: 0.43
+Nodes (7): AdminUserDetail, getAdminUserDetail(), sendAdminUserNotification(), updateAdminUserAccountStatus(), formatDate(), SquashAdminUserProfilePage(), statusClass()
+
+### Community 48 - "SquashAdminJobDetailPage.tsx"
+Cohesion: 0.48
+Nodes (6): AdminJobRow, getAdminJobDetail(), formatDate(), formatRand(), SquashAdminJobDetailPage(), statusClass()
+
+### Community 49 - "SquashAdminUsersPage.tsx"
+Cohesion: 0.43
+Nodes (6): AdminUserRow, getAdminUsers(), formatDate(), roleClass(), SquashAdminUsersPage(), UserFilter
+
+### Community 50 - "SquashAdminReportsPage.tsx"
+Cohesion: 0.53
+Nodes (5): AdminReportRow, getAdminReports(), formatDate(), SquashAdminReportsPage(), statusClass()
+
 ## Knowledge Gaps
-- **191 isolated node(s):** `SummaryCard`, `ActivePayment`, `HistoryItem`, `EscrowStep`, `summaryCards` (+186 more)
+- **191 isolated node(s):** `Severity`, `TesterJobCard`, `SummaryCard`, `ActivePayment`, `HistoryItem` (+186 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useAuth()` connect `auth.tsx` to `useAuth`, `SquashScore.tsx`, `adminApi.ts`, `notificationApi.ts`, `profileApi.ts`?**
-  _High betweenness centrality (0.102) - this node is a cross-community bridge._
-- **Why does `isSupabaseConfigured` connect `auth.tsx` to `useAuth`, `notificationApi.ts`, `adminApi.ts`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **Why does `supabase` connect `auth.tsx` to `useAuth`, `notificationApi.ts`, `adminApi.ts`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **What connects `SummaryCard`, `ActivePayment`, `HistoryItem` to the rest of the system?**
+- **Why does `useAuth()` connect `auth.tsx` to `useAuth`, `SquashScore.tsx`, `adminApi.ts`, `notificationApi.ts`, `profileApi.ts`, `SquashAdminJobsPage.tsx`, `SquashAdminUserProfilePage.tsx`, `SquashAdminJobDetailPage.tsx`, `SquashAdminUsersPage.tsx`, `SquashAdminReportsPage.tsx`, `SquashAdminPayoutsPage.tsx`?**
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
+- **Why does `isSupabaseConfigured` connect `auth.tsx` to `useAuth`, `notificationApi.ts`, `adminApi.ts`, `supabase.ts`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Why does `supabase` connect `supabase.ts` to `useAuth`, `auth.tsx`, `adminApi.ts`, `notificationApi.ts`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `Severity`, `TesterJobCard`, `SummaryCard` to the rest of the system?**
   _191 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `useAuth` be split into smaller, more focused modules?**
-  _Cohesion score 0.06692242114236999 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06939890710382514 - nodes in this community are weakly interconnected._
 - **Should `auth.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.07767722473604827 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0975609756097561 - nodes in this community are weakly interconnected._
 - **Should `testLab.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.0625 - nodes in this community are weakly interconnected._

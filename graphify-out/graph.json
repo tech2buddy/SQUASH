@@ -4,15 +4,147 @@
   "graph": {},
   "nodes": [
     {
+      "label": "SquashDeveloperViewsPage.tsx",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdeveloperviewspage.tsx"
+    },
+    {
+      "label": "DeveloperShell()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_developershell",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "developershell()"
+    },
+    {
+      "label": "SquashDeveloperJobsPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L56",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashdeveloperjobspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdeveloperjobspage()"
+    },
+    {
+      "label": "SquashDeveloperApplicationsPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L255",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdeveloperapplicationspage()"
+    },
+    {
+      "label": "SquashDeveloperReportsPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L479",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashdeveloperreportspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdeveloperreportspage()"
+    },
+    {
+      "label": "SquashDeveloperActivityPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L623",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashdeveloperactivitypage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdeveloperactivitypage()"
+    },
+    {
+      "label": "SquashReportAttachmentsPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L633",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashreportattachmentspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashreportattachmentspage()"
+    },
+    {
+      "label": "SquashDeveloperSubmissionsPage()",
+      "file_type": "code",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L646",
+      "_origin": "ast",
+      "id": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
+      "community": 47,
+      "community_name": "SquashDeveloperViewsPage.tsx",
+      "norm_label": "squashdevelopersubmissionspage()"
+    },
+    {
+      "label": "SquashTesterJobBoard.tsx",
+      "file_type": "code",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_squashtesterjobboard",
+      "community": 4,
+      "community_name": "PublicFooter.tsx",
+      "norm_label": "squashtesterjobboard.tsx"
+    },
+    {
+      "label": "Severity",
+      "file_type": "code",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "src_squashtesterjobboard_severity",
+      "community": 4,
+      "community_name": "PublicFooter.tsx",
+      "norm_label": "severity"
+    },
+    {
+      "label": "TesterJobCard",
+      "file_type": "code",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "src_squashtesterjobboard_testerjobcard",
+      "community": 4,
+      "community_name": "PublicFooter.tsx",
+      "norm_label": "testerjobcard"
+    },
+    {
+      "label": "SquashTesterJobBoard()",
+      "file_type": "code",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "src_squashtesterjobboard_squashtesterjobboard",
+      "community": 4,
+      "community_name": "PublicFooter.tsx",
+      "norm_label": "squashtesterjobboard()"
+    },
+    {
       "label": "SquashDeveloperBillingPage.tsx",
       "file_type": "code",
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "squashdeveloperbillingpage.tsx"
+      "norm_label": "squashdeveloperbillingpage.tsx",
+      "id": "src_squashdeveloperbillingpage"
     },
     {
       "label": "SummaryCard",
@@ -20,10 +152,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_summarycard",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "summarycard"
+      "norm_label": "summarycard",
+      "id": "src_squashdeveloperbillingpage_summarycard"
     },
     {
       "label": "ActivePayment",
@@ -31,10 +163,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L33",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_activepayment",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "activepayment"
+      "norm_label": "activepayment",
+      "id": "src_squashdeveloperbillingpage_activepayment"
     },
     {
       "label": "HistoryItem",
@@ -42,10 +174,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L44",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_historyitem",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "historyitem"
+      "norm_label": "historyitem",
+      "id": "src_squashdeveloperbillingpage_historyitem"
     },
     {
       "label": "EscrowStep",
@@ -53,10 +185,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L51",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_escrowstep",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "escrowstep"
+      "norm_label": "escrowstep",
+      "id": "src_squashdeveloperbillingpage_escrowstep"
     },
     {
       "label": "summaryCards",
@@ -64,10 +196,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L58",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_summarycards",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "summarycards"
+      "norm_label": "summarycards",
+      "id": "src_squashdeveloperbillingpage_summarycards"
     },
     {
       "label": "activePayments",
@@ -75,10 +207,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L100",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_activepayments",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "activepayments"
+      "norm_label": "activepayments",
+      "id": "src_squashdeveloperbillingpage_activepayments"
     },
     {
       "label": "history",
@@ -86,10 +218,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L133",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_history",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "history"
+      "norm_label": "history",
+      "id": "src_squashdeveloperbillingpage_history"
     },
     {
       "label": "escrowSteps",
@@ -97,10 +229,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L140",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_escrowsteps",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "escrowsteps"
+      "norm_label": "escrowsteps",
+      "id": "src_squashdeveloperbillingpage_escrowsteps"
     },
     {
       "label": "statusClasses()",
@@ -108,10 +240,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L167",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_statusclasses",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "statusclasses()"
+      "norm_label": "statusclasses()",
+      "id": "src_squashdeveloperbillingpage_statusclasses"
     },
     {
       "label": "formatRands()",
@@ -119,10 +251,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L172",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_formatrands",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "formatrands()"
+      "norm_label": "formatrands()",
+      "id": "src_squashdeveloperbillingpage_formatrands"
     },
     {
       "label": "formatDate()",
@@ -130,10 +262,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L176",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_formatdate",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "formatdate()"
+      "norm_label": "formatdate()",
+      "id": "src_squashdeveloperbillingpage_formatdate"
     },
     {
       "label": "jobPaymentStatus()",
@@ -141,10 +273,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L184",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_jobpaymentstatus",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "jobpaymentstatus()"
+      "norm_label": "jobpaymentstatus()",
+      "id": "src_squashdeveloperbillingpage_jobpaymentstatus"
     },
     {
       "label": "paymentTone()",
@@ -152,10 +284,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L190",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_paymenttone",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "paymenttone()"
+      "norm_label": "paymenttone()",
+      "id": "src_squashdeveloperbillingpage_paymenttone"
     },
     {
       "label": "SquashDeveloperBillingPage()",
@@ -163,10 +295,10 @@
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L196",
       "_origin": "ast",
-      "id": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
       "community": 15,
       "community_name": "SquashDeveloperBillingPage.tsx",
-      "norm_label": "squashdeveloperbillingpage()"
+      "norm_label": "squashdeveloperbillingpage()",
+      "id": "src_squashdeveloperbillingpage_squashdeveloperbillingpage"
     },
     {
       "label": "SquashDeveloperSettingsPage.tsx",
@@ -1478,50 +1610,6 @@
       "id": "src_squashtesterearningspage_squashtesterearningspage"
     },
     {
-      "label": "SquashTesterJobBoard.tsx",
-      "file_type": "code",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashtesterjobboard.tsx",
-      "id": "src_squashtesterjobboard"
-    },
-    {
-      "label": "Severity",
-      "file_type": "code",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L22",
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "severity",
-      "id": "src_squashtesterjobboard_severity"
-    },
-    {
-      "label": "TesterJobCard",
-      "file_type": "code",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L24",
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "testerjobcard",
-      "id": "src_squashtesterjobboard_testerjobcard"
-    },
-    {
-      "label": "SquashTesterJobBoard()",
-      "file_type": "code",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L46",
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashtesterjobboard()",
-      "id": "src_squashtesterjobboard_squashtesterjobboard"
-    },
-    {
       "label": "SquashTesterLevelBenefitsPage.tsx",
       "file_type": "code",
       "source_file": "src/SquashTesterLevelBenefitsPage.tsx",
@@ -1813,7 +1901,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "supabase.types.ts",
       "id": "src_lib_supabase_types"
@@ -1824,7 +1912,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "json",
       "id": "src_lib_supabase_types_json"
@@ -1835,7 +1923,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "userrole",
       "id": "src_lib_supabase_types_userrole"
@@ -1846,7 +1934,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "jobstatus",
       "id": "src_lib_supabase_types_jobstatus"
@@ -1879,7 +1967,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "submissionstatus",
       "id": "src_lib_supabase_types_submissionstatus"
@@ -1890,7 +1978,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "payoutstatus",
       "id": "src_lib_supabase_types_payoutstatus"
@@ -1901,7 +1989,7 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "community_name": "adminApi.ts",
       "norm_label": "policystatus",
       "id": "src_lib_supabase_types_policystatus"
@@ -1912,8 +2000,8 @@
       "source_file": "src/lib/supabase.types.ts",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 1,
-      "community_name": "auth.tsx",
+      "community": 21,
+      "community_name": "supabase.ts",
       "norm_label": "database",
       "id": "src_lib_supabase_types_database"
     },
@@ -2913,9 +3001,9 @@
       "source_file": "src/SquashAdminJobDetailPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "squashadminjobdetailpage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_squashadminjobdetailpage"
     },
     {
@@ -2924,9 +3012,9 @@
       "source_file": "src/SquashAdminJobDetailPage.tsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "formatrand()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_squashadminjobdetailpage_formatrand"
     },
     {
@@ -2935,9 +3023,9 @@
       "source_file": "src/SquashAdminJobDetailPage.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_squashadminjobdetailpage_formatdate"
     },
     {
@@ -2946,9 +3034,9 @@
       "source_file": "src/SquashAdminJobDetailPage.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "statusclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_squashadminjobdetailpage_statusclass"
     },
     {
@@ -2957,9 +3045,9 @@
       "source_file": "src/SquashAdminJobDetailPage.tsx",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "squashadminjobdetailpage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_squashadminjobdetailpage_squashadminjobdetailpage"
     },
     {
@@ -2968,9 +3056,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "squashadminjobspage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage"
     },
     {
@@ -2979,9 +3067,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "jobfilter",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_jobfilter"
     },
     {
@@ -2990,9 +3078,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "packagefilter",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_packagefilter"
     },
     {
@@ -3001,9 +3089,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "formatrand()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_formatrand"
     },
     {
@@ -3012,9 +3100,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_formatdate"
     },
     {
@@ -3023,9 +3111,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "statusclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_statusclass"
     },
     {
@@ -3034,9 +3122,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "packageclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_packageclass"
     },
     {
@@ -3045,9 +3133,9 @@
       "source_file": "src/SquashAdminJobsPage.tsx",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "squashadminjobspage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_squashadminjobspage_squashadminjobspage"
     },
     {
@@ -3056,9 +3144,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "squashadminpayoutspage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage"
     },
     {
@@ -3067,9 +3155,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "emptyoverview",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage_emptyoverview"
     },
     {
@@ -3078,9 +3166,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "formatrand()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage_formatrand"
     },
     {
@@ -3089,9 +3177,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage_formatdate"
     },
     {
@@ -3100,9 +3188,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "payoutstatusclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage_payoutstatusclass"
     },
     {
@@ -3111,9 +3199,9 @@
       "source_file": "src/SquashAdminPayoutsPage.tsx",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "squashadminpayoutspage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_squashadminpayoutspage_squashadminpayoutspage"
     },
     {
@@ -3122,9 +3210,9 @@
       "source_file": "src/SquashAdminReportsPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "squashadminreportspage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_squashadminreportspage"
     },
     {
@@ -3133,9 +3221,9 @@
       "source_file": "src/SquashAdminReportsPage.tsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_squashadminreportspage_formatdate"
     },
     {
@@ -3144,9 +3232,9 @@
       "source_file": "src/SquashAdminReportsPage.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "statusclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_squashadminreportspage_statusclass"
     },
     {
@@ -3155,9 +3243,9 @@
       "source_file": "src/SquashAdminReportsPage.tsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "squashadminreportspage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_squashadminreportspage_squashadminreportspage"
     },
     {
@@ -3166,9 +3254,9 @@
       "source_file": "src/SquashAdminUserProfilePage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "squashadminuserprofilepage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_squashadminuserprofilepage"
     },
     {
@@ -3177,9 +3265,9 @@
       "source_file": "src/SquashAdminUserProfilePage.tsx",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_squashadminuserprofilepage_formatdate"
     },
     {
@@ -3188,9 +3276,9 @@
       "source_file": "src/SquashAdminUserProfilePage.tsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "statusclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_squashadminuserprofilepage_statusclass"
     },
     {
@@ -3199,9 +3287,9 @@
       "source_file": "src/SquashAdminUserProfilePage.tsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "squashadminuserprofilepage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_squashadminuserprofilepage_squashadminuserprofilepage"
     },
     {
@@ -3210,9 +3298,9 @@
       "source_file": "src/SquashAdminUsersPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "squashadminuserspage.tsx",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_squashadminuserspage"
     },
     {
@@ -3221,9 +3309,9 @@
       "source_file": "src/SquashAdminUsersPage.tsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "formatdate()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_squashadminuserspage_formatdate"
     },
     {
@@ -3232,9 +3320,9 @@
       "source_file": "src/SquashAdminUsersPage.tsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "roleclass()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_squashadminuserspage_roleclass"
     },
     {
@@ -3243,9 +3331,9 @@
       "source_file": "src/SquashAdminUsersPage.tsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "userfilter",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_squashadminuserspage_userfilter"
     },
     {
@@ -3254,9 +3342,9 @@
       "source_file": "src/SquashAdminUsersPage.tsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "squashadminuserspage()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_squashadminuserspage_squashadminuserspage"
     },
     {
@@ -3425,102 +3513,14 @@
       "id": "src_squashdeveloperdashboard_rationale_258"
     },
     {
-      "label": "SquashDeveloperViewsPage.tsx",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdeveloperviewspage.tsx",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage"
-    },
-    {
-      "label": "DeveloperShell()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L24",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "developershell()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_developershell"
-    },
-    {
-      "label": "SquashDeveloperJobsPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L56",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdeveloperjobspage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashdeveloperjobspage"
-    },
-    {
-      "label": "SquashDeveloperApplicationsPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L210",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdeveloperapplicationspage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashdeveloperapplicationspage"
-    },
-    {
-      "label": "SquashDeveloperReportsPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L434",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdeveloperreportspage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashdeveloperreportspage"
-    },
-    {
-      "label": "SquashDeveloperActivityPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L578",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdeveloperactivitypage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashdeveloperactivitypage"
-    },
-    {
-      "label": "SquashReportAttachmentsPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L588",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashreportattachmentspage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashreportattachmentspage"
-    },
-    {
-      "label": "SquashDeveloperSubmissionsPage()",
-      "file_type": "code",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L601",
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "squashdevelopersubmissionspage()",
-      "community_name": "useAuth",
-      "id": "src_squashdeveloperviewspage_squashdevelopersubmissionspage"
-    },
-    {
       "label": "SquashInfoPage.tsx",
       "file_type": "code",
       "source_file": "src/SquashInfoPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "squashinfopage.tsx",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_squashinfopage"
     },
     {
@@ -3529,9 +3529,9 @@
       "source_file": "src/SquashInfoPage.tsx",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "squashinfopage()",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_squashinfopage_squashinfopage"
     },
     {
@@ -5069,7 +5069,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "adminapi.ts",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi"
@@ -5080,9 +5080,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "adminoverview",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_adminoverview"
     },
     {
@@ -5091,9 +5091,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "adminpayoutrow",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_adminpayoutrow"
     },
     {
@@ -5113,7 +5113,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "adminpolicyrow",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi_adminpolicyrow"
@@ -5124,9 +5124,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "adminuserrow",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_lib_adminapi_adminuserrow"
     },
     {
@@ -5135,9 +5135,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "adminjobrow",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_lib_adminapi_adminjobrow"
     },
     {
@@ -5146,9 +5146,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L76",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "adminreportrow",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_lib_adminapi_adminreportrow"
     },
     {
@@ -5157,9 +5157,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L90",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "adminuserdetail",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_lib_adminapi_adminuserdetail"
     },
     {
@@ -5168,9 +5168,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L121",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "counttable()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_counttable"
     },
     {
@@ -5179,9 +5179,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L129",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "getadminoverview()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_getadminoverview"
     },
     {
@@ -5190,9 +5190,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L166",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "getadminpayoutqueue()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_getadminpayoutqueue"
     },
     {
@@ -5201,9 +5201,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L213",
       "_origin": "ast",
-      "community": 7,
+      "community": 20,
       "norm_label": "updateadminpayoutstatus()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminPayoutsPage.tsx",
       "id": "src_lib_adminapi_updateadminpayoutstatus"
     },
     {
@@ -5223,9 +5223,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L275",
       "_origin": "ast",
-      "community": 7,
+      "community": 49,
       "norm_label": "getadminusers()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUsersPage.tsx",
       "id": "src_lib_adminapi_getadminusers"
     },
     {
@@ -5234,9 +5234,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L297",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "getadminuserdetail()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_lib_adminapi_getadminuserdetail"
     },
     {
@@ -5245,9 +5245,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L379",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "sendadminusernotification()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_lib_adminapi_sendadminusernotification"
     },
     {
@@ -5256,9 +5256,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L409",
       "_origin": "ast",
-      "community": 7,
+      "community": 46,
       "norm_label": "updateadminuseraccountstatus()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminUserProfilePage.tsx",
       "id": "src_lib_adminapi_updateadminuseraccountstatus"
     },
     {
@@ -5267,9 +5267,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L434",
       "_origin": "ast",
-      "community": 7,
+      "community": 45,
       "norm_label": "getadminjobs()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobsPage.tsx",
       "id": "src_lib_adminapi_getadminjobs"
     },
     {
@@ -5278,9 +5278,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L475",
       "_origin": "ast",
-      "community": 7,
+      "community": 48,
       "norm_label": "getadminjobdetail()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminJobDetailPage.tsx",
       "id": "src_lib_adminapi_getadminjobdetail"
     },
     {
@@ -5289,9 +5289,9 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L511",
       "_origin": "ast",
-      "community": 7,
+      "community": 50,
       "norm_label": "getadminreports()",
-      "community_name": "adminApi.ts",
+      "community_name": "SquashAdminReportsPage.tsx",
       "id": "src_lib_adminapi_getadminreports"
     },
     {
@@ -5311,7 +5311,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L620",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "ismissingtableerror()",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi_ismissingtableerror"
@@ -5322,7 +5322,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L632",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "writeadminactivity()",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi_writeadminactivity"
@@ -5333,7 +5333,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L652",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "getadminpolicies()",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi_getadminpolicies"
@@ -5344,7 +5344,7 @@
       "source_file": "src/lib/adminApi.ts",
       "source_location": "L680",
       "_origin": "ast",
-      "community": 7,
+      "community": 19,
       "norm_label": "saveadminpolicy()",
       "community_name": "adminApi.ts",
       "id": "src_lib_adminapi_saveadminpolicy"
@@ -5971,9 +5971,9 @@
       "source_file": "src/lib/policyApi.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "policyapi.ts",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_policyapi"
     },
     {
@@ -5982,9 +5982,9 @@
       "source_file": "src/lib/policyApi.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "publicpolicy",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_policyapi_publicpolicy"
     },
     {
@@ -5993,9 +5993,9 @@
       "source_file": "src/lib/policyApi.ts",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "getpublishedpolicybyslug()",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_policyapi_getpublishedpolicybyslug"
     },
     {
@@ -6004,9 +6004,9 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "supabase.ts",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_supabase"
     },
     {
@@ -6015,9 +6015,9 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "supabaseurl",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_supabase_supabaseurl"
     },
     {
@@ -6026,9 +6026,9 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "supabaseanonkey",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_supabase_supabaseanonkey"
     },
     {
@@ -6048,9 +6048,9 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 1,
+      "community": 21,
       "norm_label": "supabase",
-      "community_name": "auth.tsx",
+      "community_name": "supabase.ts",
       "id": "src_lib_supabase_supabase"
     },
     {
@@ -7081,13 +7081,135 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_developershell",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L623",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashdeveloperactivitypage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L255",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashdeveloperjobspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L479",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashdeveloperreportspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L646",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashDeveloperViewsPage.tsx",
+      "source_location": "L633",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashdeveloperviewspage",
+      "target": "src_squashdeveloperviewspage_squashreportattachmentspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_app",
+      "target": "src_squashtesterjobboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashtesterjobboard",
+      "target": "src_squashtesterjobboard_severity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L46",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashtesterjobboard",
+      "target": "src_squashtesterjobboard_squashtesterjobboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/SquashTesterJobBoard.tsx",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_squashtesterjobboard",
+      "target": "src_squashtesterjobboard_testerjobcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/SquashDeveloperBillingPage.tsx",
       "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_activepayment",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_activepayment"
     },
     {
       "relation": "contains",
@@ -7096,9 +7218,9 @@
       "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_activepayments",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_activepayments"
     },
     {
       "relation": "contains",
@@ -7107,9 +7229,9 @@
       "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_escrowstep",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_escrowstep"
     },
     {
       "relation": "contains",
@@ -7118,9 +7240,9 @@
       "source_location": "L140",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_escrowsteps",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_escrowsteps"
     },
     {
       "relation": "contains",
@@ -7129,9 +7251,9 @@
       "source_location": "L176",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_formatdate",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_formatdate"
     },
     {
       "relation": "contains",
@@ -7140,9 +7262,9 @@
       "source_location": "L172",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_formatrands",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_formatrands"
     },
     {
       "relation": "contains",
@@ -7151,9 +7273,9 @@
       "source_location": "L133",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_history",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_history"
     },
     {
       "relation": "contains",
@@ -7162,9 +7284,9 @@
       "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_historyitem",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_historyitem"
     },
     {
       "relation": "contains",
@@ -7173,9 +7295,9 @@
       "source_location": "L184",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_jobpaymentstatus",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_jobpaymentstatus"
     },
     {
       "relation": "contains",
@@ -7184,9 +7306,9 @@
       "source_location": "L190",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_paymenttone",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_paymenttone"
     },
     {
       "relation": "contains",
@@ -7195,9 +7317,9 @@
       "source_location": "L196",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_squashdeveloperbillingpage"
     },
     {
       "relation": "contains",
@@ -7206,9 +7328,9 @@
       "source_location": "L167",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_statusclasses",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_statusclasses"
     },
     {
       "relation": "contains",
@@ -7217,9 +7339,9 @@
       "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_summarycard",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_summarycard"
     },
     {
       "relation": "contains",
@@ -7228,9 +7350,9 @@
       "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_summarycards",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_summarycards"
     },
     {
       "relation": "calls",
@@ -7240,9 +7362,9 @@
       "source_location": "L531",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_statusclasses",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_statusclasses"
     },
     {
       "relation": "calls",
@@ -7252,9 +7374,9 @@
       "source_location": "L247",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_formatrands",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_formatrands"
     },
     {
       "relation": "calls",
@@ -7264,9 +7386,9 @@
       "source_location": "L320",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_formatdate",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_formatdate"
     },
     {
       "relation": "calls",
@@ -7276,9 +7398,9 @@
       "source_location": "L295",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_jobpaymentstatus",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_jobpaymentstatus"
     },
     {
       "relation": "calls",
@@ -7288,9 +7410,9 @@
       "source_location": "L310",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
-      "target": "src_squashdeveloperbillingpage_paymenttone",
-      "confidence_score": 1.0
+      "target": "src_squashdeveloperbillingpage_paymenttone"
     },
     {
       "relation": "imports_from",
@@ -8022,18 +8144,6 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_lib_profileapi"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "src/SquashTesterLeaderboardPage.tsx",
       "source_location": "L24",
       "weight": 1.0,
@@ -8274,30 +8384,6 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_lib_profileapi_gettesterspecializations"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L158",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashtesterjobboard_squashtesterjobboard",
-      "target": "src_lib_profileapi_gettesterspecializations"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "src/SquashTesterDashboardPage.tsx",
       "source_location": "L18",
       "weight": 1.0,
@@ -8437,30 +8523,6 @@
       "_origin": "ast",
       "source": "src_squashtestersettingspage_squashtestersettingspage",
       "target": "src_lib_profileapi_updateusersettings"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_lib_profileapi_gettoptesters"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L136",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashtesterjobboard_squashtesterjobboard",
-      "target": "src_lib_profileapi_gettoptesters"
     },
     {
       "relation": "contains",
@@ -9033,18 +9095,6 @@
       "confidence_score": 1.0,
       "source": "src_app",
       "target": "src_squashtesterearningspage"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/App.tsx",
-      "source_location": "L20",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_app",
-      "target": "src_squashtesterjobboard"
     },
     {
       "relation": "imports_from",
@@ -9949,39 +9999,6 @@
       "_origin": "ast",
       "source": "src_squashtesterearningspage_squashtesterearningspage",
       "target": "src_lib_emailapi_sendemail"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_squashtesterjobboard_severity"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L46",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_squashtesterjobboard_squashtesterjobboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashTesterJobBoard.tsx",
-      "source_location": "L24",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashtesterjobboard",
-      "target": "src_squashtesterjobboard_testerjobcard"
     },
     {
       "relation": "contains",
@@ -13846,491 +13863,6 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_squashdeveloperdashboard_squashdeveloperdashboard",
-      "target": "src_lib_jobapi_getdevelopersubmittedreports"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_auth"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_auth_useauth"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testcategories"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testcategories_getcategorybyid"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testcategories_testcategoryid"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testerbadge"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testerbadge_testerbadge"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testerspecializations"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_components_testerspecializations_getspecializationlabel"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_developerapplication"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_developerjob"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_developersubmissionreview"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_getdeveloperapplications"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_getdeveloperjobs"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_getdevelopersubmittedreports"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_lib_jobapi_reviewdeveloperapplication"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L24",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_developershell"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L578",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashdeveloperactivitypage"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L210",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashdeveloperapplicationspage"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L56",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashdeveloperjobspage"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L434",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashdeveloperreportspage"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L601",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashdevelopersubmissionspage"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L588",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_squashdeveloperviewspage",
-      "target": "src_squashdeveloperviewspage_squashreportattachmentspage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L57",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperjobspage",
-      "target": "src_auth_useauth"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L146",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperjobspage",
-      "target": "src_components_testcategories_getcategorybyid"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L72",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperjobspage",
-      "target": "src_lib_jobapi_getdeveloperapplications"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L71",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperjobspage",
-      "target": "src_lib_jobapi_getdeveloperjobs"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L73",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperjobspage",
-      "target": "src_lib_jobapi_getdevelopersubmittedreports"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L211",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
-      "target": "src_auth_useauth"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L337",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
-      "target": "src_components_testcategories_getcategorybyid"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L339",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
-      "target": "src_components_testerspecializations_getspecializationlabel"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L226",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
-      "target": "src_lib_jobapi_getdeveloperapplications"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L258",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperapplicationspage",
-      "target": "src_lib_jobapi_reviewdeveloperapplication"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L435",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperreportspage",
-      "target": "src_auth_useauth"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L522",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperreportspage",
-      "target": "src_components_testcategories_getcategorybyid"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L447",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdeveloperreportspage",
-      "target": "src_lib_jobapi_getdevelopersubmittedreports"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L602",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
-      "target": "src_auth_useauth"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L760",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
-      "target": "src_components_testcategories_getcategorybyid"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L617",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
-      "target": "src_lib_jobapi_getdeveloperapplications"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/SquashDeveloperViewsPage.tsx",
-      "source_location": "L618",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_squashdeveloperviewspage_squashdevelopersubmissionspage",
       "target": "src_lib_jobapi_getdevelopersubmittedreports"
     },
     {
@@ -20519,5 +20051,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1840b1742ed478e5054de544eb10cbc43ae9f6ae"
+  "built_at_commit": "4d5627f3171d883409402a716f7f9b7e3f185b91"
 }

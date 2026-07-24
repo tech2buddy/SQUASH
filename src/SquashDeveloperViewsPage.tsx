@@ -18,6 +18,8 @@ import {
   reviewDeveloperApplication,
   type DeveloperApplication,
   type DeveloperSubmissionReview,
+  getDeveloperAttachments,
+  type DeveloperAttachment,
 } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
 
@@ -631,11 +633,118 @@ export function SquashDeveloperActivityPage() {
 }
 
 export function SquashReportAttachmentsPage() {
+  const { session } = useAuth();
+  const [attachments, setAttachments] = useState<DeveloperAttachment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [lightboxAttachment, setLightboxAttachment] = useState<DeveloperAttachment | null>(null);
+
+  useEffect(() => {
+    async function loadAttachments() {
+      if (!session?.userId) return;
+      try {
+        setLoading(true);
+        const data = await getDeveloperAttachments(session.userId);
+        setAttachments(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load attachments');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAttachments();
+  }, [session?.userId]);
+
   return (
-    <DeveloperShell title="Report Attachments" subtitle="Uploaded files and proof." active="reports">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="text-slate-600 font-semibold">No attachments found.</div>
-      </div>
+    <DeveloperShell title="Report Attachments" subtitle="Uploaded files and proof from testers." active="reports">
+      {error && (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900"></div>
+        </div>
+      ) : attachments.length === 0 ? (
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <div className="text-lg font-bold text-slate-900">No attachments found</div>
+          <div className="mt-2 text-sm text-slate-500">Testers have not uploaded any screenshots or videos to your active jobs yet.</div>
+        </div>
+      ) : (
+        <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
+          {attachments.map((att) => (
+            <div key={att.id} className="mb-6 break-inside-avoid rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md overflow-hidden flex flex-col">
+              <div 
+                className="relative bg-slate-100 cursor-pointer group"
+                onClick={() => setLightboxAttachment(att)}
+              >
+                {att.type === 'video' ? (
+                  <div className="relative">
+                    <video src={att.url} className="w-full h-auto object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition">
+                      <div className="rounded-full bg-white/90 p-3 shadow-lg">
+                        <div className="ml-1 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-slate-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <img src={att.url} alt={att.bugTitle} className="w-full h-auto object-cover" loading="lazy" />
+                )}
+                
+                <div className="absolute top-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur-md">
+                  {att.type}
+                </div>
+              </div>
+
+              <div className="p-4 flex flex-col gap-2">
+                <div className="font-bold text-slate-900 text-sm leading-tight line-clamp-2">{att.bugTitle}</div>
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className={`rounded-full px-2 py-0.5 ${
+                    att.severity === 'Critical' ? 'bg-red-100 text-red-800' :
+                    att.severity === 'High' ? 'bg-orange-100 text-orange-800' :
+                    att.severity === 'Medium' ? 'bg-amber-100 text-amber-800' :
+                    'bg-slate-100 text-slate-800'
+                  }`}>
+                    {att.severity}
+                  </span>
+                  <span className="text-slate-500">{new Date(att.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-2 text-xs text-slate-600 font-medium">
+                  <div><span className="text-slate-400">Tester:</span> {att.testerName}</div>
+                  <div className="truncate"><span className="text-slate-400">Job:</span> {att.jobName}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {lightboxAttachment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 p-4 sm:p-8 backdrop-blur-sm" onClick={() => setLightboxAttachment(null)}>
+          <div className="relative max-h-full w-full max-w-5xl rounded-2xl bg-black shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setLightboxAttachment(null)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition"
+            >
+              <XCircle className="h-6 w-6" />
+            </button>
+            <div className="flex h-full max-h-[85vh] w-full items-center justify-center">
+              {lightboxAttachment.type === 'video' ? (
+                <video src={lightboxAttachment.url} controls autoPlay className="max-h-full max-w-full object-contain" />
+              ) : (
+                <img src={lightboxAttachment.url} alt={lightboxAttachment.bugTitle} className="max-h-full max-w-full object-contain" />
+              )}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 text-white">
+              <div className="text-lg font-bold">{lightboxAttachment.bugTitle}</div>
+              <div className="text-sm text-white/80 mt-1">Uploaded by {lightboxAttachment.testerName} for {lightboxAttachment.jobName}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </DeveloperShell>
   );
 }

@@ -1287,4 +1287,92 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
   };
 }
 
+export interface DeveloperAttachment {
+  id: string;
+  type: 'screenshot' | 'video';
+  url: string;
+  bugTitle: string;
+  jobName: string;
+  testerName: string;
+  createdAt: string;
+  severity: string;
+}
 
+export async function getDeveloperAttachments(developerId: string): Promise<DeveloperAttachment[]> {
+  if (!isSupabaseConfigured) return [];
+
+  try {
+    // 1. Get all jobs for developer
+    const { data: jobs, error: jobsError } = await supabase
+      .from('jobs')
+      .select('id, title')
+      .eq('developer_id', developerId);
+
+    if (jobsError) throw jobsError;
+    if (!jobs || jobs.length === 0) return [];
+
+    const jobIds = jobs.map((j) => j.id);
+
+    // 2. Get all bugs with attachments
+    const { data: bugReports, error: bugReportsError } = await supabase
+      .from('bug_reports')
+      .select('id, title, screenshot_path, video_path, created_at, job_id, tester_id, severity')
+      .in('job_id', jobIds)
+      .or('screenshot_path.not.is.null,video_path.not.is.null')
+      .order('created_at', { ascending: false });
+
+    if (bugReportsError) throw bugReportsError;
+    if (!bugReports || bugReports.length === 0) return [];
+
+    // 3. Get tester profiles
+    const testerIds = [...new Set(bugReports.map((b) => b.tester_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', testerIds);
+
+    const profileMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
+    const jobMap = new Map(jobs.map((j) => [j.id, j.title]));
+
+    // 4. Map to attachments with public URLs
+    const attachments: DeveloperAttachment[] = [];
+
+    for (const bug of bugReports) {
+      const testerName = profileMap.get(bug.tester_id) || 'Unknown Tester';
+      const jobName = jobMap.get(bug.job_id) || 'Unknown Job';
+
+      if (bug.screenshot_path) {
+        const { data: urlData } = supabase.storage.from('bug-screenshots').getPublicUrl(bug.screenshot_path);
+        attachments.push({
+          id: `${bug.id}-img`,
+          type: 'screenshot',
+          url: urlData.publicUrl,
+          bugTitle: bug.title,
+          jobName,
+          testerName,
+          createdAt: bug.created_at,
+          severity: bug.severity,
+        });
+      }
+
+      if (bug.video_path) {
+        const { data: urlData } = supabase.storage.from('bug-videos').getPublicUrl(bug.video_path);
+        attachments.push({
+          id: `${bug.id}-vid`,
+          type: 'video',
+          url: urlData.publicUrl,
+          bugTitle: bug.title,
+          jobName,
+          testerName,
+          createdAt: bug.created_at,
+          severity: bug.severity,
+        });
+      }
+    }
+
+    return attachments;
+  } catch (error) {
+    console.error('Failed to get developer attachments:', error);
+    return [];
+  }
+}

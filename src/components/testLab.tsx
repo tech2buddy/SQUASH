@@ -11,10 +11,13 @@
   RefreshCw,
   ShieldCheck,
   SkipForward,
+  Upload,
   Wifi,
+  X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type React from 'react';
+import React, { useState } from 'react';
+import { uploadBugReportFile, type UploadFileType } from '../lib/storageApi';
 
 export type TestType =
   | 'bug_hunt'
@@ -568,6 +571,8 @@ export function IssueReportForm({
   isRecording,
   recordingLabel,
   notice,
+  testerId,
+  jobId,
 }: {
   currentTask: TestTask;
   tasks: TestTask[];
@@ -578,7 +583,59 @@ export function IssueReportForm({
   isRecording: boolean;
   recordingLabel: string;
   notice: string;
+  testerId?: string;
+  jobId?: string;
 }) {
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ path: string; url: string; type: UploadFileType; name: string }>>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!testerId || !jobId) {
+      setUploadError('Missing tester ID or job ID for upload');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileType: UploadFileType = file.type.startsWith('image/') ? 'screenshot' : 'video';
+        const result = await uploadBugReportFile(file, fileType, testerId, jobId);
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        return {
+          path: result.path,
+          url: result.url,
+          type: fileType,
+          name: file.name,
+        };
+      });
+
+      const results = await Promise.all(uploadPromises);
+      setUploadedFiles((prev) => [...prev, ...results]);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <form
       className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -594,9 +651,10 @@ export function IssueReportForm({
           expectedResult: String(data.get('expected') || '').trim(),
           actualResult: String(data.get('actual') || '').trim(),
           frequency: String(data.get('frequency') || 'sometimes') as IssueFrequency,
-          evidence: [],
+          evidence: uploadedFiles.map((f) => f.path),
         });
         e.currentTarget.reset();
+        setUploadedFiles([]);
       }}
     >
       <div className="flex items-start justify-between gap-4">
@@ -651,8 +709,50 @@ export function IssueReportForm({
         Attached automatically: {device.deviceCategory}, {device.operatingSystem}, {device.browser}, viewport {device.viewportSize}, task {currentTask.order}, timestamp.
       </div>
 
+      {uploadedFiles.length > 0 && (
+        <div className="mt-5 space-y-2">
+          <div className="text-sm font-semibold text-slate-700">Uploaded files</div>
+          {uploadedFiles.map((file, index) => (
+            <div key={index} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-900">{file.name}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{file.type}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveFile(index)}
+                className="text-red-500 hover:text-red-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {uploadError}
+        </div>
+      )}
+
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100">Upload screenshot/video</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {uploading ? 'Uploading...' : <><Upload className="inline h-4 w-4 mr-2" /> Upload screenshot/video</>}
+        </button>
         {!isRecording ? (
           <button type="button" onClick={onRecord} className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100">Record clip</button>
         ) : (

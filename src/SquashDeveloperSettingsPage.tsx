@@ -15,6 +15,9 @@ type ToggleKey =
   | 'twoFactor';
 
 type SettingsState = {
+  developerType: 'company' | 'individual';
+  fullName: string;
+  nickname: string;
   companyName: string;
   websiteUrl: string;
   billingEmail: string;
@@ -22,6 +25,9 @@ type SettingsState = {
 };
 
 const defaultSettings: SettingsState = {
+  developerType: 'company',
+  fullName: '',
+  nickname: '',
   companyName: '',
   websiteUrl: '',
   billingEmail: '',
@@ -56,6 +62,7 @@ export default function SquashDeveloperSettingsPage() {
   const starter = useMemo(
     () => ({
       ...defaultSettings,
+      fullName: session?.name || defaultSettings.fullName,
       companyName: session?.name || defaultSettings.companyName,
       billingEmail: session?.email || defaultSettings.billingEmail,
     }),
@@ -87,6 +94,9 @@ export default function SquashDeveloperSettingsPage() {
         if (!mounted || !profile) return;
         setSettings((prev) => ({
           ...prev,
+          developerType: profile.developerType,
+          fullName: profile.fullName,
+          nickname: profile.nickname,
           companyName: profile.companyName,
           websiteUrl: profile.websiteUrl,
           billingEmail: profile.billingEmail,
@@ -134,6 +144,9 @@ export default function SquashDeveloperSettingsPage() {
     try {
       if (session?.userId) {
         await updateDeveloperProfile(session.userId, {
+          developerType: settings.developerType,
+          fullName: settings.fullName,
+          nickname: settings.nickname,
           companyName: settings.companyName,
           websiteUrl: settings.websiteUrl,
           billingEmail: settings.billingEmail,
@@ -163,7 +176,7 @@ export default function SquashDeveloperSettingsPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
         <div>
           <span className="inline-flex rounded-full bg-slate-100 px-3.5 py-1 text-xs font-extrabold text-slate-800">
@@ -207,22 +220,75 @@ export default function SquashDeveloperSettingsPage() {
                 <UserCircle2 className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Company Profile</h2>
+                <h2 className="text-xl font-bold text-slate-900">Profile & Details</h2>
                 <p className="text-xs font-medium text-slate-500">How you appear to testers</p>
               </div>
             </div>
 
             <div className="space-y-5">
               <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">Company Name</label>
-                <input
-                  type="text"
-                  value={settings.companyName}
-                  onChange={(e) => updateField('companyName', e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
-                  placeholder="Your company name"
-                />
+                <label className="mb-2 block text-sm font-bold text-slate-700">Account Type</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="developerType"
+                      value="company"
+                      checked={settings.developerType === 'company'}
+                      onChange={() => updateField('developerType', 'company')}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Company
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="developerType"
+                      value="individual"
+                      checked={settings.developerType === 'individual'}
+                      onChange={() => updateField('developerType', 'individual')}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Individual
+                  </label>
+                </div>
               </div>
+
+              {settings.developerType === 'company' ? (
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-slate-700">Company Name</label>
+                  <input
+                    type="text"
+                    value={settings.companyName}
+                    onChange={(e) => updateField('companyName', e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
+                    placeholder="Your company name"
+                  />
+                </div>
+              ) : (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-bold text-slate-700">Full Name</label>
+                    <input
+                      type="text"
+                      value={settings.fullName}
+                      onChange={(e) => updateField('fullName', e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
+                      placeholder="e.g. Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-bold text-slate-700">Nickname</label>
+                    <input
+                      type="text"
+                      value={settings.nickname}
+                      onChange={(e) => updateField('nickname', e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
+                      placeholder="e.g. Jane"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="mb-1.5 block text-sm font-bold text-slate-700">Website URL</label>

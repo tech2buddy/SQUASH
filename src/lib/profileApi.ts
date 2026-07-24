@@ -114,6 +114,9 @@ export async function replaceTesterSpecializations(userId: string, specializatio
 }
 
 export type DeveloperProfileSettings = {
+  developerType: 'company' | 'individual';
+  fullName: string;
+  nickname: string;
   companyName: string;
   websiteUrl: string;
   billingEmail: string;
@@ -122,16 +125,29 @@ export type DeveloperProfileSettings = {
 export async function getDeveloperProfile(userId: string): Promise<DeveloperProfileSettings | null> {
   if (!isSupabaseConfigured) return null;
 
-  const { data, error } = await supabase
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profileError) throw profileError;
+
+  const { data: rawData, error } = await supabase
     .from('developer_profiles')
-    .select('company_name, website_url, billing_email')
+    .select('company_name, website_url, billing_email, developer_type, nickname')
     .eq('user_id', userId)
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) return null;
+  if (!rawData) return null;
+
+  const data = rawData as any;
 
   return {
+    developerType: (data.developer_type as 'company' | 'individual') || 'company',
+    fullName: profile?.full_name || '',
+    nickname: data.nickname || '',
     companyName: data.company_name || '',
     websiteUrl: data.website_url || '',
     billingEmail: data.billing_email || '',
@@ -141,12 +157,21 @@ export async function getDeveloperProfile(userId: string): Promise<DeveloperProf
 export async function updateDeveloperProfile(userId: string, values: DeveloperProfileSettings) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ full_name: values.fullName.trim() })
+    .eq('id', userId);
+
+  if (profileError) throw profileError;
+
   const { error } = await supabase.from('developer_profiles').upsert({
     user_id: userId,
+    developer_type: values.developerType,
+    nickname: values.nickname.trim() || null,
     company_name: values.companyName.trim() || null,
     website_url: values.websiteUrl.trim() || null,
     billing_email: values.billingEmail.trim().toLowerCase() || null,
-  });
+  } as any);
 
   if (error) throw error;
 }

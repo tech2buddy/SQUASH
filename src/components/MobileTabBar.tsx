@@ -19,7 +19,7 @@ const DEVELOPER_TABS: Tab[] = [
   { label: 'Home', href: '/dashboard', icon: Home },
   { label: 'Jobs', href: '/developer/jobs', icon: Briefcase },
   { label: 'Reports', href: '/developer/reports', icon: BarChart3, activePattern: '/developer/(submissions|applications)' },
-  { label: 'Billing', href: '/developer/billing', icon: Settings, activePattern: '/developer/billing' },
+  { label: 'Billing', href: '/billing', icon: Settings, activePattern: '/billing' },
 ];
 
 export default function MobileTabBar({ role }: { role: 'tester' | 'developer' }) {

@@ -333,7 +333,7 @@ export default function SquashDeveloperBillingPage() {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold tracking-wide text-green-700">
@@ -352,25 +352,25 @@ export default function SquashDeveloperBillingPage() {
               </div>
             ) : null}
 
-            <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
               {visibleSummaryCards.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="text-base font-bold text-slate-900">
+                  <div key={card.title} className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-2 sm:gap-4">
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-base font-bold text-slate-900 truncate">
                           {card.title}
-                          {card.subtitle ? <span className="ml-1 text-slate-500">{card.subtitle}</span> : null}
+                          {card.subtitle ? <span className="ml-1 text-slate-500 hidden sm:inline">{card.subtitle}</span> : null}
                         </div>
-                        <div className="mt-3 text-3xl font-black text-slate-900">{card.value}</div>
-                        <div className="mt-3 text-sm text-slate-600">{card.note}</div>
-                        <div className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                        <div className="mt-1.5 sm:mt-3 text-lg sm:text-3xl font-black text-slate-900 truncate">{card.value}</div>
+                        <div className="mt-1 sm:mt-3 text-[10px] sm:text-sm text-slate-600 hidden sm:block">{card.note}</div>
+                        <div className="mt-1.5 sm:mt-3 inline-flex rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-xs font-semibold text-slate-600 truncate max-w-full">
                           {card.delta}
                         </div>
                       </div>
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${card.iconBg}`}>
-                        <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                      <div className={`shrink-0 flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${card.iconBg}`}>
+                        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.iconColor}`} />
                       </div>
                     </div>
                   </div>
@@ -378,7 +378,7 @@ export default function SquashDeveloperBillingPage() {
               })}
             </section>
 
-            <section className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+            <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
               <div className="space-y-6">
                 <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                   <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-start md:justify-between">
@@ -393,42 +393,30 @@ export default function SquashDeveloperBillingPage() {
                     </button>
                   </div>
 
-                  {/* Mobile Card List */}
-                  <div className="divide-y divide-slate-100 md:hidden">
+                  {/* Mobile Compact List */}
+                  <div className="flex flex-col md:hidden">
                     {visibleActivePayments.length > 0 ? (
                       visibleActivePayments.map((payment) => (
-                        <div key={payment.job} className="p-4 space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="font-bold text-slate-900">{payment.job}</div>
-                              <div className="text-xs text-slate-500">{payment.type}</div>
+                        <div key={payment.job} className="flex items-center justify-between border-b border-slate-100 px-4 py-3 last:border-b-0">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 truncate text-sm">{payment.job}</span>
+                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${payment.tone}`}>
+                                {payment.status}
+                              </span>
                             </div>
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${payment.tone}`}>
-                              {payment.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">Amount:</span>
-                            <span className="font-bold text-slate-900">{payment.amount}</span>
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                              <span>Progress</span>
-                              <span>{payment.progress}%</span>
-                            </div>
-                            <div className="h-2 w-full rounded-full bg-slate-100">
-                              <div className="h-2 rounded-full bg-green-600" style={{ width: `${payment.progress}%` }} />
+                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                              <span className="font-semibold text-slate-700">{payment.amount}</span>
+                              <span className="h-1 w-1 rounded-full bg-slate-300" />
+                              <span>{payment.progress}% done</span>
                             </div>
                           </div>
-                          <div className="pt-1 flex justify-end">
-                            <Link
-                              to="/report-details"
-                              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm"
-                            >
-                              {payment.action}
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
-                          </div>
+                          <Link
+                            to="/report-details"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
                         </div>
                       ))
                     ) : (
@@ -517,31 +505,31 @@ export default function SquashDeveloperBillingPage() {
                     </button>
                   </div>
 
-                  {/* Mobile Card List */}
-                  <div className="divide-y divide-slate-100 md:hidden">
+                  {/* Mobile Compact List */}
+                  <div className="flex flex-col md:hidden">
                     {visibleHistory.length > 0 ? (
                       visibleHistory.map((item) => (
-                        <div key={`${item.date}-${item.job}`} className="p-4 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="font-bold text-slate-900">{item.job}</div>
-                              <div className="text-xs text-slate-500">{item.date}</div>
+                        <div key={`${item.date}-${item.job}`} className="flex items-center justify-between border-b border-slate-100 px-4 py-3 last:border-b-0">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 truncate text-sm">{item.job}</span>
+                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${statusClasses(item.status)}`}>
+                                {item.status}
+                              </span>
                             </div>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(item.status)}`}>
-                              {item.status}
-                            </span>
+                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                              <span className="font-semibold text-slate-700">{item.amount}</span>
+                              <span className="h-1 w-1 rounded-full bg-slate-300" />
+                              <span>{item.date}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between pt-1">
-                            <span className="font-black text-slate-900 text-sm">{item.amount}</span>
-                            <a
-                              href={`data:text/plain;charset=utf-8,${encodeURIComponent(`Invoice for ${item.job}`)}`}
-                              download={`invoice-${item.job.replaceAll(' ', '-').toLowerCase()}.txt`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                              PDF
-                            </a>
-                          </div>
+                          <a
+                            href={`data:text/plain;charset=utf-8,${encodeURIComponent(`Invoice for ${item.job}`)}`}
+                            download={`invoice-${item.job.replaceAll(' ', '-').toLowerCase()}.txt`}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
                         </div>
                       ))
                     ) : (
@@ -744,18 +732,20 @@ export default function SquashDeveloperBillingPage() {
               </div>
             </section>
 
-            <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-900">How Escrow Works</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-4">
+              <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:mt-8 md:gap-6">
                 {escrowSteps.map((step, index) => {
                   const StepIcon = step.icon;
                   return (
-                    <div key={step.title} className="relative rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${step.iconTone}`}>
-                        <StepIcon className="h-5 w-5" />
+                    <div key={step.title} className="relative flex md:block gap-4 md:gap-0 rounded-2xl md:rounded-3xl border border-slate-200 bg-slate-50 p-4 md:p-5">
+                      <div className={`shrink-0 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl ${step.iconTone}`}>
+                        <StepIcon className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
-                      <h3 className="mt-4 text-lg font-bold text-slate-900">{step.title}</h3>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">{step.text}</p>
+                      <div>
+                        <h3 className="md:mt-4 text-sm md:text-lg font-bold text-slate-900">{step.title}</h3>
+                        <p className="mt-1 md:mt-2 text-xs md:text-sm leading-relaxed text-slate-600">{step.text}</p>
+                      </div>
                       {index !== escrowSteps.length - 1 ? (
                         <div className="absolute -right-3 top-8 hidden h-px w-6 bg-slate-300 md:block" />
                       ) : null}
@@ -787,7 +777,7 @@ export default function SquashDeveloperBillingPage() {
               </div>
             </section>
 
-            <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">Billing Help</h2>

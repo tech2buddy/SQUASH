@@ -111,6 +111,9 @@ export default function SquashOnboardingPage() {
       if (targetRole === 'developer') {
         if (!companyName.trim()) throw new Error('Please add your company or project name.');
         await updateDeveloperProfile(session.userId, {
+          developerType: 'company',
+          fullName: session.name || '',
+          nickname: session.name || '',
           companyName,
           websiteUrl,
           billingEmail: billingEmail || session.email,

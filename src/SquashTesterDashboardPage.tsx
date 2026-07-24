@@ -8,13 +8,14 @@ import {
   ShieldCheck,
   Star,
   } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import SquashScore from './components/SquashScore';
+import { getTesterTier } from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 
 import { useAuth } from './auth';
-import { getTesterSpecializations, replaceTesterSpecializations } from './lib/profileApi';
+import { getTesterSpecializations, replaceTesterSpecializations, getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
 import {
   getTesterAssignments,
   getTesterEarningsSummary,
@@ -37,18 +38,6 @@ type StatCard = {
 };
 
 
-
-const monthlyEarnings = [120, 140, 210, 260, 240, 300, 450];
-const monthlyLabels = ['1 May', '6 May', '12 May', '18 May', '22 May', '27 May', '31 May'];
-const earningsMax = Math.max(...monthlyEarnings);
-const earningsPoints = monthlyEarnings
-  .map((value, index) => {
-    const x = (index / (monthlyEarnings.length - 1)) * 100;
-    const y = 100 - (value / earningsMax) * 100;
-    return `${x},${y}`;
-  })
-  .join(' ');
-const earningsArea = `0,100 ${earningsPoints} 100,100`;
 
 function getDifficultyClasses(difficulty: Difficulty) {
   if (difficulty === 'Easy') return 'bg-green-50 text-green-700';
@@ -91,6 +80,7 @@ export default function SquashTesterDashboardPage() {
   const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
   const [assignmentsError, setAssignmentsError] = useState('');
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary>(emptyEarningsSummary);
+  const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
   const [earningsError, setEarningsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [specializations, setSpecializations] = useState<string[]>(() => {
@@ -133,11 +123,13 @@ export default function SquashTesterDashboardPage() {
     setAssignmentsError('');
     setEarningsError('');
 
-    Promise.all([getTesterAssignments(session.userId), getTesterEarningsSummary(session.userId)])
-      .then(([assignmentItems, summary]) => {
+    Promise.all([getTesterAssignments(session.userId), getTesterEarningsSummary(session.userId), getTesterProfile(session.userId)])
+      .then(([assignmentItems, summary, profile]) => {
         if (!mounted) return;
         setAssignments(assignmentItems);
         setEarningsSummary(summary);
+        setTesterProfile(profile);
+        setIsLoadingData(false);
       })
       .catch((error: Error) => {
         if (!mounted) return;
@@ -151,12 +143,46 @@ export default function SquashTesterDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
+
+  const earningsGraphData = useMemo(() => {
+    if (!earningsSummary?.earnings || earningsSummary.earnings.length === 0) {
+      return {
+        monthlyEarnings: [0, 0, 0, 0, 0, 0, 0],
+        monthlyLabels: ['-', '-', '-', '-', '-', '-', '-'],
+        earningsMax: 100,
+        earningsPoints: '0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100',
+        earningsArea: '0,100 0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100 100,100'
+      };
+    }
+
+    const sorted = [...earningsSummary.earnings].filter(e => e.submittedAt).sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime());
+    
+    let chartData = sorted.slice(-7);
+    while (chartData.length < 7) {
+      chartData.unshift({ amountZar: 0, submittedAt: chartData[0]?.submittedAt || new Date().toISOString() } as any);
+    }
+    
+    const monthlyEarnings = chartData.map(e => e.amountZar);
+    const monthlyLabels = chartData.map(e => new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short' }).format(new Date(e.submittedAt!)));
+    
+    const earningsMax = Math.max(...monthlyEarnings, 100);
+    const earningsPoints = monthlyEarnings
+      .map((value, index) => {
+        const x = (index / (monthlyEarnings.length - 1)) * 100;
+        const y = 100 - (value / earningsMax) * 100;
+        return `${x},${y}`;
+      })
+      .join(' ');
+    const earningsArea = `0,100 ${earningsPoints} 100,100`;
+
+    return { monthlyEarnings, monthlyLabels, earningsMax, earningsPoints, earningsArea };
+  }, [earningsSummary]);
 
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
-      if (session?.userId && true) {
+      if (session?.userId) {
         replaceTesterSpecializations(session.userId, next).catch(() => {
           // Keep the UI responsive; the /Profile page can retry later.
         });
@@ -285,6 +311,34 @@ export default function SquashTesterDashboardPage() {
       </div>
     );
   }
+  const rating = testerProfile?.rating || (approvedCount > 0 ? 4.2 : 0);
+  const currentTier = getTesterTier(approvedCount, rating);
+
+  let nextTierGoal = 0;
+  let tierProgress = 0;
+  let progressText = '';
+
+  if (currentTier.tier === 'new') {
+    nextTierGoal = 6;
+    tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
+    progressText = `${approvedCount} / ${nextTierGoal} tests to Verified`;
+  } else if (currentTier.tier === 'verified') {
+    nextTierGoal = 21;
+    tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
+    progressText = `${approvedCount} / ${nextTierGoal} tests to Pro`;
+  } else if (currentTier.tier === 'pro') {
+    nextTierGoal = 51;
+    tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
+    progressText = `${approvedCount} / ${nextTierGoal} tests to Elite`;
+  } else {
+    tierProgress = 100;
+    progressText = 'Max tier achieved';
+  }
+
+  const TierIcon = 
+    currentTier.tier === 'elite' ? ShieldCheck : 
+    currentTier.tier === 'pro' ? Star :
+    currentTier.tier === 'verified' ? BadgeCheck : Star;
 
   return (
     <div className="space-y-6">
@@ -369,6 +423,10 @@ export default function SquashTesterDashboardPage() {
                             </span>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                      <Star className="h-5 w-5 fill-indigo-500 text-indigo-500" />
+                      <span className="text-xl font-bold text-slate-900">{testerProfile?.rating ? testerProfile.rating.toFixed(1) : (approvedCount > 0 ? '4.2' : '0.0')}</span>
+                    </div>
                         <div className="flex shrink-0 items-center gap-3">
                           <div className="text-right">
                             <div className="text-sm font-extrabold text-slate-900">{test.amount}</div>
@@ -484,25 +542,25 @@ export default function SquashTesterDashboardPage() {
                             <stop offset="100%" stopColor="#34c759" stopOpacity="0.0" />
                           </linearGradient>
                         </defs>
-                        <polyline points={earningsArea} fill="url(#testerEarningsArea)" stroke="none" />
+                        <polyline points={earningsGraphData.earningsArea} fill="url(#testerEarningsArea)" stroke="none" />
                         <polyline
-                          points={earningsPoints}
+                          points={earningsGraphData.earningsPoints}
                           fill="none"
-                          stroke="#34c759"
-                          strokeWidth="2.5"
+                          stroke="#16a34a"
+                          strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                        {monthlyEarnings.map((value, index) => {
-                          const x = (index / (monthlyEarnings.length - 1)) * 100;
-                          const y = 100 - (value / earningsMax) * 100;
-                          return <circle key={`${value}-${index}`} cx={x} cy={y} r="2" fill="#34c759" stroke="#ffffff" strokeWidth="1" />;
+                        {earningsGraphData.monthlyEarnings.map((value: number, index: number) => {
+                          const x = (index / (earningsGraphData.monthlyEarnings.length - 1)) * 100;
+                          const y = 100 - (value / earningsGraphData.earningsMax) * 100;
+                          return <circle key={index} cx={`${x}%`} cy={`${y}%`} r="3" fill="#16a34a" className="transition-all duration-300 hover:r-4" />;
                         })}
                       </svg>
                     </div>
-                    <div className="mt-2 grid grid-cols-7 text-center text-[10px] font-semibold text-slate-400">
-                      {monthlyLabels.map((label) => (
-                        <span key={label}>{label}</span>
+                    <div className="mt-3 flex justify-between text-[10px] font-bold text-slate-400">
+                      {earningsGraphData.monthlyLabels.map((label: string, i: number) => (
+                        <span key={i}>{label}</span>
                       ))}
                     </div>
                   </div>
@@ -512,7 +570,7 @@ export default function SquashTesterDashboardPage() {
                       <LineChart className="h-5 w-5 text-green-400" />
                       Total Earnings
                     </div>
-                    <span className="text-lg font-extrabold text-green-400">R450</span>
+                    <span className="text-lg font-extrabold text-green-400">{formatRands(earningsSummary.lifetimeApprovedZar)}</span>
                   </div>
                 </div>
 
@@ -536,7 +594,9 @@ export default function SquashTesterDashboardPage() {
                   </div>
 
                   <div className="mt-3 text-xs text-slate-400 font-medium">
-                    Last payout: 10 May 2025 · R450
+                    {earningsSummary.payouts.length > 0
+                      ? `Last payout: ${formatDate(earningsSummary.payouts[0].createdAt)} · ${formatRands(earningsSummary.payouts[0].amountZar)}`
+                      : 'No payouts yet'}
                   </div>
                   <a href="/tester/payout-method" className="mt-3 block text-xs font-bold text-slate-900 hover:underline">
                     Change Payout Method →
@@ -656,22 +716,22 @@ export default function SquashTesterDashboardPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 shadow-sm border border-green-100">
-                      <Star className="h-7 w-7 text-green-600" />
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm border ${currentTier.bg} ${currentTier.border}`}>
+                      <TierIcon className={`h-7 w-7 ${currentTier.color}`} />
                     </div>
                     <div>
-                      <div className="text-xl font-extrabold text-slate-900">Level 2</div>
-                      <div className="text-xs font-semibold text-slate-500">Skilled Tester</div>
+                      <div className="text-xl font-extrabold text-slate-900">{currentTier.label.replace(' 💎', '')}</div>
+                      <div className="text-xs font-semibold text-slate-500">Tier Status</div>
                     </div>
                   </div>
 
                   <div className="mt-5">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-600">
                       <span>Progress</span>
-                      <span>650 / 1000 XP</span>
+                      <span>{progressText}</span>
                     </div>
                     <div className="mt-2 h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full w-[65%] rounded-full bg-slate-900 transition-all duration-500" />
+                      <div className="h-full rounded-full bg-slate-900 transition-all duration-500" style={{ width: `${tierProgress}%` }} />
                     </div>
                   </div>
 

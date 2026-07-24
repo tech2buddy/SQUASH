@@ -205,3 +205,81 @@ export async function getTesterReferrals(_userId: string): Promise<TesterReferra
   // TODO: Implement actual referrals table in Supabase
   return [];
 }
+
+export type UserSettings = {
+  toggles: Record<string, boolean>;
+  availableDays: string[];
+  preferredTime: string;
+};
+
+export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('toggles, available_days, preferred_time')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    toggles: (data.toggles as Record<string, boolean>) || {},
+    availableDays: (data.available_days as string[]) || [],
+    preferredTime: data.preferred_time || '',
+  };
+}
+
+export async function updateUserSettings(userId: string, settings: UserSettings) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+
+  const { error } = await supabase.from('user_settings').upsert({
+    user_id: userId,
+    toggles: settings.toggles,
+    available_days: settings.availableDays,
+    preferred_time: settings.preferredTime,
+  });
+
+  if (error) throw error;
+}
+
+export type TopTesterDisplay = {
+  name: string;
+  level: string; // The tier label e.g., 'Pro Tester'
+  testsCompleted: number;
+  rating: number;
+};
+
+export async function getTopTesters(limit = 3): Promise<TopTesterDisplay[]> {
+  if (!isSupabaseConfigured) return [];
+
+  // Query tester_profiles, order by rating and tests completed
+  const { data, error } = await supabase
+    .from('tester_profiles')
+    .select(`
+      rating,
+      tests_completed,
+      profiles!inner (
+        full_name
+      )
+    `)
+    .eq('is_public', true) // Only show public profiles
+    .order('rating', { ascending: false })
+    .order('tests_completed', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Failed to fetch top testers:', error);
+    return [];
+  }
+
+  // Map to the display format expected by the UI. 
+  return data.map((t: any) => ({
+    name: t.profiles.full_name || 'Anonymous',
+    level: '', // Will be computed in the component using getTesterTier
+    testsCompleted: t.tests_completed || 0,
+    rating: Number(t.rating) || 0,
+  }));
+}
+

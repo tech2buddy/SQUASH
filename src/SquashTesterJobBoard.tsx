@@ -15,7 +15,7 @@ import {
   type TestCategoryId,
 } from './components/testCategories';
 import { useAuth } from './auth';
-import { getTesterSpecializations } from './lib/profileApi';
+import { getTesterSpecializations, getTopTesters } from './lib/profileApi';
 import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, type DeveloperJob } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
 
@@ -30,9 +30,10 @@ type TesterJobCard = {
   deadline: string;
   severity: Severity;
   pay: string;
+  amount: string;
   testers: string;
   posted: string;
-  badge: string;
+  badge?: string;
   accent: string;
   logoUrl?: string | null;
   categoryId: TestCategoryId;
@@ -59,6 +60,7 @@ export default function SquashTesterJobBoard() {
   const [platformFilter, setPlatformFilter] = useState('Any');
   const [testTypeFilter, setTestTypeFilter] = useState('Any');
   const [timeFilter, setTimeFilter] = useState('Any');
+  const [minPay, setMinPay] = useState<number>(0);
   const [filterNotice, setFilterNotice] = useState('');
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [jobsError, setJobsError] = useState('');
@@ -93,6 +95,7 @@ export default function SquashTesterJobBoard() {
         deadline: 'Open now',
         severity: index === 0 ? 'High' : 'Medium',
         pay: job.packageKey === 'starter' ? 'R50 - R80' : job.packageKey === 'growth' ? 'R80 - R120' : 'R150 - R200',
+        amount: job.packageKey === 'starter' ? '80' : job.packageKey === 'growth' ? '120' : '200',
         testers: `${job.testersNeeded} testers needed`,
         posted: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
         badge: 'New',
@@ -126,11 +129,17 @@ export default function SquashTesterJobBoard() {
     };
   }, []);
 
-  const topTesters = [
-    { name: 'Lerato D.', level: 'Level 5', total: 'R15,430', testsCompleted: 64, rating: 4.9 },
-    { name: 'Sipho N.', level: 'Level 4', total: 'R12,210', testsCompleted: 32, rating: 4.7 },
-    { name: 'Thando M.', level: 'Level 3', total: 'R9,870', testsCompleted: 14, rating: 4.3 },
-  ];
+  const [topTesters, setTopTesters] = useState<{name: string, testsCompleted: number, rating: number}[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getTopTesters(3).then((data: any) => {
+      if (mounted) {
+        setTopTesters(data);
+      }
+    }).catch((err: any) => console.error('Failed to load top testers', err));
+    return () => { mounted = false; };
+  }, []);
 
   const [testerSpecializations, setTesterSpecializations] = useState<string[]>(() => {
     const raw = window.localStorage.getItem('squash_tester_specializations');
@@ -271,6 +280,13 @@ export default function SquashTesterJobBoard() {
       }
     }
 
+    if (minPay > 0) {
+      result = result.filter((job) => {
+        const payAmount = parseInt(job.amount.replace(/\D/g, ''), 10) || 0;
+        return payAmount >= minPay;
+      });
+    }
+
     const query = searchText.trim().toLowerCase();
     if (query) {
       result = result.filter(
@@ -298,6 +314,7 @@ export default function SquashTesterJobBoard() {
     sortBy,
     testTypeFilter,
     timeFilter,
+    minPay,
   ]);
 
   useEffect(() => {
@@ -641,13 +658,17 @@ export default function SquashTesterJobBoard() {
             </div>
 
             <div className="mt-5">
-              <label className="mb-3 block text-sm font-semibold text-slate-700">Pay Range (ZAR)</label>
+              <label className="mb-3 block text-sm font-semibold text-slate-700">Minimum Pay (ZAR): R{minPay}</label>
               <div className="px-1">
-                <div className="relative h-2 rounded-full bg-slate-200">
-                  <div className="absolute left-[8%] right-[5%] h-2 rounded-full bg-green-600" />
-                  <span className="absolute left-[8%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-green-600 shadow" />
-                  <span className="absolute right-[5%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-green-600 shadow" />
-                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="500" 
+                  step="50" 
+                  value={minPay} 
+                  onChange={(e) => setMinPay(parseInt(e.target.value, 10))}
+                  className="w-full accent-green-600 cursor-pointer"
+                />
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                   <span>R0</span>
                   <span>R500+</span>
@@ -707,13 +728,12 @@ export default function SquashTesterJobBoard() {
                     </div>
                       <div>
                         <div className="font-semibold text-slate-900">{tester.name}</div>
-                        <div className="mt-1 text-xs text-slate-500">{tester.level}</div>
                         <div className="mt-1">
                           <TesterBadge testsCompleted={tester.testsCompleted} rating={tester.rating} />
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-slate-700">{tester.total}</div>
+                    <div className="text-sm font-semibold text-slate-700">{tester.testsCompleted} tests</div>
                 </div>
               ))}
             </div>

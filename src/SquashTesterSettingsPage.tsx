@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 
 import { useAuth } from './auth';
-import { getTesterProfile, updateTesterProfile } from './lib/profileApi';
+import { getTesterProfile, updateTesterProfile, getUserSettings, updateUserSettings } from './lib/profileApi';
 
 type ToggleKey =
   | 'newInvites'
@@ -62,21 +62,7 @@ const defaultSettings: SettingsState = {
   },
 };
 
-function readSettings(fallback: SettingsState): SettingsState {
-  try {
-    const raw = window.localStorage.getItem('squash_tester_settings');
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as Partial<SettingsState>;
-    return {
-      ...fallback,
-      ...parsed,
-      toggles: { ...fallback.toggles, ...(parsed.toggles || {}) },
-      availableDays: Array.isArray(parsed.availableDays) ? parsed.availableDays : fallback.availableDays,
-    };
-  } catch {
-    return fallback;
-  }
-}
+// Removed readSettings as we fetch from Supabase now.
 
 function ToggleSwitch({ enabled, onChange, label }: { enabled: boolean; onChange: () => void; label: string }) {
   return (
@@ -107,7 +93,7 @@ export default function SquashTesterSettingsPage() {
     [session?.email, session?.name],
   );
 
-  const [settings, setSettings] = useState<SettingsState>(() => readSettings(starter));
+  const [settings, setSettings] = useState<SettingsState>(starter);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -152,6 +138,23 @@ export default function SquashTesterSettingsPage() {
         if (mounted) setProfileError(error.message || 'Could not load your profile right now.');
       });
 
+    getUserSettings(session.userId)
+      .then((userSettings) => {
+        if (!mounted || !userSettings) return;
+        setSettings((prev) => ({
+          ...prev,
+          availableDays: userSettings.availableDays,
+          preferredTime: userSettings.preferredTime || prev.preferredTime,
+          toggles: {
+            ...prev.toggles,
+            ...userSettings.toggles,
+          },
+        }));
+      })
+      .catch((error: Error) => {
+        console.error('Failed to load user settings', error);
+      });
+
     return () => {
       mounted = false;
     };
@@ -192,8 +195,6 @@ export default function SquashTesterSettingsPage() {
     setProfileError('');
 
     try {
-      window.localStorage.setItem('squash_tester_settings', JSON.stringify(settings));
-
       if (session?.userId && true) {
         await updateTesterProfile(session.userId, {
           fullName: settings.fullName,
@@ -203,12 +204,19 @@ export default function SquashTesterSettingsPage() {
           preferredPayout: settings.preferredPayout,
           isPublic: settings.toggles.profileVisible,
         });
+        
+        await updateUserSettings(session.userId, {
+          toggles: settings.toggles,
+          availableDays: settings.availableDays,
+          preferredTime: settings.preferredTime,
+        });
+
         await refreshSessionProfile();
       }
 
       setSaved(true);
-    } catch (error) {
-      setProfileError(error instanceof Error ? error.message : 'Unable to save your profile right now.');
+    } catch (error: any) {
+      setProfileError(error?.message || error?.details || JSON.stringify(error) || 'Unable to save your profile right now.');
     } finally {
       setSaving(false);
     }

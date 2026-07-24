@@ -60,7 +60,7 @@ export default function SquashAboutPage() {
         <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
           <div className="animate-fade-up">
             <div className="inline-flex rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
-              Source Quality User Assurance Solutions Here
+              Quality Assurance
             </div>
 
             <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
@@ -68,14 +68,14 @@ export default function SquashAboutPage() {
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-700">
-              Every great product in the world was tested by real people before it reached users.
+              Every great product in the world was tested by everyday users before it was launched.
               The ones that were not usually get deleted in minutes.
             </p>
 
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
               SQUASH connects developers and startups with verified real-world testers who evaluate
               apps and websites before launch. Not bots. Not internal teams. Not friends who only
-              agree with you. Real people who match your market.
+              agree with you. Everyday users who match your market.
             </p>
 
             <a
@@ -154,7 +154,7 @@ export default function SquashAboutPage() {
                 <div className="flex items-start gap-3">
                   <span className="mt-1 text-green-600">✓</span>
                   <span>
-                    Real people who match your target market, devices, and real user behavior.
+                    Everyday users who match your target market, devices, and real user behavior.
                   </span>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export default function SquashAboutPage() {
             <div className="text-center">
               <h2 className="text-4xl font-black tracking-tight text-slate-900">We are SQUASH.</h2>
               <p className="mt-4 text-xl font-semibold text-slate-700">
-                Source Quality User Assurance Solutions Here.
+                Quality Assurance.
               </p>
               <p className="mt-3 text-2xl font-black text-green-700">Find it before they do.</p>
             </div>

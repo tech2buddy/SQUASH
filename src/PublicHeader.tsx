@@ -34,7 +34,7 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
           />
           <div>
             <div className="text-lg font-extrabold tracking-tight text-slate-900">SQUASH</div>
-            <div className="text-xs text-slate-500">Source Quality User Assurance Solutions Here</div>
+            <div className="text-xs text-slate-500">Quality Assurance</div>
           </div>
         </Link>
 

@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
+import { sendEmail } from './lib/emailApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
@@ -96,6 +97,14 @@ export default function SquashTesterEarningsPage() {
       const refreshed = await getTesterEarningsSummary(session.userId);
       setEarningsSummary(refreshed);
       setPayoutNotice(`Payout request created for ${formatRand(amount)}. Admin processing comes next.`);
+      
+      // Fire-and-forget email notification (don't block the UI if it fails)
+      sendEmail({
+        to: session.email || 'admin@squashqa.com', // fallback or use the user's email
+        subject: `SQUASH Payout Requested: ${formatRand(amount)}`,
+        html: `<h2>Payout Requested</h2><p>Your request for <strong>${formatRand(amount)}</strong> has been received and is pending admin approval. It will be processed shortly.</p>`,
+      }).catch(err => console.error('Failed to send payout notification email:', err));
+      
     } catch (error) {
       setPayoutNotice(error instanceof Error ? error.message : 'Could not request payout right now.');
     } finally {
@@ -105,14 +114,6 @@ export default function SquashTesterEarningsPage() {
 
 
   
-
-  if (true && isLoadingData) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
-        Loading earnings data...
-      </div>
-    );
-  }
 
   const summaryCards = [
     {
@@ -206,8 +207,47 @@ export default function SquashTesterEarningsPage() {
     { date: '05 May 2025', type: 'Test earning', description: 'ShopEase iOS App', amount: 'R350', status: 'Paid' },
   ];
 
-  const monthlyPoints = isRealAccount && !earningsSummary ? '0,92 16,92 33,92 50,92 66,92 83,92 100,92' : '0,92 16,70 33,78 50,48 66,56 83,34 100,18';
-  const monthlyDots = monthlyPoints.split(' ').map((point) => point.split(',').map(Number));
+  const earningsGraphData = useMemo(() => {
+    if (!earningsSummary?.earnings || earningsSummary.earnings.length === 0) {
+      return {
+        monthlyEarnings: [0, 0, 0, 0, 0, 0, 0],
+        monthlyLabels: ['-', '-', '-', '-', '-', '-', '-'],
+        earningsMax: 100,
+        earningsPoints: '0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100',
+        earningsArea: '0,100 0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100 100,100'
+      };
+    }
+
+    const sorted = [...earningsSummary.earnings].filter(e => e.submittedAt).sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime());
+    
+    let chartData = sorted.slice(-7);
+    while (chartData.length < 7) {
+      chartData.unshift({ amountZar: 0, submittedAt: chartData[0]?.submittedAt || new Date().toISOString() } as any);
+    }
+    
+    const monthlyEarnings = chartData.map(e => e.amountZar);
+    const monthlyLabels = chartData.map(e => new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short' }).format(new Date(e.submittedAt!)));
+    
+    const earningsMax = Math.max(...monthlyEarnings, 100);
+    const earningsPoints = monthlyEarnings
+      .map((value, index) => {
+        const x = (index / (monthlyEarnings.length - 1)) * 100;
+        const y = 100 - (value / earningsMax) * 100;
+        return `${x},${y}`;
+      })
+      .join(' ');
+    const earningsArea = `0,100 ${earningsPoints} 100,100`;
+
+    return { monthlyEarnings, monthlyLabels, earningsMax, earningsPoints, earningsArea };
+  }, [earningsSummary]);
+
+  if (true && isLoadingData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
+        Loading earnings data...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -292,15 +332,19 @@ export default function SquashTesterEarningsPage() {
                         <stop offset="100%" stopColor="#34c759" stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    <polygon points={`0,100 ${monthlyPoints} 100,100`} fill="url(#earningsFill)" />
-                    <polyline points={monthlyPoints} fill="none" stroke="#34c759" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-                    {monthlyDots.map(([x, y]) => (
-                      <circle key={`${x}-${y}`} cx={x} cy={y} r="2" fill="#34c759" stroke="#ffffff" strokeWidth="1" />
-                    ))}
+                    <polygon points={earningsGraphData.earningsArea} fill="url(#earningsFill)" />
+                    <polyline points={earningsGraphData.earningsPoints} fill="none" stroke="#34c759" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+                    {earningsGraphData.monthlyEarnings.map((value, index) => {
+                      const x = (index / (earningsGraphData.monthlyEarnings.length - 1)) * 100;
+                      const y = 100 - (value / earningsGraphData.earningsMax) * 100;
+                      return (
+                        <circle key={`dot-${index}`} cx={x} cy={y} r="2" fill="#34c759" stroke="#ffffff" strokeWidth="1" />
+                      );
+                    })}
                   </svg>
                   <div className="mt-3 grid grid-cols-7 text-center text-[10px] font-semibold text-slate-400">
-                    {['1 May', '6 May', '12 May', '18 May', '22 May', '27 May', '31 May'].map((label) => (
-                      <span key={label}>{label}</span>
+                    {earningsGraphData.monthlyLabels.map((label, i) => (
+                      <span key={`label-${i}`}>{label}</span>
                     ))}
                   </div>
                 </div>

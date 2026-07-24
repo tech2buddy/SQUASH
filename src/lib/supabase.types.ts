@@ -147,6 +147,26 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['test_assignments']['Insert']>;
         Relationships: [];
       };
+      user_settings: {
+        Row: {
+          user_id: string;
+          toggles: Json;
+          available_days: Json;
+          preferred_time: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          toggles?: Json;
+          available_days?: Json;
+          preferred_time?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Database['public']['Tables']['user_settings']['Insert'], 'user_id'>>;
+        Relationships: [];
+      };
       test_submissions: {
         Row: {
           id: string;

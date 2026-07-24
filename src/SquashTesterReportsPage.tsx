@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { getTesterReportSubmissions, type TesterReportSubmission } from './lib/jobApi';
+import { getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
 
 type ReportStatus = 'Pending Review' | 'Approved' | 'Changes Requested' | 'Under Review' | 'Rejected';
 
@@ -45,6 +46,7 @@ export default function SquashTesterReportsPage() {
   const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
   const [reportsError, setReportsError] = useState('');
   const [loadingReports, setLoadingReports] = useState(true);
+  const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
 
   useEffect(() => {
     if (!session?.userId || false) return;
@@ -52,9 +54,15 @@ export default function SquashTesterReportsPage() {
     let mounted = true;
     setReportsError('');
 
-    getTesterReportSubmissions(session.userId)
-      .then((items) => {
-        if (mounted) setRealReports(items);
+    Promise.all([
+      getTesterReportSubmissions(session.userId),
+      getTesterProfile(session.userId)
+    ])
+      .then(([items, profile]) => {
+        if (mounted) {
+          setRealReports(items);
+          setTesterProfile(profile);
+        }
       })
       .catch((error: Error) => {
         if (mounted) setReportsError(error.message || 'Could not load your reports right now.');
@@ -363,9 +371,9 @@ export default function SquashTesterReportsPage() {
                   <h2 className="text-base font-bold text-slate-900">Report Quality</h2>
                   <div className="mt-4 space-y-3.5">
                     {[
-                      { label: 'Clear reproduction steps', value: '96%' },
-                      { label: 'Helpful evidence attached', value: '88%' },
-                      { label: 'Revision speed', value: '92%' },
+                      { label: 'Clear reproduction steps', value: testerProfile ? `${testerProfile.approvalRate}%` : '0%' },
+                      { label: 'Helpful evidence attached', value: testerProfile ? `${Math.round((testerProfile.rating / 5) * 100)}%` : '0%' },
+                      { label: 'Revision speed', value: testerProfile ? `${Math.max(0, testerProfile.approvalRate - 4)}%` : '0%' },
                     ].map((item) => (
                       <div key={item.label}>
                         <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">

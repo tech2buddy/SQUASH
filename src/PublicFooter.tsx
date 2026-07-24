@@ -1,4 +1,7 @@
-﻿const footerLinks = {
+import { Mail } from 'lucide-react';
+import { FaInstagram, FaLinkedin, FaTwitter } from 'react-icons/fa';
+
+const footerLinks = {
   Platform: [
     { label: 'For Developers', href: '/for-developers' },
     { label: 'For Testers', href: '/for-testers' },
@@ -30,12 +33,30 @@ export default function PublicFooter() {
             <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm" />
             <div>
               <div className="text-lg font-extrabold tracking-tight text-slate-900">SQUASH</div>
-              <div className="text-xs text-slate-500">Source Quality User Assurance Solutions Here</div>
+              <div className="text-xs text-slate-500">Quality Assurance</div>
             </div>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">
-            Real people. Real feedback. Better apps built for South Africa and beyond.
+            Everyday users. Real feedback. Better apps built for South Africa and beyond.
           </p>
+          <div className="mt-6 flex items-center gap-4">
+            <a href="https://www.instagram.com/squash_za?igsh=MThtZnI5enUydXp4dw%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-slate-400 transition hover:text-pink-600">
+              <span className="sr-only">Instagram</span>
+              <FaInstagram className="h-5 w-5" />
+            </a>
+            <a href="mailto:Squashqa@gmail.com" className="text-slate-400 transition hover:text-green-600">
+              <span className="sr-only">Email</span>
+              <Mail className="h-5 w-5" />
+            </a>
+            <a href="#" className="text-slate-400 transition hover:text-sky-500">
+              <span className="sr-only">Twitter</span>
+              <FaTwitter className="h-5 w-5" />
+            </a>
+            <a href="#" className="text-slate-400 transition hover:text-blue-700">
+              <span className="sr-only">LinkedIn</span>
+              <FaLinkedin className="h-5 w-5" />
+            </a>
+          </div>
         </div>
 
         {Object.entries(footerLinks).map(([title, links]) => (

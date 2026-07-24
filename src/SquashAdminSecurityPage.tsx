@@ -45,7 +45,7 @@ const emptyOverview: AdminOverview = {
 };
 
 const fallbackPolicies: AdminPolicyRow[] = [
-  { id: 'fallback-terms', slug: 'terms', title: 'Terms of Service', content: 'Source Quality User Assurance Solutions Here. These terms explain how SQUASH works for developers and testers.', status: 'published', version: 'v1.0', effectiveDate: null, publishedAt: null, updatedBy: null, createdAt: '', updatedAt: '' },
+  { id: 'fallback-terms', slug: 'terms', title: 'Terms of Service', content: 'Quality Assurance. These terms explain how SQUASH works for developers and testers.', status: 'published', version: 'v1.0', effectiveDate: null, publishedAt: null, updatedBy: null, createdAt: '', updatedAt: '' },
   { id: 'fallback-privacy', slug: 'privacy', title: 'Privacy Policy', content: 'SQUASH protects user data and uses it only to operate the platform safely.', status: 'published', version: 'v1.0', effectiveDate: null, publishedAt: null, updatedBy: null, createdAt: '', updatedAt: '' },
   { id: 'fallback-tester-code', slug: 'tester-code-of-conduct', title: 'Tester Code of Conduct', content: 'Tester standards for honest, respectful and secure testing work.', status: 'draft', version: 'v0.1', effectiveDate: null, publishedAt: null, updatedBy: null, createdAt: '', updatedAt: '' },
   { id: 'fallback-developer-terms', slug: 'developer-terms', title: 'Developer Terms', content: 'Developer responsibilities for test access, instructions and review.', status: 'draft', version: 'v0.1', effectiveDate: null, publishedAt: null, updatedBy: null, createdAt: '', updatedAt: '' },

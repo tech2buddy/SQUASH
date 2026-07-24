@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   BadgeCheck,
   Bug,
@@ -52,6 +53,18 @@ export default function SquashPricingPage() {
       highlighted: false,
     },
   ];
+
+  const [testers, setTesters] = useState(20);
+  const [selectedPlan, setSelectedPlan] = useState('Pro Plan');
+
+  const estimatorPlans = {
+    'Starter Plan': { pricePerTester: 100, minTesters: 5 },
+    'Growth Plan': { pricePerTester: 120, minTesters: 10 },
+    'Pro Plan': { pricePerTester: 125, minTesters: 20 },
+  };
+  const activePlanDetails = estimatorPlans[selectedPlan as keyof typeof estimatorPlans] || estimatorPlans['Pro Plan'];
+  const effectiveTesters = Math.max(testers, activePlanDetails.minTesters);
+  const totalCost = effectiveTesters * activePlanDetails.pricePerTester;
 
   const trustItems: TrustItem[] = [
     {
@@ -233,23 +246,44 @@ export default function SquashPricingPage() {
             <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
                 <div>
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Number of testers:</div>
+                  <div className="mb-3 flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <span>Number of testers:</span>
+                    <span className="text-slate-500">Min {activePlanDetails.minTesters}</span>
+                  </div>
                   <div className="flex items-center gap-4">
-                    <div className="relative h-2 flex-1 rounded-full bg-slate-200">
-                      <div className="absolute left-0 top-0 h-2 w-[78%] rounded-full bg-green-600" />
-                      <span className="absolute left-[78%] top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow ring-2 ring-green-600" />
-                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      step="5"
+                      value={testers}
+                      onChange={(e) => setTesters(parseInt(e.target.value, 10))}
+                      className="h-2 flex-1 appearance-none rounded-full bg-slate-200 accent-green-600"
+                    />
                     <div className="flex h-12 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-bold text-slate-900">
-                      20
+                      {testers}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-8">
                   <div className="mb-3 text-sm font-semibold text-slate-700">Package selected:</div>
-                  <a href="/post-job?plan=pro" className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-semibold text-slate-700">
-                    Pro Plan <span className="text-slate-400">&#9662;</span>
-                  </a>
+                  <select
+                    value={selectedPlan}
+                    onChange={(e) => {
+                      const plan = e.target.value;
+                      setSelectedPlan(plan);
+                      const planData = estimatorPlans[plan as keyof typeof estimatorPlans];
+                      if (testers < planData.minTesters) {
+                        setTesters(planData.minTesters);
+                      }
+                    }}
+                    className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+                  >
+                    <option value="Starter Plan">Starter Plan (R100/tester)</option>
+                    <option value="Growth Plan">Growth Plan (R120/tester)</option>
+                    <option value="Pro Plan">Pro Plan (R125/tester)</option>
+                  </select>
                 </div>
               </div>
 
@@ -257,11 +291,11 @@ export default function SquashPricingPage() {
                 <div className="space-y-4 text-base">
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Package selected:</span>
-                    <span className="font-semibold text-slate-900">Pro Plan</span>
+                    <span className="font-semibold text-slate-900">{selectedPlan}</span>
                   </div>
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Number of testers:</span>
-                    <span className="font-semibold text-slate-900">20</span>
+                    <span className="font-semibold text-slate-900">{effectiveTesters}</span>
                   </div>
                 </div>
 
@@ -269,9 +303,9 @@ export default function SquashPricingPage() {
 
                 <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 shadow-sm">
                   <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">Total:</span>
-                  <span className="text-3xl font-black text-green-700">R2,500</span>
+                  <span className="text-3xl font-black text-green-700">R{totalCost.toLocaleString()}</span>
                 </div>
-                <div className="mt-3 text-sm text-slate-500">20 testers - Pro Plan - Total: R2,500</div>
+                <div className="mt-3 text-sm text-slate-500">{effectiveTesters} testers - {selectedPlan} - Total: R{totalCost.toLocaleString()}</div>
               </div>
             </div>
           </div>

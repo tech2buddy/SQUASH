@@ -5,10 +5,10 @@ import { TEST_CATEGORIES } from './components/testCategories';
 
 export default function SquashHomepage() {
   const stats = [
-    { label: 'Testers', value: '500+' },
-    { label: 'SA Startups Served', value: '50+' },
-    { label: 'Paid Out', value: 'R2M+' },
-    { label: 'Satisfaction', value: '98%' },
+    'Real User Testing',
+    'Verified Testers',
+    'Detailed Bug Reports',
+    'Fast Turnaround',
   ];
 
   const steps = [
@@ -110,13 +110,12 @@ export default function SquashHomepage() {
 
         <section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:grid-cols-4 sm:px-6 lg:px-8">
-            {stats.map((item) => (
+            {stats.map((item, index) => (
               <div
-                key={item.label}
-                className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
+                key={index}
+                className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
               >
-                <div className="text-2xl font-black text-slate-900 sm:text-3xl">{item.value}</div>
-                <div className="mt-2 text-sm text-slate-500">{item.label}</div>
+                <div className="text-lg font-bold text-slate-800 sm:text-xl">{item}</div>
               </div>
             ))}
           </div>

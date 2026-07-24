@@ -4,6 +4,7 @@ import SquashActiveTestScreen from './SquashActiveTestScreen';
 import SquashAboutPage from './SquashAboutPage';
 import SquashDeveloperDashboard from './SquashDeveloperDashboard';
 import SquashDeveloperBillingPage from './SquashDeveloperBillingPage';
+import SquashDeveloperSettingsPage from './SquashDeveloperSettingsPage';
 import SquashForDevelopersPage from './SquashForDevelopersPage';
 import SquashForTestersPage from './SquashForTestersPage';
 import SquashHomepage from './SquashHomepage';
@@ -340,6 +341,7 @@ export default function App() {
         <Route path="/developer/submissions" element={<SquashDeveloperSubmissionsPage />} />
         <Route path="/developer/reports" element={<SquashDeveloperReportsPage />} />
         <Route path="/developer/activity" element={<SquashDeveloperActivityPage />} />
+        <Route path="/developer/settings" element={<SquashDeveloperSettingsPage />} />
         <Route path="/report-details/attachments" element={<SquashReportAttachmentsPage />} />
         <Route
           path="/billing/payment-methods"

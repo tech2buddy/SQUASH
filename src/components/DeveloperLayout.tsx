@@ -8,7 +8,7 @@ type NavItem = {
   label: string;
   href: string;
   icon: ComponentType<{ className?: string }>;
-  key: 'dashboard' | 'jobs' | 'applications' | 'reports' | 'billing';
+  key: 'dashboard' | 'jobs' | 'applications' | 'reports' | 'billing' | 'settings';
 };
 
 export default function DeveloperLayout() {
@@ -16,7 +16,7 @@ export default function DeveloperLayout() {
   const path = location.pathname;
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  let activeKey: 'dashboard' | 'jobs' | 'applications' | 'reports' | 'billing' = 'dashboard';
+  let activeKey: 'dashboard' | 'jobs' | 'applications' | 'reports' | 'billing' | 'settings' = 'dashboard';
   if (path.startsWith('/developer/jobs') || path === '/post-job') {
     activeKey = 'jobs';
   } else if (path.startsWith('/developer/applications')) {
@@ -25,6 +25,8 @@ export default function DeveloperLayout() {
     activeKey = 'reports';
   } else if (path.startsWith('/billing')) {
     activeKey = 'billing';
+  } else if (path.startsWith('/developer/settings')) {
+    activeKey = 'settings';
   } else if (path.startsWith('/dashboard')) {
     activeKey = 'dashboard';
   }
@@ -35,6 +37,7 @@ export default function DeveloperLayout() {
     { label: 'Applications', href: '/developer/applications', icon: UserCircle2, key: 'applications' },
     { label: 'Reports', href: '/developer/reports', icon: FileText, key: 'reports' },
     { label: 'Billing', href: '/billing', icon: CreditCard, key: 'billing' },
+    { label: 'Settings', href: '/developer/settings', icon: UserCircle2, key: 'settings' },
   ];
 
   return (

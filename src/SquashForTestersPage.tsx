@@ -92,7 +92,7 @@ export default function SquashForTestersPage() {
         <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
           <div className="animate-fade-up flex flex-col justify-center">
             <div className="inline-flex w-fit rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
-              Real testing opportunities for real people
+              Real testing opportunities for everyday users
             </div>
 
             <h1 className="mt-6 max-w-xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
@@ -104,7 +104,7 @@ export default function SquashForTestersPage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              Squash connects you with developers who need real testing from real people like
+              Squash connects you with developers who need real testing from everyday users like
               you.
             </p>
 

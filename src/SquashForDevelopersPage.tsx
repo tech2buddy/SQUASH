@@ -53,8 +53,8 @@ export default function SquashForDevelopersPage() {
 
   const benefits: ItemWithIcon[] = [
     {
-      title: 'Real Testers',
-      text: 'Work with real people on real devices and environments.',
+      title: 'Everyday Users',
+      text: 'Work with everyday users on real devices and environments.',
       icon: Users,
     },
     {

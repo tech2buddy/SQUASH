@@ -20,6 +20,7 @@ import { useAuth } from './auth';
 import MobileTabBar from './components/MobileTabBar';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { getTesterEarningsSummary, type TesterEarningsSummary } from './lib/jobApi';
+import { getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
 
 type TierCard = {
   tier: TesterTier;
@@ -87,6 +88,7 @@ export default function SquashTesterLevelBenefitsPage() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const testerName = session?.name || 'Tester';
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
+  const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
@@ -94,9 +96,15 @@ export default function SquashTesterLevelBenefitsPage() {
 
     let mounted = true;
     setLoadError('');
-    getTesterEarningsSummary(session.userId)
-      .then((summary) => {
-        if (mounted) setEarningsSummary(summary);
+    Promise.all([
+      getTesterEarningsSummary(session.userId),
+      getTesterProfile(session.userId)
+    ])
+      .then(([summary, profile]) => {
+        if (mounted) {
+          setEarningsSummary(summary);
+          setTesterProfile(profile);
+        }
       })
       .catch((error: Error) => {
         if (mounted) setLoadError(error.message || 'Could not load level data right now.');
@@ -108,7 +116,7 @@ export default function SquashTesterLevelBenefitsPage() {
   }, [("supabase"), session?.userId]);
 
   const approvedTests = earningsSummary?.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length || 0;
-  const rating = approvedTests > 0 ? 4.2 : 0;
+  const rating = testerProfile?.rating || (approvedTests > 0 ? 4.2 : 0);
   const currentTier = getTesterTier(approvedTests, rating);
   const currentTierIndex = tierCards.findIndex((tier) => tier.tier === currentTier.tier);
   const progressToVerified = Math.min(100, Math.round((approvedTests / 6) * 100));

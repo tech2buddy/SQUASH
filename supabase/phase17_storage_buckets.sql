@@ -25,7 +25,6 @@ values (
 on conflict (id) do nothing;
 
 -- RLS Policies for bug-screenshots bucket
-alter table storage.objects enable row level security;
 
 -- Allow testers to upload to their own bug report folders
 create policy "screenshots_upload_tester_assigned"

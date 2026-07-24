@@ -213,7 +213,7 @@ export async function getAdminPayoutQueue(): Promise<AdminPayoutRow[]> {
 export async function updateAdminPayoutStatus(input: {
   payoutId: string;
   status: Extract<PayoutStatus, 'processing' | 'paid' | 'failed' | 'cancelled'>;
-  _adminId: string;
+  adminId: string;
   adminNote?: string;
   payoutReference?: string;
 }) {
@@ -356,7 +356,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
 
 export async function sendAdminUserNotification(input: {
   userId: string;
-  _adminId: string;
+  adminId: string;
   title: string;
   body: string;
   linkPath?: string;
@@ -386,7 +386,7 @@ export async function sendAdminUserNotification(input: {
 
 export async function updateAdminUserAccountStatus(input: {
   userId: string;
-  _adminId: string;
+  adminId: string;
   status: AdminUserDetail['accountStatus'];
   note?: string;
 }) {
@@ -657,7 +657,7 @@ export async function getAdminPolicies(): Promise<AdminPolicyRow[]> {
 
 export async function saveAdminPolicy(input: {
   id?: string;
-  _adminId: string;
+  adminId: string;
   slug: string;
   title: string;
   content: string;

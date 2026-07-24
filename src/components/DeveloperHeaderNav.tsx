@@ -19,6 +19,7 @@ import {
   getUserNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  requestBrowserPushPermission,
   type AppNotification,
 } from '../lib/notificationApi';
 
@@ -44,6 +45,12 @@ export default function DeveloperHeaderNav() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'denied';
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -116,6 +123,11 @@ export default function DeveloperHeaderNav() {
   const handleMarkAllRead = async () => {
     await markAllNotificationsAsRead(userId);
     setNotifications((prev) => prev.map((n) => ({ ...n, status: 'read' })));
+  };
+
+  const handleEnablePush = async () => {
+    const perm = await requestBrowserPushPermission();
+    setPushPermission(perm);
   };
 
   return (
@@ -191,6 +203,34 @@ export default function DeveloperHeaderNav() {
               >
                 All Activity
               </Link>
+            )}
+          </div>
+
+          {/* Desktop Push Permission Banner */}
+          <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-100 p-2.5 text-xs">
+            {pushPermission === 'granted' ? (
+              <div className="flex items-center justify-between text-green-700 font-semibold px-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  Real-time push alerts enabled
+                </span>
+                <Zap className="h-3.5 w-3.5 text-green-600" />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEnablePush}
+                className="w-full flex items-center justify-between rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 transition shadow-sm"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 fill-current" />
+                  Enable Desktop Push Alerts
+                </span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">1-Click</span>
+              </button>
             )}
           </div>
 

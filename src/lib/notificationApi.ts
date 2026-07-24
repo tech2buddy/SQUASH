@@ -69,6 +69,58 @@ export async function getUserNotifications(userId: string): Promise<AppNotificat
   return getLocalNotifications(userId);
 }
 
+export async function requestBrowserPushPermission(): Promise<NotificationPermission> {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    return 'denied';
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      triggerBrowserPushNotification('SQUASH Notifications Enabled 🚀', {
+        body: 'You will receive real-time push alerts when testers apply or submit bug reports.',
+      });
+    }
+    return permission;
+  } catch (err) {
+    console.warn('Push permission request error:', err);
+    return 'denied';
+  }
+}
+
+export function triggerBrowserPushNotification(
+  title: string,
+  options?: {
+    body?: string;
+    linkPath?: string;
+    icon?: string;
+    tag?: string;
+  }
+) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  try {
+    const notification = new Notification(title, {
+      body: options?.body || 'New activity on your SQUASH workspace.',
+      icon: options?.icon || '/squash-logo.png',
+      badge: '/squash-logo.png',
+      tag: options?.tag || `squash_push_${Date.now()}`,
+      silent: false,
+    });
+
+    if (options?.linkPath) {
+      notification.onclick = (e) => {
+        e.preventDefault();
+        window.focus();
+        window.location.href = options.linkPath!;
+        notification.close();
+      };
+    }
+  } catch (err) {
+    console.warn('Error triggering browser push notification:', err);
+  }
+}
+
 export async function createNotification(input: {
   userId: string;
   title: string;
@@ -118,7 +170,11 @@ export async function createNotification(input: {
   saveLocalNotifications(input.userId, updated);
 
   if (status === 'unread') {
-    window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: input.userId } }));
+    window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: input.userId, notification: newNotification } }));
+    triggerBrowserPushNotification(input.title, {
+      body: input.body,
+      linkPath: input.linkPath,
+    });
   }
 
   return newNotification;

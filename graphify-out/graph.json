@@ -174,10 +174,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashdevelopersettingspage.tsx"
+      "norm_label": "squashdevelopersettingspage.tsx",
+      "id": "src_squashdevelopersettingspage"
     },
     {
       "label": "ToggleKey",
@@ -185,10 +185,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage_togglekey",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "togglekey"
+      "norm_label": "togglekey",
+      "id": "src_squashdevelopersettingspage_togglekey"
     },
     {
       "label": "SettingsState",
@@ -196,10 +196,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage_settingsstate",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "settingsstate"
+      "norm_label": "settingsstate",
+      "id": "src_squashdevelopersettingspage_settingsstate"
     },
     {
       "label": "defaultSettings",
@@ -207,10 +207,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L27",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage_defaultsettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "defaultsettings"
+      "norm_label": "defaultsettings",
+      "id": "src_squashdevelopersettingspage_defaultsettings"
     },
     {
       "label": "ToggleSwitch()",
@@ -218,10 +218,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L42",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage_toggleswitch",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "toggleswitch()"
+      "norm_label": "toggleswitch()",
+      "id": "src_squashdevelopersettingspage_toggleswitch"
     },
     {
       "label": "SquashDeveloperSettingsPage()",
@@ -229,10 +229,10 @@
       "source_file": "src/SquashDeveloperSettingsPage.tsx",
       "source_location": "L59",
       "_origin": "ast",
-      "id": "src_squashdevelopersettingspage_squashdevelopersettingspage",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashdevelopersettingspage()"
+      "norm_label": "squashdevelopersettingspage()",
+      "id": "src_squashdevelopersettingspage_squashdevelopersettingspage"
     },
     {
       "label": "SquashOnboardingPage.tsx",
@@ -240,10 +240,10 @@
       "source_file": "src/SquashOnboardingPage.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_squashonboardingpage",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashonboardingpage.tsx"
+      "norm_label": "squashonboardingpage.tsx",
+      "id": "src_squashonboardingpage"
     },
     {
       "label": "isOnboardingRole()",
@@ -251,10 +251,10 @@
       "source_file": "src/SquashOnboardingPage.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "src_squashonboardingpage_isonboardingrole",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "isonboardingrole()"
+      "norm_label": "isonboardingrole()",
+      "id": "src_squashonboardingpage_isonboardingrole"
     },
     {
       "label": "SquashOnboardingPage()",
@@ -262,10 +262,10 @@
       "source_file": "src/SquashOnboardingPage.tsx",
       "source_location": "L19",
       "_origin": "ast",
-      "id": "src_squashonboardingpage_squashonboardingpage",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "squashonboardingpage()"
+      "norm_label": "squashonboardingpage()",
+      "id": "src_squashonboardingpage_squashonboardingpage"
     },
     {
       "label": "MobileTabBar.tsx",
@@ -273,10 +273,10 @@
       "source_file": "src/components/MobileTabBar.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_components_mobiletabbar",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "mobiletabbar.tsx"
+      "norm_label": "mobiletabbar.tsx",
+      "id": "src_components_mobiletabbar"
     },
     {
       "label": "Tab",
@@ -284,10 +284,10 @@
       "source_file": "src/components/MobileTabBar.tsx",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "src_components_mobiletabbar_tab",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "tab"
+      "norm_label": "tab",
+      "id": "src_components_mobiletabbar_tab"
     },
     {
       "label": "TESTER_TABS",
@@ -295,10 +295,10 @@
       "source_file": "src/components/MobileTabBar.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "src_components_mobiletabbar_tester_tabs",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "tester_tabs"
+      "norm_label": "tester_tabs",
+      "id": "src_components_mobiletabbar_tester_tabs"
     },
     {
       "label": "DEVELOPER_TABS",
@@ -306,10 +306,10 @@
       "source_file": "src/components/MobileTabBar.tsx",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "src_components_mobiletabbar_developer_tabs",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "developer_tabs"
+      "norm_label": "developer_tabs",
+      "id": "src_components_mobiletabbar_developer_tabs"
     },
     {
       "label": "MobileTabBar()",
@@ -317,10 +317,10 @@
       "source_file": "src/components/MobileTabBar.tsx",
       "source_location": "L25",
       "_origin": "ast",
-      "id": "src_components_mobiletabbar_mobiletabbar",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "mobiletabbar()"
+      "norm_label": "mobiletabbar()",
+      "id": "src_components_mobiletabbar_mobiletabbar"
     },
     {
       "label": "profileApi.ts",
@@ -328,10 +328,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_lib_profileapi",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "profileapi.ts"
+      "norm_label": "profileapi.ts",
+      "id": "src_lib_profileapi"
     },
     {
       "label": "TesterProfileSettings",
@@ -339,10 +339,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "src_lib_profileapi_testerprofilesettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "testerprofilesettings"
+      "norm_label": "testerprofilesettings",
+      "id": "src_lib_profileapi_testerprofilesettings"
     },
     {
       "label": "TesterPublicProfile",
@@ -350,10 +350,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "src_lib_profileapi_testerpublicprofile",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "testerpublicprofile"
+      "norm_label": "testerpublicprofile",
+      "id": "src_lib_profileapi_testerpublicprofile"
     },
     {
       "label": "getTesterProfile()",
@@ -361,10 +361,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L20",
       "_origin": "ast",
-      "id": "src_lib_profileapi_gettesterprofile",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "gettesterprofile()"
+      "norm_label": "gettesterprofile()",
+      "id": "src_lib_profileapi_gettesterprofile"
     },
     {
       "label": "updateTesterProfile()",
@@ -372,10 +372,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L55",
       "_origin": "ast",
-      "id": "src_lib_profileapi_updatetesterprofile",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "updatetesterprofile()"
+      "norm_label": "updatetesterprofile()",
+      "id": "src_lib_profileapi_updatetesterprofile"
     },
     {
       "label": "getTesterSpecializations()",
@@ -383,10 +383,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L81",
       "_origin": "ast",
-      "id": "src_lib_profileapi_gettesterspecializations",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "gettesterspecializations()"
+      "norm_label": "gettesterspecializations()",
+      "id": "src_lib_profileapi_gettesterspecializations"
     },
     {
       "label": "replaceTesterSpecializations()",
@@ -394,10 +394,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "src_lib_profileapi_replacetesterspecializations",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "replacetesterspecializations()"
+      "norm_label": "replacetesterspecializations()",
+      "id": "src_lib_profileapi_replacetesterspecializations"
     },
     {
       "label": "DeveloperProfileSettings",
@@ -405,10 +405,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L116",
       "_origin": "ast",
-      "id": "src_lib_profileapi_developerprofilesettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "developerprofilesettings"
+      "norm_label": "developerprofilesettings",
+      "id": "src_lib_profileapi_developerprofilesettings"
     },
     {
       "label": "getDeveloperProfile()",
@@ -416,10 +416,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L125",
       "_origin": "ast",
-      "id": "src_lib_profileapi_getdeveloperprofile",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "getdeveloperprofile()"
+      "norm_label": "getdeveloperprofile()",
+      "id": "src_lib_profileapi_getdeveloperprofile"
     },
     {
       "label": "updateDeveloperProfile()",
@@ -427,10 +427,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L157",
       "_origin": "ast",
-      "id": "src_lib_profileapi_updatedeveloperprofile",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "updatedeveloperprofile()"
+      "norm_label": "updatedeveloperprofile()",
+      "id": "src_lib_profileapi_updatedeveloperprofile"
     },
     {
       "label": "TesterLeaderboardEntry",
@@ -438,10 +438,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L180",
       "_origin": "ast",
-      "id": "src_lib_profileapi_testerleaderboardentry",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "testerleaderboardentry"
+      "norm_label": "testerleaderboardentry",
+      "id": "src_lib_profileapi_testerleaderboardentry"
     },
     {
       "label": "getTesterLeaderboard()",
@@ -449,10 +449,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L192",
       "_origin": "ast",
-      "id": "src_lib_profileapi_gettesterleaderboard",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "gettesterleaderboard()"
+      "norm_label": "gettesterleaderboard()",
+      "id": "src_lib_profileapi_gettesterleaderboard"
     },
     {
       "label": "TesterReferralEntry",
@@ -460,10 +460,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L221",
       "_origin": "ast",
-      "id": "src_lib_profileapi_testerreferralentry",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "testerreferralentry"
+      "norm_label": "testerreferralentry",
+      "id": "src_lib_profileapi_testerreferralentry"
     },
     {
       "label": "getTesterReferrals()",
@@ -471,10 +471,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L229",
       "_origin": "ast",
-      "id": "src_lib_profileapi_gettesterreferrals",
       "community": 10,
       "community_name": "profileApi.ts",
-      "norm_label": "gettesterreferrals()"
+      "norm_label": "gettesterreferrals()",
+      "id": "src_lib_profileapi_gettesterreferrals"
     },
     {
       "label": "UserSettings",
@@ -482,10 +482,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L234",
       "_origin": "ast",
-      "id": "src_lib_profileapi_usersettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "usersettings"
+      "norm_label": "usersettings",
+      "id": "src_lib_profileapi_usersettings"
     },
     {
       "label": "getUserSettings()",
@@ -493,10 +493,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L240",
       "_origin": "ast",
-      "id": "src_lib_profileapi_getusersettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "getusersettings()"
+      "norm_label": "getusersettings()",
+      "id": "src_lib_profileapi_getusersettings"
     },
     {
       "label": "updateUserSettings()",
@@ -504,10 +504,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L259",
       "_origin": "ast",
-      "id": "src_lib_profileapi_updateusersettings",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "updateusersettings()"
+      "norm_label": "updateusersettings()",
+      "id": "src_lib_profileapi_updateusersettings"
     },
     {
       "label": "TopTesterDisplay",
@@ -515,10 +515,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L272",
       "_origin": "ast",
-      "id": "src_lib_profileapi_toptesterdisplay",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "toptesterdisplay"
+      "norm_label": "toptesterdisplay",
+      "id": "src_lib_profileapi_toptesterdisplay"
     },
     {
       "label": "getTopTesters()",
@@ -526,10 +526,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L279",
       "_origin": "ast",
-      "id": "src_lib_profileapi_gettoptesters",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "gettoptesters()"
+      "norm_label": "gettoptesters()",
+      "id": "src_lib_profileapi_gettoptesters"
     },
     {
       "label": "TODO: Implement actual referrals table in Supabase",
@@ -537,10 +537,10 @@
       "source_file": "src/lib/profileApi.ts",
       "source_location": "L230",
       "_origin": "ast",
-      "id": "src_lib_profileapi_rationale_230",
       "community": 17,
       "community_name": "SquashOnboardingPage.tsx",
-      "norm_label": "todo: implement actual referrals table in supabase"
+      "norm_label": "todo: implement actual referrals table in supabase",
+      "id": "src_lib_profileapi_rationale_230"
     },
     {
       "label": "phase16_developer_type.sql",
@@ -548,10 +548,10 @@
       "source_file": "supabase/phase16_developer_type.sql",
       "source_location": null,
       "_origin": "ast",
-      "id": "supabase_phase16_developer_type",
       "community": 16,
       "community_name": "SquashTesterDashboardPage.tsx",
-      "norm_label": "phase16_developer_type.sql"
+      "norm_label": "phase16_developer_type.sql",
+      "id": "supabase_phase16_developer_type"
     },
     {
       "label": "public.developer_profiles",
@@ -559,10 +559,10 @@
       "source_file": "supabase/phase16_developer_type.sql",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "supabase_phase16_developer_type_public_developer_profiles",
       "community": 16,
       "community_name": "SquashTesterDashboardPage.tsx",
-      "norm_label": "public.developer_profiles"
+      "norm_label": "public.developer_profiles",
+      "id": "supabase_phase16_developer_type_public_developer_profiles"
     },
     {
       "label": "send-email.ts",
@@ -7237,7 +7237,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/SquashDeveloperBillingPage.tsx",
-      "source_location": "L516",
+      "source_location": "L531",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_squashdeveloperbillingpage_squashdeveloperbillingpage",
@@ -7312,9 +7312,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_lib_profileapi",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi"
     },
     {
       "relation": "imports",
@@ -7324,9 +7324,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_lib_profileapi_getdeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_getdeveloperprofile"
     },
     {
       "relation": "imports",
@@ -7336,9 +7336,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_lib_profileapi_getusersettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_getusersettings"
     },
     {
       "relation": "imports",
@@ -7348,9 +7348,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_lib_profileapi_updatedeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updatedeveloperprofile"
     },
     {
       "relation": "imports",
@@ -7360,9 +7360,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_lib_profileapi_updateusersettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updateusersettings"
     },
     {
       "relation": "contains",
@@ -7371,9 +7371,9 @@
       "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_squashdevelopersettingspage_defaultsettings",
-      "confidence_score": 1.0
+      "target": "src_squashdevelopersettingspage_defaultsettings"
     },
     {
       "relation": "contains",
@@ -7382,9 +7382,9 @@
       "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_squashdevelopersettingspage_settingsstate",
-      "confidence_score": 1.0
+      "target": "src_squashdevelopersettingspage_settingsstate"
     },
     {
       "relation": "contains",
@@ -7393,9 +7393,9 @@
       "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_squashdevelopersettingspage_squashdevelopersettingspage",
-      "confidence_score": 1.0
+      "target": "src_squashdevelopersettingspage_squashdevelopersettingspage"
     },
     {
       "relation": "contains",
@@ -7404,9 +7404,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_squashdevelopersettingspage_togglekey",
-      "confidence_score": 1.0
+      "target": "src_squashdevelopersettingspage_togglekey"
     },
     {
       "relation": "contains",
@@ -7415,9 +7415,9 @@
       "source_location": "L42",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashdevelopersettingspage",
-      "target": "src_squashdevelopersettingspage_toggleswitch",
-      "confidence_score": 1.0
+      "target": "src_squashdevelopersettingspage_toggleswitch"
     },
     {
       "relation": "calls",
@@ -7475,9 +7475,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi"
     },
     {
       "relation": "imports",
@@ -7487,9 +7487,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_getdeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_getdeveloperprofile"
     },
     {
       "relation": "imports",
@@ -7499,9 +7499,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_gettesterprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterprofile"
     },
     {
       "relation": "imports",
@@ -7511,9 +7511,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_gettesterspecializations",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterspecializations"
     },
     {
       "relation": "imports",
@@ -7523,9 +7523,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_replacetesterspecializations",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_replacetesterspecializations"
     },
     {
       "relation": "imports",
@@ -7535,9 +7535,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_updatedeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updatedeveloperprofile"
     },
     {
       "relation": "imports",
@@ -7547,9 +7547,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_lib_profileapi_updatetesterprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updatetesterprofile"
     },
     {
       "relation": "contains",
@@ -7558,9 +7558,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_squashonboardingpage_isonboardingrole",
-      "confidence_score": 1.0
+      "target": "src_squashonboardingpage_isonboardingrole"
     },
     {
       "relation": "contains",
@@ -7569,9 +7569,9 @@
       "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage",
-      "target": "src_squashonboardingpage_squashonboardingpage",
-      "confidence_score": 1.0
+      "target": "src_squashonboardingpage_squashonboardingpage"
     },
     {
       "relation": "calls",
@@ -7581,9 +7581,9 @@
       "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_squashonboardingpage_squashonboardingpage",
-      "target": "src_squashonboardingpage_isonboardingrole",
-      "confidence_score": 1.0
+      "target": "src_squashonboardingpage_isonboardingrole"
     },
     {
       "relation": "calls",
@@ -7664,9 +7664,9 @@
       "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_components_mobiletabbar",
-      "target": "src_components_mobiletabbar_developer_tabs",
-      "confidence_score": 1.0
+      "target": "src_components_mobiletabbar_developer_tabs"
     },
     {
       "relation": "contains",
@@ -7675,9 +7675,9 @@
       "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_components_mobiletabbar",
-      "target": "src_components_mobiletabbar_mobiletabbar",
-      "confidence_score": 1.0
+      "target": "src_components_mobiletabbar_mobiletabbar"
     },
     {
       "relation": "contains",
@@ -7686,9 +7686,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_components_mobiletabbar",
-      "target": "src_components_mobiletabbar_tab",
-      "confidence_score": 1.0
+      "target": "src_components_mobiletabbar_tab"
     },
     {
       "relation": "contains",
@@ -7697,9 +7697,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_components_mobiletabbar",
-      "target": "src_components_mobiletabbar_tester_tabs",
-      "confidence_score": 1.0
+      "target": "src_components_mobiletabbar_tester_tabs"
     },
     {
       "relation": "imports_from",
@@ -7804,9 +7804,9 @@
       "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_developerprofilesettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_developerprofilesettings"
     },
     {
       "relation": "contains",
@@ -7815,9 +7815,9 @@
       "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_getdeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_getdeveloperprofile"
     },
     {
       "relation": "contains",
@@ -7826,9 +7826,9 @@
       "source_location": "L192",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_gettesterleaderboard",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterleaderboard"
     },
     {
       "relation": "contains",
@@ -7837,9 +7837,9 @@
       "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_gettesterprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterprofile"
     },
     {
       "relation": "contains",
@@ -7848,9 +7848,9 @@
       "source_location": "L229",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_gettesterreferrals",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterreferrals"
     },
     {
       "relation": "contains",
@@ -7859,9 +7859,9 @@
       "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_gettesterspecializations",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettesterspecializations"
     },
     {
       "relation": "contains",
@@ -7870,9 +7870,9 @@
       "source_location": "L279",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_gettoptesters",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_gettoptesters"
     },
     {
       "relation": "contains",
@@ -7881,9 +7881,9 @@
       "source_location": "L240",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_getusersettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_getusersettings"
     },
     {
       "relation": "contains",
@@ -7892,9 +7892,9 @@
       "source_location": "L94",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_replacetesterspecializations",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_replacetesterspecializations"
     },
     {
       "relation": "contains",
@@ -7903,9 +7903,9 @@
       "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_testerleaderboardentry",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_testerleaderboardentry"
     },
     {
       "relation": "contains",
@@ -7914,9 +7914,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_testerprofilesettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_testerprofilesettings"
     },
     {
       "relation": "contains",
@@ -7925,9 +7925,9 @@
       "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_testerpublicprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_testerpublicprofile"
     },
     {
       "relation": "contains",
@@ -7936,9 +7936,9 @@
       "source_location": "L221",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_testerreferralentry",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_testerreferralentry"
     },
     {
       "relation": "contains",
@@ -7947,9 +7947,9 @@
       "source_location": "L272",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_toptesterdisplay",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_toptesterdisplay"
     },
     {
       "relation": "contains",
@@ -7958,9 +7958,9 @@
       "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_updatedeveloperprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updatedeveloperprofile"
     },
     {
       "relation": "contains",
@@ -7969,9 +7969,9 @@
       "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_updatetesterprofile",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updatetesterprofile"
     },
     {
       "relation": "contains",
@@ -7980,9 +7980,9 @@
       "source_location": "L259",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_updateusersettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_updateusersettings"
     },
     {
       "relation": "contains",
@@ -7991,9 +7991,9 @@
       "source_location": "L234",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi",
-      "target": "src_lib_profileapi_usersettings",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi_usersettings"
     },
     {
       "relation": "rationale_for",
@@ -8002,9 +8002,9 @@
       "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_profileapi_rationale_230",
-      "target": "src_lib_profileapi",
-      "confidence_score": 1.0
+      "target": "src_lib_profileapi"
     },
     {
       "relation": "imports_from",
@@ -8469,9 +8469,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_phase16_developer_type",
-      "target": "supabase_phase16_developer_type_public_developer_profiles",
-      "confidence_score": 1.0
+      "target": "supabase_phase16_developer_type_public_developer_profiles"
     },
     {
       "relation": "contains",
@@ -20519,5 +20519,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "aa4f43acee92dc67613a28bf41eb47710d1d9f6c"
+  "built_at_commit": "1840b1742ed478e5054de544eb10cbc43ae9f6ae"
 }

@@ -146,50 +146,95 @@ export function SquashDeveloperJobsPage() {
               const category = getCategoryById(job.categoryId);
               const CategoryIcon = category.icon;
               return (
-                <div key={job.id} className="grid grid-cols-1 gap-4 p-5 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] md:items-center md:px-6">
-                  <div className="flex items-center gap-3">
-                    {job.logoUrl ? (
-                      <img src={job.logoUrl} alt={job.name} className="h-10 w-10 rounded-xl object-cover border border-slate-100" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-700 font-bold">
-                        {job.name.charAt(0)}
+                <div key={job.id} className="flex flex-col gap-4 p-5 md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] md:items-center md:px-6">
+                  {/* Job Title & Status - Mobile Only */}
+                  <div className="flex items-start justify-between gap-3 md:hidden">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {job.logoUrl ? (
+                        <img src={job.logoUrl} alt={job.name} className="h-10 w-10 shrink-0 rounded-xl object-cover border border-slate-100 shadow-sm" />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 font-bold shadow-sm">
+                          {job.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 truncate">{job.name}</div>
+                        <div className="text-xs text-slate-500 truncate">{job.type}</div>
                       </div>
-                    )}
-                    <div>
-                      <div className="font-bold text-slate-900">{job.name}</div>
-                      <div className="text-xs text-slate-500">{job.type}</div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <CategoryIcon className="h-4 w-4" style={{ color: category.color }} />
-                    {category.name}
-                  </div>
-
-                  <div className="text-sm font-medium text-slate-700">
-                    <span className="font-bold text-slate-900">{job.testers}</span>
-                  </div>
-
-                  <div>
-                    <span className="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                    <span className="shrink-0 inline-flex rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-green-700">
                       {job.status}
                     </span>
                   </div>
 
-                  <div className="text-sm font-medium text-slate-700">
+                  {/* Desktop Only - Title */}
+                  <div className="hidden min-w-0 items-center gap-3 md:flex">
+                    {job.logoUrl ? (
+                      <img src={job.logoUrl} alt={job.name} className="h-10 w-10 shrink-0 rounded-xl object-cover border border-slate-100" />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 font-bold">
+                        {job.name.charAt(0)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 truncate">{job.name}</div>
+                      <div className="text-xs text-slate-500 truncate">{job.type}</div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Only - Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 rounded-2xl bg-slate-50 p-3 md:hidden">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Category</div>
+                      <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                        <CategoryIcon className="h-3.5 w-3.5 shrink-0" style={{ color: category.color }} />
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Testers</div>
+                      <div className="mt-1 text-xs font-bold text-slate-900">{job.testers}</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Submissions</div>
+                      <div className="mt-1 text-xs font-bold text-slate-900">{job.submissions}</div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Only - Category */}
+                  <div className="hidden items-center gap-1.5 text-xs font-semibold text-slate-700 md:flex">
+                    <CategoryIcon className="h-4 w-4 shrink-0" style={{ color: category.color }} />
+                    <span className="truncate">{category.name}</span>
+                  </div>
+
+                  {/* Desktop Only - Testers */}
+                  <div className="hidden text-sm font-medium text-slate-700 md:block">
+                    <span className="font-bold text-slate-900">{job.testers}</span>
+                  </div>
+
+                  {/* Desktop Only - Status */}
+                  <div className="hidden md:block">
+                    <span className="inline-flex shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                      {job.status}
+                    </span>
+                  </div>
+
+                  {/* Desktop Only - Submissions */}
+                  <div className="hidden text-sm font-medium text-slate-700 md:block">
                     {job.submissions}
                   </div>
 
-                  <div className="flex items-center gap-2 text-right">
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-2 md:flex md:w-auto md:justify-end">
                     <Link
                       to={`/developer/applications?job=${job.id}`}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                      className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
                     >
                       Applications
                     </Link>
                     <Link
                       to={`/developer/reports?job=${job.id}`}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                      className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
                     >
                       Reports
                     </Link>

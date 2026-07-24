@@ -378,7 +378,7 @@ export default function SquashTesterJobBoard() {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-up">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Available Test Jobs</h1>
@@ -441,7 +441,7 @@ export default function SquashTesterJobBoard() {
             {/* Job Cards */}
             <div className="space-y-4">
               {paginatedJobs.map((job) => (
-                <div key={job.name} className="apple-bento-card p-5">
+                <div key={job.name} className="apple-bento-card p-5 min-w-0">
                   {/* Top row: logo + title + category + action */}
                   <div className="flex items-start gap-3.5">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-base font-extrabold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
@@ -508,7 +508,7 @@ export default function SquashTesterJobBoard() {
                   )}
 
                   {/* Pay + CTA row */}
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
                     <div>
                       <div className="text-xl font-extrabold text-slate-900">{job.pay}</div>
                       <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{job.testers} · {job.time}</div>

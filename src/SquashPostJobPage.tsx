@@ -1,16 +1,9 @@
 import {
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
-  ClipboardList,
-  CreditCard,
-  FileText,
   Image as ImageIcon,
-  Home,
   Lock,
-  Menu,
   RotateCcw,
-  Search,
   Shield,
   SlidersHorizontal,
   Upload,
@@ -20,8 +13,6 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
-import DeveloperHeaderNav from './components/DeveloperHeaderNav';
-import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
@@ -474,13 +465,6 @@ export default function SquashPostJobPage() {
       checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
     );
   };
-
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { label: 'Post a Job', icon: ClipboardList, href: '/post-job', active: true },
-    { label: 'Reports', icon: FileText, href: '/report-details' },
-    { label: 'Billing', icon: CreditCard, href: '/billing' },
-  ];
 
   const steps = [
     'App Details',

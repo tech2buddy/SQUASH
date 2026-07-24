@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   BadgeCheck,
-  Bell,
   BriefcaseBusiness,
   ChevronDown,
   CircleHelp,
@@ -9,18 +8,13 @@ import {
   Clock3,
   CreditCard,
   Download,
-  FileText,
-  Home,
   Landmark,
-  Menu,
   Receipt,
-  Search,
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
 import type { LucideIcon } from 'lucide-react';
@@ -201,7 +195,6 @@ function paymentTone(status: ActivePayment['status']) {
 
 export default function SquashDeveloperBillingPage() {
   const { session } = useAuth();
-  const developerName = session?.name || 'Dev Studio';
   const isRealAccount = true;
   const [liveJobs, setLiveJobs] = useState<DeveloperJob[]>([]);
   const [billingError, setBillingError] = useState('');
@@ -330,13 +323,6 @@ export default function SquashDeveloperBillingPage() {
           status: job.status === 'cancelled' ? 'Cancelled' : job.status === 'completed' ? 'Paid Out' : 'Completed',
         }))
     : history;
-
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
-    { label: 'Reports', icon: FileText, href: '/report-details' },
-    { label: 'Billing', icon: CreditCard, active: true, href: '/billing' },
-  ];
 
   if (true && isLoadingData) {
     return (

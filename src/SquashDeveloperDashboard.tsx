@@ -6,28 +6,18 @@ import {
   ChevronDown,
   Clock3,
   CircleDollarSign,
-  ClipboardList,
-  CreditCard,
-  FileText,
-  Home,
   Info,
-  LifeBuoy,
-  Menu,
   MessageSquareText,
   MoreHorizontal,
-  Search,
   TrendingUp,
   UserCircle2,
   Users,
-  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import DeveloperHeaderNav from './components/DeveloperHeaderNav';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashCertified from './components/SquashCertified';
 import SquashScore from './components/SquashScore';
-import MobileTabBar from './components/MobileTabBar';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
 import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, getDeveloperSubmittedReports, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob, type DeveloperSubmissionReview } from './lib/jobApi';
@@ -64,7 +54,6 @@ export default function SquashDeveloperDashboard() {
   const [databaseApplications, setDatabaseApplications] = useState<DeveloperApplication[]>([]);
   const [databaseReports, setDatabaseReports] = useState<DeveloperSubmissionReview[]>([]);
   const [dashboardSummary, setDashboardSummary] = useState<DeveloperDashboardSummary | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [jobsError, setJobsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -242,13 +231,6 @@ export default function SquashDeveloperDashboard() {
         })),
       ]
     : activity;
-
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/dashboard', active: true },
-    { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
-    { label: 'Reports', icon: FileText, href: '/report-details' },
-    { label: 'Billing', icon: CreditCard, href: '/billing' },
-  ];
 
   const getStatusClasses = (status: string) => {
     if (status === 'In Progress') return 'bg-green-100 text-green-700';

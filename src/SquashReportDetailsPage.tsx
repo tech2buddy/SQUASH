@@ -1,16 +1,11 @@
 import {
   ClipboardList,
-  CreditCard,
   Download,
-  FileText,
-  Home,
-  Menu,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
 import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
-import MobileTabBar from './components/MobileTabBar';
 import { useAuth } from './auth';
 import {
   getDeveloperSubmittedReports,
@@ -32,7 +27,6 @@ function formatDateTime(value: string | null) {
 
 export default function SquashReportDetailsPage() {
   const { session } = useAuth();
-  const developerName = session?.name || 'Developer';
   const params = new URLSearchParams(window.location.search);
   const submissionId = params.get('submission');
   const jobId = params.get('job');

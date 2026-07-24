@@ -1,17 +1,12 @@
 import {
   CheckCircle2,
-  ClipboardList,
-  CreditCard,
   FileText,
-  Home,
   MapPin,
   UserCircle2,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import DeveloperHeaderNav from './components/DeveloperHeaderNav';
-import MobileTabBar from './components/MobileTabBar';
 import TesterBadge from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
@@ -25,13 +20,6 @@ import {
   type DeveloperSubmissionReview,
 } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
-
-type NavItem = {
-  label: string;
-  href: string;
-  icon: ComponentType<{ className?: string }>;
-  active?: boolean;
-};
 
 function DeveloperShell({
   title,

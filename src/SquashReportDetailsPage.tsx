@@ -155,91 +155,9 @@ export default function SquashReportDetailsPage() {
   };
   const overallScore = getOverallScore(scores);
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { label: 'Post a Job', icon: ClipboardList, href: '/post-job' },
-    { label: 'Reports', icon: FileText, href: '/report-details', active: true },
-    { label: 'Billing', icon: CreditCard, href: '/billing' },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        {/* Sidebar */}
-        <aside className="hidden border-r border-slate-200 bg-white lg:block">
-          <div className="flex h-full flex-col justify-between p-6">
-            <div className="space-y-8">
-              <Link to="/" className="flex items-center gap-3">
-                <img
-                  src="/squash-logo.png"
-                  alt="SQUASH logo"
-                  className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-sm"
-                />
-                <div>
-                  <div className="text-xl font-black tracking-tight text-slate-900">SQUASH</div>
-                  <div className="text-xs text-slate-500">Developer Portal</div>
-                </div>
-              </Link>
-
-              <nav className="space-y-1.5">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.label}
-                      to={item.href}
-                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                        item.active
-                          ? 'bg-green-600 text-white shadow-sm'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Account</div>
-              <div className="mt-2 text-sm font-bold text-slate-900">{developerName}</div>
-              <Link to="/logout" className="mt-2 inline-block text-xs font-semibold text-red-600 hover:underline">
-                Sign out
-              </Link>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex flex-col min-w-0">
-          <header className="border-b border-slate-200 bg-white">
-            <div className="px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Link to="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
-                    <Menu className="h-5 w-5" />
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <Link to="/developer/submissions" className="text-xs font-semibold text-slate-500 hover:text-slate-900">
-                      Submissions
-                    </Link>
-                    <span className="text-slate-300">/</span>
-                    <span className="text-xs font-bold text-slate-900">Report Details</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Link to="/developer/submissions" className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    All Reports
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    <div>
+      <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
             {loadingReport ? (
               <div className="flex min-h-[400px] items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-600">
                 Loading report details...
@@ -476,8 +394,6 @@ export default function SquashReportDetailsPage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       <RetestRequestModal
         open={retestOpen}
@@ -487,7 +403,6 @@ export default function SquashReportDetailsPage() {
         initialUrl={realReport?.jobPlatform || ''}
         onSubmit={handleRetestSubmit}
       />
-      <MobileTabBar role={session?.role === 'tester' ? 'tester' : 'developer'} />
     </div>
   );
 }

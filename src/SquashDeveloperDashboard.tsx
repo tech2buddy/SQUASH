@@ -325,127 +325,8 @@ export default function SquashDeveloperDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      {/* Mobile Nav Drawer */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className="relative w-full max-w-xs bg-white p-6 shadow-2xl animate-in slide-in-from-left">
-            <button onClick={() => setIsMobileMenuOpen(false)} className="absolute right-4 top-4 rounded-xl p-2 text-slate-500 hover:bg-slate-100">
-              <X className="h-6 w-6" />
-            </button>
-            <div className="flex items-center gap-3 mb-8">
-              <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-xl" />
-              <span className="text-xl font-black">SQUASH</span>
-            </div>
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <a href={item.href} key={item.label} className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </a>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-      )}
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
-            />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  to={item.href}
-                  key={item.label}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="border-t border-slate-200 p-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Quick Actions</div>
-              <div className="mt-4 space-y-3">
-                <a href="/post-job" className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center font-semibold text-white hover:bg-green-700">
-                  Post a New Job
-                </a>
-                <a href="/report-details" className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50">
-                  View Reports
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                  <LifeBuoy className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="font-bold text-slate-900">Need Help?</div>
-                  <div className="text-sm text-slate-500">Visit our Help Center for support.</div>
-                </div>
-              </div>
-              <a href="/help-center" className="mt-4 inline-block text-sm font-semibold text-green-700">Go to Help Center -&gt;</a>
-            </div>
-          </div>
-        </aside>
-
-        <main className="min-w-0 pb-24 lg:pb-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setIsMobileMenuOpen(true)} className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition">
-                    <Menu className="h-5 w-5" />
-                  </button>
-                  <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
-                    <Search className="h-4 w-4 text-slate-400" />
-                    <input
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                      placeholder="Search jobs, testers, reports..."
-                    />
-                  </div>
-                </div>
-
-                <DeveloperHeaderNav />
-              </div>
-
-              <div className="flex items-center justify-between gap-4 md:hidden">
-                <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                    placeholder="Search jobs, testers, reports..."
-                  />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+    <div>
+      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h1 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">Welcome back, {developerFirstName}!</h1>
@@ -726,14 +607,14 @@ export default function SquashDeveloperDashboard() {
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                   <h2 className="text-base font-bold text-slate-900">Recent Submissions</h2>
-                  <a href="/developer/submissions" className="text-xs font-semibold text-green-700">View all &rarr;</a>
+                  <Link to="/developer/submissions" className="text-xs font-semibold text-green-700 hover:underline">View all &rarr;</Link>
                 </div>
                 <div className="space-y-1 p-3">
                   {liveApplications.length > 0 ? (
                     liveApplications.map((application) => (
-                      <a
+                      <Link
                         key={`${application.app}-${application.tester}-${application.time}`}
-                        href="/developer/submissions"
+                        to="/developer/submissions"
                         className="flex items-center justify-between gap-3 rounded-2xl border border-green-100 bg-green-50/50 px-3 py-3 transition hover:border-green-200 hover:bg-green-50"
                       >
                         <div className="min-w-0">
@@ -749,7 +630,7 @@ export default function SquashDeveloperDashboard() {
                         <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold capitalize text-amber-700 ring-1 ring-amber-100">
                           {application.status}
                         </span>
-                      </a>
+                      </Link>
                     ))
                   ) : true ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
@@ -973,9 +854,6 @@ export default function SquashDeveloperDashboard() {
               </div>
             ) : null}
           </div>
-        </main>
-      </div>
-      <MobileTabBar role="developer" />
       <RetestRequestModal
         open={Boolean(retestTarget)}
         onClose={() => setRetestTarget(null)}

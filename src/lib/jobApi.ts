@@ -309,6 +309,7 @@ export async function applyToJob(jobId: string, testerId: string, note = ''): Pr
 
 export type DeveloperApplication = JobApplication & {
   jobTitle: string;
+  jobLogoUrl?: string | null;
   jobPlatform: string;
   jobCategory: string;
   jobPackageKey: JobPackageKey;
@@ -379,6 +380,7 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
     return {
       ...mapApplication(application),
       jobTitle: job?.title || 'Unknown job',
+      jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
       jobPackageKey: job?.packageKey || 'starter',
@@ -702,6 +704,7 @@ export type DeveloperSubmissionReview = {
   submittedAt: string | null;
   createdAt: string;
   jobTitle: string;
+  jobLogoUrl?: string | null;
   jobPlatform: string;
   jobCategory: string;
   testerName: string;
@@ -782,7 +785,8 @@ export async function getDeveloperSubmittedReports(developerId: string): Promise
       summary: submission.summary,
       submittedAt: submission.submitted_at,
       createdAt: submission.created_at,
-      jobTitle: job?.title || 'Submitted test',
+      jobTitle: job?.title || 'Submitted test report',
+      jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
       testerName: profile?.full_name || 'Tester',

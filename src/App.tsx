@@ -45,9 +45,12 @@ import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
 import {
   SquashDeveloperActivityPage,
   SquashDeveloperJobsPage,
+  SquashDeveloperApplicationsPage,
+  SquashDeveloperReportsPage,
   SquashDeveloperSubmissionsPage,
   SquashReportAttachmentsPage,
 } from './SquashDeveloperViewsPage';
+import DeveloperLayout from './components/DeveloperLayout';
 import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
 
 function ProtectedRoute({
@@ -319,75 +322,27 @@ export default function App() {
         }
       />
 
+      {/* Protected Developer Routes wrapped in Master DeveloperLayout */}
       <Route
-        path="/dashboard"
         element={
           <ProtectedRoute allowedRole="developer">
-            <SquashDeveloperDashboard />
+            <DeveloperLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/post-job"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashPostJobPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/report-details"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashReportDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/billing"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashDeveloperBillingPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/developer/jobs"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashDeveloperJobsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/developer/submissions"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashDeveloperSubmissionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/developer/activity"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashDeveloperActivityPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/report-details/attachments"
-        element={
-          <ProtectedRoute allowedRole="developer">
-            <SquashReportAttachmentsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/billing/payment-methods"
-        element={
-          <ProtectedRoute allowedRole="developer">
+      >
+        <Route path="/dashboard" element={<SquashDeveloperDashboard />} />
+        <Route path="/post-job" element={<SquashPostJobPage />} />
+        <Route path="/report-details" element={<SquashReportDetailsPage />} />
+        <Route path="/billing" element={<SquashDeveloperBillingPage />} />
+        <Route path="/developer/jobs" element={<SquashDeveloperJobsPage />} />
+        <Route path="/developer/applications" element={<SquashDeveloperApplicationsPage />} />
+        <Route path="/developer/submissions" element={<SquashDeveloperSubmissionsPage />} />
+        <Route path="/developer/reports" element={<SquashDeveloperReportsPage />} />
+        <Route path="/developer/activity" element={<SquashDeveloperActivityPage />} />
+        <Route path="/report-details/attachments" element={<SquashReportAttachmentsPage />} />
+        <Route
+          path="/billing/payment-methods"
+          element={
             <SquashUtilityPage
               role="developer"
               eyebrow="Billing setup"
@@ -404,9 +359,9 @@ export default function App() {
                 { label: 'Post a Job', href: '/post-job' },
               ]}
             />
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
+      </Route>
 
       <Route
         path="/tester/dashboard"

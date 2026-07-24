@@ -347,110 +347,7 @@ export default function SquashDeveloperBillingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[240px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
-            />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex w-full items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="ml-3">{item.label}</span>
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="border-t border-slate-200 p-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-bold text-slate-900">Quick Actions</div>
-              <div className="mt-4 space-y-3">
-                <a
-                  href="/post-job"
-                  className="block w-full rounded-2xl bg-green-600 px-4 py-3 text-center font-semibold text-white hover:bg-green-700"
-                >
-                  Post a New Job
-                </a>
-                <a
-                  href="/developer/submissions"
-                  className="block w-full rounded-2xl border border-green-600 px-4 py-3 text-center font-semibold text-green-700 hover:bg-green-50"
-                >
-                  Review Submissions
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                  <CircleHelp className="h-5 w-5 text-slate-500" />
-                </div>
-                <div>
-                  <div className="font-bold text-slate-900">Need Help?</div>
-                  <div className="text-sm text-slate-500">Visit our Help Center for support.</div>
-                </div>
-              </div>
-              <a href="/help-center" className="mt-4 inline-block text-sm font-semibold text-green-700">
-                Go to Help Center -&gt;
-              </a>
-            </div>
-          </div>
-        </aside>
-
-        <main className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                <a href="/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
-                  <Menu className="h-5 w-5" />
-                </a>
-                <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[320px] lg:min-w-[420px]">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                    placeholder="Search transactions, jobs, invoices..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 sm:gap-4">
-                <a href="/report-details" className="relative rounded-full border border-slate-200 p-2.5 text-slate-600">
-                  <Bell className="h-5 w-5" />
-                </a>
-                <a href="/dashboard" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                    D
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-bold text-slate-900">{developerName}</div>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
-                </a>
-              </div>
-            </div>
-          </header>
-
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div>
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold tracking-wide text-green-700">
@@ -923,10 +820,6 @@ export default function SquashDeveloperBillingPage() {
                 </div>
               </div>
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="developer" />
     </div>
   );
 }

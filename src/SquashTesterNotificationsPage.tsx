@@ -5,17 +5,12 @@ import {
   CircleDollarSign,
   ClipboardList,
   FileText,
-  Home,
-  Menu,
-  Search,
-  Settings,
   ShieldCheck,
-  UserCircle2,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import TesterHeaderNav from './components/TesterHeaderNav';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
-import MobileTabBar from './components/MobileTabBar';
+
+
+
 import { useAuth } from './auth';
 import {
   getUserNotifications,
@@ -56,7 +51,7 @@ function typeIcon(type: AppNotification['type']) {
 
 export default function SquashTesterNotificationsPage() {
   const { session } = useAuth();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
   const userId = session?.userId || 'tester_guest';
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [filter, setFilter] = useState<FilterType>('All');
@@ -91,15 +86,7 @@ export default function SquashTesterNotificationsPage() {
     };
   }, [userId]);
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
-    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
-    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
+  
 
   const unreadCount = notifications.filter((item) => item.status === 'unread').length;
   const filteredNotifications = useMemo(
@@ -126,47 +113,7 @@ export default function SquashTesterNotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
-            <img src="/squash-logo.png" alt="SQUASH logo" className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm" />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
-          </div>
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a key={item.href} href={item.href} className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-        </aside>
-
-        <main className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden hover:bg-slate-50 transition"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search notifications..." />
-                </div>
-              </div>
-              <TesterHeaderNav />
-            </div>
-          </header>
-
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
@@ -274,11 +221,6 @@ export default function SquashTesterNotificationsPage() {
                 )}
               </div>
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/notifications" />
     </div>
   );
 }

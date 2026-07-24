@@ -1,33 +1,25 @@
 import {
   BadgeCheck,
   Banknote,
-  BriefcaseBusiness,
   CheckCircle2,
   ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
   Clock3,
   CreditCard,
-  Home,
-  Menu,
   Phone,
-  Search,
-  Settings,
   ShieldCheck,
   Smartphone,
-  UserCircle2,
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import TesterHeaderNav from './components/TesterHeaderNav';
-import MobileTabBar from './components/MobileTabBar';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
+
+
+
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
   const isRealAccount = true;
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary | null>(null);
   const [earningsError, setEarningsError] = useState('');
@@ -112,15 +104,7 @@ export default function SquashTesterEarningsPage() {
   };
 
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
-    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
-    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings', active: true },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
+  
 
   if (true && isLoadingData) {
     return (
@@ -226,81 +210,7 @@ export default function SquashTesterEarningsPage() {
   const monthlyDots = monthlyPoints.split(' ').map((point) => point.split(',').map(Number));
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
-      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        {/* Apple Translucent Left Sidebar */}
-        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
-            />
-            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-1.5 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
-                    item.active
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="p-4 pt-0">
-            <div className="apple-bento-card p-5">
-              <div className="flex items-center gap-2 font-bold text-slate-900">
-                <ShieldCheck className="h-4.5 w-4.5 text-green-600" />
-                Secure payouts
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-medium">
-                Approved tester earnings are paid directly to your selected method.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Earnings Content */}
-        <main className="min-w-0 pb-24 lg:pb-12">
-          {/* Apple Translucent Top Header */}
-          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                    placeholder="Search earnings, payouts, reports..."
-                  />
-                </div>
-              </div>
-
-              <TesterHeaderNav />
-            </div>
-          </header>
-
-          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+    <div className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
               <div>
                 <span className="inline-flex rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
@@ -612,11 +522,6 @@ export default function SquashTesterEarningsPage() {
                 </a>
               </div>
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/earnings" />
     </div>
   );
 }

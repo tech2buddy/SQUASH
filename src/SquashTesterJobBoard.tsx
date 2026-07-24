@@ -1,23 +1,14 @@
 import {
-  BriefcaseBusiness,
   ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
-  Gift,
-  Home,
-  Menu,
-  Search,
-  Settings,
   SlidersHorizontal,
   Star,
-  UserCircle2,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
-import MobileTabBar from './components/MobileTabBar';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
-import TesterHeaderNav from './components/TesterHeaderNav';
+
+
+
 import {
   TEST_CATEGORIES,
   getCategoryById,
@@ -53,7 +44,7 @@ type TesterJobCard = {
 
 export default function SquashTesterJobBoard() {
   const { session } = useAuth();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('All Jobs');
@@ -80,15 +71,7 @@ export default function SquashTesterJobBoard() {
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
   const JOBS_PER_PAGE = 6;
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
-    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs', active: true },
-    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
+  
 
   const tabs = [
     { label: 'All Jobs', count: databaseJobs.length, active: true },
@@ -377,116 +360,9 @@ export default function SquashTesterJobBoard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
-      
-      <div className="grid min-h-screen lg:grid-cols-[270px_1fr_280px]">
-        {/* Apple Translucent Left Sidebar */}
-        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
-            />
-            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-1.5 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
-                    item.active
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-4 p-4 pt-0">
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Your Progress</div>
-              <div className="mt-4 flex justify-center">
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-[8px] border-green-500/15">
-                  <div className="absolute inset-0 rotate-[20deg] rounded-full border-[8px] border-transparent border-r-green-500 border-t-green-500" />
-                  <div className="text-center">
-                    <div className="text-xl font-extrabold text-slate-900">78%</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 text-center font-bold text-slate-900">Level 3</div>
-              <div className="text-center text-xs font-semibold text-slate-500">Quality Tester</div>
-              <a href="/tester/profile" className="mt-4 block text-center text-xs font-bold text-green-700 hover:underline">
-                View Profile →
-              </a>
-            </div>
-
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Love testing?</div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                Refer a friend and earn R100 when they complete a test.
-              </p>
-              <a href="/tester/referrals" className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-green-700 hover:underline">
-                <Gift className="h-4 w-4" /> Refer Now →
-              </a>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Jobs Feed */}
-        <main className="min-w-0 pb-24 lg:pb-12">
-          {/* Apple Translucent Top Header */}
-          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
-            <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsMobileDrawerOpen(true)}
-                    className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
-                  <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                    <Search className="h-4 w-4 text-slate-400" />
-                    <input
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                      placeholder="Search jobs, apps, or developers..."
-                    />
-                  </div>
-                </div>
-
-                <TesterHeaderNav />
-              </div>
-
-              <div className="flex items-center gap-3 md:hidden">
-                <div className="flex w-full items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                    placeholder="Search jobs, apps, or developers..."
-                  />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-up">
+    <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-up">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Available Test Jobs</h1>
                 <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
@@ -690,9 +566,8 @@ export default function SquashTesterJobBoard() {
               </div>
             </div>
           </div>
-        </main>
 
-        <aside className="hidden border-l border-slate-200 bg-white p-5 xl:sticky xl:top-0 xl:block xl:h-screen xl:overflow-y-auto">
+        <div className="space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-xl font-bold text-slate-900">Filters</div>
@@ -844,11 +719,8 @@ export default function SquashTesterJobBoard() {
             </div>
             <a href="/tester/leaderboard" className="mt-4 inline-block text-sm font-semibold text-green-700">View Leaderboard -&gt;</a>
           </div>
-        </aside>
+        </div>
       </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester-jobs" />
-    </div>
   );
 }
 

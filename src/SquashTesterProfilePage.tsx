@@ -1,28 +1,21 @@
 import {
   BadgeCheck,
-  BriefcaseBusiness,
-  CircleDollarSign,
   ClipboardList,
   Clock3,
-  Home,
   Languages,
   Mail,
   MapPin,
-  Menu,
   Phone,
-  Search,
-  Settings,
   ShieldCheck,
   Smartphone,
   Star,
-  UserCircle2,
   Wifi,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import MobileTabBar from './components/MobileTabBar';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
+
+
 import SpecializationChecklist from './components/SpecializationChecklist';
-import TesterHeaderNav from './components/TesterHeaderNav';
+
 import TesterBadge from './components/TesterBadge';
 import { getSpecializationLabel, hasSaLanguageTag } from './components/testerSpecializations';
 import { useAuth } from './auth';
@@ -30,7 +23,7 @@ import { getTesterProfile, getTesterSpecializations, replaceTesterSpecialization
 
 export default function SquashTesterProfilePage() {
   const { session } = useAuth();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
   const [profileDetails, setProfileDetails] = useState<TesterPublicProfile | null>(null);
   const [profileError, setProfileError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>(() => {
@@ -86,15 +79,7 @@ export default function SquashTesterProfilePage() {
     [specializations],
   );
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
-    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
-    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile', active: true },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
+  
 
   const isRealAccount = true;
   const testerName = profileDetails?.fullName || session?.name || 'Tester';
@@ -114,74 +99,7 @@ export default function SquashTesterProfilePage() {
       ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        {/* Apple Translucent Left Sidebar */}
-        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
-            <img src="/squash-logo.png" alt="SQUASH logo" className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm" />
-            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
-          </div>
-          <nav className="flex-1 space-y-1.5 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
-                    item.active
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="p-4 pt-0">
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Profile Strength</div>
-              <div className="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                <div className="h-full w-[82%] rounded-full bg-green-500 transition-all duration-500" />
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-slate-600 font-medium">
-                Add more device and language details to unlock better matched tests.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Profile Content */}
-        <main className="min-w-0 pb-24 lg:pb-12">
-          {/* Apple Translucent Top Header */}
-          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                    placeholder="Search jobs, reports, earnings..."
-                  />
-                </div>
-              </div>
-
-              <TesterHeaderNav />
-            </div>
-          </header>
-
-          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+    <div className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
               <div>
                 <span className="inline-flex rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
@@ -203,8 +121,7 @@ export default function SquashTesterProfilePage() {
                   href="/tester/settings"
                   className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect"
                 >
-                  Account Settings
-                </a>
+                  Account </a>
               </div>
             </div>
 
@@ -406,11 +323,6 @@ export default function SquashTesterProfilePage() {
                 </div>
               </div>
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/profile" />
     </div>
   );
 }

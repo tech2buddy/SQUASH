@@ -51,6 +51,7 @@ import {
   SquashReportAttachmentsPage,
 } from './SquashDeveloperViewsPage';
 import DeveloperLayout from './components/DeveloperLayout';
+import TesterLayout from './components/TesterLayout';
 import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
 
 function ProtectedRoute({
@@ -363,107 +364,34 @@ export default function App() {
         />
       </Route>
 
+      {/* Protected Tester Routes wrapped in Master TesterLayout */}
       <Route
-        path="/tester/dashboard"
         element={
           <ProtectedRoute allowedRole="tester">
-            <SquashTesterDashboardPage />
+            <TesterLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/tester-jobs"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterJobBoard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/job-board"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterJobBoard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/active-test"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterMyTestsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/my-tests"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterMyTestsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/test-lab"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashActiveTestScreen />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/profile"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/earnings"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterEarningsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/payments"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterEarningsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/reports"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterReportsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/submissions"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterReportsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/settings"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/tester/menu"
-        element={
-          <ProtectedRoute allowedRole="tester">
+      >
+        <Route path="/tester/dashboard" element={<SquashTesterDashboardPage />} />
+        <Route path="/tester-jobs" element={<SquashTesterJobBoard />} />
+        <Route path="/job-board" element={<SquashTesterJobBoard />} />
+        <Route path="/active-test" element={<SquashTesterMyTestsPage />} />
+        <Route path="/tester/my-tests" element={<SquashTesterMyTestsPage />} />
+        <Route path="/test-lab" element={<SquashActiveTestScreen />} />
+        <Route path="/tester/profile" element={<SquashTesterProfilePage />} />
+        <Route path="/tester/earnings" element={<SquashTesterEarningsPage />} />
+        <Route path="/tester/payments" element={<SquashTesterEarningsPage />} />
+        <Route path="/tester/reports" element={<SquashTesterReportsPage />} />
+        <Route path="/tester/submissions" element={<SquashTesterReportsPage />} />
+        <Route path="/tester/settings" element={<SquashTesterSettingsPage />} />
+        <Route path="/tester/notifications" element={<SquashTesterNotificationsPage />} />
+        <Route path="/tester/payout-method" element={<SquashTesterPayoutMethodPage />} />
+        <Route path="/tester/leaderboard" element={<SquashTesterLeaderboardPage />} />
+        <Route path="/tester/level-benefits" element={<SquashTesterLevelBenefitsPage />} />
+        <Route path="/tester/referrals" element={<SquashTesterReferralsPage />} />
+        <Route
+          path="/tester/menu"
+          element={
             <SquashUtilityPage
               role="tester"
               eyebrow="Mobile navigation"
@@ -480,49 +408,10 @@ export default function App() {
                 { label: 'Settings', href: '/tester/settings' },
               ]}
             />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/notifications"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterNotificationsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/payout-method"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterPayoutMethodPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/leaderboard"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterLeaderboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/level-benefits"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterLevelBenefitsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tester/referrals"
-        element={
-          <ProtectedRoute allowedRole="tester">
-            <SquashTesterReferralsPage />
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
+      </Route>
+
       <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
   );

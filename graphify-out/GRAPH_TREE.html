@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>/ — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>/ — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"/","total_count":497,"children":[{"name":"package.json","total_count":30,"children":[{"name":"@supabase/supabase-js","total_count":1,"children":[]},{"name":"@supabase/supabase-js","total_count":1,"children":[]},{"name":"@types/react","total_count":1,"children":[]},{"name":"@types/react","total_count":1,"children":[]},{"name":"@types/react-dom","total_count":1,"children":[]},{"name":"@types/react-dom","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"dependencies","total_count":1,"children":[]},{"name":"dev","total_count":1,"children":[]},{"name":"devDependencies","total_count":1,"children":[]},{"name":"lucide-react","total_count":1,"children":[]},{"name":"lucide-react","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"preview","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"react","total_count":1,"children":[]},{"name":"react","total_count":1,"children":[]},{"name":"react-dom","total_count":1,"children":[]},{"name":"react-dom","total_count":1,"children":[]},{"name":"react-icons","total_count":1,"children":[]},{"name":"react-icons","total_count":1,"children":[]},{"name":"react-router-dom","total_count":1,"children":[]},{"name":"react-router-dom","total_count":1,"children":[]},{"name":"scripts","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]},{"name":"vite","total_count":1,"children":[]},{"name":"vite","total_count":1,"children":[]}]},{"name":"src","total_count":386,"children":[{"name":"App.tsx","total_count":4,"children":[{"name":"App()","total_count":1,"children":[]},{"name":"LogoutRoute()","total_count":1,"children":[]},{"name":"ProtectedRoute()","total_count":1,"children":[]},{"name":"routeBelongsToRole()","total_count":1,"children":[]}]},{"name":"auth.tsx","total_count":18,"children":[{"name":"AuthContext","total_count":1,"children":[]},{"name":"AuthContextValue","total_count":1,"children":[]},{"name":"AuthProvider()","total_count":1,"children":[]},{"name":"AuthResult","total_count":1,"children":[]},{"name":"AuthSession","total_count":1,"children":[]},{"name":"defaultSessionPath()","total_count":1,"children":[]},{"name":"isSafeInternalPath()","total_count":1,"children":[]},{"name":"normalizeRoles()","total_count":1,"children":[]},{"name":"ProfileRow","total_count":1,"children":[]},{"name":"readAccountRoles()","total_count":1,"children":[]},{"name":"readProfileSession()","total_count":1,"children":[]},{"name":"resolvePostLoginPath()","total_count":1,"children":[]},{"name":"roleHomePath()","total_count":1,"children":[]},{"name":"routeRole()","total_count":1,"children":[]},{"name":"SupabaseProfileRole","total_count":1,"children":[]},{"name":"useAuth()","total_count":1,"children":[]},{"name":"UserRole","total_count":1,"children":[]},{"name":"WorkspaceRole","total_count":1,"children":[]}]},{"name":"BrandIcons.tsx","total_count":2,"children":[{"name":"GitHubIcon()","total_count":1,"children":[]},{"name":"GoogleIcon()","total_count":1,"children":[]}]},{"name":"components","total_count":76,"children":[{"name":"DeveloperHeaderNav.tsx","total_count":2,"children":[{"name":"DeveloperHeaderNav()","total_count":1,"children":[]},{"name":"formatRelativeTime()","total_count":1,"children":[]}]},{"name":"DeveloperLayout.tsx","total_count":2,"children":[{"name":"DeveloperLayout()","total_count":1,"children":[]},{"name":"NavItem","total_count":1,"children":[]}]},{"name":"FeaturedTesterCard.tsx","total_count":1,"children":[{"name":"FeaturedTesterCard()","total_count":1,"children":[]}]},{"name":"MobileTabBar.tsx","total_count":4,"children":[{"name":"DEVELOPER_TABS","total_count":1,"children":[]},{"name":"MobileTabBar()","total_count":1,"children":[]},{"name":"Tab","total_count":1,"children":[]},{"name":"TESTER_TABS","total_count":1,"children":[]}]},{"name":"RetestRequestModal.tsx","total_count":4,"children":[{"name":"getRetestPrice()","total_count":1,"children":[]},{"name":"Plan","total_count":1,"children":[]},{"name":"RetestRequestModal()","total_count":1,"children":[]},{"name":"RetestSubmission","total_count":1,"children":[]}]},{"name":"SpecializationChecklist.tsx","total_count":1,"children":[{"name":"SpecializationChecklist()","total_count":1,"children":[]}]},{"name":"SquashCertified.tsx","total_count":3,"children":[{"name":"addMonths()","total_count":1,"children":[]},{"name":"isCertificationExpired()","total_count":1,"children":[]},{"name":"SquashCertified()","total_count":1,"children":[]}]},{"name":"SquashScore.tsx","total_count":6,"children":[{"name":"clampScore()","total_count":1,"children":[]},{"name":"getMeaning()","total_count":1,"children":[]},{"name":"getOverallScore()","total_count":1,"children":[]},{"name":"ScoreMeaning","total_count":1,"children":[]},{"name":"SquashScore()","total_count":1,"children":[]},{"name":"SquashScoreBreakdown","total_count":1,"children":[]}]},{"name":"testCategories.tsx","total_count":6,"children":[{"name":"getCategoryById()","total_count":1,"children":[]},{"name":"getCategoryByName()","total_count":1,"children":[]},{"name":"TEST_CATEGORIES","total_count":1,"children":[]},{"name":"TestCategory","total_count":1,"children":[]},{"name":"TestCategoryId","total_count":1,"children":[]},{"name":"TODO: Replace with Supabase query","total_count":1,"children":[]}]},{"name":"TesterBadge.tsx","total_count":4,"children":[{"name":"getTesterTier()","total_count":1,"children":[]},{"name":"TesterBadge()","total_count":1,"children":[]},{"name":"TesterTier","total_count":1,"children":[]},{"name":"TesterTierMeta","total_count":1,"children":[]}]},{"name":"TesterHeaderNav.tsx","total_count":2,"children":[{"name":"formatRelativeTime()","total_count":1,"children":[]},{"name":"TesterHeaderNav()","total_count":1,"children":[]}]},{"name":"TesterMobileDrawer.tsx","total_count":2,"children":[{"name":"Props","total_count":1,"children":[]},{"name":"TesterMobileDrawer()","total_count":1,"children":[]}]},{"name":"testerSpecializations.ts","total_count":7,"children":[{"name":"getSpecializationIds()","total_count":1,"children":[]},{"name":"getSpecializationLabel()","total_count":1,"children":[]},{"name":"hasSaLanguageTag()","total_count":1,"children":[]},{"name":"SPECIALIZATION_GROUPS","total_count":1,"children":[]},{"name":"SpecializationGroup","total_count":1,"children":[]},{"name":"SpecializationOption","total_count":1,"children":[]},{"name":"TODO: Replace with Supabase query","total_count":1,"children":[]}]},{"name":"testLab.tsx","total_count":32,"children":[{"name":"ActiveTest","total_count":1,"children":[]},{"name":"canEmbedPreview()","total_count":1,"children":[]},{"name":"createTasksFromText()","total_count":1,"children":[]},{"name":"CurrentTaskCard()","total_count":1,"children":[]},{"name":"DeviceInfoCard()","total_count":1,"children":[]},{"name":"DeviceMetadata","total_count":1,"children":[]},{"name":"FinalFeedbackForm()","total_count":1,"children":[]},{"name":"getDeviceMetadata()","total_count":1,"children":[]},{"name":"getWorkflowConfig()","total_count":1,"children":[]},{"name":"inferTestType()","total_count":1,"children":[]},{"name":"IssueFrequency","total_count":1,"children":[]},{"name":"IssueReport","total_count":1,"children":[]},{"name":"IssueReportForm()","total_count":1,"children":[]},{"name":"IssueSeverity","total_count":1,"children":[]},{"name":"NoteComposer()","total_count":1,"children":[]},{"name":"NoteType","total_count":1,"children":[]},{"name":"ProductPreview()","total_count":1,"children":[]},{"name":"QuickNotes()","total_count":1,"children":[]},{"name":"SessionTimeline()","total_count":1,"children":[]},{"name":"SubmissionChecklist()","total_count":1,"children":[]},{"name":"TaskFeedback()","total_count":1,"children":[]},{"name":"TaskStatus","total_count":1,"children":[]},{"name":"TestBriefPanel()","total_count":1,"children":[]},{"name":"TesterNote","total_count":1,"children":[]},{"name":"TesterWorkspace()","total_count":1,"children":[]},{"name":"TestSessionHeader()","total_count":1,"children":[]},{"name":"TestTask","total_count":1,"children":[]},{"name":"TestType","total_count":1,"children":[]},{"name":"TimelineEvent","total_count":1,"children":[]},{"name":"WORKFLOW_CONFIG","total_count":1,"children":[]},{"name":"WorkflowConfig","total_count":1,"children":[]},{"name":"WorkspaceTab","total_count":1,"children":[]}]}]},{"name":"counter.ts","total_count":1,"children":[{"name":"setupCounter()","total_count":1,"children":[]}]},{"name":"lib","total_count":108,"children":[{"name":"adminApi.ts","total_count":25,"children":[{"name":"AdminActivityLog","total_count":1,"children":[]},{"name":"AdminJobRow","total_count":1,"children":[]},{"name":"AdminOverview","total_count":1,"children":[]},{"name":"AdminPayoutRow","total_count":1,"children":[]},{"name":"AdminPolicyRow","total_count":1,"children":[]},{"name":"AdminReportRow","total_count":1,"children":[]},{"name":"AdminUserDetail","total_count":1,"children":[]},{"name":"AdminUserRow","total_count":1,"children":[]},{"name":"countTable()","total_count":1,"children":[]},{"name":"getAdminActivityLogs()","total_count":1,"children":[]},{"name":"getAdminJobDetail()","total_count":1,"children":[]},{"name":"getAdminJobs()","total_count":1,"children":[]},{"name":"getAdminOverview()","total_count":1,"children":[]},{"name":"getAdminPayoutQueue()","total_count":1,"children":[]},{"name":"getAdminPolicies()","total_count":1,"children":[]},{"name":"getAdminReports()","total_count":1,"children":[]},{"name":"getAdminUserDetail()","total_count":1,"children":[]},{"name":"getAdminUsers()","total_count":1,"children":[]},{"name":"getRecentAdminUsers()","total_count":1,"children":[]},{"name":"isMissingTableError()","total_count":1,"children":[]},{"name":"saveAdminPolicy()","total_count":1,"children":[]},{"name":"sendAdminUserNotification()","total_count":1,"children":[]},{"name":"updateAdminPayoutStatus()","total_count":1,"children":[]},{"name":"updateAdminUserAccountStatus()","total_count":1,"children":[]},{"name":"writeAdminActivity()","total_count":1,"children":[]}]},{"name":"jobApi.ts","total_count":42,"children":[{"name":"applyToJob()","total_count":1,"children":[]},{"name":"BugReportDetail","total_count":1,"children":[]},{"name":"createDeveloperJob()","total_count":1,"children":[]},{"name":"DeveloperApplication","total_count":1,"children":[]},{"name":"DeveloperDashboardSummary","total_count":1,"children":[]},{"name":"DeveloperJob","total_count":1,"children":[]},{"name":"DeveloperJobInput","total_count":1,"children":[]},{"name":"DeveloperSubmissionDetails","total_count":1,"children":[]},{"name":"DeveloperSubmissionReview","total_count":1,"children":[]},{"name":"formatSupabaseError()","total_count":1,"children":[]},{"name":"getActiveJobs()","total_count":1,"children":[]},{"name":"getDeveloperApplications()","total_count":1,"children":[]},{"name":"getDeveloperDashboardSummary()","total_count":1,"children":[]},{"name":"getDeveloperJobs()","total_count":1,"children":[]},{"name":"getDeveloperSubmittedReports()","total_count":1,"children":[]},{"name":"getSubmissionDetails()","total_count":1,"children":[]},{"name":"getTesterApplications()","total_count":1,"children":[]},{"name":"getTesterAssignmentById()","total_count":1,"children":[]},{"name":"getTesterAssignments()","total_count":1,"children":[]},{"name":"getTesterEarningsSummary()","total_count":1,"children":[]},{"name":"getTesterPrimaryAssignment()","total_count":1,"children":[]},{"name":"getTesterReportSubmissions()","total_count":1,"children":[]},{"name":"JobApplication","total_count":1,"children":[]},{"name":"JobInsert","total_count":1,"children":[]},{"name":"JobPackageKey","total_count":1,"children":[]},{"name":"JobUpdate","total_count":1,"children":[]},{"name":"mapApplication()","total_count":1,"children":[]},{"name":"mapAssignment()","total_count":1,"children":[]},{"name":"mapJob()","total_count":1,"children":[]},{"name":"requestTesterPayout()","total_count":1,"children":[]},{"name":"reviewDeveloperApplication()","total_count":1,"children":[]},{"name":"reviewSubmittedReport()","total_count":1,"children":[]},{"name":"saveAssignmentBugReport()","total_count":1,"children":[]},{"name":"submitAssignmentReport()","total_count":1,"children":[]},{"name":"SubmitAssignmentReportInput","total_count":1,"children":[]},{"name":"TesterAssignment","total_count":1,"children":[]},{"name":"testerEarningForPackage()","total_count":1,"children":[]},{"name":"TesterEarningItem","total_count":1,"children":[]},{"name":"TesterEarningsSummary","total_count":1,"children":[]},{"name":"TesterPayoutRequest","total_count":1,"children":[]},{"name":"TesterReportSubmission","total_count":1,"children":[]},{"name":"updateDeveloperJob()","total_count":1,"children":[]}]},{"name":"notificationApi.ts","total_count":12,"children":[{"name":"AppNotification","total_count":1,"children":[]},{"name":"backfillDeveloperNotifications()","total_count":1,"children":[]},{"name":"createNotification()","total_count":1,"children":[]},{"name":"getLocalNotifications()","total_count":1,"children":[]},{"name":"getUnreadNotificationCount()","total_count":1,"children":[]},{"name":"getUserNotifications()","total_count":1,"children":[]},{"name":"markAllNotificationsAsRead()","total_count":1,"children":[]},{"name":"markNotificationAsRead()","total_count":1,"children":[]},{"name":"NotificationType","total_count":1,"children":[]},{"name":"requestBrowserPushPermission()","total_count":1,"children":[]},{"name":"saveLocalNotifications()","total_count":1,"children":[]},{"name":"triggerBrowserPushNotification()","total_count":1,"children":[]}]},{"name":"policyApi.ts","total_count":2,"children":[{"name":"getPublishedPolicyBySlug()","total_count":1,"children":[]},{"name":"PublicPolicy","total_count":1,"children":[]}]},{"name":"profileApi.ts","total_count":14,"children":[{"name":"DeveloperProfileSettings","total_count":1,"children":[]},{"name":"getDeveloperProfile()","total_count":1,"children":[]},{"name":"getTesterLeaderboard()","total_count":1,"children":[]},{"name":"getTesterProfile()","total_count":1,"children":[]},{"name":"getTesterReferrals()","total_count":1,"children":[]},{"name":"getTesterSpecializations()","total_count":1,"children":[]},{"name":"replaceTesterSpecializations()","total_count":1,"children":[]},{"name":"TesterLeaderboardEntry","total_count":1,"children":[]},{"name":"TesterProfileSettings","total_count":1,"children":[]},{"name":"TesterPublicProfile","total_count":1,"children":[]},{"name":"TesterReferralEntry","total_count":1,"children":[]},{"name":"TODO: Implement actual referrals table in Supabase","total_count":1,"children":[]},{"name":"updateDeveloperProfile()","total_count":1,"children":[]},{"name":"updateTesterProfile()","total_count":1,"children":[]}]},{"name":"supabase.ts","total_count":4,"children":[{"name":"isSupabaseConfigured","total_count":1,"children":[]},{"name":"supabase","total_count":1,"children":[]},{"name":"supabaseAnonKey","total_count":1,"children":[]},{"name":"supabaseUrl","total_count":1,"children":[]}]},{"name":"supabase.types.ts","total_count":9,"children":[{"name":"ApplicationStatus","total_count":1,"children":[]},{"name":"AssignmentStatus","total_count":1,"children":[]},{"name":"Database","total_count":1,"children":[]},{"name":"JobStatus","total_count":1,"children":[]},{"name":"Json","total_count":1,"children":[]},{"name":"PayoutStatus","total_count":1,"children":[]},{"name":"PolicyStatus","total_count":1,"children":[]},{"name":"SubmissionStatus","total_count":1,"children":[]},{"name":"UserRole","total_count":1,"children":[]}]}]},{"name":"PublicFooter.tsx","total_count":2,"children":[{"name":"footerLinks","total_count":1,"children":[]},{"name":"PublicFooter()","total_count":1,"children":[]}]},{"name":"PublicHeader.tsx","total_count":2,"children":[{"name":"PublicHeader()","total_count":1,"children":[]},{"name":"PublicPage","total_count":1,"children":[]}]},{"name":"SquashAboutPage.tsx","total_count":2,"children":[{"name":"IconItem","total_count":1,"children":[]},{"name":"SquashAboutPage()","total_count":1,"children":[]}]},{"name":"SquashActiveTestScreen.tsx","total_count":4,"children":[{"name":"DEFAULT_TYPE_CONFIG","total_count":1,"children":[]},{"name":"SquashActiveTestScreen()","total_count":1,"children":[]},{"name":"TESTING_TYPE_CONFIG","total_count":1,"children":[]},{"name":"TestingTypeConfig","total_count":1,"children":[]}]},{"name":"SquashAdminDashboardPage.tsx","total_count":11,"children":[{"name":"emptyOverview","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRand()","total_count":1,"children":[]},{"name":"JobFilter","total_count":1,"children":[]},{"name":"jobStatusClass()","total_count":1,"children":[]},{"name":"payoutStatusClass()","total_count":1,"children":[]},{"name":"RecentUser","total_count":1,"children":[]},{"name":"ReportFilter","total_count":1,"children":[]},{"name":"reportStatusClass()","total_count":1,"children":[]},{"name":"SquashAdminDashboardPage()","total_count":1,"children":[]},{"name":"UserFilter","total_count":1,"children":[]}]},{"name":"SquashAdminJobDetailPage.tsx","total_count":4,"children":[{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRand()","total_count":1,"children":[]},{"name":"SquashAdminJobDetailPage()","total_count":1,"children":[]},{"name":"statusClass()","total_count":1,"children":[]}]},{"name":"SquashAdminJobsPage.tsx","total_count":7,"children":[{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRand()","total_count":1,"children":[]},{"name":"JobFilter","total_count":1,"children":[]},{"name":"packageClass()","total_count":1,"children":[]},{"name":"PackageFilter","total_count":1,"children":[]},{"name":"SquashAdminJobsPage()","total_count":1,"children":[]},{"name":"statusClass()","total_count":1,"children":[]}]},{"name":"SquashAdminPayoutsPage.tsx","total_count":5,"children":[{"name":"emptyOverview","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRand()","total_count":1,"children":[]},{"name":"payoutStatusClass()","total_count":1,"children":[]},{"name":"SquashAdminPayoutsPage()","total_count":1,"children":[]}]},{"name":"SquashAdminReportsPage.tsx","total_count":3,"children":[{"name":"formatDate()","total_count":1,"children":[]},{"name":"SquashAdminReportsPage()","total_count":1,"children":[]},{"name":"statusClass()","total_count":1,"children":[]}]},{"name":"SquashAdminSecurityPage.tsx","total_count":9,"children":[{"name":"checklist","total_count":1,"children":[]},{"name":"emptyDraft()","total_count":1,"children":[]},{"name":"emptyOverview","total_count":1,"children":[]},{"name":"fallbackPolicies","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRand()","total_count":1,"children":[]},{"name":"policyDestination()","total_count":1,"children":[]},{"name":"SquashAdminSecurityPage()","total_count":1,"children":[]},{"name":"statusClasses()","total_count":1,"children":[]}]},{"name":"SquashAdminUserProfilePage.tsx","total_count":3,"children":[{"name":"formatDate()","total_count":1,"children":[]},{"name":"SquashAdminUserProfilePage()","total_count":1,"children":[]},{"name":"statusClass()","total_count":1,"children":[]}]},{"name":"SquashAdminUsersPage.tsx","total_count":4,"children":[{"name":"formatDate()","total_count":1,"children":[]},{"name":"roleClass()","total_count":1,"children":[]},{"name":"SquashAdminUsersPage()","total_count":1,"children":[]},{"name":"UserFilter","total_count":1,"children":[]}]},{"name":"SquashApiDocsPage.tsx","total_count":1,"children":[{"name":"SquashApiDocsPage()","total_count":1,"children":[]}]},{"name":"SquashAuthCallbackPage.tsx","total_count":1,"children":[{"name":"SquashAuthCallbackPage()","total_count":1,"children":[]}]},{"name":"SquashCertificatePage.tsx","total_count":4,"children":[{"name":"CertificateRecord","total_count":1,"children":[]},{"name":"CERTIFICATES","total_count":1,"children":[]},{"name":"SquashCertificatePage()","total_count":1,"children":[]},{"name":"TODO: Replace with Supabase query","total_count":1,"children":[]}]},{"name":"SquashChooseWorkspacePage.tsx","total_count":1,"children":[{"name":"SquashChooseWorkspacePage()","total_count":1,"children":[]}]},{"name":"SquashDeveloperBillingPage.tsx","total_count":14,"children":[{"name":"ActivePayment","total_count":1,"children":[]},{"name":"activePayments","total_count":1,"children":[]},{"name":"EscrowStep","total_count":1,"children":[]},{"name":"escrowSteps","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRands()","total_count":1,"children":[]},{"name":"history","total_count":1,"children":[]},{"name":"HistoryItem","total_count":1,"children":[]},{"name":"jobPaymentStatus()","total_count":1,"children":[]},{"name":"paymentTone()","total_count":1,"children":[]},{"name":"SquashDeveloperBillingPage()","total_count":1,"children":[]},{"name":"statusClasses()","total_count":1,"children":[]},{"name":"SummaryCard","total_count":1,"children":[]},{"name":"summaryCards","total_count":1,"children":[]}]},{"name":"SquashDeveloperDashboard.tsx","total_count":3,"children":[{"name":"DashboardJob","total_count":1,"children":[]},{"name":"SquashDeveloperDashboard()","total_count":1,"children":[]},{"name":"TODO: Replace with Supabase query","total_count":1,"children":[]}]},{"name":"SquashDeveloperViewsPage.tsx","total_count":7,"children":[{"name":"DeveloperShell()","total_count":1,"children":[]},{"name":"SquashDeveloperActivityPage()","total_count":1,"children":[]},{"name":"SquashDeveloperApplicationsPage()","total_count":1,"children":[]},{"name":"SquashDeveloperJobsPage()","total_count":1,"children":[]},{"name":"SquashDeveloperReportsPage()","total_count":1,"children":[]},{"name":"SquashDeveloperSubmissionsPage()","total_count":1,"children":[]},{"name":"SquashReportAttachmentsPage()","total_count":1,"children":[]}]},{"name":"SquashForDevelopersPage.tsx","total_count":2,"children":[{"name":"ItemWithIcon","total_count":1,"children":[]},{"name":"SquashForDevelopersPage()","total_count":1,"children":[]}]},{"name":"SquashForTestersPage.tsx","total_count":2,"children":[{"name":"ItemWithIcon","total_count":1,"children":[]},{"name":"SquashForTestersPage()","total_count":1,"children":[]}]},{"name":"SquashHomepage.tsx","total_count":1,"children":[{"name":"SquashHomepage()","total_count":1,"children":[]}]},{"name":"SquashInfoPage.tsx","total_count":1,"children":[{"name":"SquashInfoPage()","total_count":1,"children":[]}]},{"name":"SquashLiveSessionPage.tsx","total_count":1,"children":[{"name":"SquashLiveSessionPage()","total_count":1,"children":[]}]},{"name":"SquashLoginPage.tsx","total_count":1,"children":[{"name":"SquashLoginPage()","total_count":1,"children":[]}]},{"name":"SquashNotFoundPage.tsx","total_count":1,"children":[{"name":"SquashNotFoundPage()","total_count":1,"children":[]}]},{"name":"SquashOnboardingPage.tsx","total_count":2,"children":[{"name":"isOnboardingRole()","total_count":1,"children":[]},{"name":"SquashOnboardingPage()","total_count":1,"children":[]}]},{"name":"SquashPostJobPage.tsx","total_count":3,"children":[{"name":"defaultTestTasks","total_count":1,"children":[]},{"name":"parseTaskList()","total_count":1,"children":[]},{"name":"SquashPostJobPage()","total_count":1,"children":[]}]},{"name":"SquashPricingPage.tsx","total_count":2,"children":[{"name":"SquashPricingPage()","total_count":1,"children":[]},{"name":"TrustItem","total_count":1,"children":[]}]},{"name":"SquashReportDetailsPage.tsx","total_count":2,"children":[{"name":"formatDateTime()","total_count":1,"children":[]},{"name":"SquashReportDetailsPage()","total_count":1,"children":[]}]},{"name":"SquashResetPasswordPage.tsx","total_count":1,"children":[{"name":"SquashResetPasswordPage()","total_count":1,"children":[]}]},{"name":"SquashSignupPage.tsx","total_count":1,"children":[{"name":"SquashSignupPage()","total_count":1,"children":[]}]},{"name":"SquashTesterDashboardPage.tsx","total_count":13,"children":[{"name":"Difficulty","total_count":1,"children":[]},{"name":"earningsMax","total_count":1,"children":[]},{"name":"earningsPoints","total_count":1,"children":[]},{"name":"emptyEarningsSummary","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRands()","total_count":1,"children":[]},{"name":"getDifficultyClasses()","total_count":1,"children":[]},{"name":"getStatusClasses()","total_count":1,"children":[]},{"name":"monthlyEarnings","total_count":1,"children":[]},{"name":"monthlyLabels","total_count":1,"children":[]},{"name":"SquashTesterDashboardPage()","total_count":1,"children":[]},{"name":"StatCard","total_count":1,"children":[]},{"name":"TransactionStatus","total_count":1,"children":[]}]},{"name":"SquashTesterEarningsPage.tsx","total_count":1,"children":[{"name":"SquashTesterEarningsPage()","total_count":1,"children":[]}]},{"name":"SquashTesterJobBoard.tsx","total_count":3,"children":[{"name":"Severity","total_count":1,"children":[]},{"name":"SquashTesterJobBoard()","total_count":1,"children":[]},{"name":"TesterJobCard","total_count":1,"children":[]}]},{"name":"SquashTesterLeaderboardPage.tsx","total_count":3,"children":[{"name":"rankIcon()","total_count":1,"children":[]},{"name":"rankTone()","total_count":1,"children":[]},{"name":"SquashTesterLeaderboardPage()","total_count":1,"children":[]}]},{"name":"SquashTesterLevelBenefitsPage.tsx","total_count":4,"children":[{"name":"nextTierCopy()","total_count":1,"children":[]},{"name":"SquashTesterLevelBenefitsPage()","total_count":1,"children":[]},{"name":"TierCard","total_count":1,"children":[]},{"name":"tierCards","total_count":1,"children":[]}]},{"name":"SquashTesterMyTestsPage.tsx","total_count":9,"children":[{"name":"AssignmentWithLab","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"LabTab","total_count":1,"children":[]},{"name":"navItems","total_count":1,"children":[]},{"name":"parseTasks()","total_count":1,"children":[]},{"name":"readLabState()","total_count":1,"children":[]},{"name":"SquashTesterMyTestsPage()","total_count":1,"children":[]},{"name":"statusClass()","total_count":1,"children":[]},{"name":"statusLabel()","total_count":1,"children":[]}]},{"name":"SquashTesterNotificationsPage.tsx","total_count":5,"children":[{"name":"FilterType","total_count":1,"children":[]},{"name":"formatRelativeTime()","total_count":1,"children":[]},{"name":"SquashTesterNotificationsPage()","total_count":1,"children":[]},{"name":"typeIcon()","total_count":1,"children":[]},{"name":"typeTone()","total_count":1,"children":[]}]},{"name":"SquashTesterPayoutMethodPage.tsx","total_count":5,"children":[{"name":"defaultPayoutState","total_count":1,"children":[]},{"name":"PayoutMethod","total_count":1,"children":[]},{"name":"readPayoutState()","total_count":1,"children":[]},{"name":"SafePayoutState","total_count":1,"children":[]},{"name":"SquashTesterPayoutMethodPage()","total_count":1,"children":[]}]},{"name":"SquashTesterProfilePage.tsx","total_count":1,"children":[{"name":"SquashTesterProfilePage()","total_count":1,"children":[]}]},{"name":"SquashTesterReferralsPage.tsx","total_count":2,"children":[{"name":"SquashTesterReferralsPage()","total_count":1,"children":[]},{"name":"statusClasses()","total_count":1,"children":[]}]},{"name":"SquashTesterReportsPage.tsx","total_count":6,"children":[{"name":"emptyReports","total_count":1,"children":[]},{"name":"formatDate()","total_count":1,"children":[]},{"name":"formatRands()","total_count":1,"children":[]},{"name":"ReportStatus","total_count":1,"children":[]},{"name":"SquashTesterReportsPage()","total_count":1,"children":[]},{"name":"toReportStatus()","total_count":1,"children":[]}]},{"name":"SquashTesterSettingsPage.tsx","total_count":6,"children":[{"name":"defaultSettings","total_count":1,"children":[]},{"name":"readSettings()","total_count":1,"children":[]},{"name":"SettingsState","total_count":1,"children":[]},{"name":"SquashTesterSettingsPage()","total_count":1,"children":[]},{"name":"ToggleKey","total_count":1,"children":[]},{"name":"ToggleSwitch()","total_count":1,"children":[]}]},{"name":"SquashUtilityPage.tsx","total_count":5,"children":[{"name":"roleNav","total_count":1,"children":[]},{"name":"SquashUtilityPage()","total_count":1,"children":[]},{"name":"SquashUtilityPageProps","total_count":1,"children":[]},{"name":"UtilityAction","total_count":1,"children":[]},{"name":"utilityIcons","total_count":1,"children":[]}]},{"name":"TrustedLogosRow.tsx","total_count":6,"children":[{"name":"brands","total_count":1,"children":[]},{"name":"GoogleMark()","total_count":1,"children":[]},{"name":"LogoIcon","total_count":1,"children":[]},{"name":"MicrosoftLogo()","total_count":1,"children":[]},{"name":"StripeMark()","total_count":1,"children":[]},{"name":"TrustedLogosRow()","total_count":1,"children":[]}]},{"name":"main.tsx","total_count":1,"children":[]}]},{"name":"supabase","total_count":53,"children":[{"name":"phase10_multi_role_rls_fix.sql","total_count":2,"children":[{"name":"public.is_developer()","total_count":1,"children":[]},{"name":"public.is_tester()","total_count":1,"children":[]}]},{"name":"phase12_tester_growth_notifications_referrals.sql","total_count":2,"children":[{"name":"public.notifications","total_count":1,"children":[]},{"name":"public.payout_methods","total_count":1,"children":[]}]},{"name":"phase13_test_lab_workflows.sql","total_count":3,"children":[{"name":"public.jobs","total_count":1,"children":[]},{"name":"public.test_lab_sessions","total_count":1,"children":[]},{"name":"test_lab_sessions_set_updated_at","total_count":1,"children":[]}]},{"name":"phase14_cron_jobs.sql","total_count":5,"children":[{"name":"public.create_notification_internal()","total_count":1,"children":[]},{"name":"public.cron_deadline_reminders()","total_count":1,"children":[]},{"name":"public.cron_expire_overdue_assignments()","total_count":1,"children":[]},{"name":"public.cron_job_match_alerts()","total_count":1,"children":[]},{"name":"public.cron_level_up_checker()","total_count":1,"children":[]}]},{"name":"phase2_auth.sql","total_count":2,"children":[{"name":"on_auth_user_created","total_count":1,"children":[]},{"name":"public.handle_new_auth_user()","total_count":1,"children":[]}]},{"name":"phase3_multi_role.sql","total_count":2,"children":[{"name":"public.add_developer_workspace()","total_count":1,"children":[]},{"name":"public.add_tester_workspace()","total_count":1,"children":[]}]},{"name":"phase6_admin_payout_audit.sql","total_count":2,"children":[{"name":"public.admin_activity_logs","total_count":1,"children":[]},{"name":"public.payouts","total_count":1,"children":[]}]},{"name":"phase7_admin_user_controls.sql","total_count":1,"children":[{"name":"public.profiles","total_count":1,"children":[]}]},{"name":"phase8_policy_center.sql","total_count":2,"children":[{"name":"policies_set_updated_at","total_count":1,"children":[]},{"name":"public.policies","total_count":1,"children":[]}]},{"name":"phase9_job_logos.sql","total_count":1,"children":[{"name":"public.jobs","total_count":1,"children":[]}]},{"name":"schema.sql","total_count":27,"children":[{"name":"bug_reports_set_updated_at","total_count":1,"children":[]},{"name":"developer_profiles_set_updated_at","total_count":1,"children":[]},{"name":"job_applications_set_updated_at","total_count":1,"children":[]},{"name":"jobs_set_updated_at","total_count":1,"children":[]},{"name":"payout_methods_set_updated_at","total_count":1,"children":[]},{"name":"payouts_set_updated_at","total_count":1,"children":[]},{"name":"profiles_set_updated_at","total_count":1,"children":[]},{"name":"public.bug_reports","total_count":1,"children":[]},{"name":"public.current_user_role()","total_count":1,"children":[]},{"name":"public.developer_profiles","total_count":1,"children":[]},{"name":"public.is_admin()","total_count":1,"children":[]},{"name":"public.is_developer()","total_count":1,"children":[]},{"name":"public.is_tester()","total_count":1,"children":[]},{"name":"public.job_applications","total_count":1,"children":[]},{"name":"public.jobs","total_count":1,"children":[]},{"name":"public.notifications","total_count":1,"children":[]},{"name":"public.payout_methods","total_count":1,"children":[]},{"name":"public.payouts","total_count":1,"children":[]},{"name":"public.profiles","total_count":1,"children":[]},{"name":"public.set_updated_at()","total_count":1,"children":[]},{"name":"public.test_assignments","total_count":1,"children":[]},{"name":"public.test_submissions","total_count":1,"children":[]},{"name":"public.tester_profiles","total_count":1,"children":[]},{"name":"public.tester_specializations","total_count":1,"children":[]},{"name":"test_assignments_set_updated_at","total_count":1,"children":[]},{"name":"test_submissions_set_updated_at","total_count":1,"children":[]},{"name":"tester_profiles_set_updated_at","total_count":1,"children":[]}]},{"name":"phase11_assignment_acceptance_integrity.sql","total_count":1,"children":[]},{"name":"phase2_grants.sql","total_count":1,"children":[]},{"name":"phase4_developer_applicant_review.sql","total_count":1,"children":[]},{"name":"phase5_tester_payout_requests.sql","total_count":1,"children":[]}]},{"name":"tsconfig.json","total_count":21,"children":[{"name":"allowImportingTsExtensions","total_count":1,"children":[]},{"name":"compilerOptions","total_count":1,"children":[]},{"name":"DOM","total_count":1,"children":[]},{"name":"erasableSyntaxOnly","total_count":1,"children":[]},{"name":"ES2023","total_count":1,"children":[]},{"name":"include","total_count":1,"children":[]},{"name":"jsx","total_count":1,"children":[]},{"name":"lib","total_count":1,"children":[]},{"name":"module","total_count":1,"children":[]},{"name":"moduleDetection","total_count":1,"children":[]},{"name":"moduleResolution","total_count":1,"children":[]},{"name":"noEmit","total_count":1,"children":[]},{"name":"noFallthroughCasesInSwitch","total_count":1,"children":[]},{"name":"noUnusedLocals","total_count":1,"children":[]},{"name":"noUnusedParameters","total_count":1,"children":[]},{"name":"skipLibCheck","total_count":1,"children":[]},{"name":"src","total_count":1,"children":[]},{"name":"target","total_count":1,"children":[]},{"name":"types","total_count":1,"children":[]},{"name":"verbatimModuleSyntax","total_count":1,"children":[]},{"name":"vite/client","total_count":1,"children":[]}]},{"name":"vercel.json","total_count":5,"children":[{"name":"$schema","total_count":1,"children":[]},{"name":"buildCommand","total_count":1,"children":[]},{"name":"framework","total_count":1,"children":[]},{"name":"outputDirectory","total_count":1,"children":[]},{"name":"rewrites","total_count":1,"children":[]}]},{"name":"fix_jobs_page.ps1","total_count":1,"children":[]},{"name":"fix_jobs_page2.ps1","total_count":1,"children":[]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>

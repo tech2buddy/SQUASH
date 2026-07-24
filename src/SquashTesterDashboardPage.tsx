@@ -1,29 +1,18 @@
 import {
   BadgeCheck,
-  BriefcaseBusiness,
   ChevronDown,
-  CircleDollarSign,
   ClipboardList,
   Clock3,
   ContactRound,
-  Home,
   LineChart,
-  Menu,
-  Search,
-  Settings,
   ShieldCheck,
   Star,
-  UserCircle2,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import TesterHeaderNav from './components/TesterHeaderNav';
-import MobileTabBar from './components/MobileTabBar';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
+  } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import SquashScore from './components/SquashScore';
-import TesterBadge from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
-import { getSpecializationLabel } from './components/testerSpecializations';
+
 import { useAuth } from './auth';
 import { getTesterSpecializations, replaceTesterSpecializations } from './lib/profileApi';
 import {
@@ -97,7 +86,7 @@ export default function SquashTesterDashboardPage() {
   const { session } = useAuth();
   const testerName = session?.name || 'Alex Tester';
   const testerFirstName = testerName.split(' ')[0] || testerName;
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
 
   const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
   const [assignmentsError, setAssignmentsError] = useState('');
@@ -169,17 +158,14 @@ export default function SquashTesterDashboardPage() {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
       if (session?.userId && true) {
         replaceTesterSpecializations(session.userId, next).catch(() => {
-          // Keep the UI responsive; the Settings/Profile page can retry later.
+          // Keep the UI responsive; the /Profile page can retry later.
         });
       }
       return next;
     });
   };
 
-  const topProfileTags = useMemo(
-    () => specializations.slice(0, 3).map((id) => getSpecializationLabel(id)),
-    [specializations],
-  );
+  
 
   const isRealAccount = true;
   const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
@@ -273,6 +259,7 @@ export default function SquashTesterDashboardPage() {
       status: payout.status === 'paid' ? 'Paid' : 'Pending',
     })),
   ].slice(0, 6) as Array<{ date: string; type: string; description: string; amount: string; status: TransactionStatus }>;
+
   const dashboardCompletedTests = earningsSummary.earnings
     .filter((item) => item.status === 'approved' || item.status === 'paid')
     .slice(0, 3)
@@ -288,16 +275,6 @@ export default function SquashTesterDashboardPage() {
       },
     }));
 
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard', active: true },
-    { label: 'Available Jobs', icon: BriefcaseBusiness, href: '/tester-jobs' },
-    { label: 'My Tests', icon: ClipboardList, href: '/active-test' },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
-
   if (isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 text-center text-sm font-semibold text-slate-600">
@@ -310,108 +287,8 @@ export default function SquashTesterDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
-      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        {/* Apple-style Translucent Sidebar */}
-        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
-            />
-            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-1.5 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
-                    item.active
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-4 p-4 pt-0">
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Your Progress</div>
-              <div className="mt-4 flex justify-center">
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-[8px] border-green-500/15">
-                  <div className="absolute inset-0 rotate-[20deg] rounded-full border-[8px] border-transparent border-r-green-500 border-t-green-500" />
-                  <div className="text-center">
-                    <div className="text-xl font-extrabold text-slate-900">78%</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 flex justify-center">
-                <TesterBadge testsCompleted={24} rating={4.7} />
-              </div>
-              <div className="mt-1 text-center text-xs font-semibold text-slate-500">Skilled Tester</div>
-              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                {topProfileTags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <a href="/tester/profile" className="mt-4 block text-center text-xs font-bold text-green-700 hover:underline">
-                View Profile →
-              </a>
-            </div>
-
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Referral Bonus</div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                Invite a friend and earn R100 after their first completed test.
-              </p>
-              <a href="/tester/referrals" className="mt-3 block text-xs font-bold text-green-700 hover:underline">
-                Refer Now →
-              </a>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="min-w-0 pb-24 lg:pb-12">
-          {/* Apple-style Translucent Header */}
-          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileDrawerOpen(true)}
-                  className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                    placeholder="Search jobs, apps, companies..."
-                  />
-                </div>
-              </div>
-
-              <TesterHeaderNav />
-            </div>
-          </header>
-
-          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
-            {/* Hero Welcome Header */}
+    <div className="space-y-6">
+      {/* Hero Welcome Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-up">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
@@ -843,11 +720,6 @@ export default function SquashTesterDashboardPage() {
                 </a>
               </div>
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/tester/dashboard" />
     </div>
   );
 }

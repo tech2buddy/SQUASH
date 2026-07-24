@@ -402,44 +402,12 @@ export async function reviewDeveloperApplication(
 ): Promise<JobApplication> {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
-  const { data, error } = await supabase
-    .from('job_applications')
-    .update({ status })
-    .eq('id', application.id)
-    .select('*')
-    .single();
+  const { data, error } = await (supabase.rpc as any)('review_job_application', {
+    p_application_id: application.id,
+    p_status: status,
+  });
 
-  if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
-
-  if (status === 'accepted') {
-    const { data: existingAssignment, error: existingAssignmentError } = await supabase
-      .from('test_assignments')
-      .select('id,status')
-      .eq('job_id', application.jobId)
-      .eq('tester_id', application.testerId)
-      .maybeSingle();
-
-    if (existingAssignmentError) {
-      throw new Error(formatSupabaseError(existingAssignmentError, 'Unable to check this tester assignment right now.'));
-    }
-
-    const assignmentPayload = {
-      application_id: application.id,
-      status: existingAssignment?.status === 'approved' ? 'approved' : ('active' as AssignmentStatus),
-    };
-
-    const { error: assignmentError } = existingAssignment
-      ? await supabase.from('test_assignments').update(assignmentPayload).eq('id', existingAssignment.id)
-      : await supabase.from('test_assignments').insert({
-          job_id: application.jobId,
-          tester_id: application.testerId,
-          ...assignmentPayload,
-        });
-
-    if (assignmentError) {
-      throw new Error(formatSupabaseError(assignmentError, 'Application accepted, but the active test assignment could not be created.'));
-    }
-  }
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to review this application right now.'));
 
   if (data?.id) {
     (async () => {
@@ -643,36 +611,17 @@ export async function submitAssignmentReport(input: SubmitAssignmentReportInput)
     deviceCompatibility: 76,
   };
 
-  const { data, error } = await supabase
-    .from('test_submissions')
-    .upsert(
-      {
-        assignment_id: input.assignmentId,
-        tester_id: input.testerId,
-        job_id: input.jobId,
-        status: 'submitted',
-        summary: input.summary.trim() || 'Tester completed all assigned tasks and submitted feedback.',
-        usability_score: scores.usability,
-        performance_score: scores.performance,
-        onboarding_score: scores.onboarding,
-        bug_severity_score: scores.bugSeverity,
-        device_compatibility_score: scores.deviceCompatibility,
-        submitted_at: new Date().toISOString(),
-      },
-      { onConflict: 'assignment_id' },
-    )
-    .select('*')
-    .single();
+  const { data, error } = await (supabase.rpc as any)('submit_test_assignment', {
+    p_assignment_id: input.assignmentId,
+    p_summary: input.summary.trim() || 'Tester completed all assigned tasks and submitted feedback.',
+    p_usability: scores.usability,
+    p_performance: scores.performance,
+    p_onboarding: scores.onboarding,
+    p_bug_severity: scores.bugSeverity,
+    p_device_compatibility: scores.deviceCompatibility,
+  });
 
-  if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
-
-  const { error: assignmentError } = await supabase
-    .from('test_assignments')
-    .update({ status: 'submitted' })
-    .eq('id', input.assignmentId)
-    .eq('tester_id', input.testerId);
-
-  if (assignmentError) throw assignmentError;
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to submit this report right now.'));
 
   if (data?.id) {
     Promise.all([
@@ -825,25 +774,12 @@ export async function reviewSubmittedReport(input: {
 }) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
-  const { data, error } = await supabase
-    .from('test_submissions')
-    .update({ status: input.status, reviewed_at: new Date().toISOString() })
-    .eq('id', input.submissionId)
-    .select('*')
-    .single();
+  const { data, error } = await (supabase.rpc as any)('review_test_submission', {
+    p_submission_id: input.submissionId,
+    p_status: input.status,
+  });
 
-  if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
-
-  if (input.status === 'approved' || input.status === 'changes_requested' || input.status === 'rejected') {
-    const nextAssignmentStatus: AssignmentStatus =
-      input.status === 'approved' ? 'approved' : input.status === 'changes_requested' ? 'active' : 'submitted';
-
-    const { error: assignmentError } = await supabase
-      .from('test_assignments')
-      .update({ status: nextAssignmentStatus })
-      .eq('id', input.assignmentId);
-    if (assignmentError) throw assignmentError;
-  }
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to review this report right now.'));
 
   if (data?.id) {
     (async () => {
@@ -1003,21 +939,15 @@ export async function getTesterEarningsSummary(testerId: string): Promise<Tester
   };
 }
 
-export async function requestTesterPayout(testerId: string, amountZar: number) {
+export async function requestTesterPayout(_testerId: string, amountZar: number) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
   if (amountZar <= 0) throw new Error('No approved balance available for payout yet.');
 
-  const { data, error } = await supabase
-    .from('payouts')
-    .insert({
-      tester_id: testerId,
-      amount_zar: amountZar,
-      status: 'pending',
-    })
-    .select('*')
-    .single();
+  const { data, error } = await (supabase.rpc as any)('request_tester_payout', {
+    p_amount_zar: amountZar,
+  });
 
-  if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to request a payout right now.'));
   return data;
 }
 

@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 export async function sendEmail({
   to,
   subject,
@@ -15,11 +16,16 @@ export async function sendEmail({
     // In local development, we might need to point to the Vercel dev server port.
     const isDev = import.meta.env.DEV;
     const baseUrl = isDev ? 'http://localhost:3000' : '';
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('You must be signed in to send a notification email.');
+    }
     
     const response = await fetch(`${baseUrl}/api/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ to, subject, html, text }),
     });

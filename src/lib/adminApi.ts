@@ -213,42 +213,20 @@ export async function getAdminPayoutQueue(): Promise<AdminPayoutRow[]> {
 export async function updateAdminPayoutStatus(input: {
   payoutId: string;
   status: Extract<PayoutStatus, 'processing' | 'paid' | 'failed' | 'cancelled'>;
-  adminId: string;
+  _adminId: string;
   adminNote?: string;
   payoutReference?: string;
 }) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
-  const finalStatus = input.status === 'paid' || input.status === 'failed' || input.status === 'cancelled';
-
-  const { data, error } = await supabase
-    .from('payouts')
-    .update({
-      status: input.status,
-      admin_note: input.adminNote?.trim() || null,
-      payout_reference: input.payoutReference?.trim() || null,
-      processed_at: finalStatus ? new Date().toISOString() : null,
-    })
-    .eq('id', input.payoutId)
-    .select('*')
-    .single();
-
-  if (error) throw error;
-
-  const { error: auditError } = await supabase.from('admin_activity_logs').insert({
-    admin_id: input.adminId,
-    action: `payout_${input.status}`,
-    entity_type: 'payout',
-    entity_id: input.payoutId,
-    note: input.adminNote?.trim() || null,
-    metadata: {
-      payout_reference: input.payoutReference?.trim() || null,
-      amount_zar: data.amount_zar,
-      tester_id: data.tester_id,
-    },
+  const { data, error } = await (supabase.rpc as any)('admin_update_payout', {
+    p_payout_id: input.payoutId,
+    p_status: input.status,
+    p_note: input.adminNote?.trim() || null,
+    p_reference: input.payoutReference?.trim() || null,
   });
 
-  if (auditError) throw auditError;
+  if (error) throw error;
   return data;
 }
 
@@ -378,7 +356,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
 
 export async function sendAdminUserNotification(input: {
   userId: string;
-  adminId: string;
+  _adminId: string;
   title: string;
   body: string;
   linkPath?: string;
@@ -408,7 +386,7 @@ export async function sendAdminUserNotification(input: {
 
 export async function updateAdminUserAccountStatus(input: {
   userId: string;
-  adminId: string;
+  _adminId: string;
   status: AdminUserDetail['accountStatus'];
   note?: string;
 }) {
@@ -679,7 +657,7 @@ export async function getAdminPolicies(): Promise<AdminPolicyRow[]> {
 
 export async function saveAdminPolicy(input: {
   id?: string;
-  adminId: string;
+  _adminId: string;
   slug: string;
   title: string;
   content: string;

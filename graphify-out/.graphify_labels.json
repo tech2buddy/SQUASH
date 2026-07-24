@@ -19,8 +19,8 @@
   "17": "SquashOnboardingPage.tsx",
   "18": "testerSpecializations.ts",
   "19": "adminApi.ts",
-  "20": "SquashAdminPayoutsPage.tsx",
-  "21": "supabase.ts",
+  "20": "supabase.types.ts",
+  "21": "SquashAdminDashboardPage.tsx",
   "22": "SquashTesterNotificationsPage.tsx",
   "23": "phase15_user_settings.sql",
   "24": "send-email.ts",
@@ -44,10 +44,9 @@
   "42": "phase5_tester_payout_requests.sql",
   "43": "TesterLayout.tsx",
   "44": "SquashTesterProfilePage.tsx",
-  "45": "SquashAdminJobsPage.tsx",
-  "46": "SquashAdminUserProfilePage.tsx",
-  "47": "SquashDeveloperViewsPage.tsx",
-  "48": "SquashAdminJobDetailPage.tsx",
-  "49": "SquashAdminUsersPage.tsx",
-  "50": "SquashAdminReportsPage.tsx"
+  "45": "SquashAdminPayoutsPage.tsx",
+  "46": "SquashAdminJobsPage.tsx",
+  "47": "SquashAdminJobDetailPage.tsx",
+  "48": "SquashAdminUsersPage.tsx",
+  "49": "SquashAdminReportsPage.tsx"
 }

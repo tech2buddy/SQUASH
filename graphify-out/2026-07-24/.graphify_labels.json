@@ -18,6 +18,7 @@
   "16": "SquashTesterDashboardPage.tsx",
   "17": "SquashOnboardingPage.tsx",
   "18": "testerSpecializations.ts",
+  "19": "adminApi.ts",
   "22": "SquashTesterNotificationsPage.tsx",
   "23": "phase15_user_settings.sql",
   "24": "send-email.ts",

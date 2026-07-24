@@ -1,6 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { ApplicationStatus, AssignmentStatus, Database, JobStatus } from './supabase.types';
 import { createNotification } from './notificationApi';
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendSubmissionReviewedEmail } from './emailApi';
 
 export type JobPackageKey = 'starter' | 'growth' | 'pro' | 'enterprise';
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -461,6 +462,16 @@ export async function reviewDeveloperApplication(
             linkPath: '/tester-jobs',
           });
         }
+        
+        const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', application.testerId).maybeSingle();
+        if (profile?.email) {
+          if (status === 'accepted') {
+            await sendApplicationApprovedEmail(profile.email, profile.full_name || 'Tester', job?.title || 'a SQUASH testing job');
+          } else if (status === 'rejected') {
+            await sendApplicationRejectedEmail(profile.email, profile.full_name || 'Tester', job?.title || 'a SQUASH testing job');
+          }
+        }
+
       } catch (err) {
         console.error(err);
       }
@@ -864,6 +875,16 @@ export async function reviewSubmittedReport(input: {
               type: 'report',
               linkPath: '/active-test',
             });
+          }
+          
+          const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', assignment.tester_id).maybeSingle();
+          if (profile?.email) {
+            await sendSubmissionReviewedEmail(
+              profile.email,
+              profile.full_name || 'Tester',
+              job?.title || 'a SQUASH testing job',
+              input.status
+            );
           }
         }
       } catch (err) {

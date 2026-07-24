@@ -16,8 +16,14 @@
   "14": "workflows/graphify.md",
   "15": "SquashDeveloperBillingPage.tsx",
   "16": "SquashTesterDashboardPage.tsx",
+  "17": "SquashOnboardingPage.tsx",
   "18": "testerSpecializations.ts",
+  "19": "getTesterProfile",
   "20": "SquashAdminJobsPage.tsx",
+  "21": "profileApi.ts",
+  "22": "SquashTesterNotificationsPage.tsx",
+  "23": "phase15_user_settings.sql",
+  "24": "send-email.ts",
   "25": "phase14_cron_jobs.sql",
   "26": "vercel.json",
   "27": "phase13_test_lab_workflows.sql",
@@ -35,5 +41,7 @@
   "39": "phase11_assignment_acceptance_integrity.sql",
   "40": "phase2_grants.sql",
   "41": "phase4_developer_applicant_review.sql",
-  "42": "phase5_tester_payout_requests.sql"
+  "42": "phase5_tester_payout_requests.sql",
+  "43": "TesterLayout.tsx",
+  "44": "SquashTesterProfilePage.tsx"
 }

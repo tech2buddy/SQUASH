@@ -333,17 +333,21 @@ export default function SquashDeveloperBillingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6 md:space-y-8">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold tracking-wide text-green-700">
-                  <Landmark className="h-3.5 w-3.5" />
+                  <ShieldCheck className="h-4 w-4" />
                   PAYMENT CONTROL CENTER
                 </div>
-                <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Billing</h1>
-                <p className="mt-2 text-slate-600">Manage escrow, payout approvals, invoices, and spend visibility.</p>
+                <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Billing</h1>
+                <p className="mt-2 text-slate-600">
+                  Manage escrow, payout approvals, invoices, and spend visibility.
+                </p>
               </div>
-              <div className="text-sm font-semibold text-slate-500">Dashboard &gt; Billing</div>
+              <div className="hidden text-sm font-medium text-slate-500 md:block">
+                Dashboard &gt; Billing
+              </div>
             </div>
 
             {billingError ? (
@@ -359,11 +363,11 @@ export default function SquashDeveloperBillingPage() {
                   <div key={card.title} className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-2 sm:gap-4">
                       <div className="min-w-0">
-                        <div className="text-xs sm:text-base font-bold text-slate-900 truncate">
+                        <div className="text-xs sm:text-base font-bold text-slate-900">
                           {card.title}
                           {card.subtitle ? <span className="ml-1 text-slate-500 hidden sm:inline">{card.subtitle}</span> : null}
                         </div>
-                        <div className="mt-1.5 sm:mt-3 text-lg sm:text-3xl font-black text-slate-900 truncate">{card.value}</div>
+                        <div className="mt-1.5 sm:mt-3 text-lg sm:text-3xl font-black text-slate-900">{card.value}</div>
                         <div className="mt-1 sm:mt-3 text-[10px] sm:text-sm text-slate-600 hidden sm:block">{card.note}</div>
                         <div className="mt-1.5 sm:mt-3 inline-flex rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-xs font-semibold text-slate-600 truncate max-w-full">
                           {card.delta}
@@ -388,9 +392,15 @@ export default function SquashDeveloperBillingPage() {
                         Your funds stay protected in escrow until you approve completed work.
                       </p>
                     </div>
-                    <button className="flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                      All Status <ChevronDown className="h-4 w-4" />
-                    </button>
+                    <div className="relative shrink-0">
+                      <select className="appearance-none flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white pl-4 pr-10 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-100 cursor-pointer">
+                        <option>All Status</option>
+                        <option>In Progress</option>
+                        <option>Awaiting Approval</option>
+                        <option>Completed</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    </div>
                   </div>
 
                   {/* Mobile Compact List */}
@@ -500,9 +510,14 @@ export default function SquashDeveloperBillingPage() {
                 <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                   <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                     <h2 className="text-2xl font-bold text-slate-900">Transaction History</h2>
-                    <button className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                      This Year <ChevronDown className="h-4 w-4" />
-                    </button>
+                    <div className="relative shrink-0">
+                      <select className="appearance-none flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white pl-4 pr-10 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-100 cursor-pointer">
+                        <option>This Year</option>
+                        <option>Last Year</option>
+                        <option>All Time</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    </div>
                   </div>
 
                   {/* Mobile Compact List */}
@@ -584,7 +599,20 @@ export default function SquashDeveloperBillingPage() {
                     </table>
                   </div>
 
-                  <div className="px-6 py-4 text-center text-sm font-semibold text-slate-600">Show more</div>
+                  <button className="w-full px-6 py-4 text-center text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors rounded-b-3xl">Show more</button>
+                </div>
+
+                <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold text-slate-900">Awaiting Your Approval</h2>
+                  <p className="mt-3 text-slate-700">
+                    You have 2 jobs waiting for approval. Review submissions to release tester payouts.
+                  </p>
+                  <a
+                    href="/developer/submissions"
+                    className="mt-5 block w-full rounded-2xl bg-white px-5 py-3 text-center font-semibold text-slate-800 shadow-sm ring-1 ring-sky-200 hover:bg-slate-50"
+                  >
+                    Review &amp; Approve
+                  </a>
                 </div>
               </div>
 
@@ -643,9 +671,9 @@ export default function SquashDeveloperBillingPage() {
                     {isRealAccount ? 'Payment method connection will be linked when checkout goes live.' : 'Last charged: 12 May 2025 at 14:22'}
                   </div>
 
-                  <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
+                  <a href="/billing/payment-methods" className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
                     + Add New Card
-                  </button>
+                  </a>
                   <a href="/billing/payment-methods" className="mt-3 inline-block text-sm font-semibold text-sky-700">
                     Change or remove card
                   </a>
@@ -717,18 +745,6 @@ export default function SquashDeveloperBillingPage() {
                   </a>
                 </div>
 
-                <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Awaiting Your Approval</h2>
-                  <p className="mt-3 text-slate-700">
-                    You have 2 jobs waiting for approval. Review submissions to release tester payouts.
-                  </p>
-                  <a
-                    href="/developer/submissions"
-                    className="mt-5 block w-full rounded-2xl bg-white px-5 py-3 text-center font-semibold text-slate-800 shadow-sm ring-1 ring-sky-200 hover:bg-slate-50"
-                  >
-                    Review &amp; Approve
-                  </a>
-                </div>
               </div>
             </section>
 

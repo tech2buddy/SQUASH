@@ -105,9 +105,9 @@
     "semantic_hash": "85789e54f67481309a4610d8170f6951"
   },
   "src/SquashDeveloperBillingPage.tsx": {
-    "mtime": 1784889850.778393,
-    "ast_hash": "5a84fdc33a87162cb9f8695cc3172c4e",
-    "semantic_hash": "5a84fdc33a87162cb9f8695cc3172c4e"
+    "mtime": 1784919481.2338874,
+    "ast_hash": "e410155e983b29f6201e9f18c30a35cc",
+    "semantic_hash": ""
   },
   "src/SquashDeveloperDashboard.tsx": {
     "mtime": 1784889856.9653893,
@@ -155,9 +155,9 @@
     "semantic_hash": "717240c19aa7b39b55971f5fbfe936e1"
   },
   "src/SquashOnboardingPage.tsx": {
-    "mtime": 1784829116.1059198,
-    "ast_hash": "e028199dbfa29ce706a28d8bba98f3aa",
-    "semantic_hash": "e028199dbfa29ce706a28d8bba98f3aa"
+    "mtime": 1784918622.1016898,
+    "ast_hash": "6a5b11880ae968ba06479c089e1e530c",
+    "semantic_hash": ""
   },
   "src/SquashPostJobPage.tsx": {
     "mtime": 1784889747.6807187,
@@ -275,9 +275,9 @@
     "semantic_hash": "3ac6032cd6f7c6da3dc184ebb449ddd5"
   },
   "src/components/MobileTabBar.tsx": {
-    "mtime": 1784846161.3753657,
-    "ast_hash": "0731ac7b8f0f40c13ccab1201139fc0c",
-    "semantic_hash": "0731ac7b8f0f40c13ccab1201139fc0c"
+    "mtime": 1784918921.3930054,
+    "ast_hash": "c3fc39651b552e803a78324bd1d6eb0a",
+    "semantic_hash": ""
   },
   "src/components/RetestRequestModal.tsx": {
     "mtime": 1776992358.8911855,
@@ -355,8 +355,8 @@
     "semantic_hash": "2f622cff8121a0ea3e3b51f36ec63b33"
   },
   "src/lib/profileApi.ts": {
-    "mtime": 1784916497.3071716,
-    "ast_hash": "62dce12855fe6f822257bc4b96fd8ef7",
+    "mtime": 1784918606.7143226,
+    "ast_hash": "af26e83e6159060dd6fa19357fec57e9",
     "semantic_hash": ""
   },
   "src/lib/supabase.ts": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/SquashDeveloperSettingsPage.tsx": {
-    "mtime": 1784917669.6465394,
-    "ast_hash": "e104dc40ba0d36ecb28d7423dcda666c",
+    "mtime": 1784918481.8807466,
+    "ast_hash": "d0310f769d0d5df6553c5994e77b2776",
     "semantic_hash": ""
   },
   "src/lib/emailApi.ts": {
@@ -572,6 +572,11 @@
   "supabase/phase15_user_settings.sql": {
     "mtime": 1784913422.8527825,
     "ast_hash": "a5a3379079f8d6250af83e1a4c817f83",
+    "semantic_hash": ""
+  },
+  "supabase/phase16_developer_type.sql": {
+    "mtime": 1784918421.302122,
+    "ast_hash": "fad4ab66de77003fe032720900da73ea",
     "semantic_hash": ""
   }
 }

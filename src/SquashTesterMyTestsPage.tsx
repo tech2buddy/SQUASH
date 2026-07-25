@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { getTesterAssignments, type TesterAssignment } from './lib/jobApi';
+import { getTesterTestLabSessions, type TestLabSession } from './lib/testLabApi';
 
 type LabTab = 'all' | 'accepted' | 'in_progress' | 'submitted' | 'approved';
 
@@ -29,9 +30,21 @@ function parseTasks(raw: string | null | undefined) {
     .filter(Boolean);
 }
 
-function readLabState(assignment: TesterAssignment): AssignmentWithLab {
+function readLabState(assignment: TesterAssignment, labSession?: TestLabSession): AssignmentWithLab {
   const tasks = parseTasks(assignment.jobTasks);
   const totalTasks = Math.max(1, tasks.length || 1);
+
+  if (labSession) {
+    const completedTasks = Math.min(totalTasks, Math.round((labSession.progressPercent / 100) * totalTasks));
+    return {
+      ...assignment,
+      labStarted: labSession.status !== 'not_started',
+      progressPercent: labSession.progressPercent,
+      completedTasks,
+      totalTasks,
+      lastSavedAt: labSession.lastSavedAt,
+    };
+  }
   const started = window.localStorage.getItem(`squash_test_lab_started_${assignment.id}`);
   const saved = window.localStorage.getItem(`squash_active_test_progress_${assignment.id}`);
   let completedTasks = 0;
@@ -97,10 +110,11 @@ export default function SquashTesterMyTestsPage() {
     setLoading(true);
     setError('');
 
-    getTesterAssignments(session.userId)
-      .then((items) => {
+    Promise.all([getTesterAssignments(session.userId), getTesterTestLabSessions(session.userId)])
+      .then(([items, labSessions]) => {
         if (!mounted) return;
-        setAssignments(items.map(readLabState));
+        const sessionsByAssignment = new Map(labSessions.map((labSession) => [labSession.assignmentId, labSession]));
+        setAssignments(items.map((item) => readLabState(item, sessionsByAssignment.get(item.id))));
       })
       .catch((err: Error) => {
         if (mounted) setError(err.message || 'Could not load your tests right now.');

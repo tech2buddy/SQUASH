@@ -31,6 +31,8 @@ import { useAuth } from './auth';
 import MobileTabBar from './components/MobileTabBar';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
+import { uploadBugReportFile } from './lib/storageApi';
+import { getOrCreateTestLabSession, markTestLabSubmitted, saveTestLabProgress } from './lib/testLabApi';
 
 type TestingTypeConfig = {
   bg: string; border: string; text: string; dot: string;
@@ -124,6 +126,7 @@ export default function SquashActiveTestScreen() {
   ];
 
   const [assignment, setAssignment] = useState<TesterAssignment | null>(null);
+  const [labSessionId, setLabSessionId] = useState<string | null>(null);
   const [assignmentError, setAssignmentError] = useState('');
   const [loadingAssignment, setLoadingAssignment] = useState(false);
   const [tasks, setTasks] = useState(fallbackTasks);
@@ -138,10 +141,14 @@ export default function SquashActiveTestScreen() {
   const [recordingSecondsLeft, setRecordingSecondsLeft] = useState(60);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState('');
   const [recordedVideoDuration, setRecordedVideoDuration] = useState(0);
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [evidencePreviewUrl, setEvidencePreviewUrl] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recordingStartedAtRef = useRef<number | null>(null);
   const mediaChunksRef = useRef<Blob[]>([]);
+  const recordedVideoBlobRef = useRef<Blob | null>(null);
+  const evidenceInputRef = useRef<HTMLInputElement | null>(null);
   const countdownIntervalRef = useRef<number | null>(null);
   const recordingIntervalRef = useRef<number | null>(null);
   const completedTasks = useMemo(() => taskState.filter(Boolean).length, [taskState]);
@@ -152,7 +159,7 @@ export default function SquashActiveTestScreen() {
 
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setLoadingAssignment(true);
@@ -171,6 +178,14 @@ export default function SquashActiveTestScreen() {
         }
 
         setAssignment(item);
+        getOrCreateTestLabSession({ assignmentId: item.id, jobId: item.jobId, testerId: session.userId! })
+          .then((labSession) => {
+            setLabSessionId(labSession.id);
+            const savedProgress = labSession.metadata as { task_state?: boolean[]; report_summary?: string };
+            if (Array.isArray(savedProgress.task_state)) setTaskState(savedProgress.task_state);
+            if (savedProgress.report_summary) setReportSummary(savedProgress.report_summary);
+          })
+          .catch(() => {});
         const parsedTasks = (item.jobTasks || '')
           .split(/[\r\n,]+/)
           .map((task) => task.trim())
@@ -205,7 +220,7 @@ export default function SquashActiveTestScreen() {
     return () => {
       mounted = false;
     };
-  }, [assignmentId, ("supabase"), session?.userId]);
+  }, [assignmentId, session?.userId]);
 
   const toggleTask = (index: number, checked: boolean) => {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
@@ -266,8 +281,12 @@ export default function SquashActiveTestScreen() {
       });
       mediaStreamRef.current = stream;
       mediaChunksRef.current = [];
+      recordedVideoBlobRef.current = null;
 
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, {
+        videoBitsPerSecond: 900_000,
+        audioBitsPerSecond: 64_000,
+      });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (event) => {
@@ -276,6 +295,7 @@ export default function SquashActiveTestScreen() {
 
       recorder.onstop = () => {
         const blob = new Blob(mediaChunksRef.current, { type: 'video/webm' });
+        recordedVideoBlobRef.current = blob;
         if (recordedVideoUrl) {
           URL.revokeObjectURL(recordedVideoUrl);
         }
@@ -287,19 +307,6 @@ export default function SquashActiveTestScreen() {
         setRecordedVideoDuration(Math.max(1, elapsed));
         recordingStartedAtRef.current = null;
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = String(reader.result ?? '');
-          window.localStorage.setItem(
-            'squash_latest_bug_video',
-            JSON.stringify({
-              dataUrl: base64,
-              duration: Math.max(1, elapsed),
-              createdAt: new Date().toISOString(),
-            }),
-          );
-        };
-        reader.readAsDataURL(blob);
         stopMediaStream();
       };
 
@@ -342,6 +349,41 @@ export default function SquashActiveTestScreen() {
     }, 1000);
   };
 
+  const selectEvidence = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      setBugNotice('Choose an image or video file.');
+      return;
+    }
+    if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
+    setEvidenceFile(file);
+    setEvidencePreviewUrl(URL.createObjectURL(file));
+    setBugNotice(`${file.type.startsWith('image/') ? 'Screenshot' : 'Video'} ready to upload.`);
+  };
+
+  const captureScreenshot = async () => {
+    let stream: MediaStream | null = null;
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('Screen capture is not supported on this browser.');
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d')?.drawImage(video, 0, 0);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Could not create the screenshot.');
+      selectEvidence(new File([blob], `screenshot-${Date.now()}.png`, { type: 'image/png' }));
+    } catch (error) {
+      setBugNotice(error instanceof Error ? error.message : 'Could not capture the screenshot.');
+    } finally {
+      stream?.getTracks().forEach((track) => track.stop());
+    }
+  };
   const saveBugReport = async () => {
     if (!bugDescription.trim()) {
       setBugNotice('Please describe the issue before saving.');
@@ -365,14 +407,29 @@ export default function SquashActiveTestScreen() {
     });
     window.localStorage.setItem('squash_bug_reports', JSON.stringify(existingReports));
 
-    if (assignment && session?.userId && true) {
+    if (assignment && session?.userId) {
       try {
+        let screenshotPath: string | null = null;
+        let videoPath: string | null = null;
+        const recordedBlob = recordedVideoBlobRef.current;
+        const uploadFile = evidenceFile
+          ?? (recordedBlob ? new File([recordedBlob], `recording-${Date.now()}.webm`, { type: recordedBlob.type || 'video/webm' }) : null);
+        if (uploadFile) {
+          const uploadType = uploadFile.type.startsWith('image/') ? 'screenshot' : 'video';
+          const upload = await uploadBugReportFile(uploadFile, uploadType, session.userId, assignment.jobId);
+          if (upload.error) throw new Error(`Evidence upload failed: ${upload.error}`);
+          if (uploadType === 'screenshot') screenshotPath = upload.path;
+          else videoPath = upload.path;
+        }
         await saveAssignmentBugReport({
           assignmentId: assignment.id,
           testerId: session.userId,
           jobId: assignment.jobId,
+          sessionId: labSessionId,
           description: bugDescription,
           severity: severity as 'Low' | 'Medium' | 'High' | 'Critical',
+          screenshotPath,
+          videoPath,
           videoDurationSeconds: recordedVideoDuration || null,
         });
       } catch (error) {
@@ -381,28 +438,33 @@ export default function SquashActiveTestScreen() {
       }
     }
 
-    setBugNotice(recordedVideoUrl ? 'Bug report with video saved.' : 'Bug report saved.');
+    setBugNotice(recordedVideoUrl || evidenceFile ? 'Bug report with evidence saved.' : 'Bug report saved.');
     setBugDescription('');
+    setEvidenceFile(null);
+    if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
+    setEvidencePreviewUrl('');
+    recordedVideoBlobRef.current = null;
+    if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
+    setRecordedVideoUrl('');
+    setRecordedVideoDuration(0);
   };
 
-  const saveProgress = () => {
-    window.localStorage.setItem(
-      `squash_active_test_progress_${assignment?.id || 'demo'}`,
-      JSON.stringify({
-        taskState,
-        reportSummary,
-        updatedAt: new Date().toISOString(),
-      }),
-    );
-    setProgressNotice('Progress saved.');
+  const saveProgress = async () => {
+    try {
+      if (!labSessionId) throw new Error('The Test Lab session is still loading. Please try again.');
+      await saveTestLabProgress({ sessionId: labSessionId, tasks, taskState, reportSummary });
+      window.localStorage.setItem(`squash_active_test_progress_${assignment?.id || 'demo'}`, JSON.stringify({ taskState, reportSummary, updatedAt: new Date().toISOString() }));
+      setProgressNotice('Progress saved securely.');
+    } catch (error) {
+      setProgressNotice(error instanceof Error ? error.message : 'Could not save progress right now.');
+    }
   };
-
   const submitTest = async () => {
     if (completedTasks < taskState.length) {
       setProgressNotice(`Complete all tasks before submitting (${completedTasks}/${taskState.length}).`);
       return;
     }
-    if (assignment && session?.userId && true) {
+    if (assignment && session?.userId) {
       try {
         await submitAssignmentReport({
           assignmentId: assignment.id,
@@ -410,6 +472,7 @@ export default function SquashActiveTestScreen() {
           jobId: assignment.jobId,
           summary: reportSummary || `Completed ${completedTasks} of ${taskState.length} tasks.`,
         });
+        if (labSessionId) await markTestLabSubmitted(labSessionId);
       } catch (error) {
         setProgressNotice(error instanceof Error ? error.message : 'Could not submit this test right now.');
         return;
@@ -428,13 +491,26 @@ export default function SquashActiveTestScreen() {
     navigate('/tester/reports');
   };
 
+  useEffect(() => {
+    if (!labSessionId || !assignment) return;
+    window.localStorage.setItem(
+      `squash_active_test_progress_${assignment.id}`,
+      JSON.stringify({ taskState, reportSummary, updatedAt: new Date().toISOString() }),
+    );
+    const timer = window.setTimeout(() => {
+      saveTestLabProgress({ sessionId: labSessionId, tasks, taskState, reportSummary })
+        .catch(() => setProgressNotice('Autosave could not sync. Your progress remains saved on this device.'));
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [assignment, labSessionId, reportSummary, taskState, tasks]);
   useEffect(
     () => () => {
       clearIntervals();
-stopMediaStream();
+      stopMediaStream();
       if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
+      if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
     },
-    [recordedVideoUrl],
+    [recordedVideoUrl, evidencePreviewUrl],
   );
 
   return (
@@ -725,9 +801,16 @@ stopMediaStream();
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                     </div>
+                    <input
+                      ref={evidenceInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+                      className="hidden"
+                      onChange={(event) => selectEvidence(event.target.files?.[0] ?? null)}
+                    />
                     <button
                       type="button"
-                      onClick={() => setBugNotice('Screenshot attached.')}
+                      onClick={() => evidenceInputRef.current?.click()}
                       className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                     >
                       <Upload className="h-3.5 w-3.5" /> Upload
@@ -765,10 +848,21 @@ stopMediaStream();
                     </div>
                   ) : null}
 
+                  {evidencePreviewUrl ? (
+                    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <div className="mb-1.5 text-[11px] font-semibold text-slate-600">Attached evidence</div>
+                      {evidenceFile?.type.startsWith('image/') ? (
+                        <img src={evidencePreviewUrl} alt="Bug evidence preview" className="max-h-40 w-full rounded-lg border border-slate-200 object-contain" />
+                      ) : (
+                        <video controls src={evidencePreviewUrl} className="max-h-40 w-full rounded-lg border border-slate-200 bg-black/90" />
+                      )}
+                    </div>
+                  ) : null}
+
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setBugNotice('Screenshot captured.')}
+                      onClick={captureScreenshot}
                       className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       <Camera className="h-3.5 w-3.5" /> Screenshot

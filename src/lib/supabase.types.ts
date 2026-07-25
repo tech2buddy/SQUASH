@@ -209,6 +209,7 @@ export type Database = {
         Row: {
           id: string;
           submission_id: string | null;
+          session_id: string | null;
           assignment_id: string;
           tester_id: string;
           job_id: string;
@@ -227,6 +228,7 @@ export type Database = {
         Insert: {
           id?: string;
           submission_id?: string | null;
+          session_id?: string | null;
           assignment_id: string;
           tester_id: string;
           job_id: string;

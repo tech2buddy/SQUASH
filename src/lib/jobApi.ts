@@ -581,8 +581,11 @@ export async function saveAssignmentBugReport(input: {
   assignmentId: string;
   testerId: string;
   jobId: string;
+  sessionId?: string | null;
   description: string;
   severity: 'Low' | 'Medium' | 'High' | 'Critical';
+  screenshotPath?: string | null;
+  videoPath?: string | null;
   videoDurationSeconds?: number | null;
 }) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
@@ -594,6 +597,9 @@ export async function saveAssignmentBugReport(input: {
     title: input.description.trim().slice(0, 80) || 'Bug report',
     description: input.description.trim(),
     severity: input.severity,
+    session_id: input.sessionId ?? null,
+    screenshot_path: input.screenshotPath ?? null,
+    video_path: input.videoPath ?? null,
     video_duration_seconds: input.videoDurationSeconds ?? null,
   });
 
@@ -1285,7 +1291,7 @@ export async function getDeveloperAttachments(developerId: string): Promise<Deve
     const profileMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
     const jobMap = new Map(jobs.map((j) => [j.id, j.title]));
 
-    // 4. Map to attachments with public URLs
+    // 4. Map to attachments with short-lived signed URLs
     const attachments: DeveloperAttachment[] = [];
 
     for (const bug of bugReports) {
@@ -1293,11 +1299,11 @@ export async function getDeveloperAttachments(developerId: string): Promise<Deve
       const jobName = jobMap.get(bug.job_id) || 'Unknown Job';
 
       if (bug.screenshot_path) {
-        const { data: urlData } = supabase.storage.from('bug-screenshots').getPublicUrl(bug.screenshot_path);
-        attachments.push({
+        const { data: urlData, error: urlError } = await supabase.storage.from('bug-screenshots').createSignedUrl(bug.screenshot_path, 3600);
+        if (!urlError && urlData?.signedUrl) attachments.push({
           id: `${bug.id}-img`,
           type: 'screenshot',
-          url: urlData.publicUrl,
+          url: urlData.signedUrl,
           bugTitle: bug.title,
           jobName,
           testerName,
@@ -1307,11 +1313,11 @@ export async function getDeveloperAttachments(developerId: string): Promise<Deve
       }
 
       if (bug.video_path) {
-        const { data: urlData } = supabase.storage.from('bug-videos').getPublicUrl(bug.video_path);
-        attachments.push({
+        const { data: urlData, error: urlError } = await supabase.storage.from('bug-videos').createSignedUrl(bug.video_path, 3600);
+        if (!urlError && urlData?.signedUrl) attachments.push({
           id: `${bug.id}-vid`,
           type: 'video',
-          url: urlData.publicUrl,
+          url: urlData.signedUrl,
           bugTitle: bug.title,
           jobName,
           testerName,

@@ -20,6 +20,7 @@ import {
   type BankingVerificationStatus,
 } from './lib/bankingApi';
 
+type BankingView = 'form' | 'uploading' | 'submitted' | 'status';
 type BankingForm = {
   accountHolderName: string;
   bankName: string;
@@ -81,6 +82,7 @@ export default function SquashTesterBankingPage() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [view, setView] = useState<BankingView>('form');
 
   useEffect(() => {
     let mounted = true;
@@ -101,6 +103,7 @@ export default function SquashTesterBankingPage() {
         setSubmittedProof({ path: details.proofDocumentPath, name: details.proofDocumentName });
         setStatus(details.verificationStatus);
         setReviewNote(details.verificationNote || '');
+        setView(details.verificationStatus === 'pending' || details.verificationStatus === 'approved' ? 'status' : 'form');
       })
       .catch((loadError) => {
         if (mounted) setError(loadError instanceof Error ? loadError.message : 'Could not load banking details.');
@@ -112,6 +115,37 @@ export default function SquashTesterBankingPage() {
       mounted = false;
     };
   }, [session?.userId]);
+
+  useEffect(() => {
+    if (view !== 'status' || !session?.userId) return;
+    const testerId = session.userId;
+    let mounted = true;
+
+    const refreshStatus = async () => {
+      try {
+        const details = await getTesterBankingDetails(testerId);
+        if (!mounted || !details) return;
+        setStatus((current) => {
+          if (current !== details.verificationStatus) {
+            window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: testerId } }));
+          }
+          return details.verificationStatus;
+        });
+        setReviewNote(details.verificationNote || '');
+      } catch {
+        // Keep the last known status and retry on the next refresh.
+      }
+    };
+
+    const interval = window.setInterval(() => void refreshStatus(), 10000);
+    const handleFocus = () => void refreshStatus();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [session?.userId, view]);
 
   const complete = useMemo(
     () =>
@@ -139,6 +173,7 @@ export default function SquashTesterBankingPage() {
       return;
     }
     setSaving(true);
+    setView('uploading');
     setError('');
     setNotice('');
     try {
@@ -152,7 +187,12 @@ export default function SquashTesterBankingPage() {
       setSubmittedProof({ path: result.proofDocumentPath, name: result.proofDocumentName });
       setProofDocument(null);
       setNotice('Banking details submitted securely for verification.');
+      setView('submitted');
+      window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: session.userId } }));
+      await new Promise((resolve) => window.setTimeout(resolve, 1400));
+      setView('status');
     } catch (submitError) {
+      setView('form');
       setError(submitError instanceof Error ? submitError.message : 'Could not submit banking details.');
     } finally {
       setSaving(false);
@@ -174,6 +214,98 @@ export default function SquashTesterBankingPage() {
 
   const verification = verificationMessage(status);
   const StatusIcon = verification.Icon;
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[520px] max-w-4xl items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-green-600" />
+          <p className="mt-4 text-sm font-semibold text-slate-600">Loading your secure payout details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'uploading') {
+    return (
+      <div className="mx-auto flex min-h-[560px] max-w-4xl items-center justify-center px-4">
+        <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-xl">
+          <div className="relative mx-auto h-20 w-20">
+            <div className="absolute inset-0 animate-ping rounded-full bg-green-100" />
+            <div className="relative grid h-20 w-20 place-items-center rounded-full bg-green-50">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-200 border-t-green-600" />
+            </div>
+          </div>
+          <h1 className="mt-7 text-2xl font-black text-slate-900">Submitting securely</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Encrypting your banking details and uploading your supporting document.</p>
+          <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-2/3 animate-pulse rounded-full bg-green-500" /></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'submitted') {
+    return (
+      <div className="mx-auto flex min-h-[560px] max-w-4xl items-center justify-center px-4">
+        <div className="w-full max-w-lg rounded-3xl border border-green-200 bg-white p-10 text-center shadow-xl">
+          <div className="relative mx-auto grid h-24 w-24 place-items-center rounded-full bg-green-100 text-green-700">
+            <div className="absolute inset-0 animate-ping rounded-full border-2 border-green-300" />
+            <CheckCircle2 className="relative h-12 w-12 animate-bounce" />
+          </div>
+          <h1 className="mt-7 text-3xl font-black text-slate-900">Submitted</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Your EFT details and proof of banking were received securely.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'status') {
+    return (
+      <div className="mx-auto max-w-4xl text-slate-900">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700"><Wallet className="h-4 w-4" /> EFT payout setup</div>
+            <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Banking verification</h1>
+            <p className="mt-2 text-slate-600">Track the review of your payout account.</p>
+          </div>
+          <a href="/tester/earnings" className="w-fit rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50">Back to earnings</a>
+        </div>
+
+        <section className={`mt-8 overflow-hidden rounded-3xl border p-8 shadow-sm ${verification.className}`}>
+          <div className="flex flex-col items-center text-center sm:flex-row sm:text-left">
+            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-white/80 shadow-sm"><StatusIcon className="h-10 w-10" /></span>
+            <div className="mt-5 sm:ml-6 sm:mt-0">
+              <h2 className="text-2xl font-black">{verification.title}</h2>
+              <p className="mt-2 text-sm leading-6">{verification.body}</p>
+              {reviewNote ? <p className="mt-3 rounded-xl bg-white/70 px-4 py-3 text-sm font-semibold">Admin note: {reviewNote}</p> : null}
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3"><CreditCard className="h-5 w-5 text-green-700" /><h2 className="font-bold">Submitted EFT account</h2></div>
+            <dl className="mt-5 space-y-3 text-sm">
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Account holder</dt><dd className="font-semibold text-right">{form.accountHolderName}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Bank</dt><dd className="font-semibold">{form.bankName}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Account</dt><dd className="font-semibold">Ending {form.accountNumber.slice(-4)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Branch code</dt><dd className="font-semibold">{form.branchCode}</dd></div>
+            </dl>
+          </section>
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-sky-700" /><h2 className="font-bold">Supporting document</h2></div>
+            <p className="mt-4 truncate text-sm font-semibold text-slate-700">{submittedProof?.name || 'Document submitted'}</p>
+            {submittedProof ? <button type="button" onClick={viewSubmittedProof} className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">View submitted document</button> : null}
+          </section>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button type="button" onClick={() => { setView('form'); setNotice(''); setError(''); }} className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Update banking details</button>
+          <a href="/tester/notifications" className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">View notifications</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl text-slate-900">

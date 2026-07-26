@@ -6,7 +6,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import TesterBadge from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
@@ -57,6 +57,8 @@ function DeveloperShell({
 // ----------------------------------------------------------------------
 export function SquashDeveloperJobsPage() {
   const { session } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [applications, setApplications] = useState<DeveloperApplication[]>([]);
   const [reports, setReports] = useState<DeveloperSubmissionReview[]>([]);
@@ -102,7 +104,8 @@ export function SquashDeveloperJobsPage() {
           name: job.title,
           type: job.platform,
           testers: `${acceptedTesters} / ${job.testersNeeded}`,
-          status: job.status === 'active' ? 'Open' : job.status === 'completed' ? 'Completed' : 'Reviewing',
+          status: job.status === 'draft' ? 'Draft' : job.status === 'active' ? 'Open' : job.status === 'completed' ? 'Completed' : 'Reviewing',
+          isDraft: job.status === 'draft',
           deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
           submissions: `${submittedReports} / ${job.testersNeeded}`,
           logoUrl: job.logoUrl,
@@ -114,10 +117,15 @@ export function SquashDeveloperJobsPage() {
 
   return (
     <DeveloperShell
-      title="Active Jobs"
-      subtitle="Manage your posted testing jobs and track active testing progress."
+      title="Jobs"
+      subtitle="Manage drafts, posted testing jobs and active testing progress."
       active="jobs"
     >
+      {searchParams.get('saved') === 'draft' ? (
+        <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+          Job draft saved securely. It remains private until funding is enabled.
+        </div>
+      ) : null}
       <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-6 text-center text-sm font-semibold text-slate-500">Loading jobs...</div>
@@ -134,12 +142,12 @@ export function SquashDeveloperJobsPage() {
         ) : (
           <div className="divide-y divide-slate-100">
             {/* Desktop Table Header */}
-            <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 bg-slate-50 px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 md:grid">
+            <div className="hidden grid-cols-[minmax(220px,1.5fr)_minmax(160px,1fr)_90px_90px_100px_240px] gap-4 bg-slate-50 px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 md:grid">
               <div>Job Title</div>
               <div>Category</div>
-              <div>Testers</div>
-              <div>Status</div>
-              <div>Submissions</div>
+              <div className="text-center">Testers</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Submissions</div>
               <div className="text-right">Actions</div>
             </div>
 
@@ -148,7 +156,16 @@ export function SquashDeveloperJobsPage() {
               const category = getCategoryById(job.categoryId);
               const CategoryIcon = category.icon;
               return (
-                <div key={job.id} className="flex flex-col gap-4 p-5 md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] md:items-center md:px-6">
+                <div
+                  key={job.id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/developer/jobs/${job.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') navigate(`/developer/jobs/${job.id}`);
+                  }}
+                  className="flex cursor-pointer flex-col gap-4 p-5 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 md:grid md:grid-cols-[minmax(220px,1.5fr)_minmax(160px,1fr)_90px_90px_100px_240px] md:items-center md:px-6"
+                >
                   {/* Job Title & Status - Mobile Only */}
                   <div className="flex items-start justify-between gap-3 md:hidden">
                     <div className="flex items-center gap-3 min-w-0">
@@ -210,35 +227,52 @@ export function SquashDeveloperJobsPage() {
                   </div>
 
                   {/* Desktop Only - Testers */}
-                  <div className="hidden text-sm font-medium text-slate-700 md:block">
+                  <div className="hidden text-center text-sm font-medium text-slate-700 md:block">
                     <span className="font-bold text-slate-900">{job.testers}</span>
                   </div>
 
                   {/* Desktop Only - Status */}
-                  <div className="hidden md:block">
+                  <div className="hidden text-center md:block">
                     <span className="inline-flex shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
                       {job.status}
                     </span>
                   </div>
 
                   {/* Desktop Only - Submissions */}
-                  <div className="hidden text-sm font-medium text-slate-700 md:block">
+                  <div className="hidden text-center text-sm font-medium text-slate-700 md:block">
                     {job.submissions}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 md:flex md:w-auto md:justify-end">
+                  <div className="grid grid-cols-2 gap-2 md:flex md:w-auto md:justify-end" onClick={(event) => event.stopPropagation()}>
+                    {job.isDraft ? (
+                      <Link
+                        to={`/post-job?job=${job.id}`}
+                        className="flex items-center justify-center rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 whitespace-nowrap"
+                      >
+                        Continue setup
+                      </Link>
+                    ) : (
+                      <>
+                        <Link
+                          to={`/developer/applications?job=${job.id}`}
+                          className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
+                        >
+                          Applications
+                        </Link>
+                        <Link
+                          to={`/developer/reports?job=${job.id}`}
+                          className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
+                        >
+                          Reports
+                        </Link>
+                      </>
+                    )}
                     <Link
-                      to={`/developer/applications?job=${job.id}`}
+                      to={`/developer/jobs/${job.id}`}
                       className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
                     >
-                      Applications
-                    </Link>
-                    <Link
-                      to={`/developer/reports?job=${job.id}`}
-                      className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 whitespace-nowrap"
-                    >
-                      Reports
+                      View
                     </Link>
                   </div>
                 </div>
@@ -379,7 +413,7 @@ export function SquashDeveloperApplicationsPage() {
           {loading ? (
             <div className="p-6 text-sm font-semibold text-slate-500">Loading applications...</div>
           ) : filteredApplications.length > 0 ? (
-            <div className="divide-y divide-slate-100">
+            <div className="grid gap-4 bg-slate-50/70 p-4 xl:grid-cols-2">
               {filteredApplications.map((application) => {
                 const category = getCategoryById(application.jobCategory as TestCategoryId);
                 const CategoryIcon = category.icon;
@@ -387,82 +421,70 @@ export function SquashDeveloperApplicationsPage() {
                 const isUpdating = updatingId === application.id;
 
                 return (
-                  <div key={application.id} className="p-5">
-                    <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr_auto] xl:items-center">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-black text-white">
-                            {application.testerName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900">{application.testerName}</div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                              <span>{application.testerEmail || 'Email hidden'}</span>
-                              <span className="hidden sm:inline">-</span>
-                              <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {application.testerCity}</span>
-                            </div>
-                          </div>
+                  <article key={application.id} className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-slate-900 text-white ring-4 ring-slate-100">
+                          {application.testerAvatarUrl ? (
+                            <img src={application.testerAvatarUrl} alt={`${application.testerName} profile`} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-lg font-black">{application.testerName.charAt(0).toUpperCase()}</span>
+                          )}
                         </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <TesterBadge testsCompleted={application.testerTestsCompleted} rating={application.testerRating} />
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            {application.testerRating.toFixed(1)} ★
-                          </span>
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            {application.testerTestsCompleted} tests completed
-                          </span>
-                        </div>
-                        {specializationLabels.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {specializationLabels.map((label) => (
-                              <span key={label} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <div className="text-xs font-semibold text-slate-500">Applied for</div>
-                        <div className="mt-1 font-bold text-slate-900">{application.jobTitle}</div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                            <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                            {category.name}
-                          </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-black text-slate-900">{application.testerName}</h3>
+                          <p className="mt-0.5 truncate text-xs text-slate-500">{application.testerEmail || 'Email hidden'}</p>
+                          <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-slate-500"><MapPin className="h-3.5 w-3.5" /> {application.testerCity}</p>
                         </div>
                       </div>
+                      <span className={`inline-flex shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${getStatusBadge(application.status)}`}>
+                        {application.status}
+                      </span>
+                    </div>
 
-                      <div className="flex flex-col gap-2 sm:flex-row xl:flex-col xl:items-stretch">
-                        <span className={`inline-flex justify-center rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${getStatusBadge(application.status)}`}>
-                          {application.status}
-                        </span>
-                        {application.status === 'pending' ? (
-                          <>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReview(application, 'accepted')}
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                              {isUpdating ? 'Saving...' : 'Accept'}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleReview(application, 'rejected')}
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              {isUpdating ? 'Saving...' : 'Reject'}
-                            </button>
-                          </>
-                        ) : null}
+                    <div className="mt-5 grid grid-cols-3 gap-2">
+                      <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center">
+                        <div className="text-sm font-black text-slate-900">{application.testerRating.toFixed(1)} ★</div>
+                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Rating</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center">
+                        <div className="text-sm font-black text-slate-900">{application.testerTestsCompleted}</div>
+                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tests</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center">
+                        <div className="text-sm font-black text-slate-900">{application.testerApprovalRate}%</div>
+                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Approval</div>
                       </div>
                     </div>
-                  </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <TesterBadge testsCompleted={application.testerTestsCompleted} rating={application.testerRating} />
+                      {specializationLabels.map((label) => (
+                        <span key={label} className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">{label}</span>
+                      ))}
+                    </div>
+
+                    <Link to={`/developer/jobs/${application.jobId}`} className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-green-200 hover:bg-green-50/50">
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Applied for</div>
+                        <div className="mt-1 truncate font-black text-slate-900">{application.jobTitle}</div>
+                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                        <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} /> {category.name}
+                      </span>
+                    </Link>
+
+                    {application.status === 'pending' ? (
+                      <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
+                        <button type="button" disabled={isUpdating} onClick={() => handleReview(application, 'accepted')} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-60">
+                          <CheckCircle2 className="h-4 w-4" /> {isUpdating ? 'Saving...' : 'Accept'}
+                        </button>
+                        <button type="button" disabled={isUpdating} onClick={() => handleReview(application, 'rejected')} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                          <XCircle className="h-4 w-4" /> {isUpdating ? 'Saving...' : 'Reject'}
+                        </button>
+                      </div>
+                    ) : null}
+                  </article>
                 );
               })}
             </div>

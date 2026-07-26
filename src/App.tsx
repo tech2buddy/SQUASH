@@ -21,6 +21,7 @@ import SquashTesterJobBoard from './SquashTesterJobBoard';
 import SquashTesterProfilePage from './SquashTesterProfilePage';
 import SquashTesterEarningsPage from './SquashTesterEarningsPage';
 import SquashTesterReportsPage from './SquashTesterReportsPage';
+import SquashTesterReportDetailPage from './SquashTesterReportDetailPage';
 import SquashTesterSettingsPage from './SquashTesterSettingsPage';
 import SquashTesterNotificationsPage from './SquashTesterNotificationsPage';
 import SquashTesterBankingPage from './SquashTesterBankingPage';
@@ -38,7 +39,9 @@ import SquashAdminUsersPage from './SquashAdminUsersPage';
 import SquashAdminUserProfilePage from './SquashAdminUserProfilePage';
 import SquashAdminJobsPage from './SquashAdminJobsPage';
 import SquashAdminJobDetailPage from './SquashAdminJobDetailPage';
+import SquashDeveloperJobDetailPage from './SquashDeveloperJobDetailPage';
 import SquashAdminReportsPage from './SquashAdminReportsPage';
+import SquashAdminReportDetailPage from './SquashAdminReportDetailPage';
 import SquashAdminSecurityPage from './SquashAdminSecurityPage';
 import SquashAdminOperationsPage from './SquashAdminOperationsPage';
 import SquashPrivateAdminMagicPage from './SquashPrivateAdminMagicPage';
@@ -323,6 +326,15 @@ export default function App() {
       />
 
       <Route
+        path="/A31/reports/:submissionId"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminReportDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/A31/security"
         element={
           <ProtectedRoute allowedRole="admin">
@@ -352,6 +364,7 @@ export default function App() {
         <Route path="/report-details" element={<SquashReportDetailsPage />} />
         <Route path="/billing" element={<SquashDeveloperBillingPage />} />
         <Route path="/developer/jobs" element={<SquashDeveloperJobsPage />} />
+        <Route path="/developer/jobs/:jobId" element={<SquashDeveloperJobDetailPage />} />
         <Route path="/developer/applications" element={<SquashDeveloperApplicationsPage />} />
         <Route path="/developer/submissions" element={<SquashDeveloperSubmissionsPage />} />
         <Route path="/developer/reports" element={<SquashDeveloperReportsPage />} />
@@ -379,6 +392,7 @@ export default function App() {
         <Route path="/tester/earnings" element={<SquashTesterEarningsPage />} />
         <Route path="/tester/payments" element={<SquashTesterEarningsPage />} />
         <Route path="/tester/reports" element={<SquashTesterReportsPage />} />
+        <Route path="/tester/reports/:submissionId" element={<SquashTesterReportDetailPage />} />
         <Route path="/tester/submissions" element={<SquashTesterReportsPage />} />
         <Route path="/tester/settings" element={<SquashTesterSettingsPage />} />
         <Route path="/tester/notifications" element={<SquashTesterNotificationsPage />} />

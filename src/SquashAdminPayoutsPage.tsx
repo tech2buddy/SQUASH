@@ -285,9 +285,9 @@ export default function SquashAdminPayoutsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 lg:h-screen lg:overflow-hidden">
+      <div className="grid min-h-screen lg:h-screen lg:grid-cols-[260px_1fr]">
+        <aside className="hidden border-r border-slate-200 bg-white lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
             <img src="/squash-logo.png" alt="SQUASH logo" className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm" />
             <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
@@ -324,7 +324,7 @@ export default function SquashAdminPayoutsPage() {
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 lg:h-screen lg:overflow-y-auto">
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">

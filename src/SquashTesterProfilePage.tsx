@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  Camera,
   ClipboardList,
   Clock3,
   Languages,
@@ -19,7 +20,7 @@ import SpecializationChecklist from './components/SpecializationChecklist';
 import TesterBadge from './components/TesterBadge';
 import { getSpecializationLabel, hasSaLanguageTag } from './components/testerSpecializations';
 import { useAuth } from './auth';
-import { getTesterProfile, getTesterSpecializations, replaceTesterSpecializations, type TesterPublicProfile } from './lib/profileApi';
+import { getTesterProfile, getTesterSpecializations, replaceTesterSpecializations, uploadTesterProfilePhoto, type TesterPublicProfile } from './lib/profileApi';
 
 export default function SquashTesterProfilePage() {
   const { session } = useAuth();
@@ -27,6 +28,8 @@ export default function SquashTesterProfilePage() {
   const [profileDetails, setProfileDetails] = useState<TesterPublicProfile | null>(null);
   const [profileError, setProfileError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
 
   useEffect(() => {
     if (!session?.userId) return;
@@ -47,8 +50,23 @@ export default function SquashTesterProfilePage() {
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
 
+  const handleProfilePhoto = async (file: File | undefined) => {
+    if (!file || !session?.userId) return;
+    setPhotoUploading(true);
+    setProfileError('');
+    setProfileMessage('');
+    try {
+      const avatarUrl = await uploadTesterProfilePhoto(session.userId, file);
+      setProfileDetails((current) => current ? { ...current, avatarUrl } : current);
+      setProfileMessage('Profile photo updated. Developers will now see it on your tester card.');
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Could not upload profile photo.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
@@ -70,6 +88,7 @@ export default function SquashTesterProfilePage() {
 
   const isRealAccount = true;
   const testerName = profileDetails?.fullName || session?.name || 'Tester';
+  const avatarUrl = profileDetails?.avatarUrl || null;
   const testerEmail = profileDetails?.email || session?.email || 'Add email';
   const testerCity = profileDetails?.city || (isRealAccount ? 'Add city' : 'Johannesburg');
   const testerPhone = profileDetails?.phone || (isRealAccount ? 'Add phone number' : '+27 72 000 1234');
@@ -118,12 +137,35 @@ export default function SquashTesterProfilePage() {
               </div>
             ) : null}
 
+            {profileMessage ? (
+              <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-xs font-bold text-green-800">
+                {profileMessage}
+              </div>
+            ) : null}
+
             <section className="grid gap-6 xl:grid-cols-[1fr_1fr] animate-fade-up-delayed">
               <div className="apple-bento-card p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-3xl font-extrabold text-white shadow-sm">
-                    {testerName.charAt(0)}
-                  </div>
+                  <label className="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full bg-slate-900 text-white shadow-sm ring-4 ring-white">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={`${testerName} profile`} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-3xl font-extrabold">{testerName.charAt(0)}</span>
+                    )}
+                    <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-slate-950/75 py-1.5 text-[10px] font-bold opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+                      <Camera className="h-3 w-3" /> {photoUploading ? 'Uploading' : 'Change'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      disabled={photoUploading}
+                      onChange={(event) => {
+                        void handleProfilePhoto(event.target.files?.[0]);
+                        event.target.value = '';
+                      }}
+                    />
+                  </label>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h2 className="text-xl font-bold text-slate-900">{testerName}</h2>
@@ -190,8 +232,8 @@ export default function SquashTesterProfilePage() {
                 <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-xl font-black text-slate-900 shadow-sm">
-                        {testerName.charAt(0)}
+                      <div className="h-14 w-14 overflow-hidden rounded-full bg-white text-xl font-black text-slate-900 shadow-sm ring-1 ring-slate-200">
+                        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center">{testerName.charAt(0)}</span>}
                       </div>
                       <div>
                         <div className="font-bold text-slate-900">{testerName}</div>

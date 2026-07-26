@@ -5,9 +5,7 @@ import {
   ChevronDown,
   Clock3,
   CreditCard,
-  Phone,
   ShieldCheck,
-  Smartphone,
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -53,7 +51,7 @@ export default function SquashTesterEarningsPage() {
   const liveTransactions = useMemo(() => {
     if (!earningsSummary) return null;
     return [
-      ...earningsSummary.earnings.map((item) => ({
+      ...earningsSummary.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').map((item) => ({
         date: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending date',
         type: 'Test earning',
         description: item.jobTitle,
@@ -114,6 +112,16 @@ export default function SquashTesterEarningsPage() {
 
   
 
+  const approvedThisMonthZar = earningsSummary?.earnings
+    .filter((item) => {
+      if (item.status !== 'approved' && item.status !== 'paid') return false;
+      if (!item.submittedAt) return false;
+      const submitted = new Date(item.submittedAt);
+      const now = new Date();
+      return submitted.getFullYear() === now.getFullYear() && submitted.getMonth() === now.getMonth();
+    })
+    .reduce((total, item) => total + item.amountZar, 0) || 0;
+
   const summaryCards = [
     {
       title: 'Available Balance',
@@ -132,9 +140,9 @@ export default function SquashTesterEarningsPage() {
       iconColor: 'text-amber-700',
     },
     {
-      title: 'This Month',
-      value: earningsSummary ? formatRand(earningsSummary.pendingApprovalZar) : isRealAccount ? 'R0' : 'R1,120',
-      note: 'Waiting for developer approval',
+      title: 'Approved This Month',
+      value: earningsSummary ? formatRand(approvedThisMonthZar) : isRealAccount ? 'R0' : 'R1,120',
+      note: 'Developer-approved test earnings only',
       icon: Banknote,
       iconBg: 'bg-sky-50',
       iconColor: 'text-sky-700',
@@ -152,24 +160,11 @@ export default function SquashTesterEarningsPage() {
   const payoutMethods = [
     {
       title: 'Bank Transfer (EFT)',
-      detail: isRealAccount ? 'Add your bank details in profile settings' : 'FNB account ending 1234',
+      detail: isRealAccount ? 'Add your EFT details and proof of banking' : 'FNB account ending 1234',
       status: isRealAccount ? 'Setup needed' : 'Primary',
       icon: CreditCard,
       active: !isRealAccount,
-    },
-    {
-      title: 'SnapScan',
-      detail: isRealAccount ? 'Connect SnapScan when payouts go live' : 'Connected to +27 72 000 1234',
-      status: isRealAccount ? 'Available soon' : 'Ready',
-      icon: Smartphone,
-      active: false,
-    },
-    {
-      title: 'Airtime top-up',
-      detail: isRealAccount ? 'Add a prepaid number in profile settings' : 'Vodacom prepaid number saved',
-      status: isRealAccount ? 'Setup needed' : 'Ready',
-      icon: Phone,
-      active: false,
+      href: '/tester/payout-method',
     },
   ];
 
@@ -179,8 +174,8 @@ export default function SquashTesterEarningsPage() {
         .map((item) => ({
           app: item.jobTitle,
           submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
-          amount: formatRand(item.amountZar),
-          status: 'Pending',
+          amount: 'Not earned yet',
+          status: 'Awaiting review',
         }))
     : isRealAccount
       ? []
@@ -194,7 +189,7 @@ export default function SquashTesterEarningsPage() {
     .map((item) => ({
       app: item.jobTitle,
       submitted: item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
-      amount: formatRand(item.amountZar),
+      amount: 'Not payable',
       status: 'Action needed',
     })) || [];
 
@@ -217,7 +212,7 @@ export default function SquashTesterEarningsPage() {
       };
     }
 
-    const sorted = [...earningsSummary.earnings].filter(e => e.submittedAt).sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime());
+    const sorted = [...earningsSummary.earnings].filter(e => (e.status === 'approved' || e.status === 'paid') && e.submittedAt).sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime());
     
     let chartData = sorted.slice(-7);
     while (chartData.length < 7) {
@@ -357,9 +352,10 @@ export default function SquashTesterEarningsPage() {
                     {payoutMethods.map((method) => {
                       const Icon = method.icon;
                       return (
-                        <div
+                        <a
                           key={method.title}
-                          className={`rounded-2xl border p-3.5 transition-all ${
+                          href={method.href}
+                          className={`block rounded-2xl border p-3.5 transition-all hover:border-green-300 hover:bg-green-50/60 ${
                             method.active ? 'border-green-300/80 bg-green-50/60' : 'border-slate-200/80 bg-slate-50/40'
                           }`}
                         >
@@ -377,13 +373,13 @@ export default function SquashTesterEarningsPage() {
                               {method.status}
                             </span>
                           </div>
-                        </div>
+                        </a>
                       );
                     })}
                   </div>
                 </div>
-                <a href="/tester/profile" className="mt-4 block text-xs font-bold text-slate-900 hover:underline">
-                  Update Payout Details →
+                <a href="/tester/payout-method" className="mt-4 block text-xs font-bold text-slate-900 hover:underline">
+                  Update Payout Details &rarr;
                 </a>
               </div>
             </section>

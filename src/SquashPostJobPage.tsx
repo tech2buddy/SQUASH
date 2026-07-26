@@ -9,13 +9,15 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
 import { useAuth } from './auth';
-import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
+import { createDeveloperJob, getDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
 import { startJobCheckout } from './lib/paymentApi';
+import { hasExpectedFileSignature, type SafeFileKind } from './lib/fileValidation';
+import { uploadDeveloperJobAttachments, validateJobAttachment } from './lib/jobAttachmentApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 
 const defaultTestTasks: string[] = [];
@@ -25,7 +27,9 @@ const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
 export default function SquashPostJobPage() {
   const { session } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
+  const editingJobId = searchParams.get('job');
   const packageConfigs = {
     starter: { label: 'Starter Plan', testers: 5, total: 500 },
     growth: { label: 'Growth Plan', testers: 10, total: 1200 },
@@ -63,6 +67,8 @@ export default function SquashPostJobPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftJobId, setDraftJobId] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
 
   useEffect(() => {
     if (!selectedPackage) {
@@ -75,6 +81,38 @@ export default function SquashPostJobPage() {
   }, [selectedPackage]);
 
 
+  useEffect(() => {
+    if (!editingJobId || !session?.userId || !session.roles.includes('developer')) return;
+    let active = true;
+    getDeveloperJob(editingJobId, session.userId)
+      .then((job) => {
+        if (!active) return;
+        if (!job) throw new Error('This job was not found or does not belong to your developer account.');
+        if (job.status !== 'draft') throw new Error('Only draft jobs can be edited.');
+        setDraftJobId(job.id);
+        setAppName(job.title);
+        setPlatform(job.platform);
+        setUrl(job.appUrl || '');
+        setAppLogoUrl(job.logoUrl || '');
+        setShortDescription(job.description || '');
+        setTestType(job.category as TestCategoryId);
+        if (job.packageKey === 'starter' || job.packageKey === 'growth' || job.packageKey === 'pro') {
+          setSelectedPackage(job.packageKey);
+        }
+        setTestTasks((job.tasks || '').split('\n').map((task) => task.trim()).filter(Boolean));
+        setFocusAreas(job.focusAreas || '');
+        setPreferredSpecializations(job.preferredSpecializations || []);
+        setLiveSessionEnabled(job.liveSessionEnabled);
+        setLiveSessionAt(job.liveSessionAt ? job.liveSessionAt.slice(0, 16) : '');
+        setAdditionalInfo(job.additionalInfo || '');
+      })
+      .catch((error: unknown) => {
+        if (active) setErrorMessage(getErrorMessage(error, 'Unable to load this draft.'));
+      });
+    return () => {
+      active = false;
+    };
+  }, [editingJobId, session?.userId]);
   const selectedPackageConfig = selectedPackage ? packageConfigs[selectedPackage] : null;
   const hasSelectedPackage = Boolean(selectedPackageConfig);
   const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
@@ -140,9 +178,15 @@ export default function SquashPostJobPage() {
 
   const handleLogoUpload = async (file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
+    const allowedLogoTypes: Record<string, SafeFileKind> = {
+      'image/png': 'png',
+      'image/jpeg': 'jpg',
+      'image/webp': 'webp',
+    };
+    const safeKind = allowedLogoTypes[file.type];
+    if (!safeKind || !(await hasExpectedFileSignature(file, safeKind))) {
       setFeedbackMessage('');
-      setErrorMessage('Please upload an image file for the job logo.');
+      setErrorMessage('Upload a valid PNG, JPEG or WebP logo.');
       return;
     }
     if (file.size > 1024 * 1024) {
@@ -156,7 +200,7 @@ export default function SquashPostJobPage() {
       return;
     }
 
-    const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+    const extension = safeKind;
     const safeName = `${Date.now()}-${appName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'job-logo'}.${extension}`;
     const storagePath = `${session.userId}/${safeName}`;
 
@@ -189,6 +233,29 @@ export default function SquashPostJobPage() {
       setLogoUploading(false);
     }
   };
+  const addAttachmentFiles = async (files: FileList | File[]) => {
+    const candidates = Array.from(files);
+    if (!candidates.length) return;
+    if (attachmentFiles.length + candidates.length > 5) {
+      setFeedbackMessage('');
+      setErrorMessage('You can attach up to 5 files to a job.');
+      return;
+    }
+    for (const file of candidates) {
+      const validationError = await validateJobAttachment(file);
+      if (validationError) {
+        setFeedbackMessage('');
+        setErrorMessage(validationError);
+        return;
+      }
+    }
+    setErrorMessage('');
+    setAttachmentFiles((current) => [...current, ...candidates]);
+  };
+  const handleAttachmentDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    void addAttachmentFiles(event.dataTransfer.files);
+  };
   const buildJobInput = (status: 'draft' | 'active'): DeveloperJobInput | null => {
     if (!session?.userId) {
       setErrorMessage('Please log in with a developer account first.');
@@ -209,6 +276,7 @@ export default function SquashPostJobPage() {
       totalAmountZar: total,
       testersNeeded,
       description: shortDescription,
+      additionalInfo,
       logoUrl: appLogoUrl || null,
       tasks: taskChecklistText,
       focusAreas: [testingTypes.join(', '), focusAreas].filter(Boolean).join('\n'),
@@ -236,10 +304,16 @@ export default function SquashPostJobPage() {
     try {
       const draft = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
       setDraftJobId(draft.id);
-      setFeedbackMessage('Draft saved. You can return and continue setup later.');
+      if (attachmentFiles.length) {
+        setAttachmentUploading(true);
+        await uploadDeveloperJobAttachments(draft.id, session.userId, attachmentFiles);
+        setAttachmentFiles([]);
+      }
+      navigate('/developer/jobs?saved=draft');
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to save this draft right now.'));
     } finally {
+      setAttachmentUploading(false);
       setSubmitting(false);
     }
   };
@@ -274,16 +348,22 @@ export default function SquashPostJobPage() {
     try {
       const job = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
       setDraftJobId(job.id);
+      if (attachmentFiles.length) {
+        setAttachmentUploading(true);
+        await uploadDeveloperJobAttachments(job.id, session.userId, attachmentFiles);
+        setAttachmentFiles([]);
+      }
       if (paymentsEnabled) {
         setFeedbackMessage('Preparing secure payment...');
         const checkoutUrl = await startJobCheckout(job.id);
         window.location.assign(checkoutUrl);
       } else {
-        setFeedbackMessage('Draft saved. Online funding will be enabled before launch; this job remains private.');
+        navigate('/developer/jobs?saved=draft');
       }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to save this job right now.'));
     } finally {
+      setAttachmentUploading(false);
       setSubmitting(false);
     }
   };
@@ -306,8 +386,8 @@ export default function SquashPostJobPage() {
     <div>
       <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">Post a Test Job</h1>
-              <p className="text-slate-600">Tell us about your app and what you need tested.</p>
+              <h1 className="text-3xl font-black tracking-tight text-slate-900">{editingJobId ? 'Continue Job Draft' : 'Post a Test Job'}</h1>
+              <p className="text-slate-600">{editingJobId ? 'Review and complete the saved job before funding.' : 'Tell us about your app and what you need tested.'}</p>
             </div>
 
             <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -421,7 +501,7 @@ export default function SquashPostJobPage() {
                               {logoUploading ? 'Uploading...' : 'Upload logo'}
                               <input
                                 type="file"
-                                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                                accept="image/png,image/jpeg,image/webp"
                                 className="hidden"
                                 disabled={logoUploading}
                                 onChange={(event) => handleLogoUpload(event.target.files?.[0])}
@@ -760,6 +840,7 @@ export default function SquashPostJobPage() {
                   <div className="mt-5">
                     <textarea
                       rows={5}
+                      maxLength={500}
                       value={additionalInfo}
                       onChange={(e) => setAdditionalInfo(e.target.value)}
                       placeholder="Specific features to focus on, areas of concern, items to avoid..."
@@ -772,7 +853,11 @@ export default function SquashPostJobPage() {
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Attachments (Optional)
                     </label>
-                    <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                    <label
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={handleAttachmentDrop}
+                      className="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-green-400 hover:bg-green-50/40"
+                    >
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
                         <SlidersHorizontal className="h-6 w-6 text-slate-500" />
                       </div>
@@ -780,9 +865,38 @@ export default function SquashPostJobPage() {
                         Drag &amp; drop files here or click to browse
                       </div>
                       <div className="mt-2 text-sm text-slate-500">
-                        PDF, DOC, PNG, JPG up to 10MB each
+                        PDF, PNG, JPG or WEBP up to 10MB each (maximum 5 files)
                       </div>
-                    </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                        className="sr-only"
+                        disabled={attachmentUploading}
+                        onChange={(event) => {
+                          if (event.target.files) void addAttachmentFiles(event.target.files);
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {attachmentFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {attachmentFiles.map((file, index) => (
+                          <div key={`${file.name}-${file.size}-${index}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <span className="min-w-0 truncate text-slate-700">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setAttachmentFiles((files) => files.filter((_, fileIndex) => fileIndex !== index))}
+                              className="ml-3 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                              aria-label={`Remove ${file.name}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <p className="text-xs text-slate-500">Files upload securely when you save the job draft.</p>
+                      </div>
+                    )}
                   </div>
                 </section>
 

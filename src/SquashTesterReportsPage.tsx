@@ -10,6 +10,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -42,6 +43,7 @@ const emptyReports: TesterReportSubmission[] = [];
 
 export default function SquashTesterReportsPage() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   
   const [realReports, setRealReports] = useState<TesterReportSubmission[]>(emptyReports);
   const [reportsError, setReportsError] = useState('');
@@ -74,20 +76,21 @@ export default function SquashTesterReportsPage() {
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
 
   
 
   const reports = useMemo(
     () =>
       realReports.map((report, index) => ({
+        submissionId: report.id,
         title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
         id: `Report #${String(index + 1).padStart(4, '0')}`,
         app: report.jobTitle,
         platform: report.jobPlatform,
         submitted: formatDate(report.submittedAt || report.createdAt),
         status: toReportStatus(report.status),
-        earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : formatRands(report.amountZar),
+earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : report.status === 'rejected' ? 'Not earned' : 'Awaiting approval',
         hasVideo: report.videoBugCount > 0,
         bugCount: report.bugCount,
       })),
@@ -232,7 +235,13 @@ export default function SquashTesterReportsPage() {
                     </div>
                   ) : null}
                   {reports.map((report) => (
-                    <div key={report.id} className="p-4 space-y-3">
+                    <button
+                      key={report.submissionId}
+                      type="button"
+                      onClick={() => navigate(`/tester/reports/${report.submissionId}`)}
+                      className="block w-full space-y-3 p-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-500"
+                      aria-label={`View report for ${report.app}`}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-bold text-slate-900 text-sm">{report.title}</div>
@@ -257,7 +266,7 @@ export default function SquashTesterReportsPage() {
                         </div>
                         <span className="font-extrabold text-slate-900">{report.earnings}</span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
 
@@ -296,7 +305,20 @@ export default function SquashTesterReportsPage() {
                         </tr>
                       ) : null}
                       {reports.map((report) => (
-                        <tr key={report.id} className="hover:bg-slate-50/60 transition-colors">
+                        <tr
+                          key={report.submissionId}
+                          tabIndex={0}
+                          role="link"
+                          onClick={() => navigate(`/tester/reports/${report.submissionId}`)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              navigate(`/tester/reports/${report.submissionId}`);
+                            }
+                          }}
+                          className="cursor-pointer transition-colors hover:bg-slate-50/80 focus-visible:bg-green-50/60 focus-visible:outline-none"
+                          aria-label={`View report for ${report.app}`}
+                        >
                           <td className="px-5 py-4">
                             <div className="text-xs font-bold text-slate-900">{report.title}</div>
                             <div className="text-[11px] text-slate-400 mt-0.5">{report.id}</div>

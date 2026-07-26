@@ -352,7 +352,32 @@ export type Database = {
         };
         Update: Partial<Database['public']['Tables']['policies']['Insert']>;
         Relationships: [];
-      };      jobs: {
+      };
+      job_attachments: {
+        Row: {
+          id: string;
+          job_id: string;
+          developer_id: string;
+          file_name: string;
+          file_path: string;
+          mime_type: string;
+          file_size: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          job_id: string;
+          developer_id: string;
+          file_name: string;
+          file_path: string;
+          mime_type: string;
+          file_size: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['job_attachments']['Insert']>;
+        Relationships: [];
+      };
+      jobs: {
         Row: {
           id: string;
           developer_id: string;
@@ -365,6 +390,7 @@ export type Database = {
           total_amount_zar: number;
           testers_needed: number;
           description: string | null;
+          additional_info: string | null;
           tasks: string | null;
           focus_areas: string | null;
           preferred_specializations: string[];
@@ -385,7 +411,9 @@ export type Database = {
           package_key: 'starter' | 'growth' | 'pro' | 'enterprise';
           total_amount_zar: number;
           testers_needed: number;
+
           description?: string | null;
+          additional_info?: string | null;
           tasks?: string | null;
           focus_areas?: string | null;
           preferred_specializations?: string[];

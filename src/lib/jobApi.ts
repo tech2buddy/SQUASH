@@ -56,6 +56,7 @@ export type DeveloperJobInput = {
   totalAmountZar: number;
   testersNeeded: number;
   description: string;
+  additionalInfo: string;
   tasks: string;
   focusAreas: string;
   preferredSpecializations: string[];
@@ -76,6 +77,7 @@ export type DeveloperJob = {
   totalAmountZar: number;
   testersNeeded: number;
   description: string | null;
+  additionalInfo: string | null;
   tasks: string | null;
   focusAreas: string | null;
   preferredSpecializations: string[];
@@ -98,6 +100,7 @@ function mapJob(row: {
   total_amount_zar: number;
   testers_needed: number;
   description: string | null;
+  additional_info?: string | null;
   tasks: string | null;
   focus_areas: string | null;
   preferred_specializations: string[];
@@ -119,6 +122,7 @@ function mapJob(row: {
     totalAmountZar: row.total_amount_zar,
     testersNeeded: row.testers_needed,
     description: row.description,
+    additionalInfo: row.additional_info || null,
     tasks: row.tasks,
     focusAreas: row.focus_areas,
     preferredSpecializations: row.preferred_specializations || [],
@@ -142,6 +146,7 @@ export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput
     total_amount_zar: input.totalAmountZar,
     testers_needed: input.testersNeeded,
     description: input.description.trim() || null,
+    additional_info: input.additionalInfo.trim() || null,
     tasks: input.tasks.trim() || null,
     focus_areas: input.focusAreas.trim() || null,
     preferred_specializations: input.preferredSpecializations,
@@ -175,6 +180,7 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
     total_amount_zar: input.totalAmountZar,
     testers_needed: input.testersNeeded,
     description: input.description.trim() || null,
+    additional_info: input.additionalInfo.trim() || null,
     tasks: input.tasks.trim() || null,
     focus_areas: input.focusAreas.trim() || null,
     preferred_specializations: input.preferredSpecializations,
@@ -203,6 +209,20 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
   }
 
   return mapJob(data);
+}
+
+export async function getDeveloperJob(jobId: string, developerId: string): Promise<DeveloperJob | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', jobId)
+    .eq('developer_id', developerId)
+    .maybeSingle();
+
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to load this job right now.'));
+  return data ? mapJob(data) : null;
 }
 
 export async function getDeveloperJobs(developerId: string): Promise<DeveloperJob[]> {
@@ -342,6 +362,7 @@ export type DeveloperApplication = JobApplication & {
   jobPackageKey: JobPackageKey;
   testerName: string;
   testerEmail: string;
+  testerAvatarUrl: string | null;
   testerCity: string;
   testerRating: number;
   testerTestsCompleted: number;
@@ -370,7 +391,7 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
 
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, full_name, email, city')
+    .select('id, full_name, email, city, avatar_url')
     .in('id', testerIds);
 
   if (profilesError) throw profilesError;
@@ -413,6 +434,7 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
       jobPackageKey: job?.packageKey || 'starter',
       testerName: profile?.full_name || 'Tester applicant',
       testerEmail: profile?.email || '',
+      testerAvatarUrl: profile?.avatar_url || null,
       testerCity: profile?.city || 'South Africa',
       testerRating: Number(testerProfile?.rating || 0),
       testerTestsCompleted: testerProfile?.tests_completed || 0,
@@ -609,7 +631,15 @@ export async function saveAssignmentBugReport(input: {
 }) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
+  const { data: submission, error: submissionError } = await supabase
+    .from('test_submissions')
+    .select('id')
+    .eq('assignment_id', input.assignmentId)
+    .maybeSingle();
+  if (submissionError) throw new Error(formatSupabaseError(submissionError, 'Unable to prepare this bug report.'));
+
   const { error } = await supabase.from('bug_reports').insert({
+    submission_id: submission?.id ?? null,
     assignment_id: input.assignmentId,
     tester_id: input.testerId,
     job_id: input.jobId,
@@ -625,6 +655,28 @@ export async function saveAssignmentBugReport(input: {
   if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
 }
 
+export async function attachEvidenceToBugReport(input: {
+  bugId: string;
+  testerId: string;
+  type: 'screenshot' | 'video';
+  path: string;
+}) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+
+  const update = input.type === 'screenshot'
+    ? { screenshot_path: input.path }
+    : { video_path: input.path };
+  const { data, error } = await supabase
+    .from('bug_reports')
+    .update(update)
+    .eq('id', input.bugId)
+    .eq('tester_id', input.testerId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to attach evidence to this report.'));
+  if (!data) throw new Error('This bug report could not be updated.');
+}
 export async function submitAssignmentReport(input: SubmitAssignmentReportInput) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
@@ -733,7 +785,7 @@ export async function getDeveloperSubmittedReports(developerId: string): Promise
 
   const { data: bugReports, error: bugReportsError } = await supabase
     .from('bug_reports')
-    .select('submission_id, assignment_id, severity, video_duration_seconds')
+    .select('submission_id, assignment_id, severity, video_path')
     .in('assignment_id', submissions.map((submission) => submission.assignment_id));
   if (bugReportsError) throw bugReportsError;
 
@@ -772,7 +824,7 @@ export async function getDeveloperSubmittedReports(developerId: string): Promise
       testerTestsCompleted: testerProfile?.tests_completed || 0,
       bugCount: bugs.length,
       criticalBugCount: bugs.filter((bug) => bug.severity === 'Critical').length,
-      videoBugCount: bugs.filter((bug) => Number(bug.video_duration_seconds || 0) > 0).length,
+      videoBugCount: bugs.filter((bug) => Boolean(bug.video_path)).length,
       scores: normalizedSubmissionScores(submission),
 
     };
@@ -997,7 +1049,7 @@ export async function getTesterReportSubmissions(testerId: string): Promise<Test
 
   const [{ data: jobs, error: jobsError }, { data: bugReports, error: bugReportsError }] = await Promise.all([
     supabase.from('jobs').select('*').in('id', jobIds),
-    supabase.from('bug_reports').select('assignment_id, severity, video_duration_seconds').in('assignment_id', assignmentIds),
+    supabase.from('bug_reports').select('assignment_id, severity, video_path').in('assignment_id', assignmentIds),
   ]);
 
   if (jobsError) throw jobsError;
@@ -1029,7 +1081,7 @@ export async function getTesterReportSubmissions(testerId: string): Promise<Test
       createdAt: submission.created_at,
       amountZar: testerEarningForPackage(job?.packageKey || 'starter'),
       bugCount: bugs.length,
-      videoBugCount: bugs.filter((bug) => Number(bug.video_duration_seconds || 0) > 0).length,
+      videoBugCount: bugs.filter((bug) => Boolean(bug.video_path)).length,
       criticalBugCount: bugs.filter((bug) => bug.severity === 'Critical').length,
       scores: normalizedSubmissionScores(submission),
 
@@ -1249,6 +1301,24 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
   };
 }
 
+export async function getTesterSubmissionDetails(
+  submissionId: string,
+  testerId: string,
+): Promise<DeveloperSubmissionDetails | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data: ownedSubmission, error } = await supabase
+    .from('test_submissions')
+    .select('id')
+    .eq('id', submissionId)
+    .eq('tester_id', testerId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!ownedSubmission) return null;
+
+  return getSubmissionDetails(ownedSubmission.id);
+}
 export interface DeveloperAttachment {
   id: string;
   type: 'screenshot' | 'video';

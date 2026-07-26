@@ -1,6 +1,7 @@
 import {
+  Camera,
   ClipboardList,
-  Download,
+  Video,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,6 +13,7 @@ import {
   reviewSubmittedReport,
   type DeveloperSubmissionDetails,
 } from './lib/jobApi';
+import { listTesterJobEvidence, type TesterJobEvidence } from './lib/storageApi';
 
 function formatDateTime(value: string | null) {
   if (!value) return 'Not submitted yet';
@@ -32,6 +34,7 @@ export default function SquashReportDetailsPage() {
 
   const [jobTitle, setJobTitle] = useState<string | null>(null);
   const [realReport, setRealReport] = useState<DeveloperSubmissionDetails | null>(null);
+  const [evidence, setEvidence] = useState<TesterJobEvidence[]>([]);
   const [noReportsForJob, setNoReportsForJob] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportError, setReportError] = useState('');
@@ -78,6 +81,7 @@ export default function SquashReportDetailsPage() {
 
         if (details) {
           setRealReport(details);
+          setEvidence(await listTesterJobEvidence(details.testerId, details.jobId));
           if (jobId) setJobTitle(details.jobTitle || null);
         } else {
           setReportError('The specified report could not be found.');
@@ -269,6 +273,38 @@ export default function SquashReportDetailsPage() {
                       </p>
                     </div>
 
+                    {/* Submitted Evidence */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-lg font-bold text-slate-900">Submitted Evidence</h2>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                          {evidence.length}
+                        </span>
+                      </div>
+                      {evidence.length > 0 ? (
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                          {evidence.map((item) => (
+                            <figure key={item.path} className="overflow-hidden rounded-2xl border border-slate-200 bg-black">
+                              {item.type === 'screenshot' ? (
+                                <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                  <img src={item.url} alt="Tester-submitted evidence" className="h-64 w-full object-contain" />
+                                </a>
+                              ) : (
+                                <video controls preload="metadata" src={item.url} className="h-64 w-full object-contain" />
+                              )}
+                              <figcaption className="flex items-center gap-2 bg-white px-4 py-3 text-xs font-semibold text-slate-700">
+                                {item.type === 'screenshot' ? <Camera className="h-4 w-4" /> : <Video className="h-4 w-4" />}
+                                {item.type === 'screenshot' ? 'Screenshot evidence' : 'Video evidence'}
+                              </figcaption>
+                            </figure>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-4 rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+                          No screenshot or video was submitted with this report.
+                        </p>
+                      )}
+                    </div>
                     {/* Reported Bugs */}
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                       <div className="flex items-center justify-between">
@@ -318,20 +354,6 @@ export default function SquashReportDetailsPage() {
                                       <li key={sIdx}>{step}</li>
                                     ))}
                                   </ol>
-                                </div>
-                              ) : null}
-
-                              {bug.attachmentUrl ? (
-                                <div className="mt-4 pt-3 border-t border-slate-200">
-                                  <a
-                                    href={bug.attachmentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 text-xs font-semibold text-green-700 hover:underline"
-                                  >
-                                    <Download className="h-4 w-4" />
-                                    View Attached Evidence
-                                  </a>
                                 </div>
                               ) : null}
                             </div>

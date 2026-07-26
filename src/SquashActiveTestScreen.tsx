@@ -1,35 +1,25 @@
 import {
-  Bell,
   Bug,
   Camera,
   CheckCircle2,
   ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
   Compass,
   ExternalLink,
   Eye,
   FlaskConical,
-  Home,
-  Menu,
   Mic,
   Monitor,
-  PlayCircle,
-  Search,
   Settings,
   Shield,
   Square,
   Users,
   Video,
   Upload,
-  UserCircle2,
   Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth';
-import MobileTabBar from './components/MobileTabBar';
-import TesterMobileDrawer from './components/TesterMobileDrawer';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
 import { getOrCreateTestLabSession, markTestLabSubmitted, saveTestLabProgress } from './lib/testLabApi';
@@ -101,20 +91,9 @@ const DEFAULT_TYPE_CONFIG: TestingTypeConfig = {
 
 export default function SquashActiveTestScreen() {
   const { session } = useAuth();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const testerName = session?.name || 'Thando M.';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const assignmentId = searchParams.get('assignment');
-  const navItems = [
-    { label: 'Dashboard', icon: Home, href: '/tester/dashboard' },
-    { label: 'Available Jobs', icon: ClipboardList, href: '/tester-jobs' },
-    { label: 'My Tests', icon: PlayCircle, href: '/active-test', active: true },
-    { label: 'Reports', icon: ClipboardList, href: '/tester/reports' },
-    { label: 'Earnings', icon: CircleDollarSign, href: '/tester/earnings' },
-    { label: 'Profile', icon: UserCircle2, href: '/tester/profile' },
-    { label: 'Settings', icon: Settings, href: '/tester/settings' },
-  ];
 
   const fallbackTasks = [
     'Create an account / Sign up',
@@ -436,6 +415,14 @@ export default function SquashActiveTestScreen() {
     }
   };
   const submitTest = async () => {
+    if (evidenceFile || recordedVideoBlobRef.current) {
+      setProgressNotice('Evidence is attached but not uploaded yet. Click Save Bug Report before submitting the test.');
+      return;
+    }
+    if (bugDescription.trim()) {
+      setProgressNotice('You have an unsaved bug report. Save it or clear the description before submitting the test.');
+      return;
+    }
     if (completedTasks < taskState.length) {
       setProgressNotice(`Complete all tasks before submitting (${completedTasks}/${taskState.length}).`);
       return;
@@ -482,120 +469,7 @@ export default function SquashActiveTestScreen() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
-
-      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        {/* Apple Translucent Left Sidebar */}
-        <aside className="hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-slate-200/50 px-6 py-5">
-            <img
-              src="/squash-logo.png"
-              alt="SQUASH logo"
-              className="h-10 w-10 rounded-2xl border border-white/60 object-cover shadow-sm"
-            />
-            <a href="/" className="text-xl font-bold tracking-tight text-slate-900 hover:text-green-700">
-              SQUASH
-            </a>
-          </div>
-
-          <nav className="flex-1 space-y-1.5 px-4 py-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className={`flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 apple-press-effect ${
-                    item.active
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
-                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${item.active ? 'text-white' : 'text-slate-500'}`} />
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-4 p-4 pt-0">
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Active Test</div>
-              <div className="mt-3 rounded-2xl bg-green-50/70 p-3.5 border border-green-200/60">
-                <div className="text-xs font-bold text-green-800">{assignment?.jobTitle || 'Assigned test'}</div>
-                <div className="mt-1 text-[11px] font-semibold text-slate-600">
-                  {completedTasks} / {taskState.length} tasks done
-                </div>
-              </div>
-              <a href="#task-list" className="mt-3 block text-center text-xs font-bold text-green-700 hover:underline">
-                Continue Test →
-              </a>
-            </div>
-
-            <div className="apple-bento-card p-5">
-              <div className="text-base font-bold text-slate-900">Your Rating</div>
-              <div className="mt-2 text-2xl font-extrabold text-slate-900">4.7 ★</div>
-              <div className="mt-0.5 text-xs text-slate-500 font-medium">From 28 reviews</div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="min-w-0 pb-36 lg:pb-12">
-          {/* Apple Translucent Top Header */}
-          <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/75 backdrop-blur-xl">
-            <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsMobileDrawerOpen(true)}
-                    className="rounded-2xl border border-slate-200 bg-white/80 p-2 text-slate-700 lg:hidden hover:bg-slate-100 transition apple-press-effect"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
-                  <div className="hidden max-w-xl flex-1 items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2 md:flex md:min-w-[320px] lg:min-w-[420px] focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                    <Search className="h-4 w-4 text-slate-400" />
-                    <input
-                      className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                      placeholder="Search jobs, tests, reports..."
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <a href="/tester/notifications" className="relative rounded-full border border-slate-200/80 bg-white p-2.5 text-slate-700 hover:bg-slate-50 transition apple-press-effect">
-                    <Bell className="h-4.5 w-4.5" />
-                    <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      2
-                    </span>
-                  </a>
-                  <a href="/tester/profile" className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 p-1.5 pr-4 shadow-2xs hover:bg-white transition apple-press-effect">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white font-bold text-xs">
-                      {testerName.charAt(0)}
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-xs font-bold text-slate-900 leading-tight">{testerName}</div>
-                      <div className="text-[10px] font-semibold text-slate-500">Tester</div>
-                    </div>
-                  </a>
-                </div>
-              </div>
-
-              <div className="md:hidden">
-                <div className="flex w-full items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100/60 px-4 py-2">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input
-                    className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-slate-400 text-slate-900"
-                    placeholder="Search jobs, tests, reports..."
-                  />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+    <div className="space-y-6 pb-24 lg:pb-8">
             <div className="flex items-center justify-between gap-3 animate-fade-up">
               <div className="flex min-w-0 items-center gap-3">
                 {assignment?.jobLogoUrl ? (
@@ -609,12 +483,13 @@ export default function SquashActiveTestScreen() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <div className="rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
-                  ⏱ 18:24
-                </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50/80 px-3.5 py-1.5 text-xs font-bold text-red-600 shadow-2xs">
-                  <Mic className="h-3.5 w-3.5" /> REC
-                </div>
+                {isRecording ? (
+                  <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-600 shadow-2xs">
+                    <Mic className="h-3.5 w-3.5" /> REC {formatDuration(60 - recordingSecondsLeft)}
+                  </div>
+                ) : (
+                  <div className="rounded-full border border-green-200 bg-green-50 px-3.5 py-1.5 text-xs font-bold text-green-700 shadow-2xs">Test in progress</div>
+                )}
               </div>
             </div>
 
@@ -772,7 +647,7 @@ export default function SquashActiveTestScreen() {
                     <input
                       ref={evidenceInputRef}
                       type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+                      accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
                       className="hidden"
                       onChange={(event) => selectEvidence(event.target.files?.[0] ?? null)}
                     />
@@ -781,7 +656,7 @@ export default function SquashActiveTestScreen() {
                       onClick={() => evidenceInputRef.current?.click()}
                       className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                     >
-                      <Upload className="h-3.5 w-3.5" /> Upload
+                      <Upload className="h-3.5 w-3.5" /> Attach file
                     </button>
                     {!isRecording ? (
                       <button
@@ -892,11 +767,7 @@ export default function SquashActiveTestScreen() {
               </div>
               {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-green-700">{progressNotice}</p> : null}
             </section>
-          </div>
-        </main>
-      </div>
-      <MobileTabBar role="tester" />
-      <TesterMobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} activePath="/active-test" />
+
     </div>
   );
 }

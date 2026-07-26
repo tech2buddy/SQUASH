@@ -93,13 +93,53 @@ export async function uploadBugReportFile(
   }
 }
 
+export type TesterJobEvidence = {
+  path: string;
+  name: string;
+  type: UploadFileType;
+  url: string;
+};
+
+export async function listTesterJobEvidence(
+  testerId: string,
+  jobId: string,
+): Promise<TesterJobEvidence[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const folder = `${testerId}/${jobId}`;
+  const buckets: Array<{ name: string; type: UploadFileType }> = [
+    { name: 'bug-screenshots', type: 'screenshot' },
+    { name: 'bug-videos', type: 'video' },
+  ];
+
+  const results = await Promise.all(buckets.map(async (bucket) => {
+    const { data: files, error } = await supabase.storage
+      .from(bucket.name)
+      .list(folder, { limit: 100, sortBy: { column: 'created_at', order: 'asc' } });
+
+    if (error) return [];
+
+    return Promise.all((files || [])
+      .filter((file) => file.name && file.name !== '.emptyFolderPlaceholder')
+      .map(async (file) => {
+        const path = `${folder}/${file.name}`;
+        const { data, error: signedUrlError } = await supabase.storage
+          .from(bucket.name)
+          .createSignedUrl(path, 3600);
+        if (signedUrlError || !data?.signedUrl) return null;
+        return { path, name: file.name, type: bucket.type, url: data.signedUrl } satisfies TesterJobEvidence;
+      }));
+  }));
+
+  return results.flat().filter((item): item is TesterJobEvidence => item !== null);
+}
+
 /**
  * Delete a file from Supabase Storage
- * @param path - The file path to delete
+ * @param path - The file path
  * @param type - Either 'screenshot' or 'video'
  * @returns Success or error
- */
-export async function deleteBugReportFile(
+ */export async function deleteBugReportFile(
   path: string,
   type: UploadFileType
 ): Promise<{ success: boolean; error?: string }> {
@@ -153,7 +193,7 @@ export async function getSignedUrl(
     const bucketName = type === 'screenshot' ? 'bug-screenshots' : 'bug-videos';
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .createSignedUrl(path, 60);
+      .createSignedUrl(path, 3600);
 
     if (error) {
       return {

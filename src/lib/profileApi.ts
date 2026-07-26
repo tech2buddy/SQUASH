@@ -1,3 +1,4 @@
+import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 export type TesterProfileSettings = {
@@ -10,6 +11,7 @@ export type TesterProfileSettings = {
 };
 
 export type TesterPublicProfile = TesterProfileSettings & {
+  avatarUrl: string | null;
   bio: string;
   rating: number;
   testsCompleted: number;
@@ -22,7 +24,7 @@ export async function getTesterProfile(userId: string): Promise<TesterPublicProf
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('full_name, email, phone, city')
+    .select('full_name, email, phone, city, avatar_url')
     .eq('id', userId)
     .maybeSingle();
 
@@ -40,6 +42,7 @@ export async function getTesterProfile(userId: string): Promise<TesterPublicProf
   return {
     fullName: profile.full_name,
     email: profile.email,
+    avatarUrl: profile.avatar_url || null,
     phone: profile.phone || '',
     city: profile.city || '',
     preferredPayout: testerProfile?.preferred_payout_method || 'eft',
@@ -78,6 +81,46 @@ export async function updateTesterProfile(userId: string, values: TesterProfileS
   if (testerError) throw testerError;
 }
 
+
+export async function uploadTesterProfilePhoto(userId: string, file: File): Promise<string> {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  const allowedTypes: Record<string, { kind: SafeFileKind; extension: string }> = {
+    'image/png': { kind: 'png', extension: 'png' },
+    'image/jpeg': { kind: 'jpg', extension: 'jpg' },
+    'image/webp': { kind: 'webp', extension: 'webp' },
+  };
+  const allowed = allowedTypes[file.type];
+  if (!allowed || !(await hasExpectedFileSignature(file, allowed.kind))) {
+    throw new Error('Upload a valid PNG, JPEG or WebP profile photo.');
+  }
+  if (file.size > 2 * 1024 * 1024) throw new Error('Profile photos must be 2 MB or smaller.');
+
+  const filePath = `${userId}/avatar-${crypto.randomUUID()}.${allowed.extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from('profile-avatars')
+    .upload(filePath, file, { cacheControl: '31536000', upsert: false });
+  if (uploadError) throw new Error(`Could not upload profile photo: ${uploadError.message}`);
+
+  const { data: publicUrlData } = supabase.storage.from('profile-avatars').getPublicUrl(filePath);
+  const avatarUrl = publicUrlData.publicUrl;
+  const { data: currentProfile } = await supabase.from('profiles').select('avatar_url').eq('id', userId).maybeSingle();
+  const { error: updateError } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', userId);
+  if (updateError) {
+    await supabase.storage.from('profile-avatars').remove([filePath]);
+    throw new Error(`Could not save profile photo: ${updateError.message}`);
+  }
+
+  const previousUrl = currentProfile?.avatar_url || '';
+  const marker = '/storage/v1/object/public/profile-avatars/';
+  const markerIndex = previousUrl.indexOf(marker);
+  if (markerIndex >= 0) {
+    const previousPath = decodeURIComponent(previousUrl.slice(markerIndex + marker.length));
+    if (previousPath.startsWith(`${userId}/`) && previousPath !== filePath) {
+      await supabase.storage.from('profile-avatars').remove([previousPath]);
+    }
+  }
+  return avatarUrl;
+}
 export async function getTesterSpecializations(userId: string): Promise<string[]> {
   if (!isSupabaseConfigured) return [];
 

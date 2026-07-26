@@ -532,7 +532,7 @@ export async function getAdminReports(limit = 12): Promise<AdminReportRow[]> {
   const { data: submissions, error: submissionsError } = await supabase
     .from('test_submissions')
     .select(
-      'id, job_id, tester_id, status, usability_score, performance_score, onboarding_score, bug_severity_score, device_compatibility_score, submitted_at, created_at',
+      'id, assignment_id, job_id, tester_id, status, usability_score, performance_score, onboarding_score, bug_severity_score, device_compatibility_score, submitted_at, created_at',
     )
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -542,7 +542,7 @@ export async function getAdminReports(limit = 12): Promise<AdminReportRow[]> {
 
   const jobIds = Array.from(new Set(submissions.map((submission) => submission.job_id)));
   const testerIds = Array.from(new Set(submissions.map((submission) => submission.tester_id)));
-  const submissionIds = submissions.map((submission) => submission.id);
+  const assignmentIds = submissions.map((submission) => submission.assignment_id);
 
   const [
     { data: jobs, error: jobsError },
@@ -551,7 +551,7 @@ export async function getAdminReports(limit = 12): Promise<AdminReportRow[]> {
   ] = await Promise.all([
     supabase.from('jobs').select('id, title').in('id', jobIds),
     supabase.from('profiles').select('id, full_name, email').in('id', testerIds),
-    supabase.from('bug_reports').select('id, submission_id, video_path').in('submission_id', submissionIds),
+    supabase.from('bug_reports').select('id, assignment_id, video_path').in('assignment_id', assignmentIds),
   ]);
 
   if (jobsError) throw jobsError;
@@ -560,12 +560,12 @@ export async function getAdminReports(limit = 12): Promise<AdminReportRow[]> {
 
   const jobById = new Map((jobs || []).map((job) => [job.id, job]));
   const testerById = new Map((testers || []).map((tester) => [tester.id, tester]));
-  const bugsBySubmission = new Map<string, { total: number; videos: number }>();
+  const bugsByAssignment = new Map<string, { total: number; videos: number }>();
 
   for (const bug of bugReports || []) {
-    if (!bug.submission_id) continue;
-    const current = bugsBySubmission.get(bug.submission_id) || { total: 0, videos: 0 };
-    bugsBySubmission.set(bug.submission_id, {
+    if (!bug.assignment_id) continue;
+    const current = bugsByAssignment.get(bug.assignment_id) || { total: 0, videos: 0 };
+    bugsByAssignment.set(bug.assignment_id, {
       total: current.total + 1,
       videos: current.videos + (bug.video_path ? 1 : 0),
     });
@@ -580,7 +580,7 @@ export async function getAdminReports(limit = 12): Promise<AdminReportRow[]> {
       submission.bug_severity_score,
       submission.device_compatibility_score,
     ].filter((score): score is number => typeof score === 'number');
-    const evidence = bugsBySubmission.get(submission.id) || { total: 0, videos: 0 };
+    const evidence = bugsByAssignment.get(submission.assignment_id) || { total: 0, videos: 0 };
 
     return {
       id: submission.id,

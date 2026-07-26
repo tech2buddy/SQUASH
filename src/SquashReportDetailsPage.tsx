@@ -4,8 +4,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
-import SquashScore, { getOverallScore, type SquashScoreBreakdown } from './components/SquashScore';
+import SquashScore, { type SquashScoreBreakdown } from './components/SquashScore';
 import { useAuth } from './auth';
 import {
   getDeveloperSubmittedReports,
@@ -38,11 +37,10 @@ export default function SquashReportDetailsPage() {
   const [reportError, setReportError] = useState('');
   const [actionNotice, setActionNotice] = useState('');
   const [reviewing, setReviewing] = useState(false);
-  const [retestOpen, setRetestOpen] = useState(false);
 
   useEffect(() => {
     const currentUserId = session?.userId;
-    if (!currentUserId || false || !session.roles.includes('developer')) return;
+    if (!currentUserId || !session.roles.includes('developer')) return;
 
     let mounted = true;
     setLoadingReport(true);
@@ -128,17 +126,6 @@ export default function SquashReportDetailsPage() {
     }
   };
 
-  const handleRetestSubmit = (payload: RetestSubmission) => {
-    if (!realReport) return;
-    window.localStorage.setItem(
-      `squash_retest_${realReport.id}`,
-      JSON.stringify({
-        ...payload,
-        submittedAt: new Date().toISOString(),
-      }),
-    );
-    setActionNotice(`Retest request submitted to ${realReport.testerName}. Notification sent.`);
-  };
 
   const scores: SquashScoreBreakdown = realReport?.scores || {
     usability: 0,
@@ -147,7 +134,7 @@ export default function SquashReportDetailsPage() {
     bugSeverity: 0,
     deviceCompatibility: 0,
   };
-  const overallScore = getOverallScore(scores);
+  const hasScores = Object.values(scores).some((score) => score > 0);
 
   return (
     <div>
@@ -362,7 +349,13 @@ export default function SquashReportDetailsPage() {
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                       <h3 className="text-base font-bold text-slate-900">Squash Quality Score</h3>
                       <div className="mt-4">
-                        <SquashScore scores={scores} compact={false} />
+                        {hasScores ? (
+                          <SquashScore scores={scores} compact={false} />
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                            No scored questionnaire was collected for this submission.
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -389,14 +382,6 @@ export default function SquashReportDetailsPage() {
             )}
           </div>
 
-      <RetestRequestModal
-        open={retestOpen}
-        onClose={() => setRetestOpen(false)}
-        plan="Growth"
-        originalScore={overallScore}
-        initialUrl={realReport?.jobPlatform || ''}
-        onSubmit={handleRetestSubmit}
-      />
     </div>
   );
 }

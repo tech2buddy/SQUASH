@@ -106,7 +106,7 @@ export default function SquashTesterSettingsPage() {
   }, [saved]);
 
   useEffect(() => {
-    if (!session?.userId || false) {
+    if (!session?.userId) {
       setSettings((prev) => ({
         ...prev,
         fullName: session?.name || prev.fullName,
@@ -195,7 +195,7 @@ export default function SquashTesterSettingsPage() {
     setProfileError('');
 
     try {
-      if (session?.userId && true) {
+      if (session?.userId) {
         await updateTesterProfile(session.userId, {
           fullName: settings.fullName,
           email: settings.email,
@@ -405,8 +405,8 @@ export default function SquashTesterSettingsPage() {
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
-                  <div className="font-bold text-slate-900">Paid to bank within 24hrs of approval</div>
-                  <p className="mt-1">SQUASH sends approved tester earnings quickly once the developer signs off.</p>
+                  <div className="font-bold text-slate-900">Scheduled Friday EFT payouts</div>
+                  <p className="mt-1">Approved earnings are scheduled for Friday EFT after banking verification and payout review.</p>
                 </div>
               </div>
 

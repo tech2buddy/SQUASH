@@ -10,7 +10,6 @@ import {
   } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
-import SquashScore from './components/SquashScore';
 import { getTesterTier } from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 
@@ -83,23 +82,10 @@ export default function SquashTesterDashboardPage() {
   const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
   const [earningsError, setEarningsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [specializations, setSpecializations] = useState<string[]>(() => {
-    const raw = window.localStorage.getItem('squash_tester_specializations');
-    if (!raw) return ['township-network', 'zulu', 'ecommerce'];
-    try {
-      const parsed = JSON.parse(raw) as string[];
-      return Array.isArray(parsed) ? parsed : ['township-network', 'zulu', 'ecommerce'];
-    } catch {
-      return ['township-network', 'zulu', 'ecommerce'];
-    }
-  });
+  const [specializations, setSpecializations] = useState<string[]>([]);
 
   useEffect(() => {
-    window.localStorage.setItem('squash_tester_specializations', JSON.stringify(specializations));
-  }, [specializations]);
-
-  useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     getTesterSpecializations(session.userId)
@@ -107,7 +93,7 @@ export default function SquashTesterDashboardPage() {
         if (mounted && savedSpecializations.length > 0) setSpecializations(savedSpecializations);
       })
       .catch(() => {
-        // Keep local fallback if profile sync is temporarily unavailable.
+        // The dashboard remains empty until Supabase can return verified specializations.
       });
 
     return () => {
@@ -117,7 +103,7 @@ export default function SquashTesterDashboardPage() {
 
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setAssignmentsError('');
@@ -193,7 +179,6 @@ export default function SquashTesterDashboardPage() {
 
   
 
-  const isRealAccount = true;
   const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
   const submittedAssignmentCount = assignments.filter((assignment) => assignment.status === 'submitted').length;
   const approvedAssignmentCount = assignments.filter((assignment) => assignment.status === 'approved').length;
@@ -204,7 +189,7 @@ export default function SquashTesterDashboardPage() {
     {
       title: 'Balance',
       value: formatRands(earningsSummary.availableBalanceZar),
-      note: 'Paid to bank within 24hrs',
+      note: 'Scheduled for Friday EFT',
       change: `${approvedCount} approved`,
       badgeText: 'LIVE',
       badgeBg: 'bg-emerald-50 border border-emerald-200/60',
@@ -292,13 +277,6 @@ export default function SquashTesterDashboardPage() {
     .map((item) => ({
       name: item.jobTitle,
       type: 'Approved Report',
-      score: {
-        usability: 78,
-        performance: 74,
-        onboarding: 80,
-        bugSeverity: 82,
-        deviceCompatibility: 76,
-      },
     }));
 
   if (isLoadingData) {
@@ -311,23 +289,22 @@ export default function SquashTesterDashboardPage() {
       </div>
     );
   }
-  const rating = testerProfile?.rating || (approvedCount > 0 ? 4.2 : 0);
+  const rating = testerProfile?.rating || 0;
   const currentTier = getTesterTier(approvedCount, rating);
 
-  let nextTierGoal = 0;
-  let tierProgress = 0;
-  let progressText = '';
+  let tierProgress: number;
+  let progressText: string;
 
   if (currentTier.tier === 'new') {
-    nextTierGoal = 6;
+    const nextTierGoal = 6;
     tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
     progressText = `${approvedCount} / ${nextTierGoal} tests to Verified`;
   } else if (currentTier.tier === 'verified') {
-    nextTierGoal = 21;
+    const nextTierGoal = 21;
     tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
     progressText = `${approvedCount} / ${nextTierGoal} tests to Pro`;
   } else if (currentTier.tier === 'pro') {
-    nextTierGoal = 51;
+    const nextTierGoal = 51;
     tierProgress = Math.min(100, Math.round((approvedCount / nextTierGoal) * 100));
     progressText = `${approvedCount} / ${nextTierGoal} tests to Elite`;
   } else {
@@ -425,7 +402,7 @@ export default function SquashTesterDashboardPage() {
                         </div>
                         <div className="flex items-center gap-2 mb-1.5">
                       <Star className="h-5 w-5 fill-indigo-500 text-indigo-500" />
-                      <span className="text-xl font-bold text-slate-900">{testerProfile?.rating ? testerProfile.rating.toFixed(1) : (approvedCount > 0 ? '4.2' : '0.0')}</span>
+                      <span className="text-xl font-bold text-slate-900">{rating.toFixed(1)}</span>
                     </div>
                         <div className="flex shrink-0 items-center gap-3">
                           <div className="text-right">
@@ -455,9 +432,9 @@ export default function SquashTesterDashboardPage() {
                   </div>
 
                   <div className="flex gap-4 border-b border-slate-100 px-5 py-2.5 text-xs font-bold text-slate-500 bg-slate-50/50">
-                    <span className="text-green-600 font-extrabold">In Progress ({isRealAccount ? activeAssignments.length : Math.max(assignments.length, 2)})</span>
-                    <span>Submitted ({isRealAccount ? submittedAssignmentCount : 3})</span>
-                    <span>Approved ({isRealAccount ? approvedAssignmentCount : 19})</span>
+                    <span className="text-green-600 font-extrabold">In Progress ({activeAssignments.length})</span>
+                    <span>Submitted ({submittedAssignmentCount})</span>
+                    <span>Approved ({approvedAssignmentCount})</span>
                   </div>
 
                   <div className="divide-y divide-slate-100 px-5">
@@ -503,7 +480,7 @@ export default function SquashTesterDashboardPage() {
                 <div className="apple-bento-card overflow-hidden">
                   <div className="border-b border-slate-100 px-5 py-4">
                     <h2 className="text-base font-bold text-slate-900">Completed Tests</h2>
-                    <p className="text-xs font-medium text-slate-500">Your latest completed tests and Squash Scores.</p>
+                    <p className="text-xs font-medium text-slate-500">Your latest developer-approved test submissions.</p>
                   </div>
                   <div className="divide-y divide-slate-100 px-5">
                     {dashboardCompletedTests.map((test) => (
@@ -512,12 +489,12 @@ export default function SquashTesterDashboardPage() {
                           <div className="text-sm font-bold text-slate-900">{test.name}</div>
                           <div className="text-xs text-slate-500 mt-0.5">{test.type}</div>
                         </div>
-                        <SquashScore scores={test.score} compact />
+                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Approved</span>
                       </div>
                     ))}
                     {dashboardCompletedTests.length === 0 ? (
                       <div className="py-6 text-xs text-slate-500">
-                        No approved reports yet. Once a developer approves your test, it will appear here with a Squash Score.
+                        No approved reports yet. Once a developer approves your test, it will appear here.
                       </div>
                     ) : null}
                   </div>

@@ -49,7 +49,7 @@ export default function SquashAboutPage() {
     { icon: FileText, title: 'You post your app' },
     { icon: Search, title: 'You tell us what to test' },
     { icon: Users, title: 'We handle everything else' },
-    { icon: CheckCircle2, title: 'You receive a report within 24 hours' },
+    { icon: CheckCircle2, title: 'You receive reports after testing and review' },
   ];
 
   return (

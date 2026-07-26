@@ -14,59 +14,29 @@ export type AppNotification = {
   readAt: string | null;
 };
 
-const NOTIFICATION_STORAGE_PREFIX = 'squash_notifications_v2_';
-
-function getLocalNotifications(userId: string): AppNotification[] {
-  try {
-    const raw = window.localStorage.getItem(`${NOTIFICATION_STORAGE_PREFIX}${userId}`);
-    if (!raw) return [];
-    return JSON.parse(raw) as AppNotification[];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalNotifications(userId: string, notifications: AppNotification[]) {
-  try {
-    window.localStorage.setItem(`${NOTIFICATION_STORAGE_PREFIX}${userId}`, JSON.stringify(notifications));
-  } catch (err) {
-    console.warn('Unable to save local notifications:', err);
-  }
-}
 
 export async function getUserNotifications(userId: string): Promise<AppNotification[]> {
-  if (!userId) return [];
+  if (!userId || !isSupabaseConfigured) return [];
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        const remoteNotifications: AppNotification[] = data.map((item: any) => ({
-          id: item.id,
-          userId: item.user_id,
-          title: item.title,
-          body: item.body || item.description || '',
-          type: (item.notification_type || item.type || 'job') as NotificationType,
-          linkPath: item.link_path || item.href || '/dashboard',
-          status: item.status === 'read' ? 'read' : 'unread',
-          createdAt: item.created_at,
-          readAt: item.read_at || null,
-        }));
+  if (error) throw new Error(error.message || 'Unable to load notifications.');
 
-        saveLocalNotifications(userId, remoteNotifications);
-        return remoteNotifications;
-      }
-    } catch (err) {
-      console.warn('Falling back to local notification storage:', err);
-    }
-  }
-
-  return getLocalNotifications(userId);
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    userId: item.user_id,
+    title: item.title,
+    body: item.body || item.description || '',
+    type: (item.notification_type || item.type || 'job') as NotificationType,
+    linkPath: item.link_path || item.href || '/dashboard',
+    status: item.status === 'read' ? 'read' : 'unread',
+    createdAt: item.created_at,
+    readAt: item.read_at || null,
+  }));
 }
 
 export async function requestBrowserPushPermission(): Promise<NotificationPermission> {
@@ -147,27 +117,20 @@ export async function createNotification(input: {
     readAt,
   };
 
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.from('notifications' as any).insert({
-        id: notificationId,
-        user_id: input.userId,
-        title: input.title,
-        body: input.body,
-        status,
-        read_at: readAt,
-        link_path: input.linkPath || '/dashboard',
-        notification_type: input.type || 'job',
-        created_at: now,
-      } as any);
-    } catch (err) {
-      console.warn('Could not insert remote notification, storing locally:', err);
-    }
-  }
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.');
 
-  const existing = getLocalNotifications(input.userId);
-  const updated = [newNotification, ...existing.filter((n) => n.id !== notificationId)];
-  saveLocalNotifications(input.userId, updated);
+  const { error } = await supabase.from('notifications' as any).insert({
+    id: notificationId,
+    user_id: input.userId,
+    title: input.title,
+    body: input.body,
+    status,
+    read_at: readAt,
+    link_path: input.linkPath || '/dashboard',
+    notification_type: input.type || 'job',
+    created_at: now,
+  } as any);
+  if (error) throw new Error(error.message || 'Unable to create notification.');
 
   if (status === 'unread') {
     window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: input.userId, notification: newNotification } }));
@@ -181,48 +144,28 @@ export async function createNotification(input: {
 }
 
 export async function markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
-  if (!userId) return;
+  if (!userId || !isSupabaseConfigured) return;
   const now = new Date().toISOString();
 
-  if (isSupabaseConfigured) {
-    try {
-      await supabase
-        .from('notifications' as any)
-        .update({ status: 'read', read_at: now } as any)
-        .eq('id', notificationId)
-        .eq('user_id', userId);
-    } catch (err) {
-      console.warn('Could not mark remote notification read:', err);
-    }
-  }
-
-  const existing = getLocalNotifications(userId);
-  const updated = existing.map((item) =>
-    item.id === notificationId ? { ...item, status: 'read' as const, readAt: now } : item,
-  );
-  saveLocalNotifications(userId, updated);
+  const { error } = await supabase
+    .from('notifications' as any)
+    .update({ status: 'read', read_at: now } as any)
+    .eq('id', notificationId)
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message || 'Unable to mark notification as read.');
 
   window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId } }));
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-  if (!userId) return;
+  if (!userId || !isSupabaseConfigured) return;
   const now = new Date().toISOString();
 
-  if (isSupabaseConfigured) {
-    try {
-      await supabase
-        .from('notifications' as any)
-        .update({ status: 'read', read_at: now } as any)
-        .eq('user_id', userId);
-    } catch (err) {
-      console.warn('Could not mark all remote notifications read:', err);
-    }
-  }
-
-  const existing = getLocalNotifications(userId);
-  const updated = existing.map((item) => ({ ...item, status: 'read' as const, readAt: now }));
-  saveLocalNotifications(userId, updated);
+  const { error } = await supabase
+    .from('notifications' as any)
+    .update({ status: 'read', read_at: now } as any)
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message || 'Unable to mark notifications as read.');
 
   window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId } }));
 }
@@ -232,15 +175,13 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
   return notifications.filter((n) => n.status === 'unread').length;
 }
 
-const BACKFILL_STORAGE_KEY = 'squash_backfill_done_';
+const backfilledDevelopers = new Set<string>();
 
 export async function backfillDeveloperNotifications(developerId: string): Promise<void> {
   if (!developerId || !isSupabaseConfigured) return;
 
-  // Only run once per browser session per user
-  const sessionKey = `${BACKFILL_STORAGE_KEY}${developerId}`;
-  if (sessionStorage.getItem(sessionKey)) return;
-  sessionStorage.setItem(sessionKey, '1');
+  if (backfilledDevelopers.has(developerId)) return;
+  backfilledDevelopers.add(developerId);
 
   try {
     // Get existing notifications to avoid duplicates

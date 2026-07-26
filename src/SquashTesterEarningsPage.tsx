@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { getTesterEarningsSummary, requestTesterPayout, type TesterEarningsSummary } from './lib/jobApi';
-import { sendEmail } from './lib/emailApi';
+import { sendTransactionalEmail } from './lib/emailApi';
 
 export default function SquashTesterEarningsPage() {
   const { session } = useAuth();
@@ -29,7 +29,7 @@ export default function SquashTesterEarningsPage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setEarningsError('');
@@ -80,7 +80,7 @@ export default function SquashTesterEarningsPage() {
   }, [earningsSummary]);
 
   const handleRequestPayout = async () => {
-    if (!session?.userId || false) {
+    if (!session?.userId) {
       setPayoutNotice('Please log in with a real tester account to request payout.');
       return;
     }
@@ -93,17 +93,16 @@ export default function SquashTesterEarningsPage() {
     setRequestingPayout(true);
     setPayoutNotice('');
     try {
-      await requestTesterPayout(session.userId, amount);
+      const payout = await requestTesterPayout(session.userId, amount);
       const refreshed = await getTesterEarningsSummary(session.userId);
       setEarningsSummary(refreshed);
       setPayoutNotice(`Payout request created for ${formatRand(amount)}. Admin processing comes next.`);
       
-      // Fire-and-forget email notification (don't block the UI if it fails)
-      sendEmail({
-        to: session.email || 'admin@squashqa.com', // fallback or use the user's email
-        subject: `SQUASH Payout Requested: ${formatRand(amount)}`,
-        html: `<h2>Payout Requested</h2><p>Your request for <strong>${formatRand(amount)}</strong> has been received and is pending admin approval. It will be processed shortly.</p>`,
-      }).catch(err => console.error('Failed to send payout notification email:', err));
+      // Delivery is server-authorized and derived from the payout record.
+      if (payout?.id) {
+        sendTransactionalEmail({ type: 'payout_requested', payoutId: payout.id })
+          .catch(err => console.error('Failed to send payout notification email:', err));
+      }
       
     } catch (error) {
       setPayoutNotice(error instanceof Error ? error.message : 'Could not request payout right now.');
@@ -119,7 +118,7 @@ export default function SquashTesterEarningsPage() {
     {
       title: 'Available Balance',
       value: earningsSummary ? formatRand(earningsSummary.availableBalanceZar) : isRealAccount ? 'R0' : 'R3,250',
-      note: 'Paid to bank within 24hrs of approval',
+      note: 'Eligible for Friday EFT after review',
       icon: Wallet,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-700',
@@ -555,7 +554,7 @@ export default function SquashTesterEarningsPage() {
                     Your money is handled securely
                   </div>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-                    Approved earnings are sent to your selected payout method within 24 hours. You only see what you earn as a tester.
+                    Approved earnings are scheduled for Friday EFT after banking verification and payout review. You only see what you earn as a tester.
                   </p>
                 </div>
                 <a

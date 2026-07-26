@@ -15,12 +15,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import RetestRequestModal, { type RetestSubmission } from './components/RetestRequestModal';
-import SquashCertified from './components/SquashCertified';
-import SquashScore from './components/SquashScore';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { useAuth } from './auth';
 import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, getDeveloperSubmittedReports, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob, type DeveloperSubmissionReview } from './lib/jobApi';
+import { useSupabaseRealtime } from './hooks/useSupabaseRealtime';
 
 type DashboardJob = {
   id: string;
@@ -28,27 +26,18 @@ type DashboardJob = {
   type: string;
   testers: string;
   status: 'In Progress' | 'Reviewing' | 'Open' | 'Completed';
-  deadline: string;
-  deadlineNote: string;
+  postedDate: string;
+  postedNote: string;
   submissions: string;
   accent: string;
   logoUrl?: string | null;
   categoryId: TestCategoryId;
-  completed?: boolean;
-  certifiedAt?: string;
-  score?: {
-    usability: number;
-    performance: number;
-    onboarding: number;
-    bugSeverity: number;
-    deviceCompatibility: number;
-  };
   plan?: 'Starter' | 'Growth' | 'Pro';
 };
 
 export default function SquashDeveloperDashboard() {
   const { session } = useAuth();
-  const developerName = session?.name || 'Alex Developer';
+  const developerName = session?.name || 'Developer';
   const developerFirstName = developerName.split(' ')[0] || developerName;
   const [databaseJobs, setDatabaseJobs] = useState<DeveloperJob[]>([]);
   const [databaseApplications, setDatabaseApplications] = useState<DeveloperApplication[]>([]);
@@ -57,42 +46,41 @@ export default function SquashDeveloperDashboard() {
   const [jobsError, setJobsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const hasLiveDashboard = true && dashboardSummary !== null;
   const formatRand = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
 
   const stats = [
     {
       title: 'Active Jobs',
-      value: hasLiveDashboard ? String(dashboardSummary.activeJobs) : '12',
-      note: hasLiveDashboard ? `${databaseJobs.length} total posted` : '2 in progress',
-      trend: hasLiveDashboard ? `${dashboardSummary.pendingApplications} pending applicants` : '+8%',
+      value: String(dashboardSummary?.activeJobs ?? 0),
+      note: `${databaseJobs.length} total posted`,
+      trend: `${dashboardSummary?.pendingApplications ?? 0} pending applicants`,
       icon: BriefcaseBusiness,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
     },
     {
       title: 'Total Testers',
-      value: hasLiveDashboard ? String(dashboardSummary.uniqueTesters) : '245',
-      note: hasLiveDashboard ? `${dashboardSummary.totalApplications} applications` : '18 this week',
-      trend: hasLiveDashboard ? 'Real applicants' : '+12%',
+      value: String(dashboardSummary?.uniqueTesters ?? 0),
+      note: `${dashboardSummary?.totalApplications ?? 0} applications`,
+      trend: 'Verified application data',
       icon: Users,
       iconBg: 'bg-sky-50',
       iconColor: 'text-sky-600',
     },
     {
       title: 'Reports',
-      value: hasLiveDashboard ? String(dashboardSummary.submittedReports) : '4.6',
-      note: hasLiveDashboard ? `${dashboardSummary.approvedReports} approved` : 'From 124 reports',
-      trend: hasLiveDashboard ? `${dashboardSummary.averageScore || 0}/100 avg score` : '+0.4',
+      value: String(dashboardSummary?.submittedReports ?? 0),
+      note: `${dashboardSummary?.approvedReports ?? 0} approved`,
+      trend: `${dashboardSummary?.averageScore ?? 0}/100 average score`,
       icon: BarChart3,
       iconBg: 'bg-violet-50',
       iconColor: 'text-violet-600',
     },
     {
       title: 'Committed Budget',
-      value: hasLiveDashboard ? formatRand(dashboardSummary.totalCommittedZar) : 'R78,450',
-      note: hasLiveDashboard ? 'Across posted jobs' : 'This month',
-      trend: hasLiveDashboard ? 'Package totals only' : '+15%',
+      value: formatRand(dashboardSummary?.totalCommittedZar ?? 0),
+      note: 'Across posted jobs',
+      trend: 'Package totals only',
       icon: CircleDollarSign,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
@@ -112,8 +100,8 @@ export default function SquashDeveloperDashboard() {
           type: job.platform,
           testers: `${acceptedTesters} / ${job.testersNeeded}`,
           status: job.status === 'active' ? ('Open' as const) : job.status === 'completed' ? ('Completed' as const) : ('Reviewing' as const),
-          deadline: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
-          deadlineNote: 'Newly published',
+          postedDate: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+          postedNote: 'Created',
           submissions: `${submittedReports} / ${job.testersNeeded}`,
           accent: 'bg-green-600 text-white',
           logoUrl: job.logoUrl,
@@ -126,43 +114,32 @@ export default function SquashDeveloperDashboard() {
 
   const jobs = databaseDashboardJobs;
 
-  useEffect(() => {
+  const fetchData = () => {
     if (!session?.userId || !session.roles.includes('developer')) return;
-
-    let mounted = true;
-    setJobsError('');
 
     Promise.all([getDeveloperJobs(session.userId), getDeveloperApplications(session.userId), getDeveloperSubmittedReports(session.userId), getDeveloperDashboardSummary(session.userId)])
       .then(([jobItems, applicationItems, reportItems, summary]) => {
-        if (!mounted) return;
         setDatabaseJobs(jobItems);
         setDatabaseApplications(applicationItems);
         setDatabaseReports(reportItems);
         setDashboardSummary(summary);
       })
       .catch((error: Error) => {
-        if (mounted) setJobsError(error.message || 'Could not load your live dashboard data right now.');
+        setJobsError(error.message || 'Could not load your live dashboard data right now.');
       })
       .finally(() => {
-        if (mounted) setIsLoadingData(false);
+        setIsLoadingData(false);
       });
+  };
 
-    return () => {
-      mounted = false;
-    };
+  useSupabaseRealtime(['jobs', 'job_applications', 'test_submissions', 'test_assignments'], fetchData, [session?.userId]);
+
+  useEffect(() => {
+    fetchData();
   }, [session?.role, session?.userId]);
 
   const [tierFilter, setTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
-  const [retestTarget, setRetestTarget] = useState<(typeof jobs)[number] | null>(null);
-  const [retestMessage, setRetestMessage] = useState('');
 
-  const recentSubmissions = [
-    { app: 'PayFlow Web App', tester: 'Thando M.', time: '2h ago', severity: 'Critical' },
-    { app: 'FitTrack Mobile', tester: 'Sipho N.', time: '5h ago', severity: 'Medium' },
-    { app: 'HealthApp iOS', tester: 'Lerato D.', time: '6h ago', severity: 'Low' },
-    { app: 'PayFlow Web App', tester: 'John K.', time: '1d ago', severity: 'Critical' },
-    { app: 'FitTrack Mobile', tester: 'Sarah W.', time: '1d ago', severity: 'Medium' },
-  ];
 
 
   const liveApplications = useMemo(
@@ -176,38 +153,23 @@ export default function SquashDeveloperDashboard() {
     [databaseApplications],
   );
 
-  const activity = [
-    { text: 'New job "EduLearn Platform" created', time: '2 hours ago', color: 'bg-green-100 text-green-600' },
-    { text: 'Critical bug reported in PayFlow Web App', time: '3 hours ago', color: 'bg-red-100 text-red-500' },
-    { text: 'Sipho N. submitted a report for FitTrack Mobile', time: '5 hours ago', color: 'bg-amber-100 text-amber-500' },
-    { text: '30 reports completed for HealthApp iOS', time: 'Yesterday', color: 'bg-green-100 text-green-600' },
-    { text: 'Payment of R12,450 processed', time: '2 days ago', color: 'bg-sky-100 text-sky-600' },
-  ];
 
   const totalLiveBugs = dashboardSummary
     ? Object.values(dashboardSummary.bugCounts).reduce((sum, count) => sum + count, 0)
     : 0;
-  const bugSummary = dashboardSummary
-    ? [
-        { label: 'Critical', value: `${dashboardSummary.bugCounts.Critical}`, color: 'bg-red-500' },
-        { label: 'High', value: `${dashboardSummary.bugCounts.High}`, color: 'bg-orange-500' },
-        { label: 'Medium', value: `${dashboardSummary.bugCounts.Medium}`, color: 'bg-amber-400' },
-        { label: 'Low', value: `${dashboardSummary.bugCounts.Low}`, color: 'bg-green-500' },
-      ]
-    : [
-        { label: 'Critical', value: '45 (18%)', color: 'bg-red-500' },
-        { label: 'Medium', value: '97 (40%)', color: 'bg-amber-400' },
-        { label: 'Low', value: '68 (28%)', color: 'bg-green-500' },
-        { label: 'Info', value: '35 (14%)', color: 'bg-slate-300' },
-      ];
-
-  const testerDemographics = [
-    { label: '18-24 (Everyday Users)', value: 52, color: 'bg-green-500' },
-    { label: '25-34 (Early Career)', value: 29, color: 'bg-emerald-400' },
-    { label: '35+ (Senior Users)', value: 19, color: 'bg-sky-400' },
+  const bugSummary = [
+    { label: 'Critical', value: `${dashboardSummary?.bugCounts.Critical ?? 0}`, color: 'bg-red-500' },
+    { label: 'High', value: `${dashboardSummary?.bugCounts.High ?? 0}`, color: 'bg-orange-500' },
+    { label: 'Medium', value: `${dashboardSummary?.bugCounts.Medium ?? 0}`, color: 'bg-amber-400' },
+    { label: 'Low', value: `${dashboardSummary?.bugCounts.Low ?? 0}`, color: 'bg-green-500' },
   ];
-  const submissionTrendValues = dashboardSummary ? dashboardSummary.trend : [10, 16, 19, 23, 32, 38, 30];
-  const submissionTrendLabels = ['20 May', '21 May', '22 May', '23 May', '24 May', '25 May', '26 May'];
+
+  const submissionTrendValues = dashboardSummary?.trend.length ? dashboardSummary.trend : [0, 0, 0, 0, 0, 0, 0];
+  const submissionTrendLabels = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' });
+  });
   const trendMax = Math.max(1, ...submissionTrendValues);
   const trendPoints = submissionTrendValues
     .map((value, index) => {
@@ -217,20 +179,18 @@ export default function SquashDeveloperDashboard() {
     })
     .join(' ');
   const trendAreaPoints = `0,100 ${trendPoints} 100,100`;
-  const dashboardActivity = true
-    ? [
-        ...databaseApplications.slice(0, 3).map((application) => ({
-          text: `${application.testerName} applied for ${application.jobTitle}`,
-          time: new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
-          color: 'bg-green-100 text-green-600',
-        })),
-        ...databaseJobs.slice(0, 2).map((job) => ({
-          text: `${job.title} was posted`,
-          time: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
-          color: 'bg-sky-100 text-sky-600',
-        })),
-      ]
-    : activity;
+  const dashboardActivity = [
+    ...databaseApplications.slice(0, 3).map((application) => ({
+      text: `${application.testerName} applied for ${application.jobTitle}`,
+      time: new Date(application.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
+      color: 'bg-green-100 text-green-600',
+    })),
+    ...databaseJobs.slice(0, 2).map((job) => ({
+      text: `${job.title} was posted`,
+      time: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }),
+      color: 'bg-sky-100 text-sky-600',
+    })),
+  ];
 
   const getStatusClasses = (status: string) => {
     if (status === 'In Progress') return 'bg-green-100 text-green-700';
@@ -239,11 +199,6 @@ export default function SquashDeveloperDashboard() {
     return 'bg-slate-100 text-slate-700';
   };
 
-  const getSeverityClasses = (severity: string) => {
-    if (severity === 'Critical') return 'bg-red-50 text-red-600';
-    if (severity === 'Medium') return 'bg-amber-50 text-amber-600';
-    return 'bg-green-50 text-green-600';
-  };
 
   const getActivityIcon = (text: string) => {
     if (text.includes('Critical')) return AlertTriangle;
@@ -253,52 +208,8 @@ export default function SquashDeveloperDashboard() {
     return Clock3;
   };
 
-  const handleRetestSubmit = (payload: RetestSubmission) => {
-    if (!retestTarget) return;
-    // TODO: Replace with Supabase query
-    const previousOverall = retestTarget.score
-      ? Math.round(
-          (retestTarget.score.usability +
-            retestTarget.score.performance +
-            retestTarget.score.onboarding +
-            retestTarget.score.bugSeverity +
-            retestTarget.score.deviceCompatibility) /
-            5,
-        )
-      : 68;
-    const newOverall = 81;
-    const delta = newOverall - previousOverall;
 
-    const existing = JSON.parse(window.localStorage.getItem('squash_retests') ?? '[]') as Array<{
-      jobName: string;
-      submittedAt: string;
-      plan: string;
-      price: number;
-      url: string;
-      focusAreas: string;
-    }>;
-    existing.unshift({
-      jobName: retestTarget.name,
-      submittedAt: new Date().toISOString(),
-      plan: payload.plan,
-      price: payload.price,
-      url: payload.url,
-      focusAreas: payload.focusAreas,
-    });
-    window.localStorage.setItem('squash_retests', JSON.stringify(existing));
-
-    const certifiedMessage =
-      previousOverall < 80 && newOverall >= 80
-        ? " Congratulations! You've earned your SQUASH CERTIFIED badge! 🏆"
-        : '';
-
-    setRetestMessage(
-      `Previous Score: ${previousOverall}/100 → New Score: ${newOverall}/100 +${delta} points improvement 🎉${certifiedMessage}`,
-    );
-    setRetestTarget(null);
-  };
-
-  if (true && isLoadingData) {
+  if (isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading dashboard data...
@@ -315,7 +226,7 @@ export default function SquashDeveloperDashboard() {
                 <p className="text-xs text-slate-500 mt-0.5 lg:text-base lg:mt-2">Here&apos;s what&apos;s happening with your testing activity.</p>
               </div>
               <a href="/dashboard" className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
-                {true ? 'Live' : 'May 20–28, 2024'}
+                Live
               </a>
             </div>
 
@@ -419,7 +330,7 @@ export default function SquashDeveloperDashboard() {
                         <div>
                           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                             <span>Submissions: {job.submissions}</span>
-                            <span>{job.deadline}</span>
+                            <span>{job.postedDate}</span>
                           </div>
                           <div className="h-1.5 w-full rounded-full bg-slate-100">
                             <div
@@ -439,20 +350,11 @@ export default function SquashDeveloperDashboard() {
                         </div>
 
                         <div className="pt-1 flex items-center justify-between">
-                          <div className="text-xs text-slate-500">{job.deadlineNote}</div>
+                          <div className="text-xs text-slate-500">{job.postedNote}</div>
                           <div className="flex items-center gap-2">
                             <Link to={`/developer/submissions?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
                               View reports
                             </Link>
-                            {job.completed ? (
-                              <button
-                                type="button"
-                                onClick={() => setRetestTarget(job)}
-                                className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                Retest
-                              </button>
-                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -469,7 +371,7 @@ export default function SquashDeveloperDashboard() {
                         <th className="px-5 py-3 font-medium">Category</th>
                         <th className="px-5 py-3 font-medium">Testers</th>
                         <th className="px-5 py-3 font-medium">Status</th>
-                        <th className="px-5 py-3 font-medium">Deadline</th>
+                        <th className="px-5 py-3 font-medium">Created</th>
                         <th className="px-5 py-3 font-medium">Submissions</th>
                         <th className="px-5 py-3 font-medium">Actions</th>
                       </tr>
@@ -515,32 +417,12 @@ export default function SquashDeveloperDashboard() {
                               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(job.status)}`}>
                                 {job.status}
                               </span>
-                              {job.completed && job.score ? (
-                                <div className="block">
-                                  <SquashScore scores={job.score} compact />
-                                </div>
-                              ) : null}
-                              {job.completed && job.score ? (
-                                <SquashCertified
-                                  score={Math.round(
-                                    (job.score.usability +
-                                      job.score.performance +
-                                      job.score.onboarding +
-                                      job.score.bugSeverity +
-                                      job.score.deviceCompatibility) /
-                                      5,
-                                  )}
-                                  testers={Number(job.testers.split('/')[0].trim())}
-                                  certifiedAt={job.certifiedAt ?? '2026-04-01'}
-                                  compact
-                                />
-                              ) : null}
                             </div>
                           </td>
                           <td className="px-5 py-3">
-                            <div className="text-sm font-medium text-slate-700">{job.deadline}</div>
-                            <div className={`mt-1 text-xs ${job.deadlineNote === 'Overdue' || job.deadlineNote === 'Today' ? 'text-red-500' : 'text-slate-500'}`}>
-                              {job.deadlineNote}
+                            <div className="text-sm font-medium text-slate-700">{job.postedDate}</div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {job.postedNote}
                             </div>
                           </td>
                           <td className="px-5 py-3 text-sm font-medium text-slate-700">
@@ -568,15 +450,6 @@ export default function SquashDeveloperDashboard() {
                               <Link to="/report-details" className="block rounded-xl p-2 text-slate-500 hover:bg-slate-100">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Link>
-                              {job.completed ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setRetestTarget(job)}
-                                  className="rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                  Request Retest
-                                </button>
-                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -614,28 +487,10 @@ export default function SquashDeveloperDashboard() {
                         </span>
                       </Link>
                     ))
-                  ) : true ? (
+                  ) : (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
                       No live applications yet.
                     </div>
-                  ) : (
-                    recentSubmissions.map((submission) => (
-                      <div key={`${submission.app}-${submission.tester}-${submission.time}`} className="flex items-center justify-between gap-3 rounded-2xl border border-transparent px-3 py-3 transition hover:border-slate-200 hover:bg-slate-50">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                              <UserCircle2 className="h-5 w-5" />
-                            </div>
-                            <div className="font-semibold text-slate-900">{submission.app}</div>
-                          </div>
-                          <div className="mt-1 text-sm text-slate-500">by {submission.tester}</div>
-                          <div className="mt-1 text-xs text-slate-400">{submission.time}</div>
-                        </div>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getSeverityClasses(submission.severity)}`}>
-                          {submission.severity}
-                        </span>
-                      </div>
-                    ))
                   )}
                 </div>
               </div>
@@ -645,9 +500,9 @@ export default function SquashDeveloperDashboard() {
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="text-base font-bold text-slate-900">Bug Summary</div>
                 <div className="mt-6 flex items-center justify-center">
-                  <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-[conic-gradient(#ef4444_0_18%,#fbbf24_18%_58%,#22c55e_58%_86%,#cbd5e1_86%_100%)] shadow-sm transition-transform hover:scale-105 duration-300">
+                  <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-slate-100 shadow-sm transition-transform hover:scale-105 duration-300">
                     <div className="flex h-20 w-20 flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">
-                      <div className="text-xl font-black text-slate-900">{dashboardSummary ? totalLiveBugs : 245}</div>
+                      <div className="text-xl font-black text-slate-900">{totalLiveBugs}</div>
                       <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total Bugs</div>
                     </div>
                   </div>
@@ -669,23 +524,9 @@ export default function SquashDeveloperDashboard() {
                     Tester Demographics
                   </div>
                   <div className="space-y-3">
-                    {true ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
                         Demographics will appear after testers submit profile-backed reports for your jobs.
                       </div>
-                    ) : (
-                      testerDemographics.map((segment) => (
-                        <div key={segment.label}>
-                          <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                            <span>{segment.label}</span>
-                            <span className="font-semibold text-slate-800">{segment.value}%</span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-slate-200">
-                            <div className={`h-1.5 rounded-full ${segment.color}`} style={{ width: `${segment.value}%` }} />
-                          </div>
-                        </div>
-                      ))
-                    )}
                   </div>
                 </div>
               </div>
@@ -736,10 +577,10 @@ export default function SquashDeveloperDashboard() {
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {[
-                    [dashboardSummary ? String(dashboardSummary.totalApplications) : '124', 'Applications', 'text-slate-900'],
-                    [dashboardSummary ? String(dashboardSummary.submittedReports) : '18', 'In Review', 'text-amber-600'],
-                    [dashboardSummary ? String(dashboardSummary.approvedReports) : '96', 'Approved', 'text-green-600'],
-                    [dashboardSummary ? `${dashboardSummary.averageScore || 0}/100` : '4.6*', 'Avg Score', 'text-sky-600'],
+                    [String(dashboardSummary?.totalApplications ?? 0), 'Applications', 'text-slate-900'],
+                    [String(dashboardSummary?.submittedReports ?? 0), 'In Review', 'text-amber-600'],
+                    [String(dashboardSummary?.approvedReports ?? 0), 'Approved', 'text-green-600'],
+                    [`${dashboardSummary?.averageScore ?? 0}/100`, 'Avg Score', 'text-sky-600'],
                   ].map(([value, label, color]) => (
                     <div key={label} className="rounded-xl bg-slate-50 px-3 py-2.5 text-center">
                       <div className={`text-lg font-black ${color}`}>{value}</div>
@@ -830,31 +671,7 @@ export default function SquashDeveloperDashboard() {
                 </a>
               </div>
             </section>
-            {retestMessage ? (
-              <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-                {retestMessage}
-              </div>
-            ) : null}
           </div>
-      <RetestRequestModal
-        open={Boolean(retestTarget)}
-        onClose={() => setRetestTarget(null)}
-        plan={retestTarget?.plan ?? 'Starter'}
-        originalScore={
-          retestTarget?.score
-            ? Math.round(
-                (retestTarget.score.usability +
-                  retestTarget.score.performance +
-                  retestTarget.score.onboarding +
-                  retestTarget.score.bugSeverity +
-                  retestTarget.score.deviceCompatibility) /
-                  5,
-              )
-            : 68
-        }
-        initialUrl="https://staging.example.app"
-        onSubmit={handleRetestSubmit}
-      />
     </div>
   );
 }

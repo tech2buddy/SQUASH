@@ -44,11 +44,11 @@ export default function SquashAdminJobDetailPage() {
   }, [jobId]);
 
   const navItems = [
-    { label: 'Overview', href: '/admin', icon: Home, active: false },
-    { label: 'Payout Queue', href: '/admin/payouts', icon: CreditCard, active: false },
-    { label: 'Users', href: '/admin/users', icon: Users, active: false },
-    { label: 'Jobs', href: '/admin/jobs', icon: FileText, active: true },
-    { label: 'Security', href: '/admin/security', icon: LockKeyhole, active: false },
+    { label: 'Overview', href: '/A31/dashboard', icon: Home, active: false },
+    { label: 'Payout Queue', href: '/A31/payouts', icon: CreditCard, active: false },
+    { label: 'Users', href: '/A31/users', icon: Users, active: false },
+    { label: 'Jobs', href: '/A31/jobs', icon: FileText, active: true },
+    { label: 'Security', href: '/A31/security', icon: LockKeyhole, active: false },
   ];
 
   return (
@@ -71,7 +71,7 @@ export default function SquashAdminJobDetailPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/admin/jobs" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden"><Menu className="h-5 w-5" /></a>
+                <a href="/A31/jobs" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden"><Menu className="h-5 w-5" /></a>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]"><Search className="h-4 w-4 text-slate-400" /><input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search job details..." /></div>
               </div>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm"><Bell className="h-5 w-5 text-slate-500" /><div className="hidden sm:block"><div className="text-sm font-bold text-slate-900">{adminName}</div><div className="text-xs text-slate-500">Owner Admin</div></div></div>
@@ -79,7 +79,7 @@ export default function SquashAdminJobDetailPage() {
           </header>
 
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <a href="/admin/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Back to jobs</a>
+            <a href="/A31/jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Back to jobs</a>
             {error ? <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</div> : null}
             {loading ? <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600 shadow-sm">Loading job...</div> : null}
             {!loading && !job ? <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600 shadow-sm">Job not found.</div> : null}
@@ -108,7 +108,7 @@ export default function SquashAdminJobDetailPage() {
                 <section className="mt-8 rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div><h2 className="text-2xl font-bold text-slate-900">Reports and submissions</h2><p className="mt-2 text-slate-700">Open the admin report list filtered to this job.</p></div>
-                    <a href={`/admin/reports?job=${job.id}`} className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white hover:bg-green-700">View Job Reports</a>
+                    <a href={`/A31/reports?job=${job.id}`} className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white hover:bg-green-700">View Job Reports</a>
                   </div>
                 </section>
               </>

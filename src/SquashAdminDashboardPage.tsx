@@ -237,11 +237,12 @@ export default function SquashAdminDashboardPage() {
 
           <nav className="flex-1 space-y-2 px-4 py-6">
             {[
-              { label: 'Overview', href: '/admin', icon: Home, active: true },
-              { label: 'Payout Queue', href: '/admin/payouts', icon: CreditCard },
-              { label: 'Users', href: '/admin/users', icon: Users },
-              { label: 'Jobs', href: '/admin/jobs', icon: FileText },
-              { label: 'Security', href: '/admin/security', icon: LockKeyhole },
+              { label: 'Overview', href: '/A31/dashboard', icon: Home, active: true },
+              { label: 'Payout Queue', href: '/A31/payouts', icon: CreditCard },
+              { label: 'Users', href: '/A31/users', icon: Users },
+              { label: 'Jobs', href: '/A31/jobs', icon: FileText },
+              { label: 'Security', href: '/A31/security', icon: LockKeyhole },
+              { label: 'Operations', href: '/A31/operations', icon: ShieldCheck },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -276,7 +277,7 @@ export default function SquashAdminDashboardPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/admin" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <a href="/A31/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                   <Menu className="h-5 w-5" />
                 </a>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
@@ -642,14 +643,12 @@ export default function SquashAdminDashboardPage() {
                                   </button>
                                 ) : null}
                                 {payout.status === 'pending' || payout.status === 'processing' ? (
-                                  <button
-                                    type="button"
-                                    disabled={isUpdating}
-                                    onClick={() => setConfirmPayout(payout)}
-                                    className="inline-flex items-center gap-1 rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                                  <a
+                                    href="/A31/payouts"
+                                    className="inline-flex items-center gap-1 rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700"
                                   >
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> Paid
-                                  </button>
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> Open secure payout
+                                  </a>
                                 ) : null}
                                 {payout.status === 'pending' || payout.status === 'processing' ? (
                                   <button

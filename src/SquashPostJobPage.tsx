@@ -9,27 +9,22 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
 import { useAuth } from './auth';
 import { createDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
+import { startJobCheckout } from './lib/paymentApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 
 const defaultTestTasks: string[] = [];
+const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
 
-function parseTaskList(value: string) {
-  return value
-    .split(/\r?\n|,/)
-    .map((task) => task.trim())
-    .filter(Boolean);
-}
 
 export default function SquashPostJobPage() {
   const { session } = useAuth();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
   const packageConfigs = {
     starter: { label: 'Starter Plan', testers: 5, total: 500 },
@@ -58,8 +53,6 @@ export default function SquashPostJobPage() {
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
   const [additionalInfo, setAdditionalInfo] = useState('');
-  const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
-  const draftHydratedRef = useRef(false);
   const [testerTierFilter, setTesterTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
   const [preferredSpecializations, setPreferredSpecializations] = useState<string[]>([]);
   const [liveSessionEnabled, setLiveSessionEnabled] = useState(false);
@@ -80,78 +73,6 @@ export default function SquashPostJobPage() {
     setRatePerTester(packageConfigs[selectedPackage].total);
     setTestersNeeded(packageConfigs[selectedPackage].testers);
   }, [selectedPackage]);
-  useEffect(() => {
-    const rawDraft = window.localStorage.getItem('squash_post_job_draft');
-    if (!rawDraft) {
-      draftHydratedRef.current = true;
-      return;
-    }
-    try {
-      const draft = JSON.parse(rawDraft) as Partial<{
-        appName: string;
-        platform: string;
-        appType: string;
-        url: string;
-        shortDescription: string;
-        appLogoUrl: string;
-        testType: TestCategoryId;
-        selectedPackage: SelectedPackage;
-        ratePerTester: number;
-        testersNeeded: number;
-        testerTierFilter: 'All' | 'Verified+' | 'Pro+' | 'Elite Only';
-        preferredSpecializations: string[];
-        liveSessionEnabled: boolean;
-        liveSessionAt: string;
-        tasksToComplete: string;
-        taskDraft: string;
-        focusAreas: string;
-        testingTypes: string[];
-        ageRange: string;
-        deviceType: string;
-        experienceLevel: string;
-        additionalInfo: string;
-        currentStep: number;
-        draftJobId: string;
-      }>;
-      if (
-        draft.appName === 'FitTrack Mobile' &&
-        draft.url === 'https://fittrack.app/download' &&
-        draft.shortDescription === 'A fitness tracking app for workouts, tracking progress and goals.'
-      ) {
-        window.localStorage.removeItem('squash_post_job_draft');
-        return;
-      }
-      if (draft.appName) setAppName(draft.appName);
-      if (draft.platform) setPlatform(draft.platform);
-      if (draft.appType) setAppType(draft.appType);
-      if (draft.url) setUrl(draft.url);
-      if (draft.shortDescription) setShortDescription(draft.shortDescription);
-      if (draft.appLogoUrl) setAppLogoUrl(draft.appLogoUrl);
-      if (draft.testType) setTestType(draft.testType);
-      if (draft.selectedPackage) setSelectedPackage(draft.selectedPackage);
-      if (typeof draft.ratePerTester === 'number') setRatePerTester(draft.ratePerTester);
-      if (typeof draft.testersNeeded === 'number') setTestersNeeded(draft.testersNeeded);
-      if (draft.testerTierFilter) setTesterTierFilter(draft.testerTierFilter);
-      if (Array.isArray(draft.preferredSpecializations)) setPreferredSpecializations(draft.preferredSpecializations);
-      if (typeof draft.liveSessionEnabled === 'boolean') setLiveSessionEnabled(draft.liveSessionEnabled);
-      if (draft.liveSessionAt) setLiveSessionAt(draft.liveSessionAt);
-      if (draft.tasksToComplete) setTestTasks(parseTaskList(draft.tasksToComplete));
-      if (draft.taskDraft) setTaskDraft(draft.taskDraft);
-      if (draft.focusAreas) setFocusAreas(draft.focusAreas);
-      if (Array.isArray(draft.testingTypes)) setTestingTypes(draft.testingTypes);
-      if (draft.ageRange) setAgeRange(draft.ageRange);
-      if (draft.deviceType) setDeviceType(draft.deviceType);
-      if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel);
-      if (draft.additionalInfo) setAdditionalInfo(draft.additionalInfo);
-      if (typeof draft.currentStep === 'number') setCurrentStep(Math.min(Math.max(draft.currentStep, 0), 4));
-      if (draft.draftJobId) setDraftJobId(draft.draftJobId);
-      setFeedbackMessage('Draft restored. Continue editing or publish when ready.');
-    } catch {
-      window.localStorage.removeItem('squash_post_job_draft');
-    } finally {
-      draftHydratedRef.current = true;
-    }
-  }, []);
 
 
   const selectedPackageConfig = selectedPackage ? packageConfigs[selectedPackage] : null;
@@ -161,90 +82,6 @@ export default function SquashPostJobPage() {
   const platformFee = useMemo(() => 0, [subtotal]);
   const total = hasSelectedPackage ? subtotal + platformFee + liveSessionAddon : 0;
   const taskChecklistText = useMemo(() => testTasks.map((task) => task.trim()).filter(Boolean).join('\n'), [testTasks]);
-  const draftPayload = useMemo(() => ({
-    appName,
-    platform,
-    appType,
-    url,
-    shortDescription,
-    appLogoUrl,
-    testType,
-    selectedPackage,
-    ratePerTester,
-    testersNeeded,
-    testerTierFilter,
-    preferredSpecializations,
-    liveSessionEnabled,
-    liveSessionAt,
-    tasksToComplete: taskChecklistText,
-    taskDraft,
-    focusAreas,
-    testingTypes,
-    ageRange,
-    deviceType,
-    experienceLevel,
-    additionalInfo,
-    currentStep,
-    draftJobId,
-  }), [
-    additionalInfo,
-    ageRange,
-    appLogoUrl,
-    appName,
-    appType,
-    currentStep,
-    deviceType,
-    draftJobId,
-    experienceLevel,
-    focusAreas,
-    liveSessionAt,
-    liveSessionEnabled,
-    platform,
-    preferredSpecializations,
-    ratePerTester,
-    selectedPackage,
-    shortDescription,
-    taskChecklistText,
-    taskDraft,
-    testerTierFilter,
-    testersNeeded,
-    testingTypes,
-    testType,
-    url,
-  ]);
-
-  const hasDraftContent = useMemo(
-    () =>
-      Boolean(
-        appName.trim() ||
-          url.trim() ||
-          shortDescription.trim() ||
-          appLogoUrl ||
-          taskChecklistText ||
-          taskDraft.trim() ||
-          focusAreas.trim() ||
-          additionalInfo.trim() ||
-          preferredSpecializations.length > 0 ||
-          selectedPackage ||
-          liveSessionEnabled ||
-          draftJobId,
-      ),
-    [
-      additionalInfo,
-      appLogoUrl,
-      appName,
-      draftJobId,
-      focusAreas,
-      testingTypes,
-      liveSessionEnabled,
-      preferredSpecializations.length,
-      selectedPackage,
-      shortDescription,
-      taskChecklistText,
-      taskDraft,
-      url,
-    ],
-  );
   const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (!error) return fallback;
@@ -282,16 +119,6 @@ export default function SquashPostJobPage() {
     setTestTasks((tasks) => tasks.filter((_, taskIndex) => taskIndex !== index));
   };
 
-  useEffect(() => {
-    if (!draftHydratedRef.current || !hasDraftContent || submitting) return;
-
-    const timer = window.setTimeout(() => {
-      window.localStorage.setItem('squash_post_job_draft', JSON.stringify(draftPayload));
-      setAutoSavedAt(new Date());
-    }, 800);
-
-    return () => window.clearTimeout(timer);
-  }, [draftPayload, hasDraftContent, submitting]);
   const goNext = () => {
     const validationError = validateStep(currentStep);
     if (validationError) {
@@ -323,7 +150,7 @@ export default function SquashPostJobPage() {
       setErrorMessage('Please keep the logo under 1MB for now.');
       return;
     }
-    if (!isSupabaseConfigured || !session?.userId || false || !session.roles.includes('developer')) {
+    if (!isSupabaseConfigured || !session?.userId || !session.roles.includes('developer')) {
       setFeedbackMessage('');
       setErrorMessage('Please log in with a real developer account before uploading a job logo.');
       return;
@@ -368,7 +195,7 @@ export default function SquashPostJobPage() {
       return null;
     }
     if (!selectedPackage) {
-      setErrorMessage('Please choose a package before saving or publishing this job.');
+      setErrorMessage('Please choose a package before saving this job.');
       return null;
     }
 
@@ -393,11 +220,10 @@ export default function SquashPostJobPage() {
   };
 
   const saveDraft = async () => {
-    window.localStorage.setItem('squash_post_job_draft', JSON.stringify(draftPayload));
 
-    if (!session?.userId || !session.roles.includes('developer') || false) {
-      setErrorMessage('');
-      setFeedbackMessage('Draft saved on this device. Log in with a developer account to save it online.');
+    if (!session?.userId || !session.roles.includes('developer')) {
+      setFeedbackMessage('');
+      setErrorMessage('Please log in with a developer account before saving a draft.');
       return;
     }
 
@@ -410,8 +236,7 @@ export default function SquashPostJobPage() {
     try {
       const draft = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
       setDraftJobId(draft.id);
-      window.localStorage.setItem('squash_post_job_draft', JSON.stringify({ ...draftPayload, draftJobId: draft.id }));
-      setFeedbackMessage('Draft saved. You can return and publish it later.');
+      setFeedbackMessage('Draft saved. You can return and continue setup later.');
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to save this draft right now.'));
     } finally {
@@ -433,14 +258,13 @@ export default function SquashPostJobPage() {
       return;
     }
 
-    if (!session?.userId || !session.roles.includes('developer') || false) {
+    if (!session?.userId || !session.roles.includes('developer')) {
       setFeedbackMessage('');
-      setErrorMessage('Please log in with a real developer account before publishing a job. Your draft has been saved on this device.');
-      await saveDraft();
+      setErrorMessage('Please log in with a developer account before saving this job.');
       return;
     }
 
-    const jobInput = buildJobInput('active');
+    const jobInput = buildJobInput('draft');
     if (!jobInput) return;
 
     setSubmitting(true);
@@ -449,12 +273,16 @@ export default function SquashPostJobPage() {
 
     try {
       const job = draftJobId ? await updateDeveloperJob(draftJobId, jobInput) : await createDeveloperJob(jobInput);
-      window.localStorage.removeItem('squash_post_job_draft');
-      setDraftJobId(null);
-      setFeedbackMessage(`Job published: ${job.title}. It is now visible to matching testers.`);
-      window.setTimeout(() => navigate('/dashboard'), 900);
+      setDraftJobId(job.id);
+      if (paymentsEnabled) {
+        setFeedbackMessage('Preparing secure payment...');
+        const checkoutUrl = await startJobCheckout(job.id);
+        window.location.assign(checkoutUrl);
+      } else {
+        setFeedbackMessage('Draft saved. Online funding will be enabled before launch; this job remains private.');
+      }
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Unable to publish this job right now.'));
+      setErrorMessage(getErrorMessage(error, 'Unable to save this job right now.'));
     } finally {
       setSubmitting(false);
     }
@@ -471,7 +299,7 @@ export default function SquashPostJobPage() {
     'Test Requirements',
     'Tester Profile',
     'Add-ons & Notes',
-    'Review & Publish',
+    paymentsEnabled ? 'Review & Payment' : 'Review & Save',
   ];
 
   return (
@@ -692,12 +520,13 @@ export default function SquashPostJobPage() {
                   </div>
 
                   <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 px-4 py-4 text-sm text-slate-700">
-                    <span className="font-semibold text-green-700">SQUASH Protection:</span> You will
-                    be charged once the job is published and testers start applying.
+                    <span className="font-semibold text-green-700">Job budget:</span>{' '}
+                    {paymentsEnabled
+                      ? 'Your draft remains private until payment is confirmed.'
+                      : 'This amount is an estimate only. No payment is requested while beta funding is disabled.'}
                   </div>
-                  <div className="mt-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-4 text-sm text-slate-700">
-                    Apps scoring 80+ receive a SQUASH CERTIFIED badge to use on your app store listing
-                    - included free with Growth and Pro plans.
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                    Certification badges are not issued during beta.
                   </div>
 
                   <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -992,7 +821,7 @@ export default function SquashPostJobPage() {
                 </section>
 
                 <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 4 ? '' : 'hidden'}`}>
-                  <h2 className="text-2xl font-bold text-slate-900">5. Review &amp; Publish</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">5. {paymentsEnabled ? 'Review & Payment' : 'Review & Save'}</h2>
                   <p className="mt-2 text-slate-600">Check everything before your job goes live to testers.</p>
 
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -1019,7 +848,9 @@ export default function SquashPostJobPage() {
                   </div>
 
                   <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
-                    Publishing makes this job visible to matching testers. Saving as draft keeps it private until you are ready.
+                    {paymentsEnabled
+                      ? 'After payment is confirmed, this job becomes visible to matching testers. Saving as draft keeps it private.'
+                      : 'This job will be saved privately as a draft. Online funding will be enabled before launch.'}
                   </div>
                 </section>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1040,15 +871,12 @@ export default function SquashPostJobPage() {
                     </button>
                   ) : (
                     <button type="submit" disabled={submitting} className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300">
-                      {submitting ? 'Publishing...' : 'Publish Job'}
+                      {submitting ? 'Saving...' : paymentsEnabled ? 'Continue to Payment' : 'Save Job Draft'}
                     </button>
                   )}
                 </div>
                 {errorMessage ? <p className="text-sm font-semibold text-red-600">{errorMessage}</p> : null}
                 {feedbackMessage ? <p className="text-sm font-semibold text-green-700">{feedbackMessage}</p> : null}
-                {autoSavedAt ? (
-                  <p className="text-xs font-semibold text-slate-500">Autosaved on this device at {autoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                ) : null}
               </div>
 
               <div className="space-y-6">
@@ -1095,23 +923,23 @@ export default function SquashPostJobPage() {
                 </section>
 
                 <section className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
-                  <div className="text-lg font-bold text-green-800">Your money is safe</div>
+                  <div className="text-lg font-bold text-green-800">{paymentsEnabled ? 'Payment and review' : 'Beta job setup'}</div>
                   <div className="mt-4 space-y-3 text-sm text-slate-700">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-green-700" />
-                      <span>Funds held in escrow until you approve</span>
+                      <span>{paymentsEnabled ? 'Payment confirmation is required before the job becomes visible' : 'Jobs remain private drafts until funding is enabled'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-700" />
-                      <span>Pay only when satisfied with results</span>
+                      <span>Review tester submissions before approving them</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <RotateCcw className="h-4 w-4 text-green-700" />
-                      <span>Request revisions before releasing payment</span>
+                      <span>Request revisions during submission review</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Lock className="h-4 w-4 text-green-700" />
-                      <span>Secure payment processing</span>
+                      <span>{paymentsEnabled ? 'Card details are entered on a hosted checkout page' : 'No payment will be requested in this beta environment'}</span>
                     </div>
                   </div>
                 </section>
@@ -1148,7 +976,7 @@ export default function SquashPostJobPage() {
                             {index === 1 && 'What to test and what to look for'}
                             {index === 2 && 'Who should test your app'}
                             {index === 3 && 'Add notes and optional live session'}
-                            {index === 4 && 'Review and publish your job'}
+                            {index === 4 && (paymentsEnabled ? 'Review and continue to payment' : 'Review and save your private draft')}
                           </div>
                         </div>
                       </div>

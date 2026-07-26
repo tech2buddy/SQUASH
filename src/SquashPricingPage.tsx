@@ -68,13 +68,13 @@ export default function SquashPricingPage() {
 
   const trustItems: TrustItem[] = [
     {
-      title: 'Secure Payments',
-      text: 'Your payments are safe with us.',
+      title: 'Online Payments',
+      text: 'Complete payment online when you are ready to publish a testing job.',
       icon: Lock,
     },
     {
-      title: 'Pay Only When Satisfied',
-      text: "We hold payments until you're happy.",
+      title: 'Clear Review Process',
+      text: "Review tester submissions and request revisions when required.",
       icon: ShieldCheck,
     },
     {
@@ -100,7 +100,7 @@ export default function SquashPricingPage() {
     },
     {
       q: "What if I'm not satisfied?",
-      a: "We'll work with you and the tester to resolve issues before payment is released.",
+      a: "We'll help you and the tester resolve submission issues through the documented review process.",
     },
   ];
 
@@ -233,8 +233,7 @@ export default function SquashPricingPage() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-center text-sm font-medium text-slate-700">
-              Apps scoring 80+ receive a SQUASH CERTIFIED badge to use on your app store listing
-              - included free with Growth and Pro plans.
+              Certification badges are not issued during beta.
             </div>
           </div>
         </section>
@@ -324,7 +323,7 @@ export default function SquashPricingPage() {
             </div>
 
             <div className="mt-8 text-center text-lg font-semibold text-slate-700">
-              "We hold payments until you're happy with results."
+              "Clear pricing, documented reviews, and practical testing reports."
             </div>
           </div>
 

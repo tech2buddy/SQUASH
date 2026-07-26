@@ -141,31 +141,22 @@ export default function SquashTesterJobBoard() {
     return () => { mounted = false; };
   }, []);
 
-  const [testerSpecializations, setTesterSpecializations] = useState<string[]>(() => {
-    const raw = window.localStorage.getItem('squash_tester_specializations');
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw) as string[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [testerSpecializations, setTesterSpecializations] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     getTesterSpecializations(session.userId)
       .then((savedSpecializations) => {
         if (savedSpecializations.length > 0) setTesterSpecializations(savedSpecializations);
       })
       .catch(() => {
-        // Keep local fallback if Supabase is temporarily unavailable.
+        // Matching remains empty until Supabase can return verified specializations.
       });
   }, [("supabase"), session?.userId]);
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     Promise.allSettled([getTesterApplications(session.userId), getTesterAssignments(session.userId)]).then(
       ([applicationsResult, assignmentsResult]) => {
@@ -203,7 +194,7 @@ export default function SquashTesterJobBoard() {
       return;
     }
 
-    if (!session?.userId || false || !session.roles.includes('tester')) {
+    if (!session?.userId || !session.roles.includes('tester')) {
       setApplicationError('Please log in with a real tester account before applying.');
       return;
     }

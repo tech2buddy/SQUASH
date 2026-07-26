@@ -39,7 +39,7 @@ export default function SquashOnboardingPage() {
   const finishPath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : fallbackPath;
 
   useEffect(() => {
-    if (!session?.userId || !targetRole || false) {
+    if (!session?.userId || !targetRole) {
       setLoaded(true);
       return;
     }
@@ -99,7 +99,7 @@ export default function SquashOnboardingPage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!session.userId || false) {
+    if (!session.userId) {
       navigate(finishPath, { replace: true });
       return;
     }

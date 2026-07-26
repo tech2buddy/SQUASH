@@ -1,7 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { ApplicationStatus, AssignmentStatus, Database, JobStatus } from './supabase.types';
 import { createNotification } from './notificationApi';
-import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendSubmissionReviewedEmail } from './emailApi';
+import { sendTransactionalEmail } from './emailApi';
 
 export type JobPackageKey = 'starter' | 'growth' | 'pro' | 'enterprise';
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -19,6 +19,32 @@ function formatSupabaseError(error: unknown, fallback: string) {
   return fallback;
 }
 
+type SubmissionScoreRow = {
+  usability_score?: number | null;
+  performance_score?: number | null;
+  onboarding_score?: number | null;
+  bug_severity_score?: number | null;
+  device_compatibility_score?: number | null;
+};
+
+function normalizedSubmissionScores(submission: SubmissionScoreRow) {
+  const scores = {
+    usability: submission.usability_score || 0,
+    performance: submission.performance_score || 0,
+    onboarding: submission.onboarding_score || 0,
+    bugSeverity: submission.bug_severity_score || 0,
+    deviceCompatibility: submission.device_compatibility_score || 0,
+  };
+  const legacySynthetic =
+    scores.usability === 78 &&
+    scores.performance === 74 &&
+    scores.onboarding === 80 &&
+    scores.bugSeverity === 82 &&
+    scores.deviceCompatibility === 76;
+  return legacySynthetic
+    ? { usability: 0, performance: 0, onboarding: 0, bugSeverity: 0, deviceCompatibility: 0 }
+    : scores;
+}
 export type DeveloperJobInput = {
   developerId: string;
   title: string;
@@ -166,7 +192,7 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
 
   if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
 
-  if (data?.id) {
+  if (data?.id && input.status === 'active') {
     createNotification({
       userId: input.developerId,
       title: 'Job Posted Successfully 🚀',
@@ -431,14 +457,7 @@ export async function reviewDeveloperApplication(
           });
         }
         
-        const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', application.testerId).maybeSingle();
-        if (profile?.email) {
-          if (status === 'accepted') {
-            await sendApplicationApprovedEmail(profile.email, profile.full_name || 'Tester', job?.title || 'a SQUASH testing job');
-          } else if (status === 'rejected') {
-            await sendApplicationRejectedEmail(profile.email, profile.full_name || 'Tester', job?.title || 'a SQUASH testing job');
-          }
-        }
+        await sendTransactionalEmail({ type: 'application_reviewed', applicationId: application.id });
 
       } catch (err) {
         console.error(err);
@@ -609,22 +628,14 @@ export async function saveAssignmentBugReport(input: {
 export async function submitAssignmentReport(input: SubmitAssignmentReportInput) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
-  const scores = input.scores || {
-    usability: 78,
-    performance: 74,
-    onboarding: 80,
-    bugSeverity: 82,
-    deviceCompatibility: 76,
-  };
-
   const { data, error } = await (supabase.rpc as any)('submit_test_assignment', {
     p_assignment_id: input.assignmentId,
-    p_summary: input.summary.trim() || 'Tester completed all assigned tasks and submitted feedback.',
-    p_usability: scores.usability,
-    p_performance: scores.performance,
-    p_onboarding: scores.onboarding,
-    p_bug_severity: scores.bugSeverity,
-    p_device_compatibility: scores.deviceCompatibility,
+    p_summary: input.summary.trim(),
+    p_usability: input.scores?.usability ?? null,
+    p_performance: input.scores?.performance ?? null,
+    p_onboarding: input.scores?.onboarding ?? null,
+    p_bug_severity: input.scores?.bugSeverity ?? null,
+    p_device_compatibility: input.scores?.deviceCompatibility ?? null,
   });
 
   if (error) throw new Error(formatSupabaseError(error, 'Unable to submit this report right now.'));
@@ -762,13 +773,8 @@ export async function getDeveloperSubmittedReports(developerId: string): Promise
       bugCount: bugs.length,
       criticalBugCount: bugs.filter((bug) => bug.severity === 'Critical').length,
       videoBugCount: bugs.filter((bug) => Number(bug.video_duration_seconds || 0) > 0).length,
-      scores: {
-        usability: submission.usability_score || 0,
-        performance: submission.performance_score || 0,
-        onboarding: submission.onboarding_score || 0,
-        bugSeverity: submission.bug_severity_score || 0,
-        deviceCompatibility: submission.device_compatibility_score || 0,
-      },
+      scores: normalizedSubmissionScores(submission),
+
     };
   });
 }
@@ -819,15 +825,7 @@ export async function reviewSubmittedReport(input: {
             });
           }
           
-          const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', assignment.tester_id).maybeSingle();
-          if (profile?.email) {
-            await sendSubmissionReviewedEmail(
-              profile.email,
-              profile.full_name || 'Tester',
-              job?.title || 'a SQUASH testing job',
-              input.status
-            );
-          }
+          await sendTransactionalEmail({ type: 'submission_reviewed', submissionId: input.submissionId });
         }
       } catch (err) {
         console.error(err);
@@ -1033,13 +1031,8 @@ export async function getTesterReportSubmissions(testerId: string): Promise<Test
       bugCount: bugs.length,
       videoBugCount: bugs.filter((bug) => Number(bug.video_duration_seconds || 0) > 0).length,
       criticalBugCount: bugs.filter((bug) => bug.severity === 'Critical').length,
-      scores: {
-        usability: submission.usability_score || 0,
-        performance: submission.performance_score || 0,
-        onboarding: submission.onboarding_score || 0,
-        bugSeverity: submission.bug_severity_score || 0,
-        deviceCompatibility: submission.device_compatibility_score || 0,
-      },
+      scores: normalizedSubmissionScores(submission),
+
     };
   });
 }
@@ -1108,13 +1101,8 @@ export async function getDeveloperDashboardSummary(developerId: string): Promise
   const submitted = submissions || [];
   const scoreValues = submitted
     .map((submission) => {
-      const scores = [
-        submission.usability_score,
-        submission.performance_score,
-        submission.onboarding_score,
-        submission.bug_severity_score,
-        submission.device_compatibility_score,
-      ].filter((score): score is number => typeof score === 'number');
+      const normalized = normalizedSubmissionScores(submission);
+      const scores = Object.values(normalized).filter((score) => score > 0);
       if (scores.length === 0) return 0;
       return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
     })
@@ -1207,15 +1195,36 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
     supabase.from('tester_profiles').select('tests_completed').eq('user_id', submission.tester_id).maybeSingle(),
   ]);
 
-  const bugList = (bugs || []).map((b: any) => ({
-    id: b.id,
-    title: b.title || 'Bug Report',
-    description: b.description || '',
-    severity: b.severity || 'Medium',
-    screenshotPath: b.screenshot_path || null,
-    videoPath: b.video_path || null,
-    reproductionSteps: (b.reproduction_steps || '').split('\n').filter(Boolean),
-  }));
+  const meaningfulText = (value: unknown): string => {
+    const normalized = typeof value === 'string' ? value.trim() : '';
+    if (!normalized || /^(?:n\/?a|none|no bugs?)$/i.test(normalized)) return '';
+    return normalized;
+  };
+  const bugList = (bugs || [])
+    .filter((b: any) => meaningfulText(b.title) || meaningfulText(b.description) || b.screenshot_path || b.video_path)
+    .map((b: any) => ({
+      id: b.id,
+      title: meaningfulText(b.title) || 'Bug Report',
+      description: meaningfulText(b.description) || '',
+      severity: b.severity || 'Medium',
+      screenshotPath: b.screenshot_path || null,
+      videoPath: b.video_path || null,
+      reproductionSteps: (b.reproduction_steps || '').split('\n').filter(Boolean),
+    }));
+
+  const rawScores = {
+    usability: submission.usability_score || 0,
+    performance: submission.performance_score || 0,
+    onboarding: submission.onboarding_score || 0,
+    bugSeverity: submission.bug_severity_score || 0,
+    deviceCompatibility: submission.device_compatibility_score || 0,
+  };
+  const hasLegacySyntheticScores =
+    rawScores.usability === 78 &&
+    rawScores.performance === 74 &&
+    rawScores.onboarding === 80 &&
+    rawScores.bugSeverity === 82 &&
+    rawScores.deviceCompatibility === 76;
 
   return {
     id: submission.id,
@@ -1233,13 +1242,9 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
     submittedAt: submission.submitted_at,
     createdAt: submission.created_at,
     criticalBugCount: bugList.filter((b) => b.severity === 'Critical').length,
-    scores: {
-      usability: submission.usability_score || 0,
-      performance: submission.performance_score || 0,
-      onboarding: submission.onboarding_score || 0,
-      bugSeverity: submission.bug_severity_score || 0,
-      deviceCompatibility: submission.device_compatibility_score || 0,
-    },
+    scores: hasLegacySyntheticScores
+      ? { usability: 0, performance: 0, onboarding: 0, bugSeverity: 0, deviceCompatibility: 0 }
+      : rawScores,
     bugs: bugList,
   };
 }

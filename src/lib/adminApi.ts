@@ -24,6 +24,16 @@ export type AdminPayoutRow = {
   processedAt: string | null;
   adminNote: string | null;
   payoutReference: string | null;
+  scheduledFor: string | null;
+  proofDocumentPath: string | null;
+  proofDocumentName: string | null;
+  bankingDetails: {
+    accountHolderName: string;
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    branchCode: string;
+  } | null;
 };
 
 export type AdminActivityLog = {
@@ -206,6 +216,16 @@ export async function getAdminPayoutQueue(): Promise<AdminPayoutRow[]> {
       processedAt: payout.processed_at,
       adminNote: payout.admin_note,
       payoutReference: payout.payout_reference,
+      scheduledFor: (payout as any).scheduled_for || null,
+      proofDocumentPath: (payout as any).proof_document_path || null,
+      proofDocumentName: (payout as any).proof_document_name || null,
+      bankingDetails: (payout as any).banking_snapshot ? {
+        accountHolderName: (payout as any).banking_snapshot.account_holder_name || '',
+        bankName: (payout as any).banking_snapshot.bank_name || '',
+        accountNumber: (payout as any).banking_snapshot.account_number || '',
+        accountType: (payout as any).banking_snapshot.account_type || '',
+        branchCode: (payout as any).banking_snapshot.branch_code || '',
+      } : null,
     };
   });
 }
@@ -216,17 +236,37 @@ export async function updateAdminPayoutStatus(input: {
   adminId: string;
   adminNote?: string;
   payoutReference?: string;
+  payoutProof?: File;
 }) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
 
-  const { data, error } = await (supabase.rpc as any)('admin_update_payout', {
+  let proofPath: string | null = null;
+  if (input.status === 'paid') {
+    if (!input.payoutProof) throw new Error('Upload proof of EFT payment before marking this payout as paid.');
+    const extensions: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg' };
+    const extension = extensions[input.payoutProof.type];
+    if (!extension) throw new Error('Proof of payment must be a PDF, PNG or JPEG.');
+    if (input.payoutProof.size > 5 * 1024 * 1024) throw new Error('Proof of payment must be 5 MB or smaller.');
+    proofPath = `${input.payoutId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage
+      .from('payout-proofs')
+      .upload(proofPath, input.payoutProof, { cacheControl: '3600', upsert: false });
+    if (uploadError) throw new Error(`Could not upload proof of payment: ${uploadError.message}`);
+  }
+
+  const { data, error } = await (supabase.rpc as any)('admin_update_weekly_payout', {
     p_payout_id: input.payoutId,
     p_status: input.status,
     p_note: input.adminNote?.trim() || null,
     p_reference: input.payoutReference?.trim() || null,
+    p_proof_path: proofPath,
+    p_proof_name: input.payoutProof?.name || null,
   });
 
-  if (error) throw error;
+  if (error) {
+    if (proofPath) await supabase.storage.from('payout-proofs').remove([proofPath]);
+    throw error;
+  }
   return data;
 }
 
@@ -707,4 +747,45 @@ export async function saveAdminPolicy(input: {
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };
+}
+export type AdminPayoutBatch = {
+  id: string;
+  scheduledFor: string;
+  status: 'open' | 'locked' | 'processing' | 'completed' | 'cancelled';
+  payoutCount: number;
+  totalAmountZar: number;
+  lockedAt: string | null;
+  completedAt: string | null;
+};
+
+function mapPayoutBatch(row: any): AdminPayoutBatch {
+  return {
+    id: row.id,
+    scheduledFor: row.scheduled_for,
+    status: row.status,
+    payoutCount: row.payout_count || 0,
+    totalAmountZar: row.total_amount_zar || 0,
+    lockedAt: row.locked_at || null,
+    completedAt: row.completed_at || null,
+  };
+}
+
+export async function getAdminPayoutBatches(): Promise<AdminPayoutBatch[]> {
+  const { data, error } = await (supabase.from('payout_batches') as any)
+    .select('*')
+    .order('scheduled_for', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapPayoutBatch);
+}
+
+export async function prepareFridayPayoutBatch(scheduledFor: string) {
+  const { data, error } = await (supabase.rpc as any)('admin_prepare_friday_batch', { p_scheduled_for: scheduledFor });
+  if (error) throw error;
+  return mapPayoutBatch(data);
+}
+
+export async function updatePayoutBatchStatus(batchId: string, status: Exclude<AdminPayoutBatch['status'], 'open'>) {
+  const { data, error } = await (supabase.rpc as any)('admin_update_payout_batch', { p_batch_id: batchId, p_status: status });
+  if (error) throw error;
+  return mapPayoutBatch(data);
 }

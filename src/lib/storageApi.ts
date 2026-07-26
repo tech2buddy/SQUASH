@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabase';
+import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 
 export type UploadFileType = 'screenshot' | 'video';
 
@@ -32,16 +33,21 @@ export async function uploadBugReportFile(
 
   // Validate file type
   const bucketName = type === 'screenshot' ? 'bug-screenshots' : 'bug-videos';
-  const validMimeTypes = type === 'screenshot'
-    ? ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
-    : ['video/mp4', 'video/webm', 'video/quicktime'];
+  const allowedTypes: Record<string, SafeFileKind> = type === 'screenshot'
+    ? { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }
+    : { 'video/mp4': 'mp4', 'video/webm': 'webm' };
+  const safeKind = allowedTypes[file.type];
 
-  if (!validMimeTypes.includes(file.type)) {
+  if (!safeKind) {
     return {
       path: '',
       url: '',
-      error: `Invalid file type. Expected ${validMimeTypes.join(', ')}`,
+      error: `Invalid file type. Expected ${Object.keys(allowedTypes).join(', ')}`,
     };
+  }
+
+  if (!(await hasExpectedFileSignature(file, safeKind))) {
+    return { path: '', url: '', error: 'File contents do not match the declared file type.' };
   }
 
   // Validate file size
@@ -57,7 +63,7 @@ export async function uploadBugReportFile(
   try {
     // Generate unique filename with timestamp
     const timestamp = Date.now();
-    const extension = file.name.split('.').pop();
+    const extension = safeKind;
     const filename = `${timestamp}_${Math.random().toString(36).substring(7)}.${extension}`;
     const filePath = `${testerId}/${jobId}/${filename}`;
 
@@ -77,15 +83,7 @@ export async function uploadBugReportFile(
       };
     }
 
-    // Get public URL (even though bucket is private, we need the path for database storage)
-    const { data: urlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(data.path);
-
-    return {
-      path: data.path,
-      url: urlData.publicUrl,
-    };
+    return { path: data.path, url: '' };
   } catch (error) {
     return {
       path: '',

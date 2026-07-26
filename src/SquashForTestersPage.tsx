@@ -219,8 +219,7 @@ export default function SquashForTestersPage() {
             </div>
 
             <p className="mt-5 text-sm leading-7 text-slate-600 sm:text-base">
-              Payment is sent directly to your bank account within 24 hours of the developer approving
-              your submission. No waiting, no middlemen.
+              Approved earnings are scheduled for the next eligible Friday EFT payout, subject to banking verification, review, and any account holds.
             </p>
           </div>
         </section>

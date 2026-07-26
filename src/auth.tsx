@@ -136,17 +136,17 @@ async function readProfileSession(
 }
 
 export function roleHomePath(role: UserRole): string {
-  if (role === 'admin') return '/admin';
+  if (role === 'admin') return '/A31/dashboard';
   return role === 'developer' ? '/dashboard' : '/tester/dashboard';
 }
 
 export function defaultSessionPath(session: AuthSession): string {
-  if (session.role === 'admin') return '/admin';
+  if (session.role === 'admin') return '/A31/dashboard';
   return roleHomePath(session.role);
 }
 
 export function routeRole(pathname: string): UserRole | 'public' {
-  const adminRoutes = new Set(['/admin']);
+  if (pathname.startsWith('/A31/')) return 'admin';
   const developerRoutes = new Set([
     '/dashboard',
     '/post-job',
@@ -176,9 +176,7 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/tester/payout-method',
     '/tester/leaderboard',
     '/tester/level-benefits',
-    '/tester/referrals',
   ]);
-  if (adminRoutes.has(pathname)) return 'admin';
   if (developerRoutes.has(pathname)) return 'developer';
   if (testerRoutes.has(pathname)) return 'tester';
   return 'public';
@@ -368,9 +366,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const nextSession: AuthSession = { ...session, role };
         setSession(nextSession);
-
-
-        if (isSupabaseConfigured && session.userId) {
+        const preserveAdminGrant = session.roles.includes('admin') && role !== 'admin';
+        if (isSupabaseConfigured && session.userId && !preserveAdminGrant) {
           const { error } = await supabase.from('profiles').update({ role }).eq('id', session.userId);
           if (error) throw error;
         }
@@ -378,7 +375,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return nextSession;
       },
       addRole: async (role) => {
-        if (!session?.userId || false) {
+        if (!session?.userId) {
           throw new Error('Please log in with a real account before adding another workspace.');
         }
 

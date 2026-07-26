@@ -57,11 +57,11 @@ export default function SquashAdminUsersPage() {
   const testers = users.filter((user) => user.role === 'tester').length;
 
   const navItems = [
-    { label: 'Overview', href: '/admin', icon: Home, active: false },
-    { label: 'Payout Queue', href: '/admin/payouts', icon: CreditCard, active: false },
-    { label: 'Users', href: '/admin/users', icon: Users, active: true },
-    { label: 'Jobs', href: '/admin/jobs', icon: FileText, active: false },
-    { label: 'Security', href: '/admin/security', icon: LockKeyhole, active: false },
+    { label: 'Overview', href: '/A31/dashboard', icon: Home, active: false },
+    { label: 'Payout Queue', href: '/A31/payouts', icon: CreditCard, active: false },
+    { label: 'Users', href: '/A31/users', icon: Users, active: true },
+    { label: 'Jobs', href: '/A31/jobs', icon: FileText, active: false },
+    { label: 'Security', href: '/A31/security', icon: LockKeyhole, active: false },
   ];
 
   const stats = [
@@ -115,7 +115,7 @@ export default function SquashAdminUsersPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-4">
-                <a href="/admin" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
+                <a href="/A31/dashboard" className="rounded-xl border border-slate-300 p-2.5 text-slate-600 lg:hidden">
                   <Menu className="h-5 w-5" />
                 </a>
                 <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex md:min-w-[340px] lg:min-w-[460px]">
@@ -231,7 +231,7 @@ export default function SquashAdminUsersPage() {
                         <td className="px-6 py-5 text-sm text-slate-500">{formatDate(user.createdAt)}</td>
                         <td className="px-6 py-5">
                           <a
-                            href={`/admin/users/${user.id}`}
+                            href={`/A31/users/${user.id}`}
                             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                             title="Open this user profile for account review."
                           >

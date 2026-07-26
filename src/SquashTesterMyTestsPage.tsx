@@ -45,28 +45,13 @@ function readLabState(assignment: TesterAssignment, labSession?: TestLabSession)
       lastSavedAt: labSession.lastSavedAt,
     };
   }
-  const started = window.localStorage.getItem(`squash_test_lab_started_${assignment.id}`);
-  const saved = window.localStorage.getItem(`squash_active_test_progress_${assignment.id}`);
-  let completedTasks = 0;
-  let lastSavedAt: string | null = null;
-
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved) as { taskState?: boolean[]; updatedAt?: string };
-      completedTasks = Array.isArray(parsed.taskState) ? parsed.taskState.filter(Boolean).length : 0;
-      lastSavedAt = parsed.updatedAt || null;
-    } catch {
-      completedTasks = 0;
-    }
-  }
-
   return {
     ...assignment,
-    labStarted: Boolean(started),
-    progressPercent: Math.round((completedTasks / totalTasks) * 100),
-    completedTasks,
+    labStarted: false,
+    progressPercent: 0,
+    completedTasks: 0,
     totalTasks,
-    lastSavedAt,
+    lastSavedAt: null,
   };
 }
 
@@ -101,7 +86,7 @@ export default function SquashTesterMyTestsPage() {
   const [activeTab, setActiveTab] = useState<LabTab>('all');
 
   useEffect(() => {
-    if (!session?.userId || false) {
+    if (!session?.userId) {
       setLoading(false);
       return;
     }
@@ -126,7 +111,7 @@ export default function SquashTesterMyTestsPage() {
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
 
   const counts = useMemo(() => {
     return {
@@ -146,10 +131,6 @@ export default function SquashTesterMyTestsPage() {
   }, [activeTab, assignments]);
 
   const startLab = (assignment: AssignmentWithLab) => {
-    window.localStorage.setItem(
-      `squash_test_lab_started_${assignment.id}`,
-      JSON.stringify({ startedAt: new Date().toISOString(), jobId: assignment.jobId }),
-    );
     navigate(`/test-lab?assignment=${assignment.id}`);
   };
 

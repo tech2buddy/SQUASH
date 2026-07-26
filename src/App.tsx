@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import SquashActiveTestScreen from './SquashActiveTestScreen';
 import SquashAboutPage from './SquashAboutPage';
@@ -23,14 +23,12 @@ import SquashTesterEarningsPage from './SquashTesterEarningsPage';
 import SquashTesterReportsPage from './SquashTesterReportsPage';
 import SquashTesterSettingsPage from './SquashTesterSettingsPage';
 import SquashTesterNotificationsPage from './SquashTesterNotificationsPage';
-import SquashTesterPayoutMethodPage from './SquashTesterPayoutMethodPage';
+import SquashTesterBankingPage from './SquashTesterBankingPage';
 import SquashTesterLevelBenefitsPage from './SquashTesterLevelBenefitsPage';
-import SquashTesterReferralsPage from './SquashTesterReferralsPage';
 import SquashTesterLeaderboardPage from './SquashTesterLeaderboardPage';
 import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
 import SquashApiDocsPage from './SquashApiDocsPage';
-import SquashCertificatePage from './SquashCertificatePage';
 import SquashLiveSessionPage from './SquashLiveSessionPage';
 import SquashChooseWorkspacePage from './SquashChooseWorkspacePage';
 import SquashOnboardingPage from './SquashOnboardingPage';
@@ -42,6 +40,10 @@ import SquashAdminJobsPage from './SquashAdminJobsPage';
 import SquashAdminJobDetailPage from './SquashAdminJobDetailPage';
 import SquashAdminReportsPage from './SquashAdminReportsPage';
 import SquashAdminSecurityPage from './SquashAdminSecurityPage';
+import SquashAdminOperationsPage from './SquashAdminOperationsPage';
+import SquashPrivateAdminMagicPage from './SquashPrivateAdminMagicPage';
+import SquashAdminMfaPage from './SquashAdminMfaPage';
+import SquashSupportPage from './SquashSupportPage';
 import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
 import {
   SquashDeveloperActivityPage,
@@ -54,6 +56,7 @@ import {
 import DeveloperLayout from './components/DeveloperLayout';
 import TesterLayout from './components/TesterLayout';
 import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
+import { supabase } from './lib/supabase';
 
 function ProtectedRoute({
   children,
@@ -64,6 +67,18 @@ function ProtectedRoute({
 }) {
   const { session, loading } = useAuth();
   const location = useLocation();
+  const [adminAal, setAdminAal] = useState<'checking' | 'aal1' | 'aal2'>('checking');
+
+  useEffect(() => {
+    let active = true;
+    if (allowedRole !== 'admin' || !session?.roles.includes('admin')) {
+      return () => { active = false; };
+    }
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+      if (active) setAdminAal(!error && data.currentLevel === 'aal2' ? 'aal2' : 'aal1');
+    });
+    return () => { active = false; };
+  }, [allowedRole, session?.userId, session?.roles]);
 
   if (loading) {
     return (
@@ -75,8 +90,8 @@ function ProtectedRoute({
 
   if (!session) {
     const next = encodeURIComponent(location.pathname);
-    const roleParam = allowedRole === 'admin' ? '' : `role=${allowedRole}&`;
-    return <Navigate to={`/login?${roleParam}next=${next}`} replace />;
+    if (allowedRole === 'admin') return <Navigate to={`/A31?next=${next}`} replace />;
+    return <Navigate to={`/login?role=${allowedRole}&next=${next}`} replace />;
   }
 
   const canAccessRoute = session.roles.includes(allowedRole) || (allowedRole !== 'admin' && session.roles.includes('admin'));
@@ -84,6 +99,11 @@ function ProtectedRoute({
   if (!canAccessRoute) {
     return <Navigate to={defaultSessionPath(session)} replace />;
   }
+
+  if (allowedRole === 'admin' && adminAal === 'checking') {
+    return <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] text-sm font-semibold text-slate-600">Verifying administrator security…</div>;
+  }
+  if (allowedRole === 'admin' && adminAal !== 'aal2') return <Navigate to="/A31/mfa" replace />;
 
   return children;
 }
@@ -107,7 +127,6 @@ export default function App() {
       <Route path="/pricing" element={<SquashPricingPage />} />
       <Route path="/api-docs" element={<SquashApiDocsPage />} />
       <Route path="/live-session" element={<SquashLiveSessionPage />} />
-      <Route path="/certificate/:jobId" element={<SquashCertificatePage />} />
       <Route path="/login" element={<SquashLoginPage />} />
       <Route path="/signup" element={<SquashSignupPage />} />
       <Route path="/forgot-password" element={<SquashResetPasswordPage mode="request" />} />
@@ -117,15 +136,10 @@ export default function App() {
       <Route path="/choose-workspace" element={<SquashChooseWorkspacePage />} />
       <Route path="/onboarding/:role" element={<SquashOnboardingPage />} />
       <Route path="/about" element={<SquashAboutPage />} />
-      <Route
-        path="/contact"
-        element={
-          <SquashInfoPage
-            title="Contact"
-            description="Reach our team for support, partnerships, and sales questions."
-          />
-        }
-      />
+      <Route caseSensitive path="/A31" element={<SquashPrivateAdminMagicPage />} />
+      <Route caseSensitive path="/A31/mfa" element={<SquashAdminMfaPage />} />
+      <Route path="/contact" element={<SquashSupportPage />} />
+
       <Route
         path="/privacy"
         element={
@@ -242,18 +256,11 @@ export default function App() {
           />
         }
       />
-      <Route
-        path="/help-center"
-        element={
-          <SquashInfoPage
-            title="Help Center"
-            description="Find answers to common questions and get support for your SQUASH account and workflows."
-          />
-        }
-      />
+      <Route path="/help-center" element={<SquashSupportPage />} />
+
 
       <Route
-        path="/admin"
+        path="/A31/dashboard"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminDashboardPage />
@@ -262,7 +269,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/payouts"
+        path="/A31/payouts"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminPayoutsPage />
@@ -271,7 +278,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/users"
+        path="/A31/users"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminUsersPage />
@@ -280,7 +287,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/users/:userId"
+        path="/A31/users/:userId"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminUserProfilePage />
@@ -289,7 +296,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/jobs"
+        path="/A31/jobs"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminJobsPage />
@@ -298,7 +305,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/jobs/:jobId"
+        path="/A31/jobs/:jobId"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminJobDetailPage />
@@ -307,7 +314,7 @@ export default function App() {
       />
 
       <Route
-        path="/admin/reports"
+        path="/A31/reports"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminReportsPage />
@@ -316,10 +323,18 @@ export default function App() {
       />
 
       <Route
-        path="/admin/security"
+        path="/A31/security"
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminSecurityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/A31/operations"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminOperationsPage />
           </ProtectedRoute>
         }
       />
@@ -343,27 +358,7 @@ export default function App() {
         <Route path="/developer/activity" element={<SquashDeveloperActivityPage />} />
         <Route path="/developer/settings" element={<SquashDeveloperSettingsPage />} />
         <Route path="/report-details/attachments" element={<SquashReportAttachmentsPage />} />
-        <Route
-          path="/billing/payment-methods"
-          element={
-            <SquashUtilityPage
-              role="developer"
-              eyebrow="Billing setup"
-              title="Payment methods"
-              description="Add and manage payment methods for funding SQUASH testing jobs. Checkout storage is intentionally not active until the payment provider is connected."
-              icon={utilityIcons.CreditCard}
-              details={[
-                'Cards and EFT options will connect through the payment provider, not through local browser storage.',
-                'Only protected job totals are shown here. No tester payout or platform margin information is exposed.',
-                'Invoices and receipts will attach to completed payment records once checkout goes live.',
-              ]}
-              actions={[
-                { label: 'Back to Billing', href: '/billing', primary: true },
-                { label: 'Post a Job', href: '/post-job' },
-              ]}
-            />
-          }
-        />
+        <Route path="/billing/payment-methods" element={<Navigate to="/billing" replace />} />
       </Route>
 
       {/* Protected Tester Routes wrapped in Master TesterLayout */}
@@ -387,10 +382,9 @@ export default function App() {
         <Route path="/tester/submissions" element={<SquashTesterReportsPage />} />
         <Route path="/tester/settings" element={<SquashTesterSettingsPage />} />
         <Route path="/tester/notifications" element={<SquashTesterNotificationsPage />} />
-        <Route path="/tester/payout-method" element={<SquashTesterPayoutMethodPage />} />
+        <Route path="/tester/payout-method" element={<SquashTesterBankingPage />} />
         <Route path="/tester/leaderboard" element={<SquashTesterLeaderboardPage />} />
         <Route path="/tester/level-benefits" element={<SquashTesterLevelBenefitsPage />} />
-        <Route path="/tester/referrals" element={<SquashTesterReferralsPage />} />
         <Route
           path="/tester/menu"
           element={

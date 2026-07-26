@@ -57,7 +57,7 @@ export default function SquashLoginPage() {
       }
       if (activeSession.roles.includes('admin') && routeRole(nextPath || '') === 'admin') {
         await activateRole('admin');
-        navigate('/admin', { replace: true });
+        navigate('/A31/dashboard', { replace: true });
         return;
       }
       if (!activeSession.roles.includes(role)) {

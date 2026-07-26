@@ -49,7 +49,7 @@ export default function SquashTesterReportsPage() {
   const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setReportsError('');

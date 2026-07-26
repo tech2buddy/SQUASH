@@ -1,14 +1,9 @@
 import {
   ArrowRight,
-  BadgeCheck,
   BriefcaseBusiness,
-  ChevronDown,
   CircleHelp,
-  ClipboardList,
   Clock3,
   CreditCard,
-  Download,
-  Landmark,
   Receipt,
   ShieldCheck,
   Wallet,
@@ -17,157 +12,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
-import type { LucideIcon } from 'lucide-react';
+import { getDeveloperJobPayments, type DeveloperJobPayment } from './lib/paymentApi';
 
-type SummaryCard = {
-  title: string;
-  subtitle?: string;
-  value: string;
-  note: string;
-  delta: string;
-  icon: LucideIcon;
-  iconBg: string;
-  iconColor: string;
-};
-
-type ActivePayment = {
-  job: string;
-  type: string;
-  amount: string;
-  status: 'In Progress' | 'Awaiting Approval' | 'Completed';
-  detail: string;
-  progress: number;
-  action: string;
-  tone: string;
-};
-
-type HistoryItem = {
-  date: string;
-  job: string;
-  amount: string;
-  status: 'Completed' | 'Paid Out' | 'Cancelled';
-};
-
-type EscrowStep = {
-  title: string;
-  text: string;
-  icon: LucideIcon;
-  iconTone: string;
-};
-
-const summaryCards: SummaryCard[] = [
-  {
-    title: 'Escrow Balance',
-    subtitle: '(Held)',
-    value: 'R2,500',
-    note: 'Money held securely by SQUASH',
-    delta: '+2 jobs funded',
-    icon: ShieldCheck,
-    iconBg: 'bg-green-50',
-    iconColor: 'text-green-700',
-  },
-  {
-    title: 'Total Spent',
-    value: 'R10,200',
-    note: 'Total amount spent this cycle',
-    delta: '+14% this month',
-    icon: Wallet,
-    iconBg: 'bg-slate-50',
-    iconColor: 'text-slate-700',
-  },
-  {
-    title: 'Active Jobs',
-    subtitle: 'Paid For',
-    value: '3 Jobs',
-    note: 'Payments currently in escrow',
-    delta: '1 closing today',
-    icon: BriefcaseBusiness,
-    iconBg: 'bg-green-50',
-    iconColor: 'text-green-700',
-  },
-  {
-    title: 'Pending',
-    subtitle: 'Approvals',
-    value: '2 Jobs',
-    note: 'Waiting for your final approval',
-    delta: 'Action recommended',
-    icon: CircleHelp,
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-  },
-];
-
-const activePayments: ActivePayment[] = [
-  {
-    job: 'FitTrack App',
-    type: 'Mobile App',
-    amount: 'R900',
-    status: 'In Progress',
-    detail: 'Testing in progress',
-    progress: 60,
-    action: 'View',
-    tone: 'bg-amber-100 text-amber-700',
-  },
-  {
-    job: 'FoodApp Test',
-    type: 'Mobile App',
-    amount: 'R1,200',
-    status: 'Awaiting Approval',
-    detail: 'Review submissions',
-    progress: 100,
-    action: 'Review',
-    tone: 'bg-sky-100 text-sky-700',
-  },
-  {
-    job: 'ShopEase Web',
-    type: 'Website',
-    amount: 'R700',
-    status: 'Completed',
-    detail: 'Paid out to testers',
-    progress: 100,
-    action: 'View',
-    tone: 'bg-green-100 text-green-700',
-  },
-];
-
-const history: HistoryItem[] = [
-  { date: '12 May 2025', job: 'FitTrack App', amount: 'R900', status: 'Completed' },
-  { date: '10 May 2025', job: 'ShopEase Web', amount: 'R700', status: 'Paid Out' },
-  { date: '02 May 2025', job: 'HealthHub App', amount: 'R1,500', status: 'Paid Out' },
-  { date: '25 Apr 2025', job: 'StudyBuddy', amount: 'R600', status: 'Cancelled' },
-];
-
-const escrowSteps: EscrowStep[] = [
-  {
-    title: '1. Fund Escrow',
-    text: 'You pay when posting a job, and SQUASH holds the amount safely.',
-    icon: CreditCard,
-    iconTone: 'bg-sky-50 text-sky-700',
-  },
-  {
-    title: '2. Testers Work',
-    text: 'Selected testers complete tasks and submit detailed findings.',
-    icon: BriefcaseBusiness,
-    iconTone: 'bg-amber-50 text-amber-700',
-  },
-  {
-    title: '3. Review & Approve',
-    text: 'You verify submissions and approve quality before payout.',
-    icon: ClipboardList,
-    iconTone: 'bg-violet-50 text-violet-700',
-  },
-  {
-    title: '4. Auto Payout',
-    text: 'Approved work triggers secure and automatic tester payouts.',
-    icon: BadgeCheck,
-    iconTone: 'bg-green-50 text-green-700',
-  },
-];
-
-function statusClasses(status: HistoryItem['status']) {
-  if (status === 'Cancelled') return 'bg-red-50 text-red-600';
-  return 'bg-green-50 text-green-700';
-}
+const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
 
 function formatRands(value: number) {
   return `R${Math.round(value).toLocaleString('en-ZA')}`;
@@ -181,638 +28,248 @@ function formatDate(value: string) {
   });
 }
 
-function jobPaymentStatus(status: DeveloperJob['status']): ActivePayment['status'] {
-  if (status === 'completed') return 'Completed';
-  if (status === 'in_review') return 'Awaiting Approval';
-  return 'In Progress';
+function paymentStatusLabel(status: DeveloperJobPayment['status']) {
+  if (status === 'succeeded') return 'Paid';
+  if (status === 'creating' || status === 'pending') return 'Pending';
+  if (status === 'refunded') return 'Refunded';
+  if (status === 'cancelled') return 'Cancelled';
+  return 'Failed';
 }
 
-function paymentTone(status: ActivePayment['status']) {
-  if (status === 'Completed') return 'bg-green-100 text-green-700';
-  if (status === 'Awaiting Approval') return 'bg-sky-100 text-sky-700';
-  return 'bg-amber-100 text-amber-700';
+function paymentStatusClasses(status: DeveloperJobPayment['status']) {
+  if (status === 'succeeded') return 'bg-green-50 text-green-700';
+  if (status === 'creating' || status === 'pending') return 'bg-amber-50 text-amber-700';
+  if (status === 'refunded') return 'bg-sky-50 text-sky-700';
+  return 'bg-red-50 text-red-700';
+}
+
+function jobStatusLabel(status: DeveloperJob['status']) {
+  return status.replace('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export default function SquashDeveloperBillingPage() {
   const { session } = useAuth();
-  const isRealAccount = true;
-  const [liveJobs, setLiveJobs] = useState<DeveloperJob[]>([]);
+  const [jobs, setJobs] = useState<DeveloperJob[]>([]);
+  const [payments, setPayments] = useState<DeveloperJobPayment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [billingError, setBillingError] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    if (!isRealAccount || !session?.userId) {
-      setLiveJobs([]);
-      setBillingError('');
+    let mounted = true;
+    if (!session?.userId) {
+      setJobs([]);
+      setPayments([]);
+      setLoading(false);
       return () => {
-        isMounted = false;
+        mounted = false;
       };
     }
 
-    getDeveloperJobs(session.userId)
-      .then((jobs) => {
-        if (!isMounted) return;
-        setLiveJobs(jobs);
+    setLoading(true);
+    Promise.all([
+      getDeveloperJobs(session.userId),
+      getDeveloperJobPayments(session.userId),
+    ])
+      .then(([nextJobs, nextPayments]) => {
+        if (!mounted) return;
+        setJobs(nextJobs);
+        setPayments(nextPayments);
         setBillingError('');
       })
       .catch(() => {
-        if (!isMounted) return;
-        setBillingError('Could not load billing data right now.');
+        if (!mounted) return;
+        setBillingError('Could not load billing records right now.');
       })
       .finally(() => {
-        if (isMounted) setIsLoadingData(false);
+        if (mounted) setLoading(false);
       });
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [isRealAccount, session?.userId]);
+  }, [session?.userId]);
 
-  const liveBilling = useMemo(() => {
-    const total = liveJobs.reduce((sum, job) => sum + Number(job.totalAmountZar || 0), 0);
-    const fundedJobs = liveJobs.filter((job) => job.status !== 'draft' && job.status !== 'cancelled');
-    const pendingApproval = liveJobs.filter((job) => job.status === 'in_review').length;
-    const activeJobs = liveJobs.filter((job) => job.status === 'active' || job.status === 'in_review').length;
+  const summary = useMemo(() => {
+    const paidPayments = payments.filter((payment) => payment.status === 'succeeded');
+    return {
+      postedBudget: jobs.reduce((sum, job) => sum + Number(job.totalAmountZar || 0), 0),
+      recordedPaid: paidPayments.reduce((sum, payment) => sum + payment.amountZar, 0),
+      paidCount: paidPayments.length,
+      draftCount: jobs.filter((job) => job.status === 'draft').length,
+      activeCount: jobs.filter((job) => job.status === 'active').length,
+      reviewCount: jobs.filter((job) => job.status === 'in_review').length,
+    };
+  }, [jobs, payments]);
 
-    return { total, fundedJobs, pendingApproval, activeJobs };
-  }, [liveJobs]);
+  const jobNames = useMemo(() => new Map(jobs.map((job) => [job.id, job.title])), [jobs]);
 
-  const visibleSummaryCards: SummaryCard[] = isRealAccount
-    ? [
-        {
-          title: 'Escrow Balance',
-          subtitle: '(Held)',
-          value: formatRands(
-            liveBilling.fundedJobs
-              .filter((job) => job.status === 'active' || job.status === 'in_review')
-              .reduce((sum, job) => sum + Number(job.totalAmountZar || 0), 0),
-          ),
-          note: 'Money held securely by SQUASH',
-          delta: `${liveBilling.activeJobs} active job${liveBilling.activeJobs === 1 ? '' : 's'}`,
-          icon: ShieldCheck,
-          iconBg: 'bg-green-50',
-          iconColor: 'text-green-700',
-        },
-        {
-          title: 'Total Spent',
-          value: formatRands(liveBilling.total),
-          note: 'Total value of posted jobs',
-          delta: `${liveJobs.length} job${liveJobs.length === 1 ? '' : 's'} created`,
-          icon: Wallet,
-          iconBg: 'bg-slate-50',
-          iconColor: 'text-slate-700',
-        },
-        {
-          title: 'Active Jobs',
-          subtitle: 'Funded',
-          value: `${liveBilling.activeJobs} Jobs`,
-          note: 'Payments currently protected',
-          delta: liveBilling.activeJobs ? 'Testing in motion' : 'No active jobs yet',
-          icon: BriefcaseBusiness,
-          iconBg: 'bg-green-50',
-          iconColor: 'text-green-700',
-        },
-        {
-          title: 'Pending',
-          subtitle: 'Approvals',
-          value: `${liveBilling.pendingApproval} Jobs`,
-          note: 'Waiting for your final approval',
-          delta: liveBilling.pendingApproval ? 'Action recommended' : 'Nothing pending',
-          icon: CircleHelp,
-          iconBg: 'bg-amber-50',
-          iconColor: 'text-amber-600',
-        },
-      ]
-    : summaryCards;
-
-  const visibleActivePayments: ActivePayment[] = isRealAccount
-    ? liveJobs
-        .filter((job) => job.status !== 'draft')
-        .slice(0, 6)
-        .map((job) => {
-          const status = jobPaymentStatus(job.status);
-          const progress = status === 'Completed' ? 100 : status === 'Awaiting Approval' ? 90 : 45;
-          return {
-            job: job.title,
-            type: job.category,
-            amount: formatRands(job.totalAmountZar),
-            status,
-            detail:
-              status === 'Completed'
-                ? 'Payment released after approval'
-                : status === 'Awaiting Approval'
-                  ? 'Review submissions'
-                  : 'Testing in progress',
-            progress,
-            action: status === 'Awaiting Approval' ? 'Review' : 'View',
-            tone: paymentTone(status),
-          };
-        })
-    : activePayments;
-
-  const visibleHistory: HistoryItem[] = isRealAccount
-    ? liveJobs
-        .filter((job) => job.status !== 'draft')
-        .slice(0, 8)
-        .map((job) => ({
-          date: formatDate(job.createdAt),
-          job: job.title,
-          amount: formatRands(job.totalAmountZar),
-          status: job.status === 'cancelled' ? 'Cancelled' : job.status === 'completed' ? 'Paid Out' : 'Completed',
-        }))
-    : history;
-
-  if (true && isLoadingData) {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
-        Loading billing data...
+      <div className="flex min-h-[420px] items-center justify-center px-4 text-center text-sm font-semibold text-slate-600">
+        Loading billing records...
       </div>
     );
   }
 
   return (
     <div className="space-y-6 md:space-y-8">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold tracking-wide text-green-700">
-                  <ShieldCheck className="h-4 w-4" />
-                  PAYMENT CONTROL CENTER
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold tracking-wide text-green-700">
+            <ShieldCheck className="h-4 w-4" />
+            PAYMENT RECORDS
+          </div>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Billing</h1>
+          <p className="mt-2 text-slate-600">Review job budgets and verified payment records.</p>
+        </div>
+        <div className="hidden text-sm font-medium text-slate-500 md:block">Dashboard &gt; Billing</div>
+      </div>
+
+      {billingError ? (
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {billingError}
+        </div>
+      ) : null}
+
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {[
+          { title: 'Posted job budget', value: formatRands(summary.postedBudget), note: `${jobs.length} job${jobs.length === 1 ? '' : 's'} recorded`, icon: Wallet },
+          { title: 'Verified payments', value: formatRands(summary.recordedPaid), note: `${summary.paidCount} confirmed payment${summary.paidCount === 1 ? '' : 's'}`, icon: Receipt },
+          { title: 'Private drafts', value: String(summary.draftCount), note: 'Not visible to testers', icon: Clock3 },
+          { title: 'Awaiting review', value: String(summary.reviewCount), note: 'Submission review required', icon: CircleHelp },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-bold text-slate-600 sm:text-sm">{card.title}</div>
+                  <div className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">{card.value}</div>
+                  <div className="mt-2 text-xs text-slate-500">{card.note}</div>
                 </div>
-                <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Billing</h1>
-                <p className="mt-2 text-slate-600">
-                  Manage escrow, payout approvals, invoices, and spend visibility.
-                </p>
-              </div>
-              <div className="hidden text-sm font-medium text-slate-500 md:block">
-                Dashboard &gt; Billing
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-green-50 text-green-700">
+                  <Icon className="h-5 w-5" />
+                </span>
               </div>
             </div>
+          );
+        })}
+      </section>
 
-            {billingError ? (
-              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-                {billingError}
+      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-6 py-5">
+              <h2 className="text-2xl font-bold text-slate-900">Payment history</h2>
+              <p className="mt-2 text-sm text-slate-600">Only payment attempts stored by the secure payment service appear here.</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium">Job</th>
+                    <th className="px-6 py-4 font-medium">Amount</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.length ? payments.map((payment) => (
+                    <tr key={payment.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="px-6 py-4 text-slate-700">{formatDate(payment.paidAt || payment.createdAt)}</td>
+                      <td className="px-6 py-4 font-semibold text-slate-900">{jobNames.get(payment.jobId) || 'Job payment'}</td>
+                      <td className="px-6 py-4 font-semibold text-slate-900">{formatRands(payment.amountZar)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${paymentStatusClasses(payment.status)}`}>
+                          {paymentStatusLabel(payment.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500">No verified payment records yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-6 py-5">
+              <h2 className="text-2xl font-bold text-slate-900">Job budgets</h2>
+              <p className="mt-2 text-sm text-slate-600">Package values are budgets, not proof that payment occurred.</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {jobs.length ? jobs.map((job) => (
+                <div key={job.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                  <div>
+                    <div className="font-semibold text-slate-900">{job.title}</div>
+                    <div className="mt-1 text-xs text-slate-500">{job.category}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{jobStatusLabel(job.status)}</span>
+                    <span className="font-bold text-slate-900">{formatRands(job.totalAmountZar)}</span>
+                  </div>
+                </div>
+              )) : (
+                <div className="px-6 py-12 text-center text-sm text-slate-500">No job budgets yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-green-50 text-green-700">
+                <CreditCard className="h-6 w-6" />
+              </span>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">{paymentsEnabled ? 'Online funding' : 'Beta funding setup'}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {paymentsEnabled
+                    ? 'A job remains private until its payment is confirmed by the secure payment service.'
+                    : 'Online funding is not enabled in this environment. New jobs are saved privately as drafts and no payment is requested.'}
+                </p>
               </div>
-            ) : null}
+            </div>
+            <Link to="/post-job" className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700">
+              Prepare a job {paymentsEnabled ? 'for funding' : 'draft'} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
 
-            <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-              {visibleSummaryCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div key={card.title} className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-2 sm:gap-4">
-                      <div className="min-w-0">
-                        <div className="text-xs sm:text-base font-bold text-slate-900">
-                          {card.title}
-                          {card.subtitle ? <span className="ml-1 text-slate-500 hidden sm:inline">{card.subtitle}</span> : null}
-                        </div>
-                        <div className="mt-1.5 sm:mt-3 text-lg sm:text-3xl font-black text-slate-900">{card.value}</div>
-                        <div className="mt-1 sm:mt-3 text-[10px] sm:text-sm text-slate-600 hidden sm:block">{card.note}</div>
-                        <div className="mt-1.5 sm:mt-3 inline-flex rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-xs font-semibold text-slate-600 truncate max-w-full">
-                          {card.delta}
-                        </div>
-                      </div>
-                      <div className={`shrink-0 flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${card.iconBg}`}>
-                        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.iconColor}`} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
-
-            <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-              <div className="space-y-6">
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold text-slate-900">Active Job Payments (Escrow)</h2>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Your funds stay protected in escrow until you approve completed work.
-                      </p>
-                    </div>
-                    <div className="relative shrink-0">
-                      <select className="appearance-none flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white pl-4 pr-10 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-100 cursor-pointer">
-                        <option>All Status</option>
-                        <option>In Progress</option>
-                        <option>Awaiting Approval</option>
-                        <option>Completed</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                    </div>
-                  </div>
-
-                  {/* Mobile Compact List */}
-                  <div className="flex flex-col md:hidden">
-                    {visibleActivePayments.length > 0 ? (
-                      visibleActivePayments.map((payment) => (
-                        <div key={payment.job} className="flex items-center justify-between border-b border-slate-100 px-4 py-3 last:border-b-0">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 truncate text-sm">{payment.job}</span>
-                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${payment.tone}`}>
-                                {payment.status}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                              <span className="font-semibold text-slate-700">{payment.amount}</span>
-                              <span className="h-1 w-1 rounded-full bg-slate-300" />
-                              <span>{payment.progress}% done</span>
-                            </div>
-                          </div>
-                          <Link
-                            to="/report-details"
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                          >
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-8 text-center text-sm text-slate-500">
-                        No funded job payments yet. Posted jobs will appear here once payment is connected.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
-                          <th className="px-6 py-4 font-medium">Job Name</th>
-                          <th className="px-6 py-4 font-medium">Amount</th>
-                          <th className="px-6 py-4 font-medium">Status</th>
-                          <th className="px-6 py-4 font-medium">Progress</th>
-                          <th className="px-6 py-4 font-medium">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visibleActivePayments.length > 0 ? visibleActivePayments.map((payment) => (
-                          <tr key={payment.job} className="border-b border-slate-100 last:border-b-0">
-                            <td className="px-6 py-5">
-                              <div className="font-semibold text-slate-900">{payment.job}</div>
-                              <div className="text-sm text-slate-500">{payment.type}</div>
-                            </td>
-                            <td className="px-6 py-5 font-semibold text-slate-900">{payment.amount}</td>
-                            <td className="px-6 py-5">
-                              <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${payment.tone}`}>
-                                {payment.status}
-                              </div>
-                              <div className="mt-2 text-xs text-slate-500">{payment.detail}</div>
-                            </td>
-                            <td className="px-6 py-5">
-                              <div className="text-sm font-semibold text-slate-700">{payment.progress}%</div>
-                              <div className="mt-2 h-2 w-24 rounded-full bg-slate-100">
-                                <div className="h-2 rounded-full bg-green-600" style={{ width: `${payment.progress}%` }} />
-                              </div>
-                            </td>
-                            <td className="px-6 py-5">
-                              <Link
-                                to="/report-details"
-                                className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                {payment.action}
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Link>
-                            </td>
-                          </tr>
-                        )) : (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
-                              No funded job payments yet. Posted jobs will appear here once payment is connected.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="border-t border-slate-100 px-6 py-4 text-sm text-slate-600">
-                    <div className="flex flex-wrap gap-5">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-amber-500" />
-                        In Progress - Testing running
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-sky-500" />
-                        Awaiting Approval - Needs your review
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-green-500" />
-                        Completed - Paid to testers
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-                    <h2 className="text-2xl font-bold text-slate-900">Transaction History</h2>
-                    <div className="relative shrink-0">
-                      <select className="appearance-none flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white pl-4 pr-10 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-100 cursor-pointer">
-                        <option>This Year</option>
-                        <option>Last Year</option>
-                        <option>All Time</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                    </div>
-                  </div>
-
-                  {/* Mobile Compact List */}
-                  <div className="flex flex-col md:hidden">
-                    {visibleHistory.length > 0 ? (
-                      visibleHistory.map((item) => (
-                        <div key={`${item.date}-${item.job}`} className="flex items-center justify-between border-b border-slate-100 px-4 py-3 last:border-b-0">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 truncate text-sm">{item.job}</span>
-                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${statusClasses(item.status)}`}>
-                                {item.status}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                              <span className="font-semibold text-slate-700">{item.amount}</span>
-                              <span className="h-1 w-1 rounded-full bg-slate-300" />
-                              <span>{item.date}</span>
-                            </div>
-                          </div>
-                          <a
-                            href={`data:text/plain;charset=utf-8,${encodeURIComponent(`Invoice for ${item.job}`)}`}
-                            download={`invoice-${item.job.replaceAll(' ', '-').toLowerCase()}.txt`}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-8 text-center text-sm text-slate-500">
-                        No transaction history yet.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
-                          <th className="px-6 py-4 font-medium">Date</th>
-                          <th className="px-6 py-4 font-medium">Job</th>
-                          <th className="px-6 py-4 font-medium">Amount</th>
-                          <th className="px-6 py-4 font-medium">Status</th>
-                          <th className="px-6 py-4 font-medium">Invoice</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visibleHistory.length > 0 ? visibleHistory.map((item) => (
-                          <tr key={`${item.date}-${item.job}`} className="border-b border-slate-100 last:border-b-0">
-                            <td className="px-6 py-4 text-slate-700">{item.date}</td>
-                            <td className="px-6 py-4 font-semibold text-slate-900">{item.job}</td>
-                            <td className="px-6 py-4 font-semibold text-slate-900">{item.amount}</td>
-                            <td className="px-6 py-4">
-                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(item.status)}`}>
-                                {item.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <a
-                                href={`data:text/plain;charset=utf-8,${encodeURIComponent(`Invoice for ${item.job}`)}`}
-                                download={`invoice-${item.job.replaceAll(' ', '-').toLowerCase()}.txt`}
-                                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                              >
-                                <Download className="h-4 w-4" />
-                                PDF
-                              </a>
-                            </td>
-                          </tr>
-                        )) : (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
-                              No transaction history yet.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <button className="w-full px-6 py-4 text-center text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors rounded-b-3xl">Show more</button>
-                </div>
-
-                <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Awaiting Your Approval</h2>
-                  <p className="mt-3 text-slate-700">
-                    You have 2 jobs waiting for approval. Review submissions to release tester payouts.
-                  </p>
-                  <a
-                    href="/developer/submissions"
-                    className="mt-5 block w-full rounded-2xl bg-white px-5 py-3 text-center font-semibold text-slate-800 shadow-sm ring-1 ring-sky-200 hover:bg-slate-50"
-                  >
-                    Review &amp; Approve
-                  </a>
-                </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900">Operational summary</h2>
+            <div className="mt-5 space-y-4 text-sm">
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="inline-flex items-center gap-2"><BriefcaseBusiness className="h-4 w-4" />Active jobs</span>
+                <span className="font-semibold text-slate-900">{summary.activeCount}</span>
               </div>
-
-              <div className="space-y-6">
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-2xl font-bold text-slate-900">Payment Method</h2>
-                    <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                      Default
-                    </span>
-                  </div>
-
-                  <div className="relative mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-5 text-white shadow-[0_14px_30px_rgba(2,6,23,0.35)]">
-                    <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-emerald-300/20 blur-2xl" />
-                    <div className="pointer-events-none absolute -left-10 bottom-0 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-
-                    <div className="mb-5 flex items-center justify-between">
-                      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide">
-                        SQUASH BUSINESS
-                      </span>
-                      <span className="text-xs font-medium text-white/80">Platinum</span>
-                    </div>
-
-                    <div className="mb-5 flex items-center justify-between">
-                      <div className="grid h-10 w-14 grid-cols-4 grid-rows-3 gap-1 rounded-md border border-yellow-200/40 bg-gradient-to-br from-yellow-100 to-yellow-300 p-1.5">
-                        {Array.from({ length: 12 }).map((_, i) => (
-                          <span key={i} className="rounded-[2px] bg-yellow-700/30" />
-                        ))}
-                      </div>
-                      <svg viewBox="0 0 24 24" className="h-7 w-7 text-white/70" aria-hidden="true">
-                        <path d="M4 8a8 8 0 0 1 8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        <path d="M4 12a4 4 0 0 1 4 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        <circle cx="4" cy="16" r="1.2" fill="currentColor" />
-                      </svg>
-                    </div>
-
-                    <div className="font-mono text-xl tracking-[0.18em] text-white">4023  5567  8890  1234</div>
-
-                    <div className="mt-5 flex items-end justify-between">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Card Holder</div>
-                        <div className="mt-1 text-sm font-semibold">DEV STUDIO</div>
-                      </div>
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70">Expires</div>
-                        <div className="mt-1 text-sm font-semibold">12/27</div>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="-mr-2 h-7 w-7 rounded-full bg-orange-400/90" />
-                        <span className="h-7 w-7 rounded-full bg-red-500/90" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                    {isRealAccount ? 'Payment method connection will be linked when checkout goes live.' : 'Last charged: 12 May 2025 at 14:22'}
-                  </div>
-
-                  <a href="/billing/payment-methods" className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50">
-                    + Add New Card
-                  </a>
-                  <a href="/billing/payment-methods" className="mt-3 inline-block text-sm font-semibold text-sky-700">
-                    Change or remove card
-                  </a>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Billing Breakdown</h2>
-                  <div className="mt-5 space-y-4 text-sm">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="inline-flex items-center gap-2">
-                        <Receipt className="h-4 w-4 text-slate-400" />
-                        Job package total
-                      </span>
-                      <span className="font-semibold text-slate-900">{isRealAccount ? formatRands(liveBilling.total) : 'R900'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="inline-flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-slate-400" />
-                        Payment protection
-                      </span>
-                      <span className="font-semibold text-green-700">Included</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="inline-flex items-center gap-2">
-                        <Landmark className="h-4 w-4 text-slate-400" />
-                        Tax handling
-                      </span>
-                      <span className="font-semibold text-slate-900">Included where applicable</span>
-                    </div>
-                  </div>
-                  <div className="my-5 border-t border-slate-200" />
-                  <div className="flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
-                    <span className="text-lg font-bold text-slate-900">Total Paid</span>
-                    <span className="text-2xl font-black text-green-700">{isRealAccount ? formatRands(liveBilling.total) : 'R900'}</span>
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-slate-900">Plan &amp; Usage</h2>
-                  <div className="mt-5">
-                    <div className="text-sm text-slate-500">Current Plan</div>
-                    <div className="mt-2 text-3xl font-black text-green-700">Starter</div>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-                        <span>Active jobs used</span>
-                        <span>3 / 5</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-100">
-                        <div className="h-2 w-3/5 rounded-full bg-green-600" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-                        <span>Monthly budget used</span>
-                        <span>61%</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-100">
-                        <div className="h-2 w-[61%] rounded-full bg-emerald-500" />
-                      </div>
-                    </div>
-                  </div>
-                  <a
-                    href="/pricing"
-                    className="mt-6 block w-full rounded-2xl border border-slate-300 bg-white px-5 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
-                  >
-                    Upgrade Plan
-                  </a>
-                </div>
-
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" />Private drafts</span>
+                <span className="font-semibold text-slate-900">{summary.draftCount}</span>
               </div>
-            </section>
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold text-slate-900">How Escrow Works</h2>
-              <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:mt-8 md:gap-6">
-                {escrowSteps.map((step, index) => {
-                  const StepIcon = step.icon;
-                  return (
-                    <div key={step.title} className="relative flex md:block gap-4 md:gap-0 rounded-2xl md:rounded-3xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-                      <div className={`shrink-0 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl ${step.iconTone}`}>
-                        <StepIcon className="h-4 w-4 md:h-5 md:w-5" />
-                      </div>
-                      <div>
-                        <h3 className="md:mt-4 text-sm md:text-lg font-bold text-slate-900">{step.title}</h3>
-                        <p className="mt-1 md:mt-2 text-xs md:text-sm leading-relaxed text-slate-600">{step.text}</p>
-                      </div>
-                      {index !== escrowSteps.length - 1 ? (
-                        <div className="absolute -right-3 top-8 hidden h-px w-6 bg-slate-300 md:block" />
-                      ) : null}
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Confirmed payment records</span>
+                <span className="font-semibold text-slate-900">{summary.paidCount}</span>
               </div>
+            </div>
+          </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-green-50 p-5 text-sm leading-7 text-slate-700">
-                <div className="font-bold text-slate-900">Why this works:</div>
-                <div className="mt-3 grid gap-3 md:grid-cols-4">
-                  <div className="inline-flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-green-700" />
-                    Secure
-                  </div>
-                  <div className="inline-flex items-center gap-2">
-                    <BadgeCheck className="h-4 w-4 text-green-700" />
-                    Fair
-                  </div>
-                  <div className="inline-flex items-center gap-2">
-                    <Receipt className="h-4 w-4 text-green-700" />
-                    Transparent
-                  </div>
-                  <div className="inline-flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-green-700" />
-                    Automatic payouts
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Billing Help</h2>
-                  <p className="mt-2 text-slate-600">
-                    Need support with payments, invoices, or refunds? Our billing team is available.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <a
-                    href="/contact"
-                    className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
-                  >
-                    Contact Billing Support
-                  </a>
-                  <div className="rounded-2xl bg-slate-50 px-5 py-3 font-semibold text-slate-700">billing@squash.app</div>
-                </div>
-              </div>
-            </section>
+          {summary.reviewCount > 0 ? (
+            <div className="rounded-3xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900">Submission review required</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                {summary.reviewCount} job{summary.reviewCount === 1 ? '' : 's'} currently require submission review.
+              </p>
+              <Link to="/developer/reports" className="mt-5 block rounded-2xl bg-white px-5 py-3 text-center font-semibold text-slate-800 ring-1 ring-sky-200 hover:bg-slate-50">
+                Review reports
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      </section>
     </div>
   );
 }
-

@@ -66,11 +66,6 @@ export default function SquashChooseWorkspacePage() {
             <span className="text-3xl font-black tracking-tight text-slate-900">SQUASH</span>
           </a>
           <div className="flex items-center gap-2">
-            {session.roles.includes('admin') ? (
-              <a href="/admin" className="rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100">
-                Admin
-              </a>
-            ) : null}
             <a href="/logout" className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               Sign out
             </a>

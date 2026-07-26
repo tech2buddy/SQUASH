@@ -92,7 +92,7 @@ export default function SquashTesterLevelBenefitsPage() {
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setLoadError('');

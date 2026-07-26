@@ -193,21 +193,6 @@ export default function SquashActiveTestScreen() {
         const nextTasks = parsedTasks.length > 0 ? parsedTasks : fallbackTasks;
         setTasks(nextTasks);
 
-        const saved = window.localStorage.getItem(`squash_active_test_progress_${item.id}`);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved) as { taskState?: boolean[]; reportSummary?: string };
-            if (Array.isArray(parsed.taskState) && parsed.taskState.length === nextTasks.length) {
-              setTaskState(parsed.taskState);
-            } else {
-              setTaskState(nextTasks.map(() => false));
-            }
-            if (parsed.reportSummary) setReportSummary(parsed.reportSummary);
-            return;
-          } catch {
-            // Fall through to a fresh state.
-          }
-        }
         setTaskState(nextTasks.map(() => false));
       })
       .catch((error: Error) => {
@@ -385,27 +370,19 @@ export default function SquashActiveTestScreen() {
     }
   };
   const saveBugReport = async () => {
-    if (!bugDescription.trim()) {
+    const normalizedDescription = bugDescription.trim();
+    if (!normalizedDescription) {
       setBugNotice('Please describe the issue before saving.');
       return;
     }
-    const existingReports = JSON.parse(
-      window.localStorage.getItem('squash_bug_reports') ?? '[]',
-    ) as Array<{
-      description: string;
-      severity: string;
-      createdAt: string;
-      videoDuration?: number;
-      hasVideo?: boolean;
-    }>;
-    existingReports.unshift({
-      description: bugDescription.trim(),
-      severity,
-      createdAt: new Date().toISOString(),
-      hasVideo: Boolean(recordedVideoUrl),
-      videoDuration: recordedVideoDuration || undefined,
-    });
-    window.localStorage.setItem('squash_bug_reports', JSON.stringify(existingReports));
+    if (/^(?:n\/?a|none|no bugs?)$/i.test(normalizedDescription)) {
+      setBugNotice('Describe the actual issue. If you found no bug, do not create a bug report.');
+      return;
+    }
+    if (!assignment || !session?.userId || !labSessionId) {
+      setBugNotice('The secure Test Lab session is still loading. Please try again.');
+      return;
+    }
 
     if (assignment && session?.userId) {
       try {
@@ -433,7 +410,7 @@ export default function SquashActiveTestScreen() {
           videoDurationSeconds: recordedVideoDuration || null,
         });
       } catch (error) {
-        setBugNotice(error instanceof Error ? error.message : 'Bug saved locally, but not synced yet.');
+        setBugNotice(error instanceof Error ? error.message : 'Could not save this bug report.');
         return;
       }
     }
@@ -453,7 +430,6 @@ export default function SquashActiveTestScreen() {
     try {
       if (!labSessionId) throw new Error('The Test Lab session is still loading. Please try again.');
       await saveTestLabProgress({ sessionId: labSessionId, tasks, taskState, reportSummary });
-      window.localStorage.setItem(`squash_active_test_progress_${assignment?.id || 'demo'}`, JSON.stringify({ taskState, reportSummary, updatedAt: new Date().toISOString() }));
       setProgressNotice('Progress saved securely.');
     } catch (error) {
       setProgressNotice(error instanceof Error ? error.message : 'Could not save progress right now.');
@@ -462,6 +438,10 @@ export default function SquashActiveTestScreen() {
   const submitTest = async () => {
     if (completedTasks < taskState.length) {
       setProgressNotice(`Complete all tasks before submitting (${completedTasks}/${taskState.length}).`);
+      return;
+    }
+    if (!assignment || !session?.userId || !labSessionId) {
+      setProgressNotice('The secure Test Lab session is still loading. Please try again.');
       return;
     }
     if (assignment && session?.userId) {
@@ -477,14 +457,6 @@ export default function SquashActiveTestScreen() {
         setProgressNotice(error instanceof Error ? error.message : 'Could not submit this test right now.');
         return;
       }
-    } else {
-      window.localStorage.setItem(
-        'squash_active_test_submission',
-        JSON.stringify({
-          submittedAt: new Date().toISOString(),
-          completedTasks,
-        }),
-      );
     }
 
     setProgressNotice('Test submitted successfully.');
@@ -493,13 +465,9 @@ export default function SquashActiveTestScreen() {
 
   useEffect(() => {
     if (!labSessionId || !assignment) return;
-    window.localStorage.setItem(
-      `squash_active_test_progress_${assignment.id}`,
-      JSON.stringify({ taskState, reportSummary, updatedAt: new Date().toISOString() }),
-    );
     const timer = window.setTimeout(() => {
       saveTestLabProgress({ sessionId: labSessionId, tasks, taskState, reportSummary })
-        .catch(() => setProgressNotice('Autosave could not sync. Your progress remains saved on this device.'));
+        .catch(() => setProgressNotice('Autosave could not sync. Please save again before leaving this test.'));
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [assignment, labSessionId, reportSummary, taskState, tasks]);
@@ -555,7 +523,7 @@ export default function SquashActiveTestScreen() {
             <div className="apple-bento-card p-5">
               <div className="text-base font-bold text-slate-900">Active Test</div>
               <div className="mt-3 rounded-2xl bg-green-50/70 p-3.5 border border-green-200/60">
-                <div className="text-xs font-bold text-green-800">{assignment?.jobTitle || 'FitTrack Mobile'}</div>
+                <div className="text-xs font-bold text-green-800">{assignment?.jobTitle || 'Assigned test'}</div>
                 <div className="mt-1 text-[11px] font-semibold text-slate-600">
                   {completedTasks} / {taskState.length} tasks done
                 </div>
@@ -634,7 +602,7 @@ export default function SquashActiveTestScreen() {
                   <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-2xs shrink-0" />
                 ) : null}
                 <div>
-                  <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">{assignment?.jobTitle || 'FitTrack Mobile'}</h1>
+                  <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">{assignment?.jobTitle || 'Assigned test'}</h1>
                   <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-extrabold text-slate-700 mt-1 inline-block">
                     {assignment?.jobPlatform || 'Usability Test'}
                   </span>

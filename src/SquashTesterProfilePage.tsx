@@ -26,23 +26,10 @@ export default function SquashTesterProfilePage() {
   
   const [profileDetails, setProfileDetails] = useState<TesterPublicProfile | null>(null);
   const [profileError, setProfileError] = useState('');
-  const [specializations, setSpecializations] = useState<string[]>(() => {
-    const raw = window.localStorage.getItem('squash_tester_specializations');
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw) as string[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [specializations, setSpecializations] = useState<string[]>([]);
 
   useEffect(() => {
-    window.localStorage.setItem('squash_tester_specializations', JSON.stringify(specializations));
-  }, [specializations]);
-
-  useEffect(() => {
-    if (!session?.userId || false) return;
+    if (!session?.userId) return;
 
     let mounted = true;
     setProfileError('');
@@ -65,7 +52,7 @@ export default function SquashTesterProfilePage() {
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
       const next = checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id);
-      if (session?.userId && true) {
+      if (session?.userId) {
         replaceTesterSpecializations(session.userId, next).catch((error: Error) => {
           setProfileError(error.message || 'Could not save specialization changes right now.');
         });

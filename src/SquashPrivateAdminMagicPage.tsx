@@ -62,8 +62,10 @@ export default function SquashPrivateAdminMagicPage() {
       });
       if (signInError) throw signInError;
       setSent(true);
-    } catch {
-      setError('Unable to send the private access code. Confirm that this email belongs to an existing SQUASH account.');
+    } catch (cause) {
+      console.error('Admin access-code delivery failed', cause);
+      const detail = cause instanceof Error ? cause.message : 'Unknown authentication email error';
+      setError(`Unable to send the private access code: ${detail}`);
     } finally {
       setSubmitting(false);
     }
@@ -71,8 +73,8 @@ export default function SquashPrivateAdminMagicPage() {
 
   const verifyAccessCode = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!/^\d{6}$/.test(code)) {
-      setError('Enter the 6-digit code from the email.');
+    if (!/^\d{6,8}$/.test(code)) {
+      setError('Enter the complete code from the email.');
       return;
     }
 
@@ -188,18 +190,18 @@ export default function SquashPrivateAdminMagicPage() {
             ) : (
               <form onSubmit={verifyAccessCode} className="mt-8 space-y-5">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-slate-700">6-digit access code</span>
+                  <span className="mb-2 block text-sm font-bold text-slate-700">Email access code</span>
                   <input
                     value={code}
-                    onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="000000"
+                    placeholder="00000000"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-center font-mono text-2xl font-black tracking-[0.35em] outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-50"
                   />
                 </label>
                 {error ? <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
-                <button disabled={submitting || code.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3.5 font-bold text-white shadow-[0_12px_28px_rgba(22,163,74,0.22)] hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
+                <button disabled={submitting || code.length < 6 || code.length > 8} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3.5 font-bold text-white shadow-[0_12px_28px_rgba(22,163,74,0.22)] hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
                   {submitting ? 'Verifying code...' : 'Enter operations'}
                   {!submitting ? <ArrowRight className="h-4 w-4" /> : null}
                 </button>

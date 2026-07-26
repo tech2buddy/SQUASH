@@ -21,16 +21,31 @@ export default function SquashAdminMfaPage() {
       try {
         const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalError) throw aalError;
+        if (!active) return;
         if (aal.currentLevel === 'aal2') return navigate('/A31/dashboard', { replace: true });
         const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
         if (factorsError) throw factorsError;
+        if (!active) return;
         const verified = factors.totp.find((factor) => factor.status === 'verified');
         if (verified) return active && setSetup({ factorId: verified.id });
+
+        const staleTotpFactors = factors.all.filter(
+          (factor) => factor.factor_type === 'totp' && factor.status === 'unverified',
+        );
+        for (const factor of staleTotpFactors) {
+          if (!active) return;
+          const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+          if (removeError && !removeError.message.toLowerCase().includes('factor not found')) throw removeError;
+        }
+
+        if (!active) return;
         const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'SQUASH Admin' });
         if (enrollError) throw enrollError;
         if (active) setSetup({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
-      } catch {
-        if (active) setError('Unable to prepare MFA. Confirm TOTP is enabled in Supabase Auth settings.');
+      } catch (cause) {
+        console.error('Admin MFA preparation failed', cause);
+        const detail = cause instanceof Error ? cause.message : JSON.stringify(cause);
+        if (active) setError(`Unable to prepare MFA: ${detail || 'Unknown MFA error'}`);
       } finally { if (active) setBusy(false); }
     })();
     return () => { active = false; };

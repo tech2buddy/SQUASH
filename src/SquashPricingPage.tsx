@@ -11,6 +11,7 @@ import {
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { TEST_TYPES, getTestTypeByKey, type TestTypeKey } from './lib/testTypes';
+import { usePageMeta } from './hooks/usePageMeta';
 
 type TrustItem = {
   title: string;
@@ -21,6 +22,12 @@ type TrustItem = {
 const cheapestJobPrice = Math.min(...TEST_TYPES.map((testType) => testType.ratePerTesterZar * testType.minTesters));
 
 export default function SquashPricingPage() {
+  usePageMeta({
+    title: 'Pricing',
+    description: `Pay per tester, not a flat tier. SQUASH testing jobs start from R${cheapestJobPrice} — pick bug hunting, usability, accessibility, localization, or low-data testing.`,
+    path: '/pricing',
+  });
+
   const [testers, setTesters] = useState(getTestTypeByKey('bug-hunting').defaultTesters);
   const [selectedTestType, setSelectedTestType] = useState<TestTypeKey>('bug-hunting');
 

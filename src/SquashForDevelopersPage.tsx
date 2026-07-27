@@ -15,6 +15,7 @@ import PublicHeader from './PublicHeader';
 import FeaturedTesterCard from './components/FeaturedTesterCard';
 import { TEST_CATEGORIES } from './components/testCategories';
 import TrustedLogosRow from './TrustedLogosRow';
+import { usePageMeta } from './hooks/usePageMeta';
 
 type ItemWithIcon = {
   number?: string;
@@ -24,6 +25,12 @@ type ItemWithIcon = {
 };
 
 export default function SquashForDevelopersPage() {
+  usePageMeta({
+    title: 'For Developers',
+    description: 'Post a testing job and get real bug reports and usability feedback from verified South African testers before you launch. Pay per test, no subscriptions.',
+    path: '/for-developers',
+  });
+
   const steps: ItemWithIcon[] = [
     {
       number: '1',

@@ -1,8 +1,16 @@
 ﻿import { Code2 } from 'lucide-react';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
+import { usePageMeta } from './hooks/usePageMeta';
 
 export default function SquashApiDocsPage() {
+  usePageMeta({
+    title: 'Resources',
+    description: 'API access, guides, and integration docs for SQUASH developers — coming soon.',
+    path: '/api-docs',
+    noindex: true,
+  });
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <PublicHeader active="resources" />

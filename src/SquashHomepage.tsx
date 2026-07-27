@@ -2,8 +2,15 @@ import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { Star, Users, ShieldCheck, Bug, Gauge } from 'lucide-react';
 import { TEST_CATEGORIES } from './components/testCategories';
+import { usePageMeta } from './hooks/usePageMeta';
 
 export default function SquashHomepage() {
+  usePageMeta({
+    title: 'SQUASH',
+    description: 'SQUASH connects developers and startups with real South African testers to find bugs, run usability tests, and validate apps before launch. Post a testing job or earn money testing apps.',
+    path: '/',
+  });
+
   const stats = [
     { label: 'Real User Testing', icon: Users },
     { label: 'Verified Testers', icon: ShieldCheck },

@@ -3,6 +3,7 @@ import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { useAuth } from './auth';
 import { createSupportTicket, getMySupportTickets, type SupportCategory, type SupportTicket } from './lib/supportApi';
+import { usePageMeta } from './hooks/usePageMeta';
 
 const categories: Array<{ value: SupportCategory; label: string }> = [
   { value: 'account', label: 'Account' },
@@ -16,6 +17,12 @@ const categories: Array<{ value: SupportCategory; label: string }> = [
 ];
 
 export default function SquashSupportPage() {
+  usePageMeta({
+    title: 'Contact & Support',
+    description: 'Get help with SQUASH — contact our support team about jobs, payouts, your account, or anything else.',
+    path: '/contact',
+  });
+
   const { session, loading } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [category, setCategory] = useState<SupportCategory>('account');

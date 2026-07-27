@@ -14,6 +14,7 @@ import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
 import { TEST_TYPES } from './lib/testTypes';
 import { TESTER_POOL_SHARE } from './lib/jobApi';
+import { usePageMeta } from './hooks/usePageMeta';
 
 type ItemWithIcon = {
   number?: string;
@@ -23,6 +24,12 @@ type ItemWithIcon = {
 };
 
 export default function SquashForTestersPage() {
+  usePageMeta({
+    title: 'For Testers',
+    description: 'Earn money testing apps and websites in South Africa. Find bugs, complete usability tests, and get paid via EFT — flexible, remote work on your own schedule.',
+    path: '/for-testers',
+  });
+
   const steps: ItemWithIcon[] = [
     {
       number: '1',

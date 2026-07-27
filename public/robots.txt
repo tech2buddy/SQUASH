@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /post-job
+Disallow: /billing
+Disallow: /developer/
+Disallow: /report-details
+Disallow: /tester/
+Disallow: /tester-jobs
+Disallow: /job-board
+Disallow: /active-test
+Disallow: /test-lab
+Disallow: /A31
+Disallow: /choose-workspace
+Disallow: /onboarding/
+Disallow: /auth/callback
+Disallow: /reset-password
+
+Sitemap: https://www.squashqa.co.za/sitemap.xml

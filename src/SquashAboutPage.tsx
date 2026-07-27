@@ -15,6 +15,7 @@ import {
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
+import { usePageMeta } from './hooks/usePageMeta';
 
 type IconItem = {
   icon: LucideIcon;
@@ -22,6 +23,12 @@ type IconItem = {
 };
 
 export default function SquashAboutPage() {
+  usePageMeta({
+    title: 'About',
+    description: 'SQUASH is a South African testing marketplace connecting developers with real everyday users for honest, human bug reports and usability feedback.',
+    path: '/about',
+  });
+
   const problems: IconItem[] = [
     { icon: Smartphone, label: 'Wrong device' },
     { icon: Wifi, label: 'Wrong network' },

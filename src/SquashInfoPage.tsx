@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { getPublishedPolicyBySlug, type PublicPolicy } from './lib/policyApi';
+import { usePageMeta } from './hooks/usePageMeta';
 
 export default function SquashInfoPage({
   title,
@@ -12,6 +14,9 @@ export default function SquashInfoPage({
   description: string;
   policySlug?: string;
 }) {
+  const location = useLocation();
+  usePageMeta({ title, description, path: location.pathname });
+
   const [policy, setPolicy] = useState<PublicPolicy | null>(null);
 
   useEffect(() => {

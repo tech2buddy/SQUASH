@@ -136,3 +136,9 @@ What this phase wires up:
 | Allow direct invites | **Left as "Coming soon" and disabled in the UI, not wired up.** There is no direct-invite feature anywhere in the app for this to gate — building one is a separate feature, not a toggle fix. |
 
 Two RLS-related SQL functions back this: `user_wants_notification(uuid, text)` and `get_testers_hiding_specializations(uuid[])`, both `security definer`. They exist because `user_settings` RLS only allows a user to read their own row — a developer's session approving a tester's report, or viewing a tester's application, can't read that tester's settings directly, so the check has to go through a function that runs with elevated privilege instead of a plain client-side query.
+
+## Phase 37: service_role table grants for the payment/email serverless functions
+
+Run `supabase/phase37_service_role_grants.sql` after Phase 36.
+
+`api/create-checkout.ts`, `api/payment-webhook.ts`, and `api/send-email.ts` all connect with the `SUPABASE_SERVICE_ROLE_KEY`. That role bypasses Row Level Security, but RLS bypass and object-level table privileges are two separate things in Postgres — bypassing RLS only skips row policies, it doesn't grant permission to touch the table at all. `jobs`, `job_payments`, `payment_webhook_events`, `job_applications`, `test_submissions`, and `payouts` were only ever granted to `authenticated`/`anon` in earlier phases, so `service_role` had no access to them and every real request failed with `permission denied for table jobs` (Postgres error `42501`) the first time the live payment flow was actually exercised. This phase grants `service_role` exactly the operations those three functions perform on those six tables — not a blanket grant.

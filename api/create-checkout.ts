@@ -31,7 +31,10 @@ export default async function handler(req: any, res: any) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
+  if (authError || !user) {
+    if (authError) console.error('create-checkout: auth.getUser failed', authError);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   const { data: job, error: jobError } = await supabase
     .from('jobs')
@@ -39,7 +42,11 @@ export default async function handler(req: any, res: any) {
     .eq('id', jobId)
     .eq('developer_id', user.id)
     .maybeSingle();
-  if (jobError || !job) return res.status(404).json({ error: 'Job not found' });
+  if (jobError) {
+    console.error('create-checkout: job lookup failed', jobError);
+    return res.status(500).json({ error: 'Unable to prepare payment right now' });
+  }
+  if (!job) return res.status(404).json({ error: 'Job not found' });
   if (!Number.isInteger(job.total_amount_zar) || job.total_amount_zar <= 0) {
     return res.status(400).json({ error: 'Invalid job total' });
   }

@@ -39,7 +39,7 @@ export default function SquashCertified({
     return (
       <span className={`inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 ${className}`}>
         <ShieldCheck className="h-3.5 w-3.5" />
-        SQUASH CERTIFIED ✓
+        SQUASH CERTIFIED
       </span>
     );
   }
@@ -51,7 +51,7 @@ export default function SquashCertified({
           <ShieldCheck className="h-6 w-6" />
         </div>
         <div>
-          <div className="text-base font-black text-green-800">SQUASH CERTIFIED ✓</div>
+          <div className="text-base font-black text-green-800">SQUASH CERTIFIED</div>
           <div className="text-sm text-slate-700">Tested by {testers} real SA users</div>
           <div className="text-sm text-slate-700">Certified {monthYear}</div>
         </div>

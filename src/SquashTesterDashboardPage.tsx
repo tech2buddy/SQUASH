@@ -323,7 +323,7 @@ export default function SquashTesterDashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-up">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-                  Welcome back, {testerFirstName}! 👋
+                  Welcome back, {testerFirstName}!
                 </h1>
                 <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
                   Here is what is happening with your testing journey.

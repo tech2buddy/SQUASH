@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
+import { TEST_TYPES, getTestTypeByKey, type TestTypeKey } from './lib/testTypes';
 
 type TrustItem = {
   title: string;
@@ -17,54 +18,15 @@ type TrustItem = {
   icon: LucideIcon;
 };
 
+const cheapestJobPrice = Math.min(...TEST_TYPES.map((testType) => testType.ratePerTesterZar * testType.minTesters));
+
 export default function SquashPricingPage() {
-  const plans = [
-    {
-      name: 'Starter',
-      price: 'R500',
-      suffix: '/ job',
-      features: ['5 testers', 'Bug reports', 'Screenshots', 'PDF report', 'Screenshots only (upgrade for video reports)'],
-      note: 'Best for small apps and quick checks',
-      highlighted: false,
-    },
-    {
-      name: 'Growth',
-      price: 'R1,200',
-      suffix: '/ job',
-      features: ['10 testers', 'Screen recordings', 'UX scores', 'Detailed PDF report', 'Priority matching', 'Video bug reports included'],
-      note: 'Best for startups before launch',
-      highlighted: true,
-      badge: 'Most Popular',
-    },
-    {
-      name: 'Pro',
-      price: 'R2,500',
-      suffix: '/ job',
-      features: ['20 testers', 'Full session recordings', 'Executive summary', 'Advanced analytics', 'Dedicated support', 'Video bug reports included'],
-      note: 'Best for serious products and funded startups',
-      highlighted: false,
-    },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      suffix: 'pricing',
-      features: ['50+ testers', 'Dedicated test manager', 'Custom reporting', 'SLA guarantee'],
-      note: 'Best for corporates and large teams',
-      highlighted: false,
-    },
-  ];
+  const [testers, setTesters] = useState(getTestTypeByKey('bug-hunting').defaultTesters);
+  const [selectedTestType, setSelectedTestType] = useState<TestTypeKey>('bug-hunting');
 
-  const [testers, setTesters] = useState(20);
-  const [selectedPlan, setSelectedPlan] = useState('Pro Plan');
-
-  const estimatorPlans = {
-    'Starter Plan': { pricePerTester: 100, minTesters: 5 },
-    'Growth Plan': { pricePerTester: 120, minTesters: 10 },
-    'Pro Plan': { pricePerTester: 125, minTesters: 20 },
-  };
-  const activePlanDetails = estimatorPlans[selectedPlan as keyof typeof estimatorPlans] || estimatorPlans['Pro Plan'];
-  const effectiveTesters = Math.max(testers, activePlanDetails.minTesters);
-  const totalCost = effectiveTesters * activePlanDetails.pricePerTester;
+  const activeTestType = getTestTypeByKey(selectedTestType);
+  const effectiveTesters = Math.max(testers, activeTestType.minTesters);
+  const totalCost = effectiveTesters * activeTestType.ratePerTesterZar;
 
   const trustItems: TrustItem[] = [
     {
@@ -116,11 +78,11 @@ export default function SquashPricingPage() {
             </div>
 
             <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Simple Pricing for Better Testing
+              Pay for the Test Type You Need
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-              Pay only for what you need. No subscriptions. No hidden fees.
+              Pick the kind of testing your product needs. Pay per tester, not a flat tier. No subscriptions. No hidden fees.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -168,7 +130,7 @@ export default function SquashPricingPage() {
                       <Bug className="h-10 w-10 text-emerald-700" />
                     </div>
                     <div className="rounded-2xl border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-green-700 shadow-sm">
-                      Plans from R500 per job
+                      Plans from R{cheapestJobPrice} per job
                     </div>
                   </div>
                 </div>
@@ -179,57 +141,65 @@ export default function SquashPricingPage() {
 
         <section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <div className="grid gap-6 lg:grid-cols-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative flex h-full flex-col rounded-[28px] border bg-white p-8 shadow-sm transition hover:-translate-y-1 ${
-                    plan.highlighted ? 'border-green-300 ring-2 ring-green-100' : 'border-slate-200'
-                  }`}
-                >
-                  {plan.badge ? (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700 ring-1 ring-green-200">
-                      {plan.badge}
-                    </div>
-                  ) : null}
-
-                  <div className="text-center">
-                    <h2 className="text-2xl font-black text-green-700">{plan.name}</h2>
-                    <div className="mt-4 flex items-end justify-center gap-2">
-                      <span className="text-5xl font-black text-slate-900">{plan.price}</span>
-                      <span className="pb-1 text-slate-500">{plan.suffix}</span>
-                    </div>
-                  </div>
-
-                  <div className="my-6 border-t border-slate-200" />
-
-                  <div className="space-y-4">
-                    {plan.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-slate-700">
-                        <span className="mt-1 text-green-600">&#10003;</span>
-                        <span>{feature}</span>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {TEST_TYPES.map((testType) => {
+                const minJobTotal = testType.ratePerTesterZar * testType.minTesters;
+                const highlighted = testType.key === 'bug-hunting';
+                return (
+                  <div
+                    key={testType.key}
+                    className={`relative flex h-full flex-col rounded-[28px] border bg-white p-8 shadow-sm transition hover:-translate-y-1 ${
+                      highlighted ? 'border-green-300 ring-2 ring-green-100' : 'border-slate-200'
+                    }`}
+                  >
+                    {highlighted ? (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700 ring-1 ring-green-200">
+                        Most Popular
                       </div>
-                    ))}
+                    ) : null}
+
+                    <div className="text-center">
+                      <h2 className="text-2xl font-black text-green-700">{testType.label}</h2>
+                      <div className="mt-4 flex items-end justify-center gap-2">
+                        <span className="text-5xl font-black text-slate-900">R{testType.ratePerTesterZar}</span>
+                        <span className="pb-1 text-slate-500">/ tester</span>
+                      </div>
+                    </div>
+
+                    <div className="my-6 border-t border-slate-200" />
+
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 text-slate-700">
+                        <span className="mt-1 text-green-600">&#10003;</span>
+                        <span>Minimum {testType.minTesters} testers (R{minJobTotal} to start)</span>
+                      </div>
+                      <div className="flex items-start gap-3 text-slate-700">
+                        <span className="mt-1 text-green-600">&#10003;</span>
+                        <span>About {testType.estimatedMinutes} minutes per tester</span>
+                      </div>
+                      <div className="flex items-start gap-3 text-slate-700">
+                        <span className="mt-1 text-green-600">&#10003;</span>
+                        <span>{testType.description}</span>
+                      </div>
+                    </div>
+
+                    <div className="my-6 border-t border-slate-200" />
+
+                    <div className="mt-auto">
+                      <a
+                        href={`/post-job?plan=${testType.key}`}
+                        className={`mt-4 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
+                          highlighted
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                        }`}
+                      >
+                        Post a Job
+                      </a>
+                    </div>
                   </div>
-
-                  <div className="my-6 border-t border-slate-200" />
-
-                  <div className="mt-auto">
-                    <div className="min-h-[56px] text-center leading-7 text-slate-600">{plan.note}</div>
-
-                    <a
-                      href={plan.name === 'Enterprise' ? '/contact?intent=enterprise' : `/post-job?plan=${plan.name.toLowerCase()}`}
-                      className={`mt-4 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 font-semibold shadow-sm transition ${
-                        plan.highlighted
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
-                      }`}
-                    >
-                      {plan.name === 'Enterprise' ? 'Contact Us' : 'Post a Job'}
-                    </a>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-center text-sm font-medium text-slate-700">
@@ -244,53 +214,53 @@ export default function SquashPricingPage() {
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
-                <div>
+                <div className="mb-3 text-sm font-semibold text-slate-700">Test type:</div>
+                <select
+                  value={selectedTestType}
+                  onChange={(e) => {
+                    const nextKey = e.target.value as TestTypeKey;
+                    setSelectedTestType(nextKey);
+                    const nextConfig = getTestTypeByKey(nextKey);
+                    if (testers < nextConfig.minTesters) {
+                      setTesters(nextConfig.minTesters);
+                    }
+                  }}
+                  className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+                >
+                  {TEST_TYPES.map((testType) => (
+                    <option key={testType.key} value={testType.key}>
+                      {testType.label} (R{testType.ratePerTesterZar}/tester)
+                    </option>
+                  ))}
+                </select>
+
+                <div className="mt-8">
                   <div className="mb-3 flex items-center justify-between text-sm font-semibold text-slate-700">
                     <span>Number of testers:</span>
-                    <span className="text-slate-500">Min {activePlanDetails.minTesters}</span>
+                    <span className="text-slate-500">Min {activeTestType.minTesters}</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <input
                       type="range"
-                      min="5"
-                      max="100"
-                      step="5"
-                      value={testers}
+                      min={activeTestType.minTesters}
+                      max="50"
+                      step="1"
+                      value={effectiveTesters}
                       onChange={(e) => setTesters(parseInt(e.target.value, 10))}
                       className="h-2 flex-1 appearance-none rounded-full bg-slate-200 accent-green-600"
                     />
                     <div className="flex h-12 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-bold text-slate-900">
-                      {testers}
+                      {effectiveTesters}
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-8">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Package selected:</div>
-                  <select
-                    value={selectedPlan}
-                    onChange={(e) => {
-                      const plan = e.target.value;
-                      setSelectedPlan(plan);
-                      const planData = estimatorPlans[plan as keyof typeof estimatorPlans];
-                      if (testers < planData.minTesters) {
-                        setTesters(planData.minTesters);
-                      }
-                    }}
-                    className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-                  >
-                    <option value="Starter Plan">Starter Plan (R100/tester)</option>
-                    <option value="Growth Plan">Growth Plan (R120/tester)</option>
-                    <option value="Pro Plan">Pro Plan (R125/tester)</option>
-                  </select>
                 </div>
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <div className="space-y-4 text-base">
                   <div className="flex items-center justify-between text-slate-600">
-                    <span>Package selected:</span>
-                    <span className="font-semibold text-slate-900">{selectedPlan}</span>
+                    <span>Test type:</span>
+                    <span className="font-semibold text-slate-900">{activeTestType.label}</span>
                   </div>
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Number of testers:</span>
@@ -304,7 +274,7 @@ export default function SquashPricingPage() {
                   <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">Total:</span>
                   <span className="text-3xl font-black text-green-700">R{totalCost.toLocaleString()}</span>
                 </div>
-                <div className="mt-3 text-sm text-slate-500">{effectiveTesters} testers - {selectedPlan} - Total: R{totalCost.toLocaleString()}</div>
+                <div className="mt-3 text-sm text-slate-500">{effectiveTesters} testers - {activeTestType.label} - Total: R{totalCost.toLocaleString()}</div>
               </div>
             </div>
           </div>

@@ -9,10 +9,10 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
-import { getDeveloperJobPayments, type DeveloperJobPayment } from './lib/paymentApi';
+import { getDeveloperJobPayments, getJobPaymentStatus, startJobCheckout, type DeveloperJobPayment } from './lib/paymentApi';
 
 const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
 
@@ -47,12 +47,74 @@ function jobStatusLabel(status: DeveloperJob['status']) {
   return status.replace('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+type RedirectBanner = { type: 'success' | 'pending' | 'cancelled' | 'failed'; jobId: string };
+
 export default function SquashDeveloperBillingPage() {
   const { session } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<DeveloperJob[]>([]);
   const [payments, setPayments] = useState<DeveloperJobPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingError, setBillingError] = useState('');
+  const [redirectBanner, setRedirectBanner] = useState<RedirectBanner | null>(null);
+  const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleCompletePayment = async (jobId: string) => {
+    setRetryingJobId(jobId);
+    setRetryError('');
+    try {
+      const checkoutUrl = await startJobCheckout(jobId);
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      setRetryError(error instanceof Error ? error.message : 'Unable to start payment right now.');
+      setRetryingJobId(null);
+    }
+  };
+
+  // Yoco redirects back here with ?payment=success|cancelled|failed&job=<id>.
+  // The webhook (not this redirect) is what actually confirms and activates
+  // the job, so on "success" we briefly poll job_payments in case the
+  // webhook hasn't landed yet rather than assuming the redirect alone means paid.
+  useEffect(() => {
+    const paymentParam = searchParams.get('payment');
+    const jobId = searchParams.get('job');
+    if (!paymentParam || !jobId) return;
+
+    if (paymentParam === 'success') {
+      setRedirectBanner({ type: 'pending', jobId });
+      let attempts = 0;
+      let cancelled = false;
+      const poll = async () => {
+        attempts += 1;
+        try {
+          const status = await getJobPaymentStatus(jobId);
+          if (status?.status === 'succeeded') {
+            if (!cancelled) {
+              setRedirectBanner({ type: 'success', jobId });
+              setRefreshKey((key) => key + 1);
+            }
+            return;
+          }
+        } catch {
+          // keep polling; a transient read failure shouldn't block the retry loop
+        }
+        if (!cancelled && attempts < 6) window.setTimeout(poll, 2000);
+      };
+      poll();
+      navigate('/billing', { replace: true });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (paymentParam === 'cancelled' || paymentParam === 'failed') {
+      setRedirectBanner({ type: paymentParam, jobId });
+      navigate('/billing', { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     let mounted = true;
@@ -87,7 +149,7 @@ export default function SquashDeveloperBillingPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.userId]);
+  }, [session?.userId, refreshKey]);
 
   const summary = useMemo(() => {
     const paidPayments = payments.filter((payment) => payment.status === 'succeeded');
@@ -128,6 +190,43 @@ export default function SquashDeveloperBillingPage() {
       {billingError ? (
         <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {billingError}
+        </div>
+      ) : null}
+
+      {redirectBanner ? (
+        <div
+          className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
+            redirectBanner.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : redirectBanner.type === 'pending'
+                ? 'border-amber-200 bg-amber-50 text-amber-700'
+                : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {redirectBanner.type === 'success' && 'Payment confirmed — your job is now live.'}
+          {redirectBanner.type === 'pending' && 'Payment received. Your job will go live within a few minutes once confirmed.'}
+          {redirectBanner.type === 'cancelled' && (
+            <span>
+              Payment was cancelled.{' '}
+              <button type="button" onClick={() => handleCompletePayment(redirectBanner.jobId)} className="underline hover:no-underline">
+                Try again
+              </button>
+            </span>
+          )}
+          {redirectBanner.type === 'failed' && (
+            <span>
+              Payment failed.{' '}
+              <button type="button" onClick={() => handleCompletePayment(redirectBanner.jobId)} className="underline hover:no-underline">
+                Try again
+              </button>
+            </span>
+          )}
+        </div>
+      ) : null}
+
+      {retryError ? (
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {retryError}
         </div>
       ) : null}
 
@@ -210,6 +309,16 @@ export default function SquashDeveloperBillingPage() {
                   <div className="flex items-center gap-3">
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{jobStatusLabel(job.status)}</span>
                     <span className="font-bold text-slate-900">{formatRands(job.totalAmountZar)}</span>
+                    {paymentsEnabled && job.status === 'draft' ? (
+                      <button
+                        type="button"
+                        disabled={retryingJobId === job.id}
+                        onClick={() => handleCompletePayment(job.id)}
+                        className="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                      >
+                        {retryingJobId === job.id ? 'Starting...' : 'Complete payment'}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               )) : (

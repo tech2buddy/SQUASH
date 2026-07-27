@@ -67,3 +67,72 @@ Developer applicant flow:
 Run `supabase/phase5_tester_payout_requests.sql` after Phase 4.
 
 This allows testers to create their own pending payout requests. Admins still control processing and final payout status updates.
+
+## Phase 34: Platform commission pricing
+
+Run `supabase/phase34_commission_pricing.sql` after Phase 33.
+
+Before this phase, `request_tester_payout()` computed a tester's available balance as `floor(total_amount_zar / testers_needed)` per approved submission — the entire job price split evenly across testers, with zero margin retained by SQUASH before payment processing fees.
+
+This phase changes the split to 62% tester pool / 38% SQUASH commission:
+
+```
+floor(total_amount_zar * 0.62 / testers_needed)
+```
+
+Example at the current package prices:
+
+| Package | Price | Testers | Old payout/tester | New payout/tester | SQUASH commission |
+|---|---|---|---|---|---|
+| Starter | R500 | 5 | R100 | R62 | R190 |
+| Growth | R1,200 | 10 | R120 | R74 | R456 |
+| Pro | R2,500 | 20 | R125 | R77 | R950 |
+
+The real, authoritative payout amount is enforced inside `request_tester_payout()` (`security definer`, callable only via RPC by `authenticated` users). Changing only client-side display numbers would not change what actually gets paid out — this migration is what actually moves the commission split into effect.
+
+The client-side earnings/report display functions in `src/lib/jobApi.ts` were updated in the same change to compute the same 62% split from `total_amount_zar` and `testers_needed`, so what testers see on their dashboard now matches what `request_tester_payout()` will actually approve.
+
+## Phase 35: Test-type-based pricing
+
+Run `supabase/phase35_test_type_pricing.sql` after Phase 34.
+
+Replaces the flat Starter/Growth/Pro tester-count packages with pricing based on what kind of test a developer orders. `jobs.package_key` now holds one of six test types instead of a package tier:
+
+| Test Type | Rate / Tester | Min Testers | Default Testers |
+|---|---|---|---|
+| Bug Hunting | R100 | 5 | 10 |
+| Onboarding / First Impressions | R90 | 3 | 5 |
+| Usability Testing | R140 | 5 | 5 |
+| Low-Data Testing | R150 | 3 | 3 |
+| Localization Testing | R180 | 3 | 3 |
+| Accessibility Testing | R220 | 3 | 3 |
+
+These live in `src/lib/testTypes.ts` as the single source of truth for rates, minimums, and defaults — update that file if rates change, not the SQL.
+
+The 62/38 commission split from Phase 34 is untouched: `total_amount_zar` is still just `rate_per_tester * testers_needed`, so `request_tester_payout()` and the tester earnings display keep working exactly as before with no further changes.
+
+A job currently holds one test type — mixing multiple test types in a single job posting (e.g. Bug Hunting + Usability together) was deliberately left out of this phase. It would need a `job_test_types` line-item table instead of a single `package_key` column, and is a bigger schema change than this pricing fix. A developer who wants multiple test types today posts multiple jobs.
+
+### Phase 35b: Backfill legacy package_key values
+
+If Phase 35 fails with `ERROR: 23514: check constraint "jobs_package_key_check" ... is violated`, it means real job rows already exist with the old `starter`/`growth`/`pro`/`enterprise` values. Run `supabase/phase35b_backfill_legacy_package_keys.sql` — it remaps those rows to `bug-hunting` (their `total_amount_zar` and `testers_needed` are untouched, so nothing already charged or paid changes) and then re-applies the constraint.
+
+## Phase 36: Notification and privacy preferences actually do something
+
+Run `supabase/phase36_notification_preferences.sql` after Phase 35 (or 35b).
+
+Before this phase, every toggle under Settings > Notifications and Settings > Privacy saved a value to `user_settings.toggles` that nothing ever read back — every notification was sent unconditionally regardless of what a tester turned off, and "Show specialization tags" / "Allow direct invites" had no effect on anything.
+
+What this phase wires up:
+
+| Toggle | What it now gates |
+|---|---|
+| New test invites | The existing `cron_job_match_alerts()` job (the "Perfect Match" notification) skips a tester if they've turned this off. |
+| Approval updates | `Report Approved` / `Report Rejected` notifications, gated client-side via `createNotification({ preferenceKey: 'approvalUpdates' })`. |
+| Changes requested | `Action Required` notification, gated the same way with `preferenceKey: 'changesRequested'`. |
+| Payout alerts | `admin_update_weekly_payout()` now sends a "Payout Sent" notification when a payout is marked `paid`, gated by this toggle. |
+| Weekly summary | New `cron_weekly_summary()` job, scheduled every Monday 08:00 UTC — only sends to testers who had at least one approved test in the past 7 days and haven't disabled it. |
+| Show specialization tags | `getDeveloperApplications()` in `src/lib/jobApi.ts` now omits a tester's specialization tags from what a developer sees if they've turned this off. |
+| Allow direct invites | **Left as "Coming soon" and disabled in the UI, not wired up.** There is no direct-invite feature anywhere in the app for this to gate — building one is a separate feature, not a toggle fix. |
+
+Two RLS-related SQL functions back this: `user_wants_notification(uuid, text)` and `get_testers_hiding_specializations(uuid[])`, both `security definer`. They exist because `user_settings` RLS only allows a user to read their own row — a developer's session approving a tester's report, or viewing a tester's application, can't read that tester's settings directly, so the check has to go through a function that runs with elevated privilege instead of a plain client-side query.

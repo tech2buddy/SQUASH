@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { getTesterProfile, updateTesterProfile, getUserSettings, updateUserSettings } from './lib/profileApi';
+import { getTesterBankingDetails, type BankingVerificationStatus } from './lib/bankingApi';
 
 type ToggleKey =
   | 'newInvites'
@@ -64,13 +65,14 @@ const defaultSettings: SettingsState = {
 
 // Removed readSettings as we fetch from Supabase now.
 
-function ToggleSwitch({ enabled, onChange, label }: { enabled: boolean; onChange: () => void; label: string }) {
+function ToggleSwitch({ enabled, onChange, label, disabled }: { enabled: boolean; onChange: () => void; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onChange}
+      disabled={disabled}
       aria-label={label}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition ${
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition disabled:cursor-not-allowed ${
         enabled ? 'bg-green-600' : 'bg-slate-200'
       }`}
     >
@@ -97,6 +99,7 @@ export default function SquashTesterSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [bankingStatus, setBankingStatus] = useState<BankingVerificationStatus | 'none'>('none');
 
   useEffect(() => {
     const timer = saved ? window.setTimeout(() => setSaved(false), 2500) : undefined;
@@ -127,7 +130,8 @@ export default function SquashTesterSettingsPage() {
           email: profile.email,
           phone: profile.phone,
           city: profile.city || prev.city,
-          preferredPayout: profile.preferredPayout,
+          // SnapScan/airtime aren't wired up on the backend yet -- only EFT actually pays out.
+          preferredPayout: 'eft',
           toggles: {
             ...prev.toggles,
             profileVisible: profile.isPublic,
@@ -155,20 +159,37 @@ export default function SquashTesterSettingsPage() {
         console.error('Failed to load user settings', error);
       });
 
+    getTesterBankingDetails(session.userId)
+      .then((details) => {
+        if (!mounted) return;
+        setBankingStatus(details?.verificationStatus || 'none');
+      })
+      .catch((error: Error) => {
+        console.error('Failed to load banking verification status', error);
+      });
+
     return () => {
       mounted = false;
     };
-  }, [session?.email, session?.name, ("supabase"), session?.userId]);
+  }, [session?.email, session?.name, session?.userId]);
 
 
   
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const payoutOptions = [
-    { id: 'eft', title: 'Bank Transfer (EFT)', detail: 'Best for regular payouts to your bank account.' },
-    { id: 'snapscan', title: 'SnapScan', detail: 'Useful for quick mobile payouts when available.' },
-    { id: 'airtime', title: 'Airtime top-up', detail: 'Turn smaller approved earnings into airtime.' },
+    { id: 'eft', title: 'Bank Transfer (EFT)', detail: 'Best for regular payouts to your bank account.', comingSoon: false },
+    { id: 'snapscan', title: 'SnapScan', detail: 'Useful for quick mobile payouts when available.', comingSoon: true },
+    { id: 'airtime', title: 'Airtime top-up', detail: 'Turn smaller approved earnings into airtime.', comingSoon: true },
   ] as const;
+
+  const bankingStatusBadge = (() => {
+    if (bankingStatus === 'approved') return { label: 'Verified', className: 'bg-green-100 text-green-700' };
+    if (bankingStatus === 'pending') return { label: 'Pending review', className: 'bg-amber-100 text-amber-700' };
+    if (bankingStatus === 'changes_required') return { label: 'Changes requested', className: 'bg-amber-100 text-amber-700' };
+    if (bankingStatus === 'rejected') return { label: 'Rejected', className: 'bg-red-100 text-red-700' };
+    return { label: 'Add banking details', className: 'bg-slate-100 text-slate-600' };
+  })();
 
   const updateField = (key: keyof Omit<SettingsState, 'toggles' | 'availableDays'>, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -230,10 +251,10 @@ export default function SquashTesterSettingsPage() {
     { key: 'weeklySummary', title: 'Weekly summary', detail: 'A simple weekly digest of jobs, earnings and profile tips.' },
   ];
 
-  const privacyRows: Array<{ key: ToggleKey; title: string; detail: string }> = [
+  const privacyRows: Array<{ key: ToggleKey; title: string; detail: string; comingSoon?: boolean }> = [
     { key: 'profileVisible', title: 'Show profile to developers', detail: 'Let developers see your public tester card.' },
     { key: 'showSpecializations', title: 'Show specialization tags', detail: 'Display your device, network and language strengths.' },
-    { key: 'directInvites', title: 'Allow direct invites', detail: 'Developers can invite you to matching jobs.' },
+    { key: 'directInvites', title: 'Allow direct invites', detail: 'Developers can invite you to matching jobs. Direct invites are not built yet, so this has no effect.', comingSoon: true },
   ];
 
   return (
@@ -383,22 +404,41 @@ export default function SquashTesterSettingsPage() {
                   {payoutOptions.map((option) => (
                     <label
                       key={option.id}
-                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
-                        settings.preferredPayout === option.id
-                          ? 'border-green-200 bg-green-50'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      className={`flex items-start gap-3 rounded-2xl border p-4 transition ${
+                        option.comingSoon
+                          ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60'
+                          : 'cursor-pointer ' + (settings.preferredPayout === option.id
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-slate-200 bg-white hover:bg-slate-50')
                       }`}
                     >
                       <input
                         type="radio"
                         name="preferredPayout"
                         checked={settings.preferredPayout === option.id}
+                        disabled={option.comingSoon}
                         onChange={() => setSettings((prev) => ({ ...prev, preferredPayout: option.id }))}
-                        className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500"
+                        className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 disabled:cursor-not-allowed"
                       />
-                      <span>
-                        <span className="block font-bold text-slate-900">{option.title}</span>
+                      <span className="flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="block font-bold text-slate-900">{option.title}</span>
+                          {option.comingSoon ? (
+                            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                              Coming soon
+                            </span>
+                          ) : (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${bankingStatusBadge.className}`}>
+                              {bankingStatusBadge.label}
+                            </span>
+                          )}
+                        </span>
                         <span className="mt-1 block text-sm leading-6 text-slate-600">{option.detail}</span>
+                        {!option.comingSoon && bankingStatus !== 'approved' ? (
+                          <a href="/tester/payout-method" className="mt-1 inline-block text-sm font-semibold text-green-700 hover:text-green-800">
+                            {bankingStatus === 'none' ? 'Add your bank details ->' : 'Review your bank details ->'}
+                          </a>
+                        ) : null}
                       </span>
                     </label>
                   ))}
@@ -495,15 +535,23 @@ export default function SquashTesterSettingsPage() {
 
                 <div className="mt-6 divide-y divide-slate-100">
                   {privacyRows.map((row) => (
-                    <div key={row.key} className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                    <div key={row.key} className={`flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0 ${row.comingSoon ? 'opacity-60' : ''}`}>
                       <div>
-                        <div className="font-bold text-slate-900">{row.title}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-bold text-slate-900">{row.title}</div>
+                          {row.comingSoon ? (
+                            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                              Coming soon
+                            </span>
+                          ) : null}
+                        </div>
                         <div className="mt-1 text-sm leading-6 text-slate-600">{row.detail}</div>
                       </div>
                       <ToggleSwitch
-                        enabled={settings.toggles[row.key]}
+                        enabled={!row.comingSoon && settings.toggles[row.key]}
                         onChange={() => toggleSetting(row.key)}
                         label={`Toggle ${row.title}`}
+                        disabled={row.comingSoon}
                       />
                     </div>
                   ))}

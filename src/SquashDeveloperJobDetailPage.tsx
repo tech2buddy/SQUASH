@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { getDeveloperJob, type DeveloperJob } from './lib/jobApi';
+import { getTestTypeByKey } from './lib/testTypes';
 import { getDeveloperJobAttachments, type DeveloperJobAttachment } from './lib/jobAttachmentApi';
 
 function formatBytes(bytes: number) {
@@ -122,7 +123,7 @@ export default function SquashDeveloperJobDetailPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-black text-slate-900">Job details</h2>
             <div className="mt-5 space-y-4 text-sm">
-              <div className="flex items-center gap-3"><Users className="h-4 w-4 text-green-600" /><span>{job.testersNeeded} testers · {job.packageKey} plan</span></div>
+              <div className="flex items-center gap-3"><Users className="h-4 w-4 text-green-600" /><span>{job.testersNeeded} testers · {getTestTypeByKey(job.packageKey).label}</span></div>
               <div className="flex items-center gap-3"><CalendarDays className="h-4 w-4 text-green-600" /><span>Created {new Date(job.createdAt).toLocaleDateString('en-ZA')}</span></div>
               {job.appUrl ? <a href={job.appUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 font-semibold text-green-700 hover:underline"><Globe2 className="h-4 w-4" /> Open application link</a> : null}
             </div>

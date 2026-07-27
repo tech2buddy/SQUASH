@@ -6,6 +6,11 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undef
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// User-facing copy for backend-unavailable states. Never mention the backend
+// provider by name here -- that belongs in developer-only console logs, not
+// anything a customer can see on screen.
+export const SERVICE_UNAVAILABLE_MESSAGE = 'This feature is temporarily unavailable. Please try again shortly.';
+
 if (!isSupabaseConfigured) {
   console.warn(
     'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local or Vercel environment variables.',

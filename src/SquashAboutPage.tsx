@@ -144,15 +144,15 @@ export default function SquashAboutPage() {
               </p>
               <div className="mt-6 space-y-4 text-base text-slate-700">
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✓</span>
+                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
                   <span>Not bots. Not internal teams.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✓</span>
+                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
                   <span>Not friends who tell you only what you want to hear.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-green-600">✓</span>
+                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
                   <span>
                     Everyday users who match your target market, devices, and real user behavior.
                   </span>
@@ -190,7 +190,7 @@ export default function SquashAboutPage() {
                 <div className="mt-5 space-y-3 text-slate-700">
                   {reportItems.map((item) => (
                     <div key={item} className="flex items-start gap-3">
-                      <span className="mt-1 text-green-600">✓</span>
+                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
                       <span>{item}</span>
                     </div>
                   ))}
@@ -236,7 +236,7 @@ export default function SquashAboutPage() {
                 <div className="mt-6 space-y-4 text-slate-700">
                   {testerBenefits.map((item) => (
                     <div key={item} className="flex items-start gap-3">
-                      <span className="mt-1 text-green-600">✓</span>
+                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
                       <span>{item}</span>
                     </div>
                   ))}

@@ -33,6 +33,7 @@ import {
   type AdminReportRow,
   type AdminUserRow,
 } from './lib/adminApi';
+import { getTestTypeByKey } from './lib/testTypes';
 
 type RecentUser = Awaited<ReturnType<typeof getRecentAdminUsers>>[number];
 type UserFilter = 'all' | AdminUserRow['role'];
@@ -454,7 +455,7 @@ export default function SquashAdminDashboardPage() {
                             <div className="font-semibold text-slate-900">{job.developerName}</div>
                             <div className="text-sm text-slate-500">{job.developerEmail}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm capitalize text-slate-700">{job.packageKey} - {job.testersNeeded} testers</td>
+                          <td className="px-6 py-4 text-sm text-slate-700">{getTestTypeByKey(job.packageKey).shortLabel} - {job.testersNeeded} testers</td>
                           <td className="px-6 py-4 font-bold text-slate-900">{formatRand(job.totalAmountZar)}</td>
                           <td className="px-6 py-4">
                             <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ring-1 ${jobStatusClass(job.status)}`}>

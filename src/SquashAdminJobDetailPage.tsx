@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getAdminJobDetail, type AdminJobRow } from './lib/adminApi';
+import { getTestTypeByKey } from './lib/testTypes';
 
 function formatRand(value: number) {
   return `R${Math.round(value).toLocaleString('en-ZA')}`;
@@ -98,7 +99,7 @@ export default function SquashAdminJobDetailPage() {
                 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                   {[
                     ['Developer', job.developerName, job.developerEmail],
-                    ['Package', job.packageKey, `${job.testersNeeded} testers`],
+                    ['Test Type', getTestTypeByKey(job.packageKey).label, `${job.testersNeeded} testers`],
                     ['Job Value', formatRand(job.totalAmountZar), 'Total developer cost'],
                     ['Posted', formatDate(job.createdAt), 'Created date'],
                   ].map(([label, value, note]) => (

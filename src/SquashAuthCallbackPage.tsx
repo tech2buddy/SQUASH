@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { defaultSessionPath, useAuth, type WorkspaceRole } from './auth';
-import { isSupabaseConfigured, supabase } from './lib/supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './lib/supabase';
 
 export default function SquashAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -22,7 +22,7 @@ export default function SquashAuthCallbackPage() {
     const processOAuthCallback = async () => {
       if (!isSupabaseConfigured) {
         if (alive) {
-          setError('Supabase authentication is not configured yet.');
+          setError(SERVICE_UNAVAILABLE_MESSAGE);
         }
         return;
       }

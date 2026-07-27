@@ -1,21 +1,22 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import type { ApplicationStatus, AssignmentStatus, Database, JobStatus } from './supabase.types';
 import { createNotification } from './notificationApi';
 import { sendTransactionalEmail } from './emailApi';
+import type { TestTypeKey } from './testTypes';
 
-export type JobPackageKey = 'starter' | 'growth' | 'pro' | 'enterprise';
+export type JobPackageKey = TestTypeKey;
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
 type JobUpdate = Database['public']['Tables']['jobs']['Update'];
 function formatSupabaseError(error: unknown, fallback: string) {
   if (!error) return fallback;
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'object' && 'message' in error) {
-    const message = String((error as { message?: unknown }).message || fallback);
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = String((error as { message?: unknown }).message || '');
     if (message.includes('logo_url')) {
-      return `${message}. Run supabase/phase9_job_logos.sql in Supabase SQL Editor, then try again.`;
+      console.error('Job logo column missing. Run supabase/phase9_job_logos.sql.', error);
+      return 'This job could not be saved right now. Please try again shortly.';
     }
-    return message;
   }
+  console.error(error);
   return fallback;
 }
 
@@ -135,7 +136,7 @@ function mapJob(row: {
 }
 
 export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput): Promise<DeveloperJob> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const payload: JobUpdate = {
     title: input.title.trim(),
@@ -168,7 +169,7 @@ export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput
   return mapJob(data);
 }
 export async function createDeveloperJob(input: DeveloperJobInput): Promise<DeveloperJob> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const payload: JobInsert = {
     developer_id: input.developerId,
@@ -297,7 +298,7 @@ export async function getTesterApplications(testerId: string): Promise<JobApplic
 }
 
 export async function applyToJob(jobId: string, testerId: string, note = ''): Promise<JobApplication> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data, error } = await supabase
     .from('job_applications')
@@ -410,11 +411,20 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
 
   if (specializationError) throw specializationError;
 
+  // RLS on user_settings only allows reading your own row, so a developer's
+  // session can't select another user's toggles directly -- this goes
+  // through a security-definer RPC instead, same as the notification gating.
+  const { data: hiddenTesterIds } = await (supabase.rpc as any)('get_testers_hiding_specializations', {
+    p_tester_ids: testerIds,
+  });
+  const hidesSpecializations = new Set((hiddenTesterIds || []) as string[]);
+
   const profileById = new Map((profiles || []).map((profile) => [profile.id, profile]));
   const testerProfileById = new Map((testerProfiles || []).map((profile) => [profile.user_id, profile]));
   const specializationsByTesterId = new Map<string, string[]>();
 
   for (const row of specializationRows || []) {
+    if (hidesSpecializations.has(row.tester_id)) continue;
     const current = specializationsByTesterId.get(row.tester_id) || [];
     current.push(row.specialization_key);
     specializationsByTesterId.set(row.tester_id, current);
@@ -431,7 +441,7 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
       jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
-      jobPackageKey: job?.packageKey || 'starter',
+      jobPackageKey: job?.packageKey || 'bug-hunting',
       testerName: profile?.full_name || 'Tester applicant',
       testerEmail: profile?.email || '',
       testerAvatarUrl: profile?.avatar_url || null,
@@ -448,7 +458,7 @@ export async function reviewDeveloperApplication(
   application: Pick<JobApplication, 'id' | 'jobId' | 'testerId'>,
   status: Extract<ApplicationStatus, 'accepted' | 'rejected'>,
 ): Promise<JobApplication> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data, error } = await (supabase.rpc as any)('review_job_application', {
     p_application_id: application.id,
@@ -559,7 +569,7 @@ export async function getTesterAssignments(testerId: string): Promise<TesterAssi
       jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
-      jobPackageKey: job?.packageKey || 'starter',
+      jobPackageKey: job?.packageKey || 'bug-hunting',
       jobDescription: job?.description || null,
       jobTasks: job?.tasks || null,
       jobAppUrl: job?.appUrl || null,
@@ -605,7 +615,7 @@ export async function getTesterAssignmentById(assignmentId: string, testerId: st
     jobLogoUrl: mappedJob?.logoUrl || null,
     jobPlatform: mappedJob?.platform || 'App',
     jobCategory: mappedJob?.category || 'mobile-app-testing',
-    jobPackageKey: mappedJob?.packageKey || 'starter',
+    jobPackageKey: mappedJob?.packageKey || 'bug-hunting',
     jobDescription: mappedJob?.description || null,
     jobTasks: mappedJob?.tasks || null,
     jobAppUrl: mappedJob?.appUrl || null,
@@ -629,7 +639,7 @@ export async function saveAssignmentBugReport(input: {
   videoPath?: string | null;
   videoDurationSeconds?: number | null;
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data: submission, error: submissionError } = await supabase
     .from('test_submissions')
@@ -661,7 +671,7 @@ export async function attachEvidenceToBugReport(input: {
   type: 'screenshot' | 'video';
   path: string;
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const update = input.type === 'screenshot'
     ? { screenshot_path: input.path }
@@ -678,7 +688,7 @@ export async function attachEvidenceToBugReport(input: {
   if (!data) throw new Error('This bug report could not be updated.');
 }
 export async function submitAssignmentReport(input: SubmitAssignmentReportInput) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data, error } = await (supabase.rpc as any)('submit_test_assignment', {
     p_assignment_id: input.assignmentId,
@@ -836,7 +846,7 @@ export async function reviewSubmittedReport(input: {
   assignmentId: string;
   status: 'approved' | 'changes_requested' | 'rejected';
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data, error } = await (supabase.rpc as any)('review_test_submission', {
     p_submission_id: input.submissionId,
@@ -858,6 +868,7 @@ export async function reviewSubmittedReport(input: {
               body: `Your report for ${job?.title || 'an app'} was approved! Earnings have been credited to your wallet.`,
               type: 'payout',
               linkPath: '/tester/earnings',
+              preferenceKey: 'approvalUpdates',
             });
           } else if (input.status === 'changes_requested') {
             await createNotification({
@@ -866,6 +877,7 @@ export async function reviewSubmittedReport(input: {
               body: `The developer requested changes on your report for ${job?.title || 'an app'}.`,
               type: 'report',
               linkPath: '/active-test',
+              preferenceKey: 'changesRequested',
             });
           } else if (input.status === 'rejected') {
             await createNotification({
@@ -874,6 +886,7 @@ export async function reviewSubmittedReport(input: {
               body: `Unfortunately, your report for ${job?.title || 'an app'} did not meet the requirements.`,
               type: 'report',
               linkPath: '/active-test',
+              preferenceKey: 'approvalUpdates',
             });
           }
           
@@ -888,11 +901,11 @@ export async function reviewSubmittedReport(input: {
   return data;
 }
 
-function testerEarningForPackage(packageKey: JobPackageKey): number {
-  if (packageKey === 'growth') return 120;
-  if (packageKey === 'pro') return 200;
-  if (packageKey === 'enterprise') return 220;
-  return 80;
+export const TESTER_POOL_SHARE = 0.62;
+
+export function testerPayoutForJob(totalAmountZar: number, testersNeeded: number): number {
+  if (!testersNeeded) return 0;
+  return Math.floor((totalAmountZar * TESTER_POOL_SHARE) / testersNeeded);
 }
 
 export type TesterEarningItem = {
@@ -952,7 +965,7 @@ export async function getTesterEarningsSummary(testerId: string): Promise<Tester
       id: submission.id,
       jobTitle: job?.title || 'Submitted test',
       status: submission.status === 'submitted' || submission.status === 'draft' ? 'pending' : submission.status,
-      amountZar: testerEarningForPackage(job?.packageKey || 'starter'),
+      amountZar: testerPayoutForJob(job?.totalAmountZar || 0, job?.testersNeeded || 0),
       submittedAt: submission.submitted_at,
     };
   });
@@ -996,7 +1009,7 @@ export async function getTesterEarningsSummary(testerId: string): Promise<Tester
 }
 
 export async function requestTesterPayout(_testerId: string, amountZar: number) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   if (amountZar <= 0) throw new Error('No approved balance available for payout yet.');
 
   const { data, error } = await (supabase.rpc as any)('request_tester_payout', {
@@ -1079,7 +1092,7 @@ export async function getTesterReportSubmissions(testerId: string): Promise<Test
       summary: submission.summary,
       submittedAt: submission.submitted_at,
       createdAt: submission.created_at,
-      amountZar: testerEarningForPackage(job?.packageKey || 'starter'),
+      amountZar: testerPayoutForJob(job?.totalAmountZar || 0, job?.testersNeeded || 0),
       bugCount: bugs.length,
       videoBugCount: bugs.filter((bug) => Boolean(bug.video_path)).length,
       criticalBugCount: bugs.filter((bug) => bug.severity === 'Critical').length,

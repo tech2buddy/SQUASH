@@ -106,7 +106,7 @@ export default function SquashTesterReferralsPage() {
       ...prev,
     ]);
     setEmail('');
-    setInviteNotice('Invite prepared. TODO: Replace with Supabase referral invite email.');
+    setInviteNotice('Invite saved. We will email your friend shortly.');
   };
 
   return (

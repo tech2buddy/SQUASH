@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 
 export type UploadFileType = 'screenshot' | 'video';
@@ -27,7 +27,7 @@ export async function uploadBugReportFile(
     return {
       path: '',
       url: '',
-      error: 'Supabase is not configured',
+      error: SERVICE_UNAVAILABLE_MESSAGE,
     };
   }
 
@@ -146,7 +146,7 @@ export async function listTesterJobEvidence(
   if (!isSupabaseConfigured) {
     return {
       success: false,
-      error: 'Supabase is not configured',
+      error: SERVICE_UNAVAILABLE_MESSAGE,
     };
   }
 
@@ -185,7 +185,7 @@ export async function getSignedUrl(
   if (!isSupabaseConfigured) {
     return {
       url: '',
-      error: 'Supabase is not configured',
+      error: SERVICE_UNAVAILABLE_MESSAGE,
     };
   }
 

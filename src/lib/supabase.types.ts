@@ -386,7 +386,7 @@ export type Database = {
           logo_url: string | null;
           platform: string;
           category: string;
-          package_key: 'starter' | 'growth' | 'pro' | 'enterprise';
+          package_key: 'bug-hunting' | 'onboarding' | 'usability' | 'low-data' | 'localization' | 'accessibility';
           total_amount_zar: number;
           testers_needed: number;
           description: string | null;
@@ -408,7 +408,7 @@ export type Database = {
           logo_url?: string | null;
           platform: string;
           category: string;
-          package_key: 'starter' | 'growth' | 'pro' | 'enterprise';
+          package_key: 'bug-hunting' | 'onboarding' | 'usability' | 'low-data' | 'localization' | 'accessibility';
           total_amount_zar: number;
           testers_needed: number;
 

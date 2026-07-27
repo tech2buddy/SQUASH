@@ -1,5 +1,5 @@
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 
 export type TesterProfileSettings = {
   fullName: string;
@@ -56,7 +56,7 @@ export async function getTesterProfile(userId: string): Promise<TesterPublicProf
 }
 
 export async function updateTesterProfile(userId: string, values: TesterProfileSettings) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { error: profileError } = await supabase
     .from('profiles')
@@ -83,7 +83,7 @@ export async function updateTesterProfile(userId: string, values: TesterProfileS
 
 
 export async function uploadTesterProfilePhoto(userId: string, file: File): Promise<string> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const allowedTypes: Record<string, { kind: SafeFileKind; extension: string }> = {
     'image/png': { kind: 'png', extension: 'png' },
     'image/jpeg': { kind: 'jpg', extension: 'jpg' },
@@ -135,7 +135,7 @@ export async function getTesterSpecializations(userId: string): Promise<string[]
 }
 
 export async function replaceTesterSpecializations(userId: string, specializationKeys: string[]) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const uniqueKeys = Array.from(new Set(specializationKeys));
   const { error: deleteError } = await supabase
@@ -198,7 +198,7 @@ export async function getDeveloperProfile(userId: string): Promise<DeveloperProf
 }
 
 export async function updateDeveloperProfile(userId: string, values: DeveloperProfileSettings) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { error: profileError } = await supabase
     .from('profiles')
@@ -300,7 +300,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
 }
 
 export async function updateUserSettings(userId: string, settings: UserSettings) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { error } = await supabase.from('user_settings').upsert({
     user_id: userId,

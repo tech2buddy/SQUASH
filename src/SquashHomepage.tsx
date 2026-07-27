@@ -1,14 +1,14 @@
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
-import { Star } from 'lucide-react';
+import { Star, Users, ShieldCheck, Bug, Gauge } from 'lucide-react';
 import { TEST_CATEGORIES } from './components/testCategories';
 
 export default function SquashHomepage() {
   const stats = [
-    'Real User Testing',
-    'Verified Testers',
-    'Detailed Bug Reports',
-    'Fast Turnaround',
+    { label: 'Real User Testing', icon: Users },
+    { label: 'Verified Testers', icon: ShieldCheck },
+    { label: 'Detailed Bug Reports', icon: Bug },
+    { label: 'Fast Turnaround', icon: Gauge },
   ];
 
   const steps = [
@@ -110,14 +110,21 @@ export default function SquashHomepage() {
 
         <section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:grid-cols-4 sm:px-6 lg:px-8">
-            {stats.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
-              >
-                <div className="text-lg font-bold text-slate-800 sm:text-xl">{item}</div>
-              </div>
-            ))}
+            {stats.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="apple-bento-card apple-press-effect animate-fade-up group flex flex-col items-center justify-center gap-3.5 p-5 text-center cursor-default hover:border-green-200"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-700 shadow-[0_6px_16px_-6px_rgba(15,23,42,0.35)] transition-transform duration-200 ease-out group-hover:scale-[1.03]">
+                    <Icon className="h-6 w-6 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="text-base font-bold text-slate-800 sm:text-lg">{item.label}</div>
+                </div>
+              );
+            })}
           </div>
         </section>
 

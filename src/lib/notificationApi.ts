@@ -1,6 +1,29 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 
 export type NotificationType = 'job' | 'application' | 'report' | 'payout' | 'security';
+
+export type NotificationPreferenceKey = 'newInvites' | 'approvalUpdates' | 'payoutAlerts' | 'changesRequested';
+
+// Checks the user's saved notification toggle before sending. Defaults to
+// true (send it) if the user has no settings row yet or the key is unset,
+// matching the default-on state new users see in Settings.
+//
+// This calls the user_wants_notification() SQL function (security definer)
+// rather than querying user_settings directly -- RLS on that table only
+// allows a user to read their own row, but this check is very often run
+// from someone else's session (e.g. a developer approving a tester's
+// report), so a direct client-side select would always be blocked and
+// silently fall back to "send it" instead of actually respecting the
+// tester's preference.
+async function userWantsNotification(userId: string, preferenceKey: NotificationPreferenceKey): Promise<boolean> {
+  if (!isSupabaseConfigured) return true;
+  const { data, error } = await (supabase.rpc as any)('user_wants_notification', {
+    p_user_id: userId,
+    p_key: preferenceKey,
+  });
+  if (error) return true;
+  return data !== false;
+}
 
 export type AppNotification = {
   id: string;
@@ -99,7 +122,8 @@ export async function createNotification(input: {
   linkPath?: string;
   status?: 'read' | 'unread';
   createdAt?: string;
-}): Promise<AppNotification> {
+  preferenceKey?: NotificationPreferenceKey;
+}): Promise<AppNotification | null> {
   const notificationId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const now = input.createdAt || new Date().toISOString();
   const status = input.status || 'unread';
@@ -117,7 +141,11 @@ export async function createNotification(input: {
     readAt,
   };
 
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+
+  if (input.preferenceKey && !(await userWantsNotification(input.userId, input.preferenceKey))) {
+    return null;
+  }
 
   const { error } = await supabase.from('notifications' as any).insert({
     id: notificationId,

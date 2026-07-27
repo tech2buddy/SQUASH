@@ -1,4 +1,5 @@
 import {
+  Check,
   ChevronDown,
   SlidersHorizontal,
   Star,
@@ -16,8 +17,9 @@ import {
 } from './components/testCategories';
 import { useAuth } from './auth';
 import { getTesterSpecializations, getTopTesters } from './lib/profileApi';
-import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, type DeveloperJob } from './lib/jobApi';
+import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, testerPayoutForJob, type DeveloperJob } from './lib/jobApi';
 import { getSpecializationLabel } from './components/testerSpecializations';
+import { getTestTypeByKey } from './lib/testTypes';
 
 type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
 
@@ -86,16 +88,19 @@ export default function SquashTesterJobBoard() {
 
   const databaseJobCards = useMemo<TesterJobCard[]>(
     () =>
-      databaseJobs.map((job, index) => ({
+      databaseJobs.map((job, index) => {
+        const testTypeConfig = getTestTypeByKey(job.packageKey);
+        const payoutZar = testerPayoutForJob(job.totalAmountZar, job.testersNeeded);
+        return {
         name: job.title,
         description: job.description || 'Developer is looking for real tester feedback on this app.',
         tags: [job.platform, getCategoryById(job.category as TestCategoryId).name],
         type: getCategoryById(job.category as TestCategoryId).name,
-        time: job.packageKey === 'starter' ? 'About 20 min' : job.packageKey === 'growth' ? 'About 30 min' : 'About 45 min',
+        time: `About ${testTypeConfig.estimatedMinutes} min`,
         deadline: 'Open now',
         severity: index === 0 ? 'High' : 'Medium',
-        pay: job.packageKey === 'starter' ? 'R50 - R80' : job.packageKey === 'growth' ? 'R80 - R120' : 'R150 - R200',
-        amount: job.packageKey === 'starter' ? '80' : job.packageKey === 'growth' ? '120' : '200',
+        pay: `R${payoutZar}`,
+        amount: String(payoutZar),
         testers: `${job.testersNeeded} testers needed`,
         posted: new Date(job.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
         badge: 'New',
@@ -106,7 +111,8 @@ export default function SquashTesterJobBoard() {
         source: 'supabase',
         jobId: job.id,
         developerId: job.developerId,
-      })),
+        };
+      }),
     [databaseJobs],
   );
 
@@ -460,7 +466,10 @@ export default function SquashTesterJobBoard() {
                           <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Live</span>
                         ) : null}
                         {job.requiredSpecializations.some((id) => testerSpecializations.includes(id)) ? (
-                          <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-extrabold text-green-800">✓ Matches You</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-extrabold text-green-800">
+                            <Check className="h-3 w-3" strokeWidth={3} />
+                            Matches You
+                          </span>
                         ) : null}
                       </div>
                       {(() => {

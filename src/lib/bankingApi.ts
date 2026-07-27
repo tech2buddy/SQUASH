@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 
 export type BankingVerificationStatus = 'pending' | 'approved' | 'rejected' | 'changes_required';
@@ -78,7 +78,7 @@ export async function saveTesterBankingDetails(input: {
   branchCode: string;
   proofDocument: File;
 }): Promise<TesterBankingDetails> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const allowedTypes: Record<string, string> = {
     'application/pdf': 'pdf',

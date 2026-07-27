@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 
 export type TestLabSession = {
   id: string;
@@ -21,7 +21,7 @@ function mapSession(row: any): TestLabSession {
 }
 
 export async function getOrCreateTestLabSession(input: { assignmentId: string; jobId: string; testerId: string }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const { data: existing, error: existingError } = await (supabase.from('test_lab_sessions') as any)
     .select('*').eq('assignment_id', input.assignmentId).maybeSingle();
   if (existingError) throw existingError;
@@ -35,7 +35,7 @@ export async function getOrCreateTestLabSession(input: { assignmentId: string; j
 }
 
 export async function saveTestLabProgress(input: { sessionId: string; tasks: string[]; taskState: boolean[]; reportSummary: string }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const progressPercent = input.taskState.length ? Math.round((input.taskState.filter(Boolean).length / input.taskState.length) * 100) : 0;
   const { data: session, error: sessionError } = await (supabase.from('test_lab_sessions') as any)
     .select('assignment_id, job_id, tester_id').eq('id', input.sessionId).single();
@@ -66,7 +66,7 @@ export async function saveTestLabProgress(input: { sessionId: string; tasks: str
   if (error) throw error;
 }
 export async function markTestLabSubmitted(sessionId: string) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const now = new Date().toISOString();
   const { error } = await (supabase.from('test_lab_sessions') as any)
     .update({ status: 'submitted', submitted_at: now, last_saved_at: now, progress_percent: 100 })

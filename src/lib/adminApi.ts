@@ -1,5 +1,6 @@
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import type { JobStatus, PayoutStatus, PolicyStatus, SubmissionStatus, UserRole } from './supabase.types';
+import type { TestTypeKey } from './testTypes';
 
 export type AdminOverview = {
   totalUsers: number;
@@ -76,7 +77,7 @@ export type AdminJobRow = {
   developerEmail: string;
   platform: string;
   category: string;
-  packageKey: 'starter' | 'growth' | 'pro' | 'enterprise';
+  packageKey: TestTypeKey;
   testersNeeded: number;
   totalAmountZar: number;
   status: JobStatus;
@@ -238,7 +239,7 @@ export async function updateAdminPayoutStatus(input: {
   payoutReference?: string;
   payoutProof?: File;
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   let proofPath: string | null = null;
   if (input.status === 'paid') {
@@ -401,7 +402,7 @@ export async function sendAdminUserNotification(input: {
   body: string;
   linkPath?: string;
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { data, error } = await supabase.from('notifications' as any).insert({
     user_id: input.userId,
@@ -430,7 +431,7 @@ export async function updateAdminUserAccountStatus(input: {
   status: AdminUserDetail['accountStatus'];
   note?: string;
 }) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const { error } = await supabase
     .from('profiles')
@@ -705,7 +706,7 @@ export async function saveAdminPolicy(input: {
   version: string;
   effectiveDate?: string | null;
 }): Promise<AdminPolicyRow> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured yet.');
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
   const payload = {
     slug: input.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, ''),

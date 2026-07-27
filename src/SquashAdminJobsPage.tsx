@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
 import { getAdminJobs, type AdminJobRow } from './lib/adminApi';
+import { getTestTypeByKey } from './lib/testTypes';
 
 type JobFilter = 'all' | AdminJobRow['status'];
 type PackageFilter = 'all' | AdminJobRow['packageKey'];
@@ -36,10 +37,12 @@ function statusClass(status: AdminJobRow['status']) {
 }
 
 function packageClass(packageKey: AdminJobRow['packageKey']) {
-  if (packageKey === 'pro') return 'bg-green-50 text-green-700 ring-green-100';
-  if (packageKey === 'growth') return 'bg-sky-50 text-sky-700 ring-sky-100';
-  if (packageKey === 'enterprise') return 'bg-violet-50 text-violet-700 ring-violet-100';
-  return 'bg-slate-50 text-slate-700 ring-slate-200';
+  if (packageKey === 'accessibility') return 'bg-violet-50 text-violet-700 ring-violet-100';
+  if (packageKey === 'localization') return 'bg-pink-50 text-pink-700 ring-pink-100';
+  if (packageKey === 'low-data') return 'bg-amber-50 text-amber-700 ring-amber-100';
+  if (packageKey === 'usability') return 'bg-sky-50 text-sky-700 ring-sky-100';
+  if (packageKey === 'onboarding') return 'bg-teal-50 text-teal-700 ring-teal-100';
+  return 'bg-green-50 text-green-700 ring-green-100';
 }
 
 export default function SquashAdminJobsPage() {
@@ -233,11 +236,13 @@ export default function SquashAdminJobsPage() {
                     onChange={(event) => setPackageFilter(event.target.value as PackageFilter)}
                     className="w-fit rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-green-500"
                   >
-                    <option value="all">All packages</option>
-                    <option value="starter">Starter</option>
-                    <option value="growth">Growth</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
+                    <option value="all">All test types</option>
+                    <option value="bug-hunting">Bug Hunting</option>
+                    <option value="onboarding">Onboarding</option>
+                    <option value="usability">Usability</option>
+                    <option value="low-data">Low-Data</option>
+                    <option value="localization">Localization</option>
+                    <option value="accessibility">Accessibility</option>
                   </select>
                 </div>
               </div>
@@ -268,8 +273,8 @@ export default function SquashAdminJobsPage() {
                           <div className="text-sm text-slate-500">{job.developerEmail}</div>
                         </td>
                         <td className="px-6 py-5">
-                          <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ring-1 ${packageClass(job.packageKey)}`}>
-                            {job.packageKey}
+                          <span className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${packageClass(job.packageKey)}`}>
+                            {getTestTypeByKey(job.packageKey).shortLabel}
                           </span>
                         </td>
                         <td className="px-6 py-5 text-sm font-semibold text-slate-700">{job.testersNeeded}</td>

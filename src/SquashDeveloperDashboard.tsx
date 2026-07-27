@@ -16,6 +16,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
+import { getTestTypeByKey } from './lib/testTypes';
 import { useAuth } from './auth';
 import { getDeveloperApplications, getDeveloperDashboardSummary, getDeveloperJobs, getDeveloperSubmittedReports, type DeveloperApplication, type DeveloperDashboardSummary, type DeveloperJob, type DeveloperSubmissionReview } from './lib/jobApi';
 import { useSupabaseRealtime } from './hooks/useSupabaseRealtime';
@@ -32,7 +33,7 @@ type DashboardJob = {
   accent: string;
   logoUrl?: string | null;
   categoryId: TestCategoryId;
-  plan?: 'Starter' | 'Growth' | 'Pro';
+  plan?: string;
 };
 
 export default function SquashDeveloperDashboard() {
@@ -106,7 +107,7 @@ export default function SquashDeveloperDashboard() {
           accent: 'bg-green-600 text-white',
           logoUrl: job.logoUrl,
           categoryId: job.category as TestCategoryId,
-          plan: job.packageKey === 'starter' ? ('Starter' as const) : job.packageKey === 'growth' ? ('Growth' as const) : ('Pro' as const),
+          plan: getTestTypeByKey(job.packageKey).shortLabel,
         };
       }),
     [databaseJobs, databaseApplications, databaseReports],

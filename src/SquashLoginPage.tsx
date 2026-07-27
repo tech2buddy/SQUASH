@@ -93,11 +93,11 @@ export default function SquashLoginPage() {
       const rawMsg = err instanceof Error ? err.message : String(err || '');
       if (rawMsg.includes('provider is not enabled') || rawMsg.includes('Unsupported provider')) {
         const providerName = provider === 'google' ? 'Google' : 'GitHub';
-        setError(
-          `${providerName} OAuth is not enabled in your Supabase project. To enable it, navigate to Authentication > Providers in your Supabase Dashboard and add your ${providerName} Client ID & Secret. You can also sign in with email/password below.`,
-        );
+        console.error(`OAuth provider not enabled: ${providerName}`, err);
+        setError(`${providerName} sign-in is not available right now. You can sign in with email/password below.`);
       } else {
-        setError(rawMsg || 'Social login is not available right now.');
+        console.error(err);
+        setError('Social login is not available right now. You can sign in with email/password below.');
       }
       setSubmitting(false);
     }

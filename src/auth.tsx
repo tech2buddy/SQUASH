@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { isSupabaseConfigured, supabase } from './lib/supabase';
+import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './lib/supabase';
 import { createNotification } from './lib/notificationApi';
 
 export type UserRole = 'developer' | 'tester' | 'admin';
@@ -265,7 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       signIn: async ({ email, password }) => {
         if (!isSupabaseConfigured) {
-          throw new Error('Supabase is not configured yet.');
+          throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -285,7 +285,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signUp: async ({ role, email, password, name }) => {
         if (!isSupabaseConfigured) {
-          throw new Error('Supabase is not configured yet.');
+          throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
         }
 
         const { data, error } = await supabase.auth.signUp({
@@ -332,7 +332,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signInWithOAuth: async ({ provider, role }) => {
         if (!isSupabaseConfigured) {
-          throw new Error('Supabase is not configured yet.');
+          throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
         }
 
         const { error } = await supabase.auth.signInWithOAuth({

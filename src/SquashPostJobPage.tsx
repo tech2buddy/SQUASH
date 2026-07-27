@@ -13,6 +13,7 @@ import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from 're
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
+import { TEST_TYPES, getTestTypeByKey, type TestTypeKey } from './lib/testTypes';
 import { useAuth } from './auth';
 import { createDeveloperJob, getDeveloperJob, updateDeveloperJob, type DeveloperJobInput, type JobPackageKey } from './lib/jobApi';
 import { startJobCheckout } from './lib/paymentApi';
@@ -30,15 +31,10 @@ export default function SquashPostJobPage() {
   const navigate = useNavigate();
   const plan = (searchParams.get('plan') ?? '').toLowerCase();
   const editingJobId = searchParams.get('job');
-  const packageConfigs = {
-    starter: { label: 'Starter Plan', testers: 5, total: 500 },
-    growth: { label: 'Growth Plan', testers: 10, total: 1200 },
-    pro: { label: 'Pro Plan', testers: 20, total: 2500 },
-  } as const;
-  type PackageKey = keyof typeof packageConfigs;
-  type SelectedPackage = PackageKey | '';
-  const initialPackage: SelectedPackage =
-    plan === 'starter' || plan === 'growth' || plan === 'pro' ? (plan as PackageKey) : '';
+  type SelectedTestType = TestTypeKey | '';
+  const initialTestType: SelectedTestType = TEST_TYPES.some((testTypeOption) => testTypeOption.key === plan)
+    ? (plan as TestTypeKey)
+    : '';
   const [appName, setAppName] = useState('');
   const [platform, setPlatform] = useState('Android');
   const [appType, setAppType] = useState('Mobile Application');
@@ -46,13 +42,12 @@ export default function SquashPostJobPage() {
   const [appLogoUrl, setAppLogoUrl] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [testType, setTestType] = useState<TestCategoryId>('mobile-app-testing');
-  const [selectedPackage, setSelectedPackage] = useState<SelectedPackage>(initialPackage);
-  const [ratePerTester, setRatePerTester] = useState<number>(initialPackage ? packageConfigs[initialPackage].total : 0);
-  const [testersNeeded, setTestersNeeded] = useState<number>(initialPackage ? packageConfigs[initialPackage].testers : 0);
+  const [selectedTestType, setSelectedTestType] = useState<SelectedTestType>(initialTestType);
+  const [ratePerTester, setRatePerTester] = useState<number>(initialTestType ? getTestTypeByKey(initialTestType).ratePerTesterZar : 0);
+  const [testersNeeded, setTestersNeeded] = useState<number>(initialTestType ? getTestTypeByKey(initialTestType).defaultTesters : 0);
   const [testTasks, setTestTasks] = useState<string[]>(defaultTestTasks);
   const [taskDraft, setTaskDraft] = useState('');
   const [focusAreas, setFocusAreas] = useState('');
-  const [testingTypes, setTestingTypes] = useState<string[]>([]);
   const [ageRange, setAgeRange] = useState('18 - 25');
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
@@ -71,14 +66,15 @@ export default function SquashPostJobPage() {
   const [attachmentUploading, setAttachmentUploading] = useState(false);
 
   useEffect(() => {
-    if (!selectedPackage) {
+    if (!selectedTestType) {
       setRatePerTester(0);
       setTestersNeeded(0);
       return;
     }
-    setRatePerTester(packageConfigs[selectedPackage].total);
-    setTestersNeeded(packageConfigs[selectedPackage].testers);
-  }, [selectedPackage]);
+    const config = getTestTypeByKey(selectedTestType);
+    setRatePerTester(config.ratePerTesterZar);
+    setTestersNeeded(config.defaultTesters);
+  }, [selectedTestType]);
 
 
   useEffect(() => {
@@ -96,8 +92,8 @@ export default function SquashPostJobPage() {
         setAppLogoUrl(job.logoUrl || '');
         setShortDescription(job.description || '');
         setTestType(job.category as TestCategoryId);
-        if (job.packageKey === 'starter' || job.packageKey === 'growth' || job.packageKey === 'pro') {
-          setSelectedPackage(job.packageKey);
+        if (TEST_TYPES.some((testTypeOption) => testTypeOption.key === job.packageKey)) {
+          setSelectedTestType(job.packageKey as TestTypeKey);
         }
         setTestTasks((job.tasks || '').split('\n').map((task) => task.trim()).filter(Boolean));
         setFocusAreas(job.focusAreas || '');
@@ -113,12 +109,15 @@ export default function SquashPostJobPage() {
       active = false;
     };
   }, [editingJobId, session?.userId]);
-  const selectedPackageConfig = selectedPackage ? packageConfigs[selectedPackage] : null;
-  const hasSelectedPackage = Boolean(selectedPackageConfig);
+  const selectedTestTypeConfig = selectedTestType ? getTestTypeByKey(selectedTestType) : null;
+  const hasSelectedTestType = Boolean(selectedTestTypeConfig);
   const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
-  const subtotal = useMemo(() => (selectedPackage ? Math.max(0, ratePerTester) : 0), [ratePerTester, selectedPackage]);
+  const subtotal = useMemo(
+    () => (selectedTestType ? Math.max(0, ratePerTester * testersNeeded) : 0),
+    [ratePerTester, testersNeeded, selectedTestType],
+  );
   const platformFee = useMemo(() => 0, [subtotal]);
-  const total = hasSelectedPackage ? subtotal + platformFee + liveSessionAddon : 0;
+  const total = hasSelectedTestType ? subtotal + platformFee + liveSessionAddon : 0;
   const taskChecklistText = useMemo(() => testTasks.map((task) => task.trim()).filter(Boolean).join('\n'), [testTasks]);
   const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
   const getErrorMessage = (error: unknown, fallback: string) => {
@@ -135,7 +134,9 @@ export default function SquashPostJobPage() {
       if (!shortDescription.trim()) return 'Please add a short app description before continuing.';
     }
     if (stepIndex === 1) {
-      if (!selectedPackage) return 'Please choose a package before continuing.';
+      if (!selectedTestType) return 'Please choose a test type before continuing.';
+      const config = getTestTypeByKey(selectedTestType);
+      if (testersNeeded < config.minTesters) return `${config.label} requires at least ${config.minTesters} testers.`;
       if (testTasks.every((task) => !task.trim())) return 'Please add the tasks testers must complete.';
       if (!focusAreas.trim()) return 'Please add what testers should focus on.';
     }
@@ -261,8 +262,8 @@ export default function SquashPostJobPage() {
       setErrorMessage('Please log in with a developer account first.');
       return null;
     }
-    if (!selectedPackage) {
-      setErrorMessage('Please choose a package before saving this job.');
+    if (!selectedTestType) {
+      setErrorMessage('Please choose a test type before saving this job.');
       return null;
     }
 
@@ -272,14 +273,14 @@ export default function SquashPostJobPage() {
       appUrl: url,
       platform,
       category: testType,
-      packageKey: selectedPackage as JobPackageKey,
+      packageKey: selectedTestType as JobPackageKey,
       totalAmountZar: total,
       testersNeeded,
       description: shortDescription,
       additionalInfo,
       logoUrl: appLogoUrl || null,
       tasks: taskChecklistText,
-      focusAreas: [testingTypes.join(', '), focusAreas].filter(Boolean).join('\n'),
+      focusAreas,
       preferredSpecializations,
       liveSessionEnabled,
       liveSessionAt: liveSessionEnabled && liveSessionAt ? liveSessionAt : null,
@@ -543,7 +544,7 @@ export default function SquashPostJobPage() {
 
                   <div className="mt-6 grid gap-5 md:grid-cols-3">
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">Test Type</label>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Platform Category</label>
                       <div className="relative">
                         <select
                           value={testType}
@@ -561,17 +562,19 @@ export default function SquashPostJobPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-slate-700">Package</label>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Test Type</label>
                       <div className="relative">
                         <select
-                          value={selectedPackage}
-                          onChange={(e) => setSelectedPackage(e.target.value as SelectedPackage)}
+                          value={selectedTestType}
+                          onChange={(e) => setSelectedTestType(e.target.value as SelectedTestType)}
                           className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
                         >
-                          <option value="">Select package</option>
-                          <option value="starter">Starter (R500)</option>
-                          <option value="growth">Growth (R1,200)</option>
-                          <option value="pro">Pro (R2,500)</option>
+                          <option value="">Select test type</option>
+                          {TEST_TYPES.map((testTypeOption) => (
+                            <option key={testTypeOption.key} value={testTypeOption.key}>
+                              {testTypeOption.label} (R{testTypeOption.ratePerTesterZar}/tester)
+                            </option>
+                          ))}
                         </select>
                         <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       </div>
@@ -581,21 +584,22 @@ export default function SquashPostJobPage() {
                       <label className="mb-2 block text-sm font-semibold text-slate-700">Testers</label>
                       <input
                         type="number"
-                        min={1}
+                        min={selectedTestTypeConfig?.minTesters || 1}
                         value={testersNeeded}
                         onChange={(e) => setTestersNeeded(Number(e.target.value) || 0)}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
                       />
+                      {selectedTestTypeConfig ? (
+                        <div className="mt-1 text-xs text-slate-500">Minimum {selectedTestTypeConfig.minTesters} testers</div>
+                      ) : null}
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {!selectedPackage ? (
-                      <span>Choose a package to see what is included</span>
-                    ) : selectedPackage === 'starter' ? (
-                      <span>Screenshots only (upgrade for video reports)</span>
+                    {!selectedTestTypeConfig ? (
+                      <span>Choose a test type to see what is included</span>
                     ) : (
-                      <span>Video bug reports included</span>
+                      <span>{selectedTestTypeConfig.description} Typically about {selectedTestTypeConfig.estimatedMinutes} minutes per tester.</span>
                     )}
                   </div>
 
@@ -673,48 +677,6 @@ export default function SquashPostJobPage() {
                         Add Task
                       </button>
                     </div>
-                  </div>
-
-                  {/* Testing Types */}
-                  <div className="mt-5">
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      Type of Testing Required <span className="text-xs font-normal text-slate-400 ml-1">(select all that apply)</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        'Functional Testing',
-                        'Usability Testing',
-                        'Exploratory Testing',
-                        'Regression Testing',
-                        'Feature Validation Testing',
-                        'First Impression Testing',
-                        'Compatibility Testing',
-                        'Accessibility Testing',
-                      ].map((type) => {
-                        const selected = testingTypes.includes(type);
-                        return (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() =>
-                              setTestingTypes((prev) =>
-                                prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-                              )
-                            }
-                            className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${
-                              selected
-                                ? 'bg-green-600 border-green-600 text-white shadow-sm'
-                                : 'bg-white border-slate-200 text-slate-600 hover:border-green-400 hover:text-green-700'
-                            }`}
-                          >
-                            {selected ? '✓ ' : ''}{type}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {testingTypes.length === 0 && (
-                      <p className="mt-2 text-xs text-amber-600 font-medium">Select at least one testing type.</p>
-                    )}
                   </div>
 
                   <div className="mt-5">
@@ -947,7 +909,7 @@ export default function SquashPostJobPage() {
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <div className="text-sm font-semibold text-slate-500">Testing</div>
                       <div className="mt-1 text-lg font-bold text-slate-900">{getCategoryById(testType).name}</div>
-                      <div className="mt-1 text-sm text-slate-600">{testersNeeded || '-'} testers - {selectedPackageConfig?.label || 'Package not selected'}</div>
+                      <div className="mt-1 text-sm text-slate-600">{testersNeeded || '-'} testers - {selectedTestTypeConfig?.label || 'Test type not selected'}</div>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <div className="text-sm font-semibold text-slate-500">Tester profile</div>
@@ -956,8 +918,8 @@ export default function SquashPostJobPage() {
                     </div>
                     <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
                       <div className="text-sm font-semibold text-green-700">Total</div>
-                      <div className="mt-1 text-2xl font-black text-green-700">{hasSelectedPackage ? formatZar(total) : 'Select package'}</div>
-                      <div className="mt-1 text-sm text-slate-600">{liveSessionEnabled ? 'Includes live session add-on' : hasSelectedPackage ? 'Job package only' : 'Choose a package first'}</div>
+                      <div className="mt-1 text-2xl font-black text-green-700">{hasSelectedTestType ? formatZar(total) : 'Select test type'}</div>
+                      <div className="mt-1 text-sm text-slate-600">{liveSessionEnabled ? 'Includes live session add-on' : hasSelectedTestType ? 'Job total only' : 'Choose a test type first'}</div>
                     </div>
                   </div>
 
@@ -999,12 +961,16 @@ export default function SquashPostJobPage() {
 
                   <div className="mt-5 space-y-4 text-sm">
                     <div className="flex items-center justify-between text-slate-600">
-                      <span>Test Type</span>
+                      <span>Platform Category</span>
                       <span className="font-semibold text-slate-900">{getCategoryById(testType).name}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
-                      <span>Package</span>
-                      <span className="font-semibold text-slate-900">{selectedPackageConfig?.label || 'Choose a package'}</span>
+                      <span>Test Type</span>
+                      <span className="font-semibold text-slate-900">{selectedTestTypeConfig?.label || 'Choose a test type'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Rate per Tester</span>
+                      <span className="font-semibold text-slate-900">{selectedTestTypeConfig ? formatZar(selectedTestTypeConfig.ratePerTesterZar) : '-'}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Testers</span>
@@ -1024,14 +990,14 @@ export default function SquashPostJobPage() {
 
                   <div className="my-5 border-t border-dashed border-slate-200" />
 
-                  {hasSelectedPackage ? (
+                  {hasSelectedTestType ? (
                     <div className="mt-5 flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
                       <span className="text-lg font-bold text-slate-900">Total</span>
                       <span className="text-2xl font-black text-green-700">{formatZar(total)}</span>
                     </div>
                   ) : (
                     <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-500">
-                      Choose a package to calculate the total.
+                      Choose a test type to calculate the total.
                     </div>
                   )}
                 </section>
@@ -1061,7 +1027,7 @@ export default function SquashPostJobPage() {
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Auto-calculated</div>
                   <div className="mt-4 text-sm text-slate-500">Total Amount</div>
-                  <div className="mt-2 text-4xl font-black text-green-700">{hasSelectedPackage ? formatZar(total) : 'Pending'}</div>
+                  <div className="mt-2 text-4xl font-black text-green-700">{hasSelectedTestType ? formatZar(total) : 'Pending'}</div>
                   {testerTierFilter === 'Elite Only' ? (
                     <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                       Premium indicator: Elite tester tier selected.

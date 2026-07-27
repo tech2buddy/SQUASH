@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   FileText,
   MapPin,
+  Star,
   UserCircle2,
   XCircle,
 } from 'lucide-react';
@@ -444,7 +445,10 @@ export function SquashDeveloperApplicationsPage() {
 
                     <div className="mt-5 grid grid-cols-3 gap-2">
                       <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center">
-                        <div className="text-sm font-black text-slate-900">{application.testerRating.toFixed(1)} ★</div>
+                        <div className="inline-flex items-center justify-center gap-1 text-sm font-black text-slate-900">
+                          {application.testerRating.toFixed(1)}
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        </div>
                         <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Rating</div>
                       </div>
                       <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center">

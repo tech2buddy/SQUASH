@@ -12,6 +12,8 @@ import {
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
+import { TEST_TYPES } from './lib/testTypes';
+import { TESTER_POOL_SHARE } from './lib/jobApi';
 
 type ItemWithIcon = {
   number?: string;
@@ -77,12 +79,11 @@ export default function SquashForTestersPage() {
     'New Tests Posted Daily - always something new to test.',
   ];
 
-  const earningRows = [
-    { type: 'Basic Bug Test', amount: 'R50 to R80 per test', time: 'About 20 minutes' },
-    { type: 'Usability Test', amount: 'R80 to R120 per test', time: 'About 30 minutes' },
-    { type: 'Full UX Audit', amount: 'R150 to R200 per test', time: 'About 45 minutes' },
-    { type: 'Mystery Shop Test', amount: 'R180 to R220 per test', time: 'About 60 minutes' },
-  ];
+  const earningRows = TEST_TYPES.map((testType) => ({
+    type: testType.label,
+    amount: `R${Math.floor(testType.ratePerTesterZar * TESTER_POOL_SHARE)} per test`,
+    time: `About ${testType.estimatedMinutes} minutes`,
+  }));
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -143,7 +144,7 @@ export default function SquashForTestersPage() {
                   <div className="space-y-4">
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                       <div className="text-lg font-bold text-slate-900">Tester Earnings</div>
-                      <div className="mt-4 text-4xl font-black text-slate-900">R5,920</div>
+                      <div className="mt-4 text-4xl font-black text-slate-900">R3,240</div>
                       <div className="mt-4 flex h-20 items-end justify-between gap-2">
                         {[20, 30, 45, 40, 65].map((h, i) => (
                           <div key={i} className="flex flex-1 items-end">
@@ -260,7 +261,7 @@ export default function SquashForTestersPage() {
               <h3 className="text-2xl font-black text-slate-900">Earn What You Deserve</h3>
               <div className="mt-7 text-center">
                 <div className="text-[clamp(1.35rem,2.6vw,2.15rem)] font-black leading-none tracking-tight text-green-700 whitespace-nowrap">
-                  R1,800 - R18,000+
+                  R630 - R6,320+
                 </div>
                 <div className="mx-auto mt-3 max-w-[32ch] text-slate-600">
                   per month depending on activity and report quality.

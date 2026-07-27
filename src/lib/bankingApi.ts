@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
+import { scanUploadedFile } from './scanApi';
 
 export type BankingVerificationStatus = 'pending' | 'approved' | 'rejected' | 'changes_required';
 export type BankAccountType = 'cheque' | 'savings' | 'transmission';
@@ -104,6 +105,10 @@ export async function saveTesterBankingDetails(input: {
     .from('tester-banking-documents')
     .upload(filePath, input.proofDocument, { cacheControl: '3600', upsert: false });
   if (uploadError) throw new Error(`Could not upload the banking document: ${uploadError.message}`);
+
+  // Fails closed: an infected or unscannable banking document is removed
+  // server-side and never reaches the admin review queue.
+  await scanUploadedFile('tester-banking-documents', filePath);
 
   const { data, error } = await (supabase.rpc as any)('save_tester_banking_details', {
     p_account_holder_name: input.accountHolderName.trim(),

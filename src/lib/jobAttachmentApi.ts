@@ -1,5 +1,6 @@
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 import { supabase } from './supabase';
+import { scanUploadedFile } from './scanApi';
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
@@ -30,6 +31,11 @@ export async function uploadDeveloperJobAttachments(jobId: string, developerId: 
       .from('job-attachments')
       .upload(filePath, file, { cacheControl: '3600', upsert: false });
     if (uploadError) throw new Error(`Could not upload ${file.name}: ${uploadError.message}`);
+
+    // Scanned before the metadata row exists, so a rejected file never
+    // becomes visible to testers. Developers upload these and testers
+    // download them, which makes this the highest-risk delivery path.
+    await scanUploadedFile('job-attachments', filePath);
 
     const { error: metadataError } = await supabase.from('job_attachments').insert({
       job_id: jobId,

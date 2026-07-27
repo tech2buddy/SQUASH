@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
+import { scanUploadedFile } from './scanApi';
 
 export type UploadFileType = 'screenshot' | 'video';
 
@@ -80,6 +81,17 @@ export async function uploadBugReportFile(
         path: '',
         url: '',
         error: uploadError.message,
+      };
+    }
+
+    try {
+      await scanUploadedFile(bucketName, data.path);
+    } catch (scanError) {
+      // The server already removed the file from the bucket.
+      return {
+        path: '',
+        url: '',
+        error: scanError instanceof Error ? scanError.message : 'This file could not be accepted.',
       };
     }
 

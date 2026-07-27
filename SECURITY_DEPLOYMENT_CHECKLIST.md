@@ -9,9 +9,25 @@
 5. Run `supabase/verify_production_security.sql` in the production SQL editor and review every result. The RLS-disabled and anonymous/public SECURITY DEFINER grant reports should return zero rows.
 6. Confirm response headers on the production domain: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and HSTS.
 
-## External control still required
+## Upload malware scanning
 
-File signature, MIME, extension, size, private-bucket, and signed-URL controls are implemented. These are not malware scanning. Before accepting untrusted public uploads at scale, connect a malware scanning service or quarantine scanner and only release files after a clean verdict.
+Implemented in phase 38 (`supabase/phase38_file_scanning.sql` + `api/scan-upload.ts`), using Cloudmersive. Files are scanned immediately after upload; infected files are deleted from the bucket server-side and recorded in `public.file_scans`.
+
+Required to activate:
+
+1. Create a Cloudmersive account and get an API key.
+2. Set `CLOUDMERSIVE_API_KEY` in Vercel (server-only — do **not** prefix with `VITE_`).
+3. Run `supabase/phase38_file_scanning.sql` in the production SQL editor.
+4. Redeploy.
+
+Behaviour when the scanner is unavailable (no key configured, API error, or timeout) is deliberately split by risk:
+
+- `tester-banking-documents` **fails closed** — the upload is deleted and the tester sees an error. These are reviewed by admins and are the highest-value target.
+- All other buckets **fail open** — the upload is allowed and the failure is recorded in `file_scans` with status `error`, so a scanner outage cannot block testers from submitting bug reports. Query `select * from public.file_scans where status = 'error'` to find anything that slipped through during an outage.
+
+Do **not** substitute VirusTotal's free API here: it shares submitted files with its security community, which would leak testers' bank statements.
+
+File signature, MIME, extension, size, private-bucket, and signed-URL controls remain in place as the first line of defence.
 
 ## Security testing before public launch
 

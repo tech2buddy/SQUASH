@@ -3,6 +3,7 @@ import type { ApplicationStatus, AssignmentStatus, Database, JobStatus } from '.
 import { createNotification } from './notificationApi';
 import { sendTransactionalEmail } from './emailApi';
 import type { TestTypeKey } from './testTypes';
+import { testerPayoutForJob } from './pricing';
 
 export type JobPackageKey = TestTypeKey;
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -899,13 +900,6 @@ export async function reviewSubmittedReport(input: {
   }
 
   return data;
-}
-
-export const TESTER_POOL_SHARE = 0.62;
-
-export function testerPayoutForJob(totalAmountZar: number, testersNeeded: number): number {
-  if (!testersNeeded) return 0;
-  return Math.floor((totalAmountZar * TESTER_POOL_SHARE) / testersNeeded);
 }
 
 export type TesterEarningItem = {

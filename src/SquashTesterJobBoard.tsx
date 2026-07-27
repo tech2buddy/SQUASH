@@ -17,7 +17,8 @@ import {
 } from './components/testCategories';
 import { useAuth } from './auth';
 import { getTesterSpecializations, getTopTesters } from './lib/profileApi';
-import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, testerPayoutForJob, type DeveloperJob } from './lib/jobApi';
+import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments, type DeveloperJob } from './lib/jobApi';
+import { testerPayoutForJob } from './lib/pricing';
 import { getSpecializationLabel } from './components/testerSpecializations';
 import { getTestTypeByKey } from './lib/testTypes';
 

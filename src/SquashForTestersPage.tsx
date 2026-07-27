@@ -13,7 +13,7 @@ import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import TrustedLogosRow from './TrustedLogosRow';
 import { TEST_TYPES } from './lib/testTypes';
-import { TESTER_POOL_SHARE } from './lib/jobApi';
+import { TESTER_POOL_SHARE } from './lib/pricing';
 import { usePageMeta } from './hooks/usePageMeta';
 
 type ItemWithIcon = {

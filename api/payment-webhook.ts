@@ -76,7 +76,9 @@ export default async function handler(req: any, res: any) {
   } catch {
     return res.status(400).json({ error: 'Invalid webhook body' });
   }
-  if (event?.id !== webhookId) return res.status(400).json({ error: 'Webhook ID mismatch' });
+  // Note: event.id (e.g. "evt_...") is the event's own ID and is unrelated
+  // to the "webhook-id" header (Svix's delivery message ID, used only for
+  // signature verification above) -- they are never expected to match.
 
   const checkoutId = event?.payload?.metadata?.checkoutId;
   if (typeof checkoutId !== 'string') return res.status(200).json({ received: true });

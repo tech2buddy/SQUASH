@@ -58,22 +58,22 @@ export default function SquashAboutPage() {
       <PublicHeader active="about" />
 
       <main>
-        <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
+        <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
           <div className="animate-fade-up">
-            <div className="inline-flex rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
+            <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 sm:text-sm">
               Quality Assurance
             </div>
 
-            <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl">
               We Are SQUASH.
             </h1>
 
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-700">
+            <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-700 sm:mt-6 sm:text-lg sm:leading-8">
               Every great product in the world was tested by everyday users before it was launched.
               The ones that were not usually get deleted in minutes.
             </p>
 
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+            <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
               SQUASH connects developers and startups with verified real-world testers who evaluate
               apps and websites before launch. Not bots. Not internal teams. Not friends who only
               agree with you. Everyday users who match your market.
@@ -81,7 +81,7 @@ export default function SquashAboutPage() {
 
             <a
               href="/post-job"
-              className="mt-8 inline-block rounded-2xl bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-700"
+              className="mt-6 w-full text-center sm:w-auto inline-block rounded-2xl bg-emerald-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 sm:mt-8"
             >
               Get Started
             </a>
@@ -89,8 +89,8 @@ export default function SquashAboutPage() {
 
           <div className="animate-fade-up-delayed relative lg:pl-6">
             <div className="absolute -inset-6 -z-10 hidden rounded-[40px] bg-gradient-to-br from-emerald-100 via-slate-100 to-white blur-2xl sm:block" />
-            <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-white p-2 shadow-xl sm:p-3">
-              <div className="aspect-[4/3] overflow-hidden rounded-[22px]">
+            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-2 shadow-lg sm:rounded-[30px] sm:p-3 sm:shadow-xl">
+              <div className="aspect-[16/10] overflow-hidden rounded-[18px] sm:aspect-[4/3] sm:rounded-[22px]">
                 <img
                   src="/hero-illustration.png"
                   alt="Team squashing bugs in a mobile app before users see them"

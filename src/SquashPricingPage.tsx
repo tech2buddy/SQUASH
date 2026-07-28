@@ -78,30 +78,30 @@ export default function SquashPricingPage() {
       <PublicHeader active="pricing" />
 
       <main>
-        <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-24">
+        <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-16 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-24">
           <div className="animate-fade-up flex flex-col justify-center">
-            <div className="inline-flex w-fit rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
+            <div className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 sm:text-sm">
               Transparent pricing with no hidden fees
             </div>
 
-            <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl">
               Pay for the Test Type You Need
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
               Pick the kind of testing your product needs. Pay per tester, not a flat tier. No subscriptions. No hidden fees.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <a
                 href="/post-job"
-                className="rounded-2xl bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-700"
+                className="w-full text-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
               >
                 Post a Job
               </a>
               <a
                 href="/contact?intent=sales"
-                className="rounded-2xl border border-slate-300 px-6 py-3 text-center text-base font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="w-full text-center rounded-2xl border border-slate-300 px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
               >
                 Talk to Sales
               </a>

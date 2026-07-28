@@ -97,13 +97,13 @@ export default function SquashForTestersPage() {
       <PublicHeader active="testers" />
 
       <main>
-        <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
+        <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:px-8 lg:py-24">
           <div className="animate-fade-up flex flex-col justify-center">
-            <div className="inline-flex w-fit rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
+            <div className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 sm:text-sm">
               Real testing opportunities for everyday users
             </div>
 
-            <h1 className="mt-6 max-w-xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 max-w-xl text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl">
               Find Bugs.
               <br />
               Earn Money.
@@ -111,21 +111,21 @@ export default function SquashForTestersPage() {
               Help Build Better Apps.
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
               Squash connects you with developers who need real testing from everyday users like
               you.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <a
                 href="/tester-jobs"
-                className="rounded-2xl bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-700"
+                className="w-full text-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
               >
                 Browse Open Tests
               </a>
               <a
                 href="#how-it-works"
-                className="rounded-2xl border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="w-full text-center rounded-2xl border border-slate-300 px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
               >
                 How It Works
               </a>
@@ -133,8 +133,8 @@ export default function SquashForTestersPage() {
           </div>
 
           <div className="animate-fade-up-delayed flex items-center justify-center">
-            <div className="w-full max-w-2xl rounded-[28px] border border-slate-200 bg-slate-50 p-5 shadow-xl">
-              <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="w-full max-w-2xl rounded-[24px] border border-slate-200 bg-slate-50 p-3.5 sm:rounded-[28px] sm:p-5 shadow-xl">
+              <div className="rounded-[20px] border border-slate-200 bg-white p-4 sm:rounded-[24px] sm:p-6 shadow-sm">
                 <div className="grid gap-6 md:grid-cols-[0.8fr_1.2fr] md:items-center">
                   <div className="space-y-4">
                     <div className="mx-auto grid h-40 w-24 place-items-center rounded-[28px] border-4 border-slate-900 bg-white shadow-sm">

@@ -44,6 +44,39 @@ type ProfileRow = {
   email: string;
 };
 
+// Which workspace a dual-role account is currently viewing is a per-device
+// preference, not an account-wide fact. It used to be written to
+// profiles.role, which meant switching to Tester on one machine silently
+// flipped every other signed-in device to the tester workspace on their next
+// page load. Keeping it in localStorage scopes the choice to the browser
+// that made it.
+const ACTIVE_WORKSPACE_KEY = 'squash.active-workspace';
+
+function readStoredWorkspace(userId: string): UserRole | null {
+  try {
+    const raw = window.localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}.${userId}`);
+    return raw === 'developer' || raw === 'tester' || raw === 'admin' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeWorkspace(userId: string, role: UserRole) {
+  try {
+    window.localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}.${userId}`, role);
+  } catch {
+    // Private browsing or blocked storage: fall back to profiles.role.
+  }
+}
+
+function clearStoredWorkspace(userId: string) {
+  try {
+    window.localStorage.removeItem(`${ACTIVE_WORKSPACE_KEY}.${userId}`);
+  } catch {
+    // Nothing to clean up if storage is unavailable.
+  }
+}
+
 function normalizeRoles(roles: UserRole[]): UserRole[] {
   return Array.from(new Set(roles)).filter(
     (role): role is UserRole => role === 'developer' || role === 'tester' || role === 'admin',
@@ -123,7 +156,15 @@ async function readProfileSession(
   const profile = data as ProfileRow;
   const fallbackRole: UserRole = profile.role === 'admin' ? 'admin' : profile.role === 'developer' ? 'developer' : 'tester';
   const roles = await readAccountRoles(profile.id, fallbackRole);
-  const activeRole = roles.includes(fallbackRole) ? fallbackRole : roles[0];
+
+  // An explicit choice made on this device wins; profiles.role is only the
+  // starting default. targetRole (an in-flight login/switch) beats both.
+  const storedWorkspace = readStoredWorkspace(profile.id);
+  const preferredRole: UserRole =
+    (targetRole && roles.includes(targetRole) && targetRole) ||
+    (storedWorkspace && roles.includes(storedWorkspace) && storedWorkspace) ||
+    fallbackRole;
+  const activeRole = roles.includes(preferredRole) ? preferredRole : roles[0];
 
   return {
     role: activeRole,
@@ -366,11 +407,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const nextSession: AuthSession = { ...session, role };
         setSession(nextSession);
-        const preserveAdminGrant = session.roles.includes('admin') && role !== 'admin';
-        if (isSupabaseConfigured && session.userId && !preserveAdminGrant) {
-          const { error } = await supabase.from('profiles').update({ role }).eq('id', session.userId);
-          if (error) throw error;
-        }
+
+        // Deliberately does NOT write profiles.role. That column is an
+        // account-wide value, so persisting the switch there changed which
+        // workspace every other signed-in device opened. The choice is
+        // stored per device instead.
+        if (session.userId) storeWorkspace(session.userId, role);
 
         return nextSession;
       },
@@ -418,6 +460,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
       },
       logout: async () => {
+        // Cleared before sign-out so the next person to sign in on a shared
+        // machine does not inherit this account's workspace choice.
+        if (session?.userId) clearStoredWorkspace(session.userId);
         if (isSupabaseConfigured) {
           await supabase.auth.signOut();
         }

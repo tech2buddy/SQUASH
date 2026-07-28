@@ -238,7 +238,9 @@ export default function TesterHeaderNav() {
           </div>
           <div className="hidden sm:block">
             <div className="text-sm font-bold text-slate-900 leading-tight">{testerName}</div>
-            <div className="text-xs text-slate-500">Verified Tester</div>
+            {/* Email, not just the role: two accounts can share a display name,
+                and without this there is nothing on screen telling them apart. */}
+            <div className="max-w-[180px] truncate text-xs text-slate-500">{session?.email || 'Verified Tester'}</div>
           </div>
           <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${profileOpen ? 'rotate-180 text-green-700' : ''}`} />
         </button>

@@ -168,3 +168,16 @@ Phase 39 fixed `set status = p_status` in `review_job_application` but missed a 
 A bare literal (`set status = 'active'`) is coerced straight to the column type and is fine. A `CASE` expression must resolve its own result type before the assignment target is considered, and with every branch an untyped literal it resolves to `text` — which then cannot be assigned to an enum column. The fix casts the whole `CASE` result.
 
 Every other status assignment in these functions was audited and is either a bare literal or an already enum-typed plpgsql variable.
+
+## Phase 40: make in-app notifications actually deliver
+
+Run `supabase/phase40_notification_delivery_fix.sql` after Phase 39b.
+
+No notification was ever received when a tester applied to a job, when a developer accepted an applicant, or when a tester submitted a report. Two independent causes, both silent:
+
+1. The only INSERT policy on `public.notifications` is `notifications_admin_insert` (`with check public.is_admin()`). Every one of those events writes a notification for the *other* party from a developer or tester session, so RLS rejected all of them. The client swallowed the error.
+2. The client generated its own id (`notif_<timestamp>_<rand>`) and passed it to a `uuid` column, producing `invalid input syntax for type uuid`.
+
+Adds `notify_user(...)`, a `security definer` RPC that writes the notification only if the caller is an admin, is notifying themselves, or shares a job with the recipient as the opposite party (developer ↔ tester via `job_applications` or `test_assignments`). Loosening the INSERT policy instead would have let any authenticated user push arbitrary notifications to anyone.
+
+Banking-status notifications were unaffected — `notify_tester_banking_status()` is a `security definer` trigger and already bypassed RLS.

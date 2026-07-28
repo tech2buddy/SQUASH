@@ -54,7 +54,12 @@ export async function getUserNotifications(userId: string): Promise<AppNotificat
     userId: item.user_id,
     title: item.title,
     body: item.body || item.description || '',
-    type: (item.notification_type || item.type || 'job') as NotificationType,
+    // notify_user stores the client's 'job' type as 'job_match', which is
+    // what the column's check constraint allows. Map it back so the UI sees
+    // the type it wrote.
+    type: (item.notification_type === 'job_match'
+      ? 'job'
+      : item.notification_type || item.type || 'job') as NotificationType,
     linkPath: item.link_path || item.href || '/dashboard',
     status: item.status === 'read' ? 'read' : 'unread',
     createdAt: item.created_at,
@@ -124,13 +129,34 @@ export async function createNotification(input: {
   createdAt?: string;
   preferenceKey?: NotificationPreferenceKey;
 }): Promise<AppNotification | null> {
-  const notificationId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const now = input.createdAt || new Date().toISOString();
   const status = input.status || 'unread';
   const readAt = status === 'read' ? now : null;
 
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+
+  if (input.preferenceKey && !(await userWantsNotification(input.userId, input.preferenceKey))) {
+    return null;
+  }
+
+  // Goes through notify_user (security definer) rather than inserting
+  // directly. The only INSERT policy on notifications is admin-only, so
+  // every developer/tester-triggered notification was silently rejected by
+  // RLS. The RPC verifies the two users share a job before writing, and
+  // lets the id column default to gen_random_uuid() -- the client used to
+  // pass a "notif_<ts>_<rand>" string into a uuid column, which failed with
+  // "invalid input syntax for type uuid".
+  const { data: newId, error } = await (supabase.rpc as any)('notify_user', {
+    p_user_id: input.userId,
+    p_title: input.title,
+    p_body: input.body,
+    p_type: input.type || 'general',
+    p_link_path: input.linkPath || '/dashboard',
+  });
+  if (error) throw new Error(error.message || 'Unable to create notification.');
+
   const newNotification: AppNotification = {
-    id: notificationId,
+    id: String(newId),
     userId: input.userId,
     title: input.title,
     body: input.body,
@@ -140,25 +166,6 @@ export async function createNotification(input: {
     createdAt: now,
     readAt,
   };
-
-  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
-
-  if (input.preferenceKey && !(await userWantsNotification(input.userId, input.preferenceKey))) {
-    return null;
-  }
-
-  const { error } = await supabase.from('notifications' as any).insert({
-    id: notificationId,
-    user_id: input.userId,
-    title: input.title,
-    body: input.body,
-    status,
-    read_at: readAt,
-    link_path: input.linkPath || '/dashboard',
-    notification_type: input.type || 'job',
-    created_at: now,
-  } as any);
-  if (error) throw new Error(error.message || 'Unable to create notification.');
 
   if (status === 'unread') {
     window.dispatchEvent(new CustomEvent('squash_notification_updated', { detail: { userId: input.userId, notification: newNotification } }));

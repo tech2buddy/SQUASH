@@ -20,6 +20,7 @@ import { startJobCheckout } from './lib/paymentApi';
 import { hasExpectedFileSignature, type SafeFileKind } from './lib/fileValidation';
 import { uploadDeveloperJobAttachments, validateJobAttachment } from './lib/jobAttachmentApi';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
+import { briefCompletionIssues, type TestBrief } from './lib/testBrief';
 
 const defaultTestTasks: string[] = [];
 const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
@@ -56,6 +57,12 @@ export default function SquashPostJobPage() {
   const [testTasks, setTestTasks] = useState<string[]>(defaultTestTasks);
   const [taskDraft, setTaskDraft] = useState('');
   const [focusAreas, setFocusAreas] = useState('');
+  const [testObjective, setTestObjective] = useState('');
+  const [accessInstructions, setAccessInstructions] = useState('');
+  const [requiredEnvironment, setRequiredEnvironment] = useState('');
+  const [outOfScope, setOutOfScope] = useState('');
+  const [evidenceRules, setEvidenceRules] = useState('');
+  const [taskExpectedOutcomes, setTaskExpectedOutcomes] = useState<string[]>([]);
   const [ageRange, setAgeRange] = useState('18 - 25');
   const [deviceType, setDeviceType] = useState('Android');
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
@@ -105,6 +112,12 @@ export default function SquashPostJobPage() {
         }
         setTestTasks((job.tasks || '').split('\n').map((task) => task.trim()).filter(Boolean));
         setFocusAreas(job.focusAreas || '');
+        setTestObjective(job.testBrief.objective || '');
+        setAccessInstructions(job.testBrief.accessInstructions || '');
+        setRequiredEnvironment(job.testBrief.requiredEnvironment || '');
+        setOutOfScope(job.testBrief.outOfScope || '');
+        setEvidenceRules(job.testBrief.evidenceRules || '');
+        setTaskExpectedOutcomes(job.testBrief.tasks.map((task) => task.expectedOutcome));
         setPreferredSpecializations(job.preferredSpecializations || []);
         setLiveSessionEnabled(job.liveSessionEnabled);
         setLiveSessionAt(job.liveSessionAt ? job.liveSessionAt.slice(0, 16) : '');
@@ -127,6 +140,19 @@ export default function SquashPostJobPage() {
   const platformFee = 0;
   const total = hasSelectedTestType ? subtotal + platformFee + liveSessionAddon : 0;
   const taskChecklistText = useMemo(() => testTasks.map((task) => task.trim()).filter(Boolean).join('\n'), [testTasks]);
+  const testBrief = useMemo<TestBrief>(() => ({
+    objective: testObjective.trim(),
+    accessInstructions: accessInstructions.trim(),
+    requiredEnvironment: requiredEnvironment.trim(),
+    outOfScope: outOfScope.trim(),
+    evidenceRules: evidenceRules.trim(),
+    customQuestions: [],
+    tasks: testTasks.map((title, index) => ({
+      id: `task-${index + 1}`,      title: title.trim(),
+      instructions: title.trim(),
+      expectedOutcome: (taskExpectedOutcomes[index] || '').trim(),
+    })).filter((task) => task.title),
+  }), [accessInstructions, evidenceRules, outOfScope, requiredEnvironment, taskExpectedOutcomes, testObjective, testTasks]);
   const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
 
   const validateStep = (stepIndex: number) => {
@@ -139,6 +165,8 @@ export default function SquashPostJobPage() {
       const config = getTestTypeByKey(selectedTestType);
       if (testersNeeded < config.minTesters) return `${config.label} requires at least ${config.minTesters} testers.`;
       if (testTasks.every((task) => !task.trim())) return 'Please add the tasks testers must complete.';
+      const briefIssues = briefCompletionIssues(testBrief);
+      if (briefIssues.length) return briefIssues[0];
       if (!focusAreas.trim()) return 'Please add what testers should focus on.';
     }
     return '';
@@ -148,6 +176,7 @@ export default function SquashPostJobPage() {
     const nextTask = taskDraft.trim();
     if (!nextTask) return;
     setTestTasks((tasks) => [...tasks, nextTask]);
+    setTaskExpectedOutcomes((outcomes) => [...outcomes, '']);
     setTaskDraft('');
   };
 
@@ -157,6 +186,7 @@ export default function SquashPostJobPage() {
 
   const removeTestTask = (index: number) => {
     setTestTasks((tasks) => tasks.filter((_, taskIndex) => taskIndex !== index));
+    setTaskExpectedOutcomes((outcomes) => outcomes.filter((_, taskIndex) => taskIndex !== index));
   };
 
   const goNext = () => {
@@ -285,6 +315,7 @@ export default function SquashPostJobPage() {
       preferredSpecializations,
       liveSessionEnabled,
       liveSessionAt: liveSessionEnabled && liveSessionAt ? liveSessionAt : null,
+      testBrief,
       status,
     };
   };
@@ -636,23 +667,13 @@ export default function SquashPostJobPage() {
                         </div>
                       ) : null}
                       {testTasks.map((task, index) => (
-                        <div key={`${index}-${task}`} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-sm font-bold text-green-700">
-                            {index + 1}
+                        <div key={`${index}-${task}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                          <div className="flex gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-sm font-bold text-green-700">{index + 1}</div>
+                            <input value={task} onChange={(e) => updateTestTask(index, e.target.value)} placeholder="Task: e.g. Create an account" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500" />
+                            <button type="button" onClick={() => removeTestTask(index)} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Remove</button>
                           </div>
-                          <input
-                            value={task}
-                            onChange={(e) => updateTestTask(index, e.target.value)}
-                            placeholder="Example: Create an account"
-                            className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeTestTask(index)}
-                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                          >
-                            Remove
-                          </button>
+                          <input value={taskExpectedOutcomes[index] || ''} onChange={(e) => setTaskExpectedOutcomes((outcomes) => outcomes.map((outcome, outcomeIndex) => outcomeIndex === index ? e.target.value : outcome))} placeholder="Expected result: what should happen when this task is completed?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-green-500" />
                         </div>
                       ))}
                     </div>
@@ -680,7 +701,24 @@ export default function SquashPostJobPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5">
+
+                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                    <label className="block text-sm font-semibold text-slate-700">Main testing objective
+                      <textarea rows={3} value={testObjective} onChange={(e) => setTestObjective(e.target.value)} placeholder="What decision should this test help you make?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-700">Required environment
+                      <textarea rows={3} value={requiredEnvironment} onChange={(e) => setRequiredEnvironment(e.target.value)} placeholder="Device, OS, browser, network or build requirements" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-700">Access instructions <span className="font-normal text-slate-400">(optional)</span>
+                      <textarea rows={3} value={accessInstructions} onChange={(e) => setAccessInstructions(e.target.value)} placeholder="Test account, onboarding route, or safe access instructions" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-700">Evidence rules <span className="font-normal text-slate-400">(optional)</span>
+                      <textarea rows={3} value={evidenceRules} onChange={(e) => setEvidenceRules(e.target.value)} placeholder="Example: attach a screenshot for every failure; record critical issues" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                    </label>
+                  </div>
+                  <label className="mt-5 block text-sm font-semibold text-slate-700">Out of scope <span className="font-normal text-slate-400">(optional)</span>
+                    <textarea rows={2} value={outOfScope} onChange={(e) => setOutOfScope(e.target.value)} placeholder="What testers must not test or change" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                  </label>                  <div className="mt-5">
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Additional Focus Areas <span className="text-xs font-normal text-slate-400 ml-1">(optional)</span>
                     </label>

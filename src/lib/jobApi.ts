@@ -4,6 +4,7 @@ import { createNotification } from './notificationApi';
 import { sendTransactionalEmail } from './emailApi';
 import type { TestTypeKey } from './testTypes';
 import { testerPayoutForJob } from './pricing';
+import { parseTestBrief, type TestBrief } from './testBrief';
 
 export type JobPackageKey = TestTypeKey;
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -64,6 +65,7 @@ export type DeveloperJobInput = {
   preferredSpecializations: string[];
   liveSessionEnabled: boolean;
   liveSessionAt: string | null;
+  testBrief?: TestBrief;
   status?: JobStatus;
 };
 
@@ -85,6 +87,7 @@ export type DeveloperJob = {
   preferredSpecializations: string[];
   liveSessionEnabled: boolean;
   liveSessionAt: string | null;
+  testBrief: TestBrief;
   status: JobStatus;
   createdAt: string;
   updatedAt: string;
@@ -111,6 +114,7 @@ function mapJob(row: {
   status: JobStatus;
   created_at: string;
   updated_at: string;
+  lab_config?: unknown;
 }): DeveloperJob {
   return {
     id: row.id,
@@ -130,6 +134,7 @@ function mapJob(row: {
     preferredSpecializations: row.preferred_specializations || [],
     liveSessionEnabled: row.live_session_enabled,
     liveSessionAt: row.live_session_at,
+    testBrief: parseTestBrief(row.lab_config, row.tasks || ''),
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -139,7 +144,7 @@ function mapJob(row: {
 export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput): Promise<DeveloperJob> {
   if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
-  const payload: JobUpdate = {
+  const payload: JobUpdate & { lab_config?: TestBrief } = {
     title: input.title.trim(),
     app_url: input.appUrl.trim() || null,
     platform: input.platform,
@@ -154,13 +159,14 @@ export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput
     preferred_specializations: input.preferredSpecializations,
     live_session_enabled: input.liveSessionEnabled,
     live_session_at: input.liveSessionAt,
+    lab_config: input.testBrief,
     status: input.status || 'active',
   };
   if (input.logoUrl) payload.logo_url = input.logoUrl;
 
   const { data, error } = await supabase
     .from('jobs')
-    .update(payload)
+    .update(payload as any)
     .eq('id', jobId)
     .eq('developer_id', input.developerId)
     .select('*')
@@ -172,7 +178,7 @@ export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput
 export async function createDeveloperJob(input: DeveloperJobInput): Promise<DeveloperJob> {
   if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
-  const payload: JobInsert = {
+  const payload: JobInsert & { lab_config?: TestBrief } = {
     developer_id: input.developerId,
     title: input.title.trim(),
     app_url: input.appUrl.trim() || null,
@@ -188,13 +194,14 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
     preferred_specializations: input.preferredSpecializations,
     live_session_enabled: input.liveSessionEnabled,
     live_session_at: input.liveSessionAt,
+    lab_config: input.testBrief,
     status: input.status || 'active',
   };
   if (input.logoUrl) payload.logo_url = input.logoUrl;
 
   const { data, error } = await supabase
     .from('jobs')
-    .insert(payload)
+    .insert(payload as any)
     .select('*')
     .single();
 
@@ -538,6 +545,7 @@ export type TesterAssignment = {
   jobTasks: string | null;
   jobAppUrl: string | null;
   jobFocusAreas: string | null;
+  jobBrief: TestBrief;
 };
 
 function mapAssignment(row: {
@@ -549,7 +557,7 @@ function mapAssignment(row: {
   due_at: string | null;
   created_at: string;
   updated_at: string;
-}): Omit<TesterAssignment, 'jobTitle' | 'jobLogoUrl' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl' | 'jobFocusAreas'> {
+}): Omit<TesterAssignment, 'jobTitle' | 'jobLogoUrl' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl' | 'jobFocusAreas' | 'jobBrief'> {
   return {
     id: row.id,
     jobId: row.job_id,
@@ -594,6 +602,7 @@ export async function getTesterAssignments(testerId: string): Promise<TesterAssi
       jobTasks: job?.tasks || null,
       jobAppUrl: job?.appUrl || null,
       jobFocusAreas: job?.focusAreas || null,
+      jobBrief: job?.testBrief || parseTestBrief(null),
     };
   });
 }
@@ -640,6 +649,7 @@ export async function getTesterAssignmentById(assignmentId: string, testerId: st
     jobTasks: mappedJob?.tasks || null,
     jobAppUrl: mappedJob?.appUrl || null,
     jobFocusAreas: mappedJob?.focusAreas || null,
+    jobBrief: mappedJob?.testBrief || parseTestBrief(null),
   };
 }
 

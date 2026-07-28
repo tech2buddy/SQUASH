@@ -184,11 +184,12 @@ export default function SquashActiveTestScreen() {
             });
           })
           .catch(() => {});
+        const structuredTasks = item.jobBrief.tasks.map((task) => task.title);
         const parsedTasks = (item.jobTasks || '')
           .split(/[\r\n,]+/)
           .map((task) => task.trim())
           .filter(Boolean);
-        const nextTasks = parsedTasks.length > 0 ? parsedTasks : fallbackTasks;
+        const nextTasks = structuredTasks.length > 0 ? structuredTasks : (parsedTasks.length > 0 ? parsedTasks : fallbackTasks);
         setTasks(nextTasks);
 
         setTaskState(nextTasks.map(() => false));
@@ -586,7 +587,7 @@ export default function SquashActiveTestScreen() {
                   const cfg = TESTING_TYPE_CONFIG[matchedKey] || DEFAULT_TYPE_CONFIG;
                   const PrimaryIcon = cfg.Icon;
                   const typeLabel = matchedKey || platform || 'Active Test';
-                  const focusText = assignment?.jobFocusAreas || assignment?.jobDescription || '';
+                  const focusText = assignment?.jobBrief.objective || assignment?.jobFocusAreas || assignment?.jobDescription || '';
 
                   return (
                     <>
@@ -698,6 +699,9 @@ export default function SquashActiveTestScreen() {
                               <span className={`block text-xs ${taskState[index] ? 'font-bold text-slate-900 line-through opacity-60' : 'font-medium text-slate-700'}`}>
                                 {task}
                               </span>
+                              {assignment?.jobBrief.tasks[index]?.expectedOutcome ? (
+                                <span className="mt-1 block text-[11px] leading-relaxed text-slate-500">Expected: {assignment.jobBrief.tasks[index].expectedOutcome}</span>
+                              ) : null}
                               {result?.durationSeconds != null || result?.difficultyRating || result?.emotionRating ? (
                                 <span className="mt-1 flex flex-wrap items-center gap-1.5">
                                   {result.durationSeconds != null ? (

@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
+import type { TaskOutcome } from './testBrief';
 
 export type TestLabSession = {
   id: string;
@@ -111,7 +112,7 @@ function mapTaskResult(row: any): TestTaskResult {
 export async function getTestLabTaskResults(sessionId: string): Promise<TestTaskResult[]> {
   if (!isSupabaseConfigured) return [];
   const { data, error } = await (supabase.from('test_task_results') as any)
-    .select('task_key, task_order, title, status, started_at, completed_at, difficulty_rating, emotion_rating')
+    .select('task_key, task_order, title, status, started_at, completed_at, difficulty_rating, emotion_rating, outcome, outcome_note')
     .eq('session_id', sessionId)
     .order('task_order', { ascending: true });
   if (error) throw error;
@@ -168,10 +169,24 @@ export async function completeTestLabTask(input: {
   if (error) throw error;
 }
 
+export async function recordTestTaskOutcome(input: {
+  sessionId: string;
+  taskKey: string;
+  outcome: TaskOutcome;
+  note?: string;
+}) {
+  if (!isSupabaseConfigured) return;
+  const now = new Date().toISOString();
+  const { error } = await (supabase.from('test_task_results') as any)
+    .update({ status: 'completed', outcome: input.outcome, outcome_note: input.note?.trim() || null, completed_at: now })
+    .eq('session_id', input.sessionId)
+    .eq('task_key', input.taskKey);
+  if (error) throw error;
+}
 export async function reopenTestLabTask(sessionId: string, taskKey: string) {
   if (!isSupabaseConfigured) return;
   const { error } = await (supabase.from('test_task_results') as any)
-    .update({ status: 'active', completed_at: null })
+    .update({ status: 'active', completed_at: null, outcome: null, outcome_note: null })
     .eq('session_id', sessionId)
     .eq('task_key', taskKey);
   if (error) throw error;

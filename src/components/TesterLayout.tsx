@@ -26,6 +26,7 @@ export default function TesterLayout() {
   const location = useLocation();
   const path = location.pathname;
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const isTestLab = path === '/test-lab';
 
   let activeKey: NavItem['key'] = 'dashboard';
   if (path.startsWith('/tester-jobs') || path === '/job-board') {
@@ -105,19 +106,19 @@ export default function TesterLayout() {
       )}
 
       {/* Apple Glassmorphism Sidebar - Fixed 100vh */}
-      <aside className="hidden w-[260px] shrink-0 border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:flex lg:h-screen lg:flex-col overflow-y-auto">
-        <div className="flex items-center gap-3 border-b border-slate-200/60 px-6 py-6">
+      <aside className={`hidden ${isTestLab ? 'w-[180px]' : 'w-[260px]'} shrink-0 border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:flex lg:h-screen lg:flex-col overflow-y-auto`}>
+        <div className={`flex items-center gap-3 border-b border-slate-200/60 ${isTestLab ? 'px-4 py-4' : 'px-6 py-6'}`}>
           <img
             src="/squash-logo.png"
             alt="SQUASH logo"
-            className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
+            className={isTestLab ? 'h-9 w-9 rounded-xl border border-slate-200 object-cover shadow-sm' : 'h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm'}
           />
-          <Link to="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
+          <Link to="/" className={isTestLab ? 'text-lg font-black tracking-tight text-slate-900 hover:text-green-700' : 'text-2xl font-black tracking-tight text-slate-900 hover:text-green-700'}>
             SQUASH
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-2 px-4 py-6">
+        <nav className={`flex-1 space-y-2 ${isTestLab ? 'px-2 py-4' : 'px-4 py-6'}`}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeKey === item.key;
@@ -125,7 +126,7 @@ export default function TesterLayout() {
               <Link
                 to={item.href}
                 key={item.label}
-                className={`apple-press-effect flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200 ${
+                className={`apple-press-effect flex items-center gap-3 rounded-xl ${isTestLab ? 'px-3 py-2.5 text-sm' : 'px-4 py-3'} font-semibold transition-all duration-200 ${
                   isActive ? 'bg-slate-900 text-white shadow-md' : 'text-slate-700 hover:bg-black/[0.04]'
                 }`}
               >
@@ -140,31 +141,25 @@ export default function TesterLayout() {
       {/* Main Column: Fixed Top Header + Isolated Scroll Content */}
       <div className="flex flex-1 flex-col h-screen min-w-0 overflow-hidden">
         {/* Header - Fixed to Top */}
-        <header className="shrink-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-600 lg:hidden hover:bg-slate-50 transition shadow-sm"
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="hidden md:flex max-w-md items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 min-w-[280px] lg:min-w-[360px]">
-                <Search className="h-4 w-4 text-slate-400" />
-                <input
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  placeholder="Search jobs, apps, tasks..."
-                />
+        {!isTestLab ? (
+          <header className="shrink-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl px-4 py-3.5 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setIsMobileSidebarOpen(true)} className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-600 lg:hidden hover:bg-slate-50 transition shadow-sm" aria-label="Open navigation menu">
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div className="hidden md:flex max-w-md items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 min-w-[280px] lg:min-w-[360px]">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search jobs, apps, tasks..." />
+                </div>
               </div>
+              <TesterHeaderNav />
             </div>
-            <TesterHeaderNav />
-          </div>
-        </header>
+          </header>
+        ) : null}
 
         {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+        <main className={isTestLab ? 'flex-1 overflow-y-auto p-0' : 'flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8'}>
           <Outlet />
         </main>
       </div>

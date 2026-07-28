@@ -664,6 +664,11 @@ export async function saveAssignmentBugReport(input: {
   jobId: string;
   sessionId?: string | null;
   description: string;
+  title?: string;
+  stepsToReproduce?: string;
+  expectedResult?: string;
+  actualResult?: string;
+  frequency?: 'once' | 'sometimes' | 'every_time';
   severity: 'Low' | 'Medium' | 'High' | 'Critical';
   screenshotPath?: string | null;
   videoPath?: string | null;
@@ -678,13 +683,17 @@ export async function saveAssignmentBugReport(input: {
     .maybeSingle();
   if (submissionError) throw new Error(formatSupabaseError(submissionError, 'Unable to prepare this bug report.'));
 
-  const { error } = await supabase.from('bug_reports').insert({
+  const { error } = await (supabase.from('bug_reports') as any).insert({
     submission_id: submission?.id ?? null,
     assignment_id: input.assignmentId,
     tester_id: input.testerId,
     job_id: input.jobId,
-    title: input.description.trim().slice(0, 80) || 'Bug report',
+    title: input.title?.trim().slice(0, 80) || input.description.trim().slice(0, 80) || 'Bug report',
     description: input.description.trim(),
+    steps_to_reproduce: input.stepsToReproduce?.trim() || null,
+    expected_result: input.expectedResult?.trim() || null,
+    actual_result: input.actualResult?.trim() || null,
+    frequency: input.frequency || 'sometimes',
     severity: input.severity,
     session_id: input.sessionId ?? null,
     screenshot_path: input.screenshotPath ?? null,

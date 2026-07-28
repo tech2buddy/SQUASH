@@ -86,6 +86,8 @@ export type TestTaskResult = {
   completedAt: string | null;
   difficultyRating: DifficultyRating | null;
   emotionRating: EmotionRating | null;
+  outcome: TaskOutcome | null;
+  outcomeNote: string | null;
   /** Seconds spent on the task, when both timestamps exist. */
   durationSeconds: number | null;
 };
@@ -102,6 +104,8 @@ function mapTaskResult(row: any): TestTaskResult {
     completedAt,
     difficultyRating: row.difficulty_rating || null,
     emotionRating: row.emotion_rating || null,
+    outcome: row.outcome || null,
+    outcomeNote: row.outcome_note || null,
     durationSeconds:
       startedAt && completedAt
         ? Math.max(0, Math.round((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 1000))

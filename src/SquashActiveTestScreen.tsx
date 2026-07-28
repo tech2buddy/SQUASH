@@ -3,104 +3,28 @@ import {
   Camera,
   CheckCircle2,
   ChevronDown,
-  Compass,
-  ExternalLink,
-  Eye,
-  FlaskConical,
-  Mic,
   Monitor,
-  Settings,
-  Shield,
   Square,
-  Users,
-  Video,
   Upload,
-  Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from './auth';
+import type { TaskOutcome } from './lib/testBrief';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
+import TesterHeaderNav from './components/TesterHeaderNav';
 import {
   completeTestLabTask,
+  recordTestTaskOutcome,
   getOrCreateTestLabSession,
   getTestLabTaskResults,
   markTestLabSubmitted,
   reopenTestLabTask,
   saveTestLabProgress,
   startTestLabTask,
-  DIFFICULTY_RATINGS,
-  EMOTION_RATINGS,
-  type DifficultyRating,
-  type EmotionRating,
   type TestTaskResult,
 } from './lib/testLabApi';
-
-type TestingTypeConfig = {
-  bg: string; border: string; text: string; dot: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  mission: string;
-  tips: string[];
-};
-
-const TESTING_TYPE_CONFIG: Record<string, TestingTypeConfig> = {
-  'Functional Testing': {
-    bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', dot: 'bg-blue-500',
-    Icon: Settings,
-    mission: 'Verify every feature works exactly as intended.',
-    tips: ['Follow each user flow step by step', 'Test edge cases and error states', 'Check that every button and link responds correctly', 'Document anything that fails or behaves unexpectedly'],
-  },
-  'Usability Testing': {
-    bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', dot: 'bg-violet-500',
-    Icon: Users,
-    mission: 'Is this app intuitive for a real person?',
-    tips: ['Think out loud as you navigate', 'Note your first moment of confusion', 'Does the flow feel natural and logical?', 'Would a first-time user figure this out alone?'],
-  },
-  'Exploratory Testing': {
-    bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', dot: 'bg-amber-500',
-    Icon: Compass,
-    mission: 'Go off-script. Break assumptions.',
-    tips: ['Try things the developer didn\'t expect', 'Enter unexpected or extreme inputs', 'Use the app in the wrong order', 'Look for hidden or broken states'],
-  },
-  'Regression Testing': {
-    bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', dot: 'bg-red-500',
-    Icon: FlaskConical,
-    mission: 'Make sure nothing that worked before is now broken.',
-    tips: ['Test all core user flows thoroughly', 'Check previously known working features', 'Look for anything that feels "off" vs before', 'Pay close attention to recent changes'],
-  },
-  'Feature Validation Testing': {
-    bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', dot: 'bg-yellow-500',
-    Icon: CheckCircle2,
-    mission: 'Does this new feature do exactly what it promises?',
-    tips: ['Test the happy path first', 'Then deliberately test edge cases', 'Compare behaviour to what was described', 'Note any gap between expectation and reality'],
-  },
-  'First Impression Testing': {
-    bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700', dot: 'bg-pink-500',
-    Icon: Eye,
-    mission: 'You have 5 minutes of fresh eyes. Use them.',
-    tips: ['Note your very first reaction — good or bad', 'Is the purpose of the app immediately clear?', 'What\'s confusing or unexpected in the first screen?', 'Would you continue using this app?'],
-  },
-  'Compatibility Testing': {
-    bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700', dot: 'bg-cyan-500',
-    Icon: Monitor,
-    mission: 'Does it work consistently on your device?',
-    tips: ['Note your exact device and OS version', 'Look for layout or rendering issues', 'Test on your screen size and resolution', 'Check performance on your connection type'],
-  },
-  'Accessibility Testing': {
-    bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', dot: 'bg-green-500',
-    Icon: Shield,
-    mission: 'Can someone with different abilities use this comfortably?',
-    tips: ['Are tap targets large enough to use easily?', 'Is all text readable at default size?', 'Are error messages clear and helpful?', 'Can the app be navigated without precise tapping?'],
-  },
-};
-
-const DEFAULT_TYPE_CONFIG: TestingTypeConfig = {
-  bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', dot: 'bg-slate-400',
-  Icon: Zap,
-  mission: 'Test thoroughly and report everything you find.',
-  tips: ['Follow the task checklist carefully', 'Note any bugs or unexpected behaviour', 'Screenshot or record any issues', 'Write a clear summary for the developer'],
-};
 
 const fallbackTasks = [
   'Create an account / Sign up',
@@ -125,8 +49,13 @@ export default function SquashActiveTestScreen() {
   const [tasks, setTasks] = useState(fallbackTasks);
   const [taskState, setTaskState] = useState(fallbackTasks.map((_, index) => index < 2));
   const [taskResults, setTaskResults] = useState<TestTaskResult[]>([]);
-  const [ratingPromptIndex, setRatingPromptIndex] = useState<number | null>(null);
+  const [expandedTaskIndex, setExpandedTaskIndex] = useState(0);
   const [bugDescription, setBugDescription] = useState('');
+  const [bugTitle, setBugTitle] = useState('');
+  const [bugSteps, setBugSteps] = useState('');
+  const [bugExpected, setBugExpected] = useState('');
+  const [bugActual, setBugActual] = useState('');
+  const [bugFrequency, setBugFrequency] = useState<'once' | 'sometimes' | 'every_time'>('sometimes');
   const [reportSummary, setReportSummary] = useState('');
   const [severity, setSeverity] = useState('Medium');
   const [bugNotice, setBugNotice] = useState('');
@@ -221,11 +150,8 @@ export default function SquashActiveTestScreen() {
     const taskKey = `task-${index + 1}`;
 
     if (checked) {
-      // Ask how it felt right after completing, while it is still fresh.
-      setRatingPromptIndex(index);
       completeTestLabTask({ sessionId: labSessionId, taskKey })
         .then(() => {
-          // Start the next unfinished task so its duration is measured.
           const nextIndex = taskState.findIndex((done, idx) => idx !== index && !done);
           if (nextIndex >= 0) return startTestLabTask(labSessionId, `task-${nextIndex + 1}`);
           return undefined;
@@ -233,23 +159,30 @@ export default function SquashActiveTestScreen() {
         .then(() => refreshTaskResults(labSessionId))
         .catch(() => {});
     } else {
-      setRatingPromptIndex(null);
       reopenTestLabTask(labSessionId, taskKey)
         .then(() => refreshTaskResults(labSessionId))
         .catch(() => {});
     }
   };
 
-  const rateTask = (index: number, rating: { difficulty?: DifficultyRating; emotion?: EmotionRating }) => {
+  const recordTaskOutcome = async (index: number, outcome: TaskOutcome) => {
     if (!labSessionId) return;
-    completeTestLabTask({
-      sessionId: labSessionId,
-      taskKey: `task-${index + 1}`,
-      difficultyRating: rating.difficulty,
-      emotionRating: rating.emotion,
-    })
-      .then(() => refreshTaskResults(labSessionId))
-      .catch(() => {});
+    let note = '';
+    if (outcome === 'blocked' || outcome === 'not_applicable') {
+      note = window.prompt(outcome === 'blocked' ? 'Why could this task not be completed?' : 'Why does this task not apply in your environment?')?.trim() || '';
+      if (!note) {
+        setProgressNotice('Add a reason before marking a task blocked or not applicable.');
+        return;
+      }
+    }
+    setTaskState((previous) => previous.map((done, taskIndex) => taskIndex === index ? true : done));
+    try {
+      await recordTestTaskOutcome({ sessionId: labSessionId, taskKey: `task-${index + 1}`, outcome, note });
+      await refreshTaskResults(labSessionId);
+      if (outcome === 'fail') setBugNotice('Document the failed task with a structured bug report below.');
+    } catch (error) {
+      setProgressNotice(error instanceof Error ? error.message : 'Could not save this task result.');
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -411,7 +344,11 @@ export default function SquashActiveTestScreen() {
     }
   };
   const saveBugReport = async () => {
-    const normalizedDescription = bugDescription.trim();
+    const normalizedDescription = [bugDescription.trim(), 'Steps: ' + bugSteps.trim(), 'Expected: ' + bugExpected.trim(), 'Actual: ' + bugActual.trim()].filter(Boolean).join('\n\n');
+    if (!bugTitle.trim() || !bugSteps.trim() || !bugExpected.trim() || !bugActual.trim()) {
+      setBugNotice('Add a title, reproduction steps, expected result and actual result before saving.');
+      return;
+    }
     if (!normalizedDescription) {
       setBugNotice('Please describe the issue before saving.');
       return;
@@ -445,6 +382,11 @@ export default function SquashActiveTestScreen() {
           jobId: assignment.jobId,
           sessionId: labSessionId,
           description: bugDescription,
+          title: bugTitle,
+          stepsToReproduce: bugSteps,
+          expectedResult: bugExpected,
+          actualResult: bugActual,
+          frequency: bugFrequency,
           severity: severity as 'Low' | 'Medium' | 'High' | 'Critical',
           screenshotPath,
           videoPath,
@@ -458,6 +400,10 @@ export default function SquashActiveTestScreen() {
 
     setBugNotice(recordedVideoUrl || evidenceFile ? 'Bug report with evidence saved.' : 'Bug report saved.');
     setBugDescription('');
+    setBugTitle('');
+    setBugSteps('');
+    setBugExpected('');
+    setBugActual('');
     setEvidenceFile(null);
     if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
     setEvidencePreviewUrl('');
@@ -481,7 +427,7 @@ export default function SquashActiveTestScreen() {
       setProgressNotice('Evidence is attached but not uploaded yet. Click Save Bug Report before submitting the test.');
       return;
     }
-    if (bugDescription.trim()) {
+    if (bugDescription.trim() || bugTitle.trim() || bugSteps.trim() || bugExpected.trim() || bugActual.trim()) {
       setProgressNotice('You have an unsaved bug report. Save it or clear the description before submitting the test.');
       return;
     }
@@ -552,388 +498,578 @@ export default function SquashActiveTestScreen() {
   );
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-8">
-            <div className="flex items-center justify-between gap-3 animate-fade-up">
-              <div className="flex min-w-0 items-center gap-3">
-                {assignment?.jobLogoUrl ? (
-                  <img src={assignment.jobLogoUrl} alt={`${assignment.jobTitle} logo`} className="h-10 w-10 rounded-2xl border border-slate-200 object-cover shadow-2xs shrink-0" />
-                ) : null}
-                <div>
-                  <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">{assignment?.jobTitle || 'Assigned test'}</h1>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-extrabold text-slate-700 mt-1 inline-block">
-                    {assignment?.jobPlatform || 'Usability Test'}
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-between">
+      {/* Top Header Bar */}
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-3 sm:px-6 lg:px-8 shadow-xs">
+        {/* Left: Job Logo + Title + Metadata Badges */}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-sm overflow-hidden">
+            {assignment?.jobLogoUrl ? (
+              <img src={assignment.jobLogoUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-sm font-black tracking-tight">
+                {(assignment?.jobTitle || 'B').slice(0, 1)}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+            <h1 className="text-lg font-bold tracking-tight text-slate-900 truncate sm:text-xl">
+              {assignment?.jobTitle || 'Bolt — Checkout Flow Test'}
+            </h1>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">
+              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 border border-emerald-100">
+                Test in progress
+              </span>
+              <span className="text-slate-300">|</span>
+              <span>
+                Payout <strong className="font-bold text-emerald-600 ml-1">R{(assignment?.jobPackageKey as string) === 'growth' ? 120 : (assignment?.jobPackageKey as string) === 'pro' ? 200 : 80}</strong>
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="inline-flex items-center gap-1 text-slate-500">
+                <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {assignment?.dueAt ? new Date(assignment.dueAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '25 May 2025, 23:59'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Header Navigation & Profile */}
+        <div className="flex items-center gap-3 shrink-0">
+          <TesterHeaderNav />
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Responsive 2-Column Grid */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+          {/* Left Column (Brief & Tasks) */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* 1. Developer Brief Card */}
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base mb-4 border-b border-slate-100 pb-3">
+                <span className="text-slate-400 font-mono text-sm font-bold">&lt;/&gt;</span>
+                <h2>Developer Brief</h2>
+              </div>
+
+              <div className="space-y-3.5 text-xs">
+                {/* Objective */}
+                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 items-start">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                    <span className="text-sm">🎯</span> Objective
+                  </span>
+                  <p className="text-slate-700 leading-relaxed font-medium">
+                    {assignment?.jobBrief.objective || assignment?.jobFocusAreas || assignment?.jobDescription || 'Verify that users can add a payment method and proceed through the checkout flow without errors.'}
+                  </p>
+                </div>
+
+                {/* Test Link */}
+                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 items-center">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                    <span className="text-sm">🔗</span> Test link
+                  </span>
+                  <div className="flex items-center justify-between gap-3 min-w-0">
+                    <a
+                      href={assignment?.jobAppUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-600 hover:underline truncate"
+                    >
+                      {assignment?.jobAppUrl || 'https://bolt.new/checkout'}
+                    </a>
+                    {assignment?.jobAppUrl ? (
+                      <a
+                        href={assignment.jobAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                      >
+                        Open test website ↗
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Required Environment */}
+                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 items-start">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                    <span className="text-sm">🖥️</span> Required environment
+                  </span>
+                  <span className="text-slate-700 font-medium">
+                    {assignment?.jobBrief.requiredEnvironment || assignment?.jobPlatform || 'Windows 11, Chrome (latest), 1920 x 1080'}
+                  </span>
+                </div>
+
+                {/* Out of Scope */}
+                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 items-start">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                    <span className="text-sm">🚫</span> Out of scope
+                  </span>
+                  <span className="text-slate-600 font-medium">
+                    {assignment?.jobBrief.outOfScope || 'Promotions, coupon codes, saved addresses, and account deletion.'}
                   </span>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {isRecording ? (
-                  <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-600 shadow-2xs">
-                    <Mic className="h-3.5 w-3.5" /> REC {formatDuration(60 - recordingSecondsLeft)}
-                  </div>
-                ) : (
-                  <div className="rounded-full border border-green-200 bg-green-50 px-3.5 py-1.5 text-xs font-bold text-green-700 shadow-2xs">Test in progress</div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="apple-bento-card overflow-hidden">
-                {(() => {
-                  // Derive testing type from platform label, with fuzzy matching
-                  const platform = assignment?.jobPlatform || '';
-                  const matchedKey = Object.keys(TESTING_TYPE_CONFIG).find(k =>
-                    platform.toLowerCase().includes(k.toLowerCase().split(' ')[0])
-                  ) || '';
-                  const cfg = TESTING_TYPE_CONFIG[matchedKey] || DEFAULT_TYPE_CONFIG;
-                  const PrimaryIcon = cfg.Icon;
-                  const typeLabel = matchedKey || platform || 'Active Test';
-                  const focusText = assignment?.jobBrief.objective || assignment?.jobFocusAreas || assignment?.jobDescription || '';
-
-                  return (
-                    <>
-                      {/* Coloured banner */}
-                      <div className={`${cfg.bg} border-b ${cfg.border} px-5 pt-4 pb-3.5`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 border ${cfg.border} shadow-2xs`}>
-                            <PrimaryIcon className={`h-5 w-5 ${cfg.text}`} />
-                          </div>
-                          <div>
-                            <div className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${cfg.text} opacity-70`}>Testing Brief</div>
-                            <div className={`text-base font-extrabold ${cfg.text}`}>{typeLabel}</div>
-                          </div>
-                        </div>
-                        <p className={`mt-2 text-xs font-semibold italic ${cfg.text} opacity-80 leading-relaxed`}>
-                          "{cfg.mission}"
-                        </p>
-                      </div>
-
-                      {/* Progress + Launch */}
-                      <div className="px-5 py-3.5 flex items-center gap-3 border-b border-slate-100">
-                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
-                          <svg className="h-11 w-11 -rotate-90" viewBox="0 0 80 80">
-                            <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="9" />
-                            <circle
-                              cx="40" cy="40" r="32" fill="none"
-                              stroke="#34c759" strokeWidth="9"
-                              strokeLinecap="round"
-                              strokeDasharray={`${2 * Math.PI * 32}`}
-                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
-                              className="transition-all duration-500"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[10px] font-extrabold text-slate-900">{progressPercent}%</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-bold text-slate-700">{completedTasks}/{taskState.length} tasks done</span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-slate-100">
-                            <div className="h-1.5 rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => window.open(assignment?.jobAppUrl || '#', '_blank', 'noopener,noreferrer')}
-                          disabled={!assignment?.jobAppUrl}
-                          className="shrink-0 flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-40 transition apple-press-effect"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Launch
-                        </button>
-                      </div>
-
-                      {/* What to look for */}
-                      {focusText ? (
-                        <div className={`mx-4 mt-4 rounded-2xl border ${cfg.border} ${cfg.bg} p-4`}>
-                          <div className={`text-[10px] font-extrabold uppercase tracking-[0.1em] ${cfg.text} mb-1.5`}>What to look for</div>
-                          <p className="text-xs leading-relaxed text-slate-700 font-medium whitespace-pre-line">{focusText}</p>
-                        </div>
-                      ) : null}
-
-                      {/* Tips */}
-                      <div className="px-5 pt-4 pb-5">
-                        <div className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-2.5">Testing Tips</div>
-                        <div className="space-y-2">
-                          {cfg.tips.slice(0, 3).map((tip, i) => (
-                            <div key={i} className="flex items-start gap-2.5">
-                              <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />
-                              <span className="text-xs leading-relaxed text-slate-600 font-medium">{tip}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </section>
-
-              <section className="space-y-4">
-                <div id="task-list" className="apple-bento-card p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-900">Your Tasks</h2>
-                      {loadingAssignment ? <p className="mt-1 text-xs font-semibold text-slate-500">Loading assignment...</p> : null}
-                      {assignmentError ? <p className="mt-1 text-xs font-semibold text-red-600">{assignmentError}</p> : null}
-                    </div>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                      {completedTasks} / {taskState.length} Done
-                    </div>
-                  </div>
-
-                  <div className="mt-3.5 space-y-2">
-                    {tasks.map((task, index) => {
-                      const result = taskResults.find((item) => item.taskKey === `task-${index + 1}`);
-                      const showRatingPrompt = ratingPromptIndex === index && taskState[index];
-                      return (
-                        <div key={task} className="rounded-2xl border border-slate-100 bg-slate-50/50">
-                          <label className="flex cursor-pointer items-start gap-3 px-3.5 py-3 transition hover:bg-slate-100/60">
-                            <input
-                              type="checkbox"
-                              checked={taskState[index]}
-                              onChange={(e) => toggleTask(index, e.target.checked)}
-                              className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-slate-900 focus:ring-slate-900"
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className={`block text-xs ${taskState[index] ? 'font-bold text-slate-900 line-through opacity-60' : 'font-medium text-slate-700'}`}>
-                                {task}
-                              </span>
-                              {assignment?.jobBrief.tasks[index]?.expectedOutcome ? (
-                                <span className="mt-1 block text-[11px] leading-relaxed text-slate-500">Expected: {assignment.jobBrief.tasks[index].expectedOutcome}</span>
-                              ) : null}
-                              {result?.durationSeconds != null || result?.difficultyRating || result?.emotionRating ? (
-                                <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                                  {result.durationSeconds != null ? (
-                                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                      {formatDuration(result.durationSeconds)}
-                                    </span>
-                                  ) : null}
-                                  {result.difficultyRating ? (
-                                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                      {result.difficultyRating}
-                                    </span>
-                                  ) : null}
-                                  {result.emotionRating ? (
-                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
-                                      result.emotionRating === 'Confusing' || result.emotionRating === 'Frustrating'
-                                        ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                                        : 'bg-white text-slate-600 ring-slate-200'
-                                    }`}>
-                                      {result.emotionRating}
-                                    </span>
-                                  ) : null}
-                                </span>
-                              ) : null}
-                            </span>
-                          </label>
-
-                          {showRatingPrompt ? (
-                            <div className="border-t border-slate-100 px-3.5 py-3">
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="text-[11px] font-bold text-slate-700">How was that step?</div>
-                                <button
-                                  type="button"
-                                  onClick={() => setRatingPromptIndex(null)}
-                                  className="text-[10px] font-semibold text-slate-400 hover:text-slate-600"
-                                >
-                                  Skip
-                                </button>
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                {EMOTION_RATINGS.map((emotion) => (
-                                  <button
-                                    key={emotion}
-                                    type="button"
-                                    onClick={() => rateTask(index, { emotion })}
-                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
-                                      result?.emotionRating === emotion
-                                        ? 'bg-slate-900 text-white'
-                                        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-300'
-                                    }`}
-                                  >
-                                    {emotion}
-                                  </button>
-                                ))}
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                {DIFFICULTY_RATINGS.map((difficulty) => (
-                                  <button
-                                    key={difficulty}
-                                    type="button"
-                                    onClick={() => rateTask(index, { difficulty })}
-                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
-                                      result?.difficultyRating === difficulty
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-300'
-                                    }`}
-                                  >
-                                    {difficulty}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="apple-bento-card p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Bug className="h-4.5 w-4.5 text-red-500" />
-                    <h2 className="text-base font-bold text-slate-900">Report a Bug</h2>
-                  </div>
-
-                  <textarea
-                    rows={3}
-                    value={bugDescription}
-                    onChange={(e) => setBugDescription(e.target.value)}
-                    placeholder="Describe the issue you found..."
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-green-500"
-                  />
-
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <select
-                        value={severity}
-                        onChange={(e) => setSeverity(e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2 pr-8 text-xs text-slate-600 outline-none transition focus:border-green-500"
-                      >
-                        <option>Critical</option>
-                        <option>High</option>
-                        <option>Medium</option>
-                        <option>Low</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    </div>
-                    <input
-                      ref={evidenceInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
-                      className="hidden"
-                      onChange={(event) => selectEvidence(event.target.files?.[0] ?? null)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => evidenceInputRef.current?.click()}
-                      className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      <Upload className="h-3.5 w-3.5" /> Attach file
-                    </button>
-                    {!isRecording ? (
-                      <button
-                        type="button"
-                        onClick={startRecordingWithCountdown}
-                        className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100"
-                      >
-                        <Video className="h-3.5 w-3.5" /> Record
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => stopRecording(false)}
-                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        <Square className="h-3.5 w-3.5" /> Stop
-                      </button>
-                    )}
-                  </div>
-
-                  {recordCountdown !== null ? (
-                    <p className="mt-2 text-xs font-semibold text-amber-700">Starting in {recordCountdown}...</p>
-                  ) : null}
-                  {isRecording ? (
-                    <p className="mt-2 text-xs font-semibold text-red-600">● REC {formatDuration(recordingSecondsLeft)}</p>
-                  ) : null}
-
-                  {recordedVideoUrl ? (
-                    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <div className="mb-1.5 text-[11px] font-semibold text-slate-600">Recording — {formatDuration(recordedVideoDuration)}</div>
-                      <video controls src={recordedVideoUrl} className="max-h-32 w-full rounded-lg border border-slate-200 bg-black/90" />
-                    </div>
-                  ) : null}
-
-                  {evidencePreviewUrl ? (
-                    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <div className="mb-1.5 text-[11px] font-semibold text-slate-600">Attached evidence</div>
-                      {evidenceFile?.type.startsWith('image/') ? (
-                        <img src={evidencePreviewUrl} alt="Bug evidence preview" className="max-h-40 w-full rounded-lg border border-slate-200 object-contain" />
-                      ) : (
-                        <video controls src={evidencePreviewUrl} className="max-h-40 w-full rounded-lg border border-slate-200 bg-black/90" />
-                      )}
-                    </div>
-                  ) : null}
-
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={captureScreenshot}
-                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      <Camera className="h-3.5 w-3.5" /> Screenshot
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveBugReport}
-                      className="flex-1 rounded-xl bg-red-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-600"
-                    >
-                      Save Bug Report
-                    </button>
-                  </div>
-                  {bugNotice ? <p className="mt-2 text-xs font-semibold text-green-700">{bugNotice}</p> : null}
-                </div>
-
-                <div className="rounded-2xl border border-green-100 bg-green-50 p-4 shadow-sm">
-                  <div className="text-sm font-bold text-slate-900 mb-1">Testing Notes</div>
-                  <label>
-                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">Final report summary</span>
-                    <textarea
-                      rows={3}
-                      value={reportSummary}
-                      onChange={(e) => setReportSummary(e.target.value)}
-                      placeholder="Summarize what worked, what felt confusing, and any important notes for the developer..."
-                      className="w-full rounded-xl border border-green-100 bg-white px-3 py-2.5 text-xs outline-none transition focus:border-green-500"
-                    />
-                  </label>
-                </div>
-              </section>
-            </div>
-
-            <section className="fixed bottom-[64px] inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:static lg:mt-4 lg:rounded-2xl lg:bg-white lg:px-5 lg:py-4 lg:shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Progress</span>
-                    <span className="font-semibold text-slate-700">{completedTasks}/{taskState.length} done</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-100">
-                    <div className="h-2 rounded-full bg-green-600 transition-all" style={{ width: `${progressPercent}%` }} />
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={saveProgress}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={submitTest}
-                    className="rounded-xl bg-green-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-green-700"
-                  >
-                    Submit Test
-                  </button>
-                </div>
-              </div>
-              {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-green-700">{progressNotice}</p> : null}
             </section>
 
+            {/* 2. Test Tasks Card */}
+            <section id="task-list" className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                  <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <h2>Test Tasks</h2>
+                  <span className="text-slate-300 font-normal">—</span>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {completedTasks} of {taskState.length} complete
+                  </span>
+                </div>
+              </div>
+
+              {loadingAssignment ? <p className="py-2 text-xs font-semibold text-slate-500">Loading tasks...</p> : null}
+              {assignmentError ? <p className="py-2 text-xs font-semibold text-red-600">{assignmentError}</p> : null}
+
+              {/* Tasks Accordion List */}
+              <div className="space-y-3">
+                {tasks.map((task, index) => {
+                  const result = taskResults.find((item) => item.taskKey === 'task-' + (index + 1));
+                  const isExpanded = expandedTaskIndex === index;
+                  const structuredTask = assignment?.jobBrief.tasks[index];
+                  const status = result?.outcome || (taskState[index] ? 'completed' : 'pending');
+
+                  return (
+                    <div
+                      key={task + index}
+                      className={`rounded-xl border transition-all ${
+                        isExpanded ? 'border-blue-200 bg-white shadow-xs' : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                      }`}
+                    >
+                      {/* Accordion Header */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTaskIndex(isExpanded ? -1 : index)}
+                        className="flex w-full items-center gap-3 p-3.5 text-left"
+                      >
+                        {/* Number Circle or Check */}
+                        <span
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                            taskState[index]
+                              ? 'bg-emerald-500 text-white'
+                              : isExpanded
+                              ? 'border-2 border-blue-500 text-blue-600 font-extrabold'
+                              : 'border border-slate-300 bg-white text-slate-600'
+                          }`}
+                        >
+                          {taskState[index] ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}
+                        </span>
+
+                        {/* Task Title */}
+                        <span className="min-w-0 flex-1 text-xs font-bold text-slate-800">
+                          {task}
+                        </span>
+
+                        {/* Status Badge */}
+                        <div className="flex items-center gap-2">
+                          {status === 'pass' || status === 'completed' || taskState[index] ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200/60">
+                              <CheckCircle2 className="h-3 w-3" /> Done
+                            </span>
+                          ) : isExpanded ? (
+                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600">
+                              In progress
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                              Pending
+                            </span>
+                          )}
+
+                          <ChevronDown
+                            className={`h-4 w-4 text-slate-400 transition-transform ${
+                              isExpanded ? 'rotate-180 text-slate-600' : ''
+                            }`}
+                          />
+                        </div>
+                      </button>
+
+                      {/* Expanded Task Steps & Outcomes */}
+                      {isExpanded ? (
+                        <div className="border-t border-slate-100 p-4 space-y-4 bg-white rounded-b-xl">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Steps to Perform */}
+                            <div>
+                              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                Steps to perform
+                              </h3>
+                              {structuredTask?.instructions ? (
+                                <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line">
+                                  {structuredTask.instructions}
+                                </p>
+                              ) : (
+                                <ol className="space-y-1.5 text-xs text-slate-700">
+                                  <li className="flex items-start gap-2">
+                                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">1</span>
+                                    <span>Navigate to the billing/target section.</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">2</span>
+                                    <span>Execute task requirement for: <strong>{task}</strong>.</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">3</span>
+                                    <span>Observe behavior and document outcomes.</span>
+                                  </li>
+                                </ol>
+                              )}
+                            </div>
+
+                            {/* Expected Result */}
+                            <div className="border-t border-slate-100 pt-3 md:border-t-0 md:border-l md:border-slate-100 md:pl-4 md:pt-0">
+                              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                Expected result
+                              </h3>
+                              <p className="text-xs leading-relaxed text-slate-700 font-medium">
+                                {structuredTask?.expectedOutcome || 'The payment method is saved and appears in the list with masked card details without errors.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Outcome Buttons: PASS | FAIL | BLOCKED */}
+                          <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => void recordTaskOutcome(index, 'pass')}
+                              className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                result?.outcome === 'pass' || (taskState[index] && result?.outcome !== 'fail' && result?.outcome !== 'blocked')
+                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
+                                  : 'border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50/50'
+                              }`}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> PASS
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => void recordTaskOutcome(index, 'fail')}
+                              className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                result?.outcome === 'fail'
+                                  ? 'border-rose-500 bg-rose-50 text-rose-700 ring-2 ring-rose-500/20'
+                                  : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50/50'
+                              }`}
+                            >
+                              <Square className="h-3.5 w-3.5 rotate-45 text-rose-500" /> FAIL
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => void recordTaskOutcome(index, 'blocked')}
+                              className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                result?.outcome === 'blocked'
+                                  ? 'border-amber-500 bg-amber-50 text-amber-700 ring-2 ring-amber-500/20'
+                                  : 'border-amber-200 bg-white text-amber-600 hover:bg-amber-50/50'
+                              }`}
+                            >
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-amber-500 flex items-center justify-center text-[9px] font-black">/</span> BLOCKED
+                            </button>
+
+                            {taskState[index] ? (
+                              <button
+                                type="button"
+                                onClick={() => toggleTask(index, false)}
+                                className="ml-auto text-[11px] font-semibold text-slate-400 hover:text-slate-600 hover:underline"
+                              >
+                                Reset task
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {result?.outcomeNote ? (
+                            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 font-medium">
+                              Note: {result.outcomeNote}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column (Evidence, Bug Report, Captured Environment) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* 1. Evidence for Task Card */}
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
+                  <Camera className="h-4.5 w-4.5 text-blue-600" />
+                  <h2>Evidence for Task {expandedTaskIndex >= 0 ? expandedTaskIndex + 1 : 1}</h2>
+                </div>
+                <span className="text-xs font-semibold text-slate-400">
+                  {evidenceFile || recordedVideoUrl ? '1 / 3 uploaded' : '0 / 3 uploaded'}
+                </span>
+              </div>
+
+              <input
+                ref={evidenceInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+                className="hidden"
+                onChange={(event) => selectEvidence(event.target.files?.[0] ?? null)}
+              />
+
+              {/* Dotted Upload Drop Area */}
+              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center transition hover:bg-slate-50">
+                {evidencePreviewUrl || recordedVideoUrl ? (
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">{evidenceFile?.name || 'Screen recording ready'}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">Evidence will attach when saving the bug report.</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-2xs text-slate-400 mb-2">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">No evidence added yet</p>
+                    <p className="mt-1 text-[11px] text-slate-500">Add a screenshot, screen recording, or file.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Buttons Row */}
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={captureScreenshot}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                >
+                  <Camera className="h-3.5 w-3.5 text-slate-500" /> Screenshot
+                </button>
+                <button
+                  type="button"
+                  onClick={isRecording ? () => stopRecording(false) : startRecordingWithCountdown}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-100 transition shadow-2xs"
+                >
+                  <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                  {isRecording ? 'Stop' : 'Record screen'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => evidenceInputRef.current?.click()}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                >
+                  <Upload className="h-3.5 w-3.5 text-slate-500" /> Attach file
+                </button>
+              </div>
+
+              {recordCountdown !== null ? (
+                <p className="mt-2 text-xs font-semibold text-amber-700 text-center">Starting in {recordCountdown}s...</p>
+              ) : null}
+              {isRecording ? (
+                <p className="mt-2 text-xs font-semibold text-rose-600 text-center">Recording: {formatDuration(60 - recordingSecondsLeft)}</p>
+              ) : null}
+
+              {evidencePreviewUrl && evidenceFile?.type.startsWith('image/') ? (
+                <img src={evidencePreviewUrl} alt="Evidence preview" className="mt-3 max-h-40 w-full rounded-lg border border-slate-200 object-contain" />
+              ) : null}
+              {recordedVideoUrl ? (
+                <video controls src={recordedVideoUrl} className="mt-3 max-h-40 w-full rounded-lg bg-black" />
+              ) : null}
+            </section>
+
+            {/* 2. Report a Bug Card */}
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-rose-500 font-bold text-base mb-4 border-b border-slate-100 pb-3">
+                <Bug className="h-4.5 w-4.5" />
+                <h2 className="text-slate-900">Report a Bug</h2>
+              </div>
+
+              <div className="space-y-3.5">
+                {/* Title */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Bug title <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    value={bugTitle}
+                    onChange={(event) => setBugTitle(event.target.value)}
+                    placeholder="Short, clear summary of the issue"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                  />
+                </div>
+
+                {/* Steps */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Steps to reproduce <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={bugSteps}
+                    onChange={(event) => setBugSteps(event.target.value)}
+                    placeholder="List the exact steps to reproduce the issue"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                  />
+                </div>
+
+                {/* Expected & Actual Side by Side */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Expected result <span className="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={bugExpected}
+                      onChange={(event) => setBugExpected(event.target.value)}
+                      placeholder="What should have happened?"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Actual result <span className="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={bugActual}
+                      onChange={(event) => setBugActual(event.target.value)}
+                      placeholder="What actually happened?"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Severity & Reproducibility Side by Side */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Severity <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={severity}
+                      onChange={(event) => setSeverity(event.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                    >
+                      <option value="Critical">🔴 Critical</option>
+                      <option value="High">🟠 High</option>
+                      <option value="Medium">🟡 Medium</option>
+                      <option value="Low">🟢 Low</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Reproducibility <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={bugFrequency}
+                      onChange={(event) => setBugFrequency(event.target.value as 'once' | 'sometimes' | 'every_time')}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                    >
+                      <option value="every_time">Every time</option>
+                      <option value="sometimes">Sometimes</option>
+                      <option value="once">Once</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={saveBugReport}
+                  className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-bold text-white transition shadow-xs"
+                >
+                  Save Bug Report
+                </button>
+                {bugNotice ? <p className="text-xs font-semibold text-emerald-600 text-center">{bugNotice}</p> : null}
+              </div>
+            </section>
+
+            {/* 3. Captured Environment Card */}
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base mb-3 border-b border-slate-100 pb-3">
+                <Monitor className="h-4.5 w-4.5 text-slate-600" />
+                <h2>Captured environment</h2>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">OS</p>
+                  <p className="mt-1 font-semibold text-slate-800 truncate">
+                    {typeof navigator === 'undefined' ? 'Windows 11' : navigator.platform.includes('Win') ? 'Windows 11' : navigator.platform || 'macOS'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Browser</p>
+                  <p className="mt-1 font-semibold text-slate-800 truncate">
+                    {typeof navigator === 'undefined' ? 'Chrome 150.0.0.0' : navigator.userAgent.includes('Chrome') ? 'Chrome 150.0.0.0' : 'Safari'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Resolution</p>
+                  <p className="mt-1 font-semibold text-slate-800">
+                    {typeof window === 'undefined' ? '1920 x 1080' : `${window.screen.width} x ${window.screen.height}`}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+
+      {/* Floating Bottom Action Bar */}
+      <footer className="sticky bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Readiness Progress Bar */}
+          <div className="flex items-center gap-3.5 flex-1 w-full sm:max-w-md">
+            <span className="text-xs font-bold text-slate-700 whitespace-nowrap">
+              Report readiness
+            </span>
+            <div className="h-2.5 flex-1 rounded-full bg-slate-100 overflow-hidden border border-slate-200/50">
+              <div
+                className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs font-black text-slate-900 min-w-[32px] text-right">
+              {progressPercent}%
+            </span>
+          </div>
+
+          {/* Prompt */}
+          <p className="hidden md:block text-xs font-medium text-slate-400">
+            Complete all tasks and add any necessary bug reports.
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={saveProgress}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+            >
+              <Square className="h-3.5 w-3.5 text-slate-400" /> Save draft
+            </button>
+            <button
+              type="button"
+              onClick={submitTest}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Review & Submit
+            </button>
+          </div>
+        </div>
+        {progressNotice ? <p className="mt-2 text-xs font-semibold text-emerald-600 text-center">{progressNotice}</p> : null}
+      </footer>
     </div>
   );
 }

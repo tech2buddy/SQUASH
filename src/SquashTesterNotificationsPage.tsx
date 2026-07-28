@@ -7,7 +7,7 @@ import {
   FileText,
   ShieldCheck,
   } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 
 
@@ -57,7 +57,7 @@ export default function SquashTesterNotificationsPage() {
   const [filter, setFilter] = useState<FilterType>('All');
   const [loading, setLoading] = useState(true);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!userId) return;
     try {
       setLoading(true);
@@ -68,7 +68,7 @@ export default function SquashTesterNotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchNotifications();
@@ -84,7 +84,7 @@ export default function SquashTesterNotificationsPage() {
     return () => {
       window.removeEventListener('squash_notification_updated', handleUpdated);
     };
-  }, [userId]);
+  }, [fetchNotifications, userId]);
 
   
 

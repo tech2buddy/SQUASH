@@ -1,6 +1,6 @@
 import { ClipboardList, CreditCard, FileText, Home, Menu, Search, UserCircle2, X } from 'lucide-react';
 import { type ComponentType, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router';
 import DeveloperHeaderNav from './DeveloperHeaderNav';
 import MobileTabBar from './MobileTabBar';
 

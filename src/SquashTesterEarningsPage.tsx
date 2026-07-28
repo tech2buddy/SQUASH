@@ -235,7 +235,7 @@ export default function SquashTesterEarningsPage() {
     return { monthlyEarnings, monthlyLabels, earningsMax, earningsPoints, earningsArea };
   }, [earningsSummary]);
 
-  if (true && isLoadingData) {
+  if (isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading earnings data...

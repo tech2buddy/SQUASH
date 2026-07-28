@@ -1,6 +1,6 @@
 import { Code2, Eye, Lock, Mail, UserRound } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { resolvePostLoginPath, routeRole, useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
 

@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useAuth } from './auth';
 
 export default function SquashNotFoundPage() {

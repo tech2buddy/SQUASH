@@ -1,6 +1,6 @@
 import { ArrowLeft, CheckCircle2, Eye, KeyRound, Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { useAuth } from './auth';

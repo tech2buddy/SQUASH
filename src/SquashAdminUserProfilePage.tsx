@@ -11,8 +11,8 @@ import {
   Search,
   Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router';
 import { useAuth } from './auth';
 import {
   getAdminUserDetail,
@@ -43,7 +43,7 @@ export default function SquashAdminUserProfilePage() {
   const [notificationBody, setNotificationBody] = useState('Please update your profile information so we can keep your account in good standing.');
   const [adminNote, setAdminNote] = useState('');
 
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     setError('');
@@ -54,11 +54,11 @@ export default function SquashAdminUserProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     loadUser();
-  }, [userId]);
+  }, [loadUser]);
 
   const sendNotification = async () => {
     if (!session?.userId || !user) return;

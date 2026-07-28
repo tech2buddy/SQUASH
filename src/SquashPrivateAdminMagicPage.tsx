@@ -7,7 +7,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from './auth';
 import { supabase } from './lib/supabase';
 
@@ -21,7 +21,7 @@ export default function SquashPrivateAdminMagicPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (loading || !session) return;
+    if (loading || !session?.userId) return;
     let alive = true;
 
     refreshSessionProfile()

@@ -1,6 +1,6 @@
 import { ArrowLeft, CheckCircle2, Clock3, FileText, Globe2, Lock, Smartphone, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { getSpecializationLabel } from './components/testerSpecializations';

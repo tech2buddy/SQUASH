@@ -1,6 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router';
 import { useAuth } from './auth';
 import { supabase } from './lib/supabase';
 

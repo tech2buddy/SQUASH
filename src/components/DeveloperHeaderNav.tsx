@@ -11,8 +11,8 @@ import {
   UserCircle2,
   Zap,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../auth';
 import {
   backfillDeveloperNotifications,
@@ -54,7 +54,7 @@ export default function DeveloperHeaderNav() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!userId) return;
     try {
       const list = await getUserNotifications(userId);
@@ -62,7 +62,7 @@ export default function DeveloperHeaderNav() {
     } catch (err) {
       console.warn('Failed to load developer notifications:', err);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId || userId === 'dev_guest') return;
@@ -81,7 +81,7 @@ export default function DeveloperHeaderNav() {
       window.removeEventListener('squash_notification_updated', handleUpdated);
       clearInterval(interval);
     };
-  }, [userId]);
+  }, [fetchNotifications, userId]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {

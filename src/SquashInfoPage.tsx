@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { getPublishedPolicyBySlug, type PublicPolicy } from './lib/policyApi';

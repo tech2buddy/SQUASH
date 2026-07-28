@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { useAuth } from './auth';
@@ -32,16 +32,16 @@ export default function SquashSupportPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     if (!session) return;
     try {
       setTickets(await getMySupportTickets());
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Could not load your support requests.');
     }
-  };
+  }, [session?.userId]);
 
-  useEffect(() => { loadTickets(); }, [session?.userId]);
+  useEffect(() => { loadTickets(); }, [loadTickets]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();

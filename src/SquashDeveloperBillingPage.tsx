@@ -9,7 +9,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from './auth';
 import { getDeveloperJobs, type DeveloperJob } from './lib/jobApi';
 import { getDeveloperJobPayments, getJobPaymentStatus, startJobCheckout, type DeveloperJobPayment } from './lib/paymentApi';

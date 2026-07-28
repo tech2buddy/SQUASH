@@ -5,7 +5,7 @@ import {
   Star,
   } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import TesterBadge from './components/TesterBadge';
 
 

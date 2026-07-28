@@ -1,6 +1,6 @@
 import { BriefcaseBusiness, ClipboardList, ShieldCheck, UserRound } from 'lucide-react';
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router';
 import { roleHomePath, useAuth, type WorkspaceRole } from './auth';
 
 export default function SquashChooseWorkspacePage() {

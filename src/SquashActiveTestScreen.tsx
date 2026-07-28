@@ -18,7 +18,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from './auth';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
@@ -102,20 +102,21 @@ const DEFAULT_TYPE_CONFIG: TestingTypeConfig = {
   tips: ['Follow the task checklist carefully', 'Note any bugs or unexpected behaviour', 'Screenshot or record any issues', 'Write a clear summary for the developer'],
 };
 
+const fallbackTasks = [
+  'Create an account / Sign up',
+  'Set a daily step goal',
+  'Navigate to the Stats page',
+  'Track a workout',
+  'Check how to view history',
+  'Log out of the app',
+];
+
 export default function SquashActiveTestScreen() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const assignmentId = searchParams.get('assignment');
 
-  const fallbackTasks = [
-    'Create an account / Sign up',
-    'Set a daily step goal',
-    'Navigate to the Stats page',
-    'Track a workout',
-    'Check how to view history',
-    'Log out of the app',
-  ];
 
   const [assignment, setAssignment] = useState<TesterAssignment | null>(null);
   const [labSessionId, setLabSessionId] = useState<string | null>(null);

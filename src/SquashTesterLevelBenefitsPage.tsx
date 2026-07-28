@@ -113,7 +113,7 @@ export default function SquashTesterLevelBenefitsPage() {
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
 
   const approvedTests = earningsSummary?.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length || 0;
   const rating = testerProfile?.rating || (approvedTests > 0 ? 4.2 : 0);

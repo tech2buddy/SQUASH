@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarDays, CheckCircle2, ClipboardList, CreditCard, FileText, Globe2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import {

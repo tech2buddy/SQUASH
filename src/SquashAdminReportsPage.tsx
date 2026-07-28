@@ -1,6 +1,6 @@
 import { Bell, CreditCard, FileText, Home, LockKeyhole, Menu, Search, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { useAuth } from './auth';
 import { getAdminReports, type AdminReportRow } from './lib/adminApi';
 

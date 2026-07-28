@@ -10,7 +10,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 
 
@@ -142,7 +142,7 @@ earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Appro
     return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
-  if (true && loadingReports) {
+  if (loadingReports) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 text-center text-xs font-bold text-slate-500">
         Loading reports...

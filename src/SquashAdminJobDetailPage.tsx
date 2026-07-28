@@ -1,6 +1,6 @@
 import { ArrowLeft, Bell, CreditCard, FileText, Home, LockKeyhole, Menu, Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useAuth } from './auth';
 import { getAdminJobDetail, type AdminJobRow } from './lib/adminApi';
 import { getTestTypeByKey } from './lib/testTypes';

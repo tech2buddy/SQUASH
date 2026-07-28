@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { TEST_CATEGORIES, type TestCategoryId, getCategoryById } from './components/testCategories';
 import { TEST_TYPES, getTestTypeByKey, type TestTypeKey } from './lib/testTypes';
@@ -23,6 +23,14 @@ import { isSupabaseConfigured, supabase } from './lib/supabase';
 
 const defaultTestTasks: string[] = [];
 const paymentsEnabled = import.meta.env.VITE_PAYMENTS_ENABLED === 'true';
+function getErrorMessage(error: unknown, fallback: string) {
+  if (!error) return fallback;
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && 'message' in error) {
+    return String((error as { message?: unknown }).message || fallback);
+  }
+  return fallback;
+}
 
 
 export default function SquashPostJobPage() {
@@ -108,7 +116,7 @@ export default function SquashPostJobPage() {
     return () => {
       active = false;
     };
-  }, [editingJobId, session?.userId]);
+  }, [editingJobId, session?.roles, session?.userId]);
   const selectedTestTypeConfig = selectedTestType ? getTestTypeByKey(selectedTestType) : null;
   const hasSelectedTestType = Boolean(selectedTestTypeConfig);
   const liveSessionAddon = liveSessionEnabled ? 2000 : 0;
@@ -116,18 +124,11 @@ export default function SquashPostJobPage() {
     () => (selectedTestType ? Math.max(0, ratePerTester * testersNeeded) : 0),
     [ratePerTester, testersNeeded, selectedTestType],
   );
-  const platformFee = useMemo(() => 0, [subtotal]);
+  const platformFee = 0;
   const total = hasSelectedTestType ? subtotal + platformFee + liveSessionAddon : 0;
   const taskChecklistText = useMemo(() => testTasks.map((task) => task.trim()).filter(Boolean).join('\n'), [testTasks]);
   const formatZar = (amount: number) => `R${amount.toLocaleString('en-ZA')}`;
-  const getErrorMessage = (error: unknown, fallback: string) => {
-    if (!error) return fallback;
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'object' && 'message' in error) {
-      return String((error as { message?: unknown }).message || fallback);
-    }
-    return fallback;
-  };
+
   const validateStep = (stepIndex: number) => {
     if (stepIndex === 0) {
       if (!appName.trim()) return 'Please add the app name before continuing.';

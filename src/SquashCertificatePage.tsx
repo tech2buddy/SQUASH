@@ -1,6 +1,6 @@
 import { CheckCircle2, Copy, Share2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import SquashCertified from './components/SquashCertified';

@@ -13,8 +13,8 @@ import {
   UserCircle2,
   Users,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
 import { getTestTypeByKey } from './lib/testTypes';
 import { useAuth } from './auth';
@@ -115,7 +115,7 @@ export default function SquashDeveloperDashboard() {
 
   const jobs = databaseDashboardJobs;
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     if (!session?.userId || !session.roles.includes('developer')) return;
 
     Promise.all([getDeveloperJobs(session.userId), getDeveloperApplications(session.userId), getDeveloperSubmittedReports(session.userId), getDeveloperDashboardSummary(session.userId)])
@@ -131,13 +131,13 @@ export default function SquashDeveloperDashboard() {
       .finally(() => {
         setIsLoadingData(false);
       });
-  };
+  }, [session]);
 
-  useSupabaseRealtime(['jobs', 'job_applications', 'test_submissions', 'test_assignments'], fetchData, [session?.userId]);
+  useSupabaseRealtime(['jobs', 'job_applications', 'test_submissions', 'test_assignments'], fetchData, [fetchData]);
 
   useEffect(() => {
     fetchData();
-  }, [session?.role, session?.userId]);
+  }, [fetchData]);
 
   const [tierFilter, setTierFilter] = useState<'All' | 'Verified+' | 'Pro+' | 'Elite Only'>('All');
 

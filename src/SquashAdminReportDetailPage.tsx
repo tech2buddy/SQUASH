@@ -11,7 +11,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 import { useAuth } from './auth';
 import { getSubmissionDetails, type DeveloperSubmissionDetails } from './lib/jobApi';

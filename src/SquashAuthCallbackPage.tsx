@@ -1,6 +1,6 @@
 import { AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { defaultSessionPath, useAuth, type WorkspaceRole } from './auth';

@@ -1,6 +1,6 @@
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Globe, MapPin, ShieldCheck, Smartphone, UserRound, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useAuth, type UserRole } from './auth';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import {

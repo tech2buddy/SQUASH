@@ -9,7 +9,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { isSafeInternalPath, useAuth } from './auth';
 
 export default function SquashPrivateAdminAccessPage() {

@@ -99,7 +99,7 @@ export default function SquashTesterLeaderboardPage() {
     [],
   );
 
-  if (true && isLoadingData) {
+  if (isLoadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-center text-sm font-semibold text-slate-600">
         Loading leaderboard data...

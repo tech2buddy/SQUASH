@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarDays, Camera, CheckCircle2, Clock3, ExternalLink, FileWarning, UploadCloud, Video, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 
 import { useAuth } from './auth';
 import { attachEvidenceToBugReport, getTesterSubmissionDetails, type DeveloperSubmissionDetails } from './lib/jobApi';

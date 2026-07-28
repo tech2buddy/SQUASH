@@ -4,7 +4,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import SquashScore, { type SquashScoreBreakdown } from './components/SquashScore';
 import { useAuth } from './auth';
 import {

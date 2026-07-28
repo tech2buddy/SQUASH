@@ -18,6 +18,34 @@ function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';
 }
 
+/**
+ * Records a scan verdict. Failures here are logged rather than thrown --
+ * losing the audit row must not break an upload whose file was already
+ * scanned -- but they must never be silent, or a missing table/grant looks
+ * identical to "no scan ever happened".
+ */
+async function recordScan(
+  supabase: any,
+  input: { bucket: string; path: string; userId: string; status: string; threats: string[] },
+) {
+  const { error } = await supabase.from('file_scans').upsert({
+    bucket_id: input.bucket,
+    object_path: input.path,
+    uploaded_by: input.userId,
+    status: input.status,
+    threat_names: input.threats,
+  }, { onConflict: 'bucket_id,object_path' });
+
+  if (error) {
+    console.error('scan-upload: could not record scan verdict', {
+      bucket: input.bucket,
+      path: input.path,
+      status: input.status,
+      error,
+    });
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -52,13 +80,9 @@ export default async function handler(req: any, res: any) {
       await supabase.storage.from(bucket).remove([path]);
       return res.status(503).json({ error: 'Document scanning is unavailable. Please try again later.' });
     }
-    await supabase.from('file_scans').upsert({
-      bucket_id: bucket,
-      object_path: path,
-      uploaded_by: user.id,
-      status: 'error',
-      threat_names: ['scanner_not_configured'],
-    }, { onConflict: 'bucket_id,object_path' });
+    await recordScan(supabase, {
+      bucket, path, userId: user.id, status: 'error', threats: ['scanner_not_configured'],
+    });
     return res.status(200).json({ scanned: false, clean: true });
   }
 
@@ -92,13 +116,9 @@ export default async function handler(req: any, res: any) {
       : [];
   } catch (error) {
     console.error('scan-upload: scanner call failed', { bucket, path, error });
-    await supabase.from('file_scans').upsert({
-      bucket_id: bucket,
-      object_path: path,
-      uploaded_by: user.id,
-      status: 'error',
-      threat_names: ['scan_failed'],
-    }, { onConflict: 'bucket_id,object_path' });
+    await recordScan(supabase, {
+      bucket, path, userId: user.id, status: 'error', threats: ['scan_failed'],
+    });
 
     // Banking documents fail closed; everything else is allowed through
     // with the failure recorded, so a scanner outage cannot block testers
@@ -110,13 +130,9 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ scanned: false, clean: true });
   }
 
-  await supabase.from('file_scans').upsert({
-    bucket_id: bucket,
-    object_path: path,
-    uploaded_by: user.id,
-    status: cleanResult ? 'clean' : 'infected',
-    threat_names: threats,
-  }, { onConflict: 'bucket_id,object_path' });
+  await recordScan(supabase, {
+    bucket, path, userId: user.id, status: cleanResult ? 'clean' : 'infected', threats,
+  });
 
   if (!cleanResult) {
     await supabase.storage.from(bucket).remove([path]);

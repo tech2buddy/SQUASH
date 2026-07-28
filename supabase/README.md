@@ -142,3 +142,19 @@ Two RLS-related SQL functions back this: `user_wants_notification(uuid, text)` a
 Run `supabase/phase37_service_role_grants.sql` after Phase 36.
 
 `api/create-checkout.ts`, `api/payment-webhook.ts`, and `api/send-email.ts` all connect with the `SUPABASE_SERVICE_ROLE_KEY`. That role bypasses Row Level Security, but RLS bypass and object-level table privileges are two separate things in Postgres — bypassing RLS only skips row policies, it doesn't grant permission to touch the table at all. `jobs`, `job_payments`, `payment_webhook_events`, `job_applications`, `test_submissions`, and `payouts` were only ever granted to `authenticated`/`anon` in earlier phases, so `service_role` had no access to them and every real request failed with `permission denied for table jobs` (Postgres error `42501`) the first time the live payment flow was actually exercised. This phase grants `service_role` exactly the operations those three functions perform on those six tables — not a blanket grant.
+
+## Phase 39: fix text -> enum casts in the core workflow RPCs
+
+Run `supabase/phase39_enum_status_cast_fix.sql` after Phase 38.
+
+`review_job_application`, `review_test_submission`, and `admin_update_weekly_payout` all declare `p_status text` and assign it directly to a column typed as a Postgres enum. Postgres has no implicit or assignment cast from `text` to an enum in an `UPDATE`, so every one of those calls failed with:
+
+```
+42804: column "status" is of type application_status but expression is of type text
+```
+
+That broke the entire core workflow — a developer could not accept a tester, could not approve a submitted report, and an admin could not mark a payout as paid. It was introduced when phase 19 rewrote these functions during security hardening, and stayed hidden because rows created before phase 19 still show accepted/approved states, so the data looked normal.
+
+Fixed with an explicit `::public.<enum_type>` cast. Each function already validates `p_status` against an allow-list before the cast, so no unexpected value can reach it.
+
+Tables using `text` + a check constraint (`tester_banking_details.verification_status`, `payout_batches.status`, `support_tickets.status`) were never affected.

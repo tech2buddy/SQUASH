@@ -158,3 +158,13 @@ That broke the entire core workflow — a developer could not accept a tester, c
 Fixed with an explicit `::public.<enum_type>` cast. Each function already validates `p_status` against an allow-list before the cast, so no unexpected value can reach it.
 
 Tables using `text` + a check constraint (`tester_banking_details.verification_status`, `payout_batches.status`, `support_tickets.status`) were never affected.
+
+### Phase 39b: completes the enum cast fix
+
+Run `supabase/phase39b_assignment_status_cast.sql` after Phase 39.
+
+Phase 39 fixed `set status = p_status` in `review_job_application` but missed a second text -> enum assignment in the same function's `ON CONFLICT` clause, so accepting a tester still failed one line later with `42804: column "status" is of type assignment_status`.
+
+A bare literal (`set status = 'active'`) is coerced straight to the column type and is fine. A `CASE` expression must resolve its own result type before the assignment target is considered, and with every branch an untyped literal it resolves to `text` — which then cannot be assigned to an enum column. The fix casts the whole `CASE` result.
+
+Every other status assignment in these functions was audited and is either a bare literal or an already enum-typed plpgsql variable.

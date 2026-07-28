@@ -546,6 +546,11 @@ export type TesterAssignment = {
   jobAppUrl: string | null;
   jobFocusAreas: string | null;
   jobBrief: TestBrief;
+  // Needed to show the tester what this assignment actually pays. Without
+  // them the Test Lab had to guess from the package key, which still
+  // referenced the removed growth/pro tiers and so always showed R80.
+  jobTotalAmountZar: number;
+  jobTestersNeeded: number;
 };
 
 function mapAssignment(row: {
@@ -557,7 +562,7 @@ function mapAssignment(row: {
   due_at: string | null;
   created_at: string;
   updated_at: string;
-}): Omit<TesterAssignment, 'jobTitle' | 'jobLogoUrl' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl' | 'jobFocusAreas' | 'jobBrief'> {
+}): Omit<TesterAssignment, 'jobTitle' | 'jobLogoUrl' | 'jobPlatform' | 'jobCategory' | 'jobPackageKey' | 'jobDescription' | 'jobTasks' | 'jobAppUrl' | 'jobFocusAreas' | 'jobBrief' | 'jobTotalAmountZar' | 'jobTestersNeeded'> {
   return {
     id: row.id,
     jobId: row.job_id,
@@ -602,6 +607,8 @@ export async function getTesterAssignments(testerId: string): Promise<TesterAssi
       jobTasks: job?.tasks || null,
       jobAppUrl: job?.appUrl || null,
       jobFocusAreas: job?.focusAreas || null,
+      jobTotalAmountZar: job?.totalAmountZar || 0,
+      jobTestersNeeded: job?.testersNeeded || 0,
       jobBrief: job?.testBrief || parseTestBrief(null),
     };
   });
@@ -649,6 +656,8 @@ export async function getTesterAssignmentById(assignmentId: string, testerId: st
     jobTasks: mappedJob?.tasks || null,
     jobAppUrl: mappedJob?.appUrl || null,
     jobFocusAreas: mappedJob?.focusAreas || null,
+    jobTotalAmountZar: mappedJob?.totalAmountZar || 0,
+    jobTestersNeeded: mappedJob?.testersNeeded || 0,
     jobBrief: mappedJob?.testBrief || parseTestBrief(null),
   };
 }

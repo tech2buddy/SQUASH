@@ -11,6 +11,7 @@ import {
   ListOrdered,
   Monitor,
   Paperclip,
+  Search,
   Slash,
   Square,
   Target,
@@ -22,6 +23,7 @@ import { useAuth } from './auth';
 import type { TaskOutcome } from './lib/testBrief';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, getAssignmentBugReports, type SavedBugReportItem, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
+import { testerPayoutForJob } from './lib/pricing';
 import TesterHeaderNav from './components/TesterHeaderNav';
 import {
   captureSessionEnvironment,
@@ -62,6 +64,12 @@ export default function SquashActiveTestScreen() {
   const [taskResults, setTaskResults] = useState<TestTaskResult[]>([]);
   // Captured once per mount so the panel and the saved session agree.
   const liveEnvironment = useMemo(() => captureSessionEnvironment(), []);
+  // Uses the same 62% split the payout RPC enforces, rather than guessing
+  // from the package key (which still named the removed growth/pro tiers).
+  const assignmentPayout = useMemo(
+    () => testerPayoutForJob(assignment?.jobTotalAmountZar || 0, assignment?.jobTestersNeeded || 0),
+    [assignment?.jobTotalAmountZar, assignment?.jobTestersNeeded],
+  );
   const [expandedTaskIndex, setExpandedTaskIndex] = useState(0);
   const [bugDescription, setBugDescription] = useState('');
   const [bugTitle, setBugTitle] = useState('');
@@ -553,7 +561,7 @@ export default function SquashActiveTestScreen() {
               </span>
               <span className="text-slate-300">|</span>
               <span>
-                Payout <strong className="font-bold text-emerald-600 ml-1">R{(assignment?.jobPackageKey as string) === 'growth' ? 120 : (assignment?.jobPackageKey as string) === 'pro' ? 200 : 80}</strong>
+                Payout <strong className="ml-1 font-bold text-emerald-600">R{assignmentPayout}</strong>
               </span>
               <span className="text-slate-300">|</span>
               <span className="inline-flex items-center gap-1 text-slate-500">
@@ -564,16 +572,25 @@ export default function SquashActiveTestScreen() {
           </div>
         </div>
 
-        {/* Right Header Navigation & Profile */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right Header Navigation & Profile. The Test Lab renders its own
+            header instead of using TesterLayout, so the search field is
+            repeated here to stay consistent with every other tester page. */}
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="hidden items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 lg:flex lg:min-w-[280px]">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              placeholder="Search jobs, apps, tasks..."
+            />
+          </div>
           <TesterHeaderNav />
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-5 space-y-4">
+      <main className="flex-1 w-full mx-auto max-w-[1600px] px-4 py-5 sm:px-8 sm:py-6 space-y-5">
         {/* Responsive 2-Column Grid */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-start">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-start">
           {/* Left Column (Brief & Tasks) */}
           <div className="lg:col-span-7 space-y-4">
             {/* 1. Developer Brief Card */}

@@ -1,18 +1,15 @@
-import { Star } from 'lucide-react';
-import TesterBadge from './TesterBadge';
 import { getSpecializationLabel, hasSaLanguageTag } from './testerSpecializations';
+import { Target, Building2, Globe, type LucideIcon } from 'lucide-react';
 
 export default function FeaturedTesterCard({
   name,
-  avatar,
-  rating,
-  testsCompleted,
+  icon: Icon,
+  subtitle = 'Target Audience Filter',
   specializations,
 }: {
   name: string;
-  avatar: string;
-  rating: number;
-  testsCompleted: number;
+  icon: LucideIcon;
+  subtitle?: string;
   specializations: string[];
 }) {
   const topTags = specializations.slice(0, 3).map((id) => getSpecializationLabel(id));
@@ -20,24 +17,21 @@ export default function FeaturedTesterCard({
   const isLanguageTester = hasSaLanguageTag(specializations);
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
-          {avatar}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/80 shadow-2xs">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <div className="font-bold text-slate-900">{name}</div>
-          <div className="mt-1 flex items-center gap-1 text-sm text-slate-600">
-            <Star className="h-4 w-4 fill-current text-amber-500" />
-            {rating.toFixed(1)} · {testsCompleted} tests
-          </div>
-          <div className="mt-2">
-            <TesterBadge testsCompleted={testsCompleted} rating={rating} />
+          <div className="font-bold text-slate-900 leading-snug">{name}</div>
+          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+            <Target className="h-3 w-3 text-emerald-600" />
+            {subtitle}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-1.5">
         {topTags.map((tag) => (
           <span
             key={tag}
@@ -48,15 +42,15 @@ export default function FeaturedTesterCard({
         ))}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {isTownshipTester ? (
-          <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
-            Township Network Tester 🏘️
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <Building2 className="h-3 w-3" /> Township Network Tester
           </span>
         ) : null}
         {isLanguageTester ? (
-          <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
-            SA Language Tester 🇿🇦
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <Globe className="h-3 w-3" /> SA Language Tester
           </span>
         ) : null}
       </div>

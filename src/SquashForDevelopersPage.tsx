@@ -5,9 +5,12 @@ import {
   Clock3,
   Code2,
   FileText,
+  Laptop,
   Link as LinkIcon,
   ShieldCheck,
+  Smartphone,
   Users,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import PublicFooter from './PublicFooter';
@@ -280,32 +283,29 @@ export default function SquashForDevelopersPage() {
 
         <section className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-2xl font-bold text-slate-900">Test With The Right Users</h3>
+            <h3 className="text-2xl font-bold text-slate-900">Target The Exact Audience You Need</h3>
             <p className="mt-2 text-slate-600">
-              Filter testers by device, network conditions, language and app expertise. Get feedback from users who match your exact target market.
+              Filter testers by device model, real-world network conditions, local languages, and app domain expertise. Get feedback from users matching your exact target demographic.
             </p>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <FeaturedTesterCard
-                name="Lerato D."
-                avatar="LD"
-                rating={4.9}
-                testsCompleted={62}
+                name="Township & Mobile Money"
+                icon={Smartphone}
+                subtitle="Target Demographic Filter"
                 specializations={['township-network', 'zulu', 'ecommerce', 'samsung-a-series']}
               />
               <FeaturedTesterCard
-                name="Sipho N."
-                avatar="SN"
-                rating={4.7}
-                testsCompleted={34}
+                name="Fintech & Load Shedding"
+                icon={Zap}
+                subtitle="Target Demographic Filter"
                 specializations={['2g-3g-only', 'load-shedding', 'banking', 'xhosa']}
               />
               <FeaturedTesterCard
-                name="Thando M."
-                avatar="TM"
-                rating={4.4}
-                testsCompleted={16}
-                specializations={['iphone-12-plus', 'education', 'afrikaans']}
+                name="iOS & Web App Experience"
+                icon={Laptop}
+                subtitle="Target Demographic Filter"
+                specializations={['iphone-12-plus', 'education', 'afrikaans', 'desktop-laptop']}
               />
             </div>
           </div>

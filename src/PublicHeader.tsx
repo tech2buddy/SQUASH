@@ -2,7 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
-type PublicPage = 'home' | 'developers' | 'testers' | 'pricing' | 'resources';
+type PublicPage = 'home' | 'developers' | 'testers' | 'pricing' | 'about' | 'resources';
 
 export default function PublicHeader({ active }: { active?: PublicPage }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -43,7 +43,7 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
           {navItem('/for-developers', 'For Developers', 'developers')}
           {navItem('/for-testers', 'For Testers', 'testers')}
           {navItem('/pricing', 'Pricing', 'pricing')}
-          {navItem('/api-docs', 'Resources', 'resources')}
+          {navItem('/about', 'About', 'about')}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -81,8 +81,8 @@ export default function PublicHeader({ active }: { active?: PublicPage }) {
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
               Pricing
             </Link>
-            <Link to="/api-docs" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
-              Resources
+            <Link to="/about" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
+              About
             </Link>
           </nav>
 

@@ -52,16 +52,10 @@ export default function SquashAboutPage() {
     'Do what you already do every day',
   ];
 
-  const processSteps = [
-    { icon: FileText, title: 'You post your app' },
-    { icon: Search, title: 'You tell us what to test' },
-    { icon: Users, title: 'We handle everything else' },
-    { icon: CheckCircle2, title: 'You receive reports after testing and review' },
-  ];
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <PublicHeader />
+      <PublicHeader active="about" />
 
       <main>
         <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
@@ -169,35 +163,86 @@ export default function SquashAboutPage() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200 bg-slate-50">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <h2 className="text-center text-3xl font-black tracking-tight text-slate-900">
-              Here is how simple it is for you as a developer.
-            </h2>
+        <section className="border-y border-slate-200/80 bg-slate-50/50 py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3.5 py-1 text-xs font-extrabold text-emerald-700 uppercase tracking-wider">
+                Simple 4-Step Process
+              </span>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                How SQUASH Works for Developers
+              </h2>
+              <p className="mt-3 text-base text-slate-600 font-medium">
+                From app submission to developer-ready QA reports in hours.
+              </p>
+            </div>
 
-            <div className="mt-10 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-              <div className="grid gap-6 md:grid-cols-4">
-                {processSteps.map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-3xl border border-slate-200 bg-white p-5 text-center shadow-sm"
-                  >
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-700 ring-1 ring-green-100">
-                      <item.icon className="h-5 w-5" />
+            {/* 4 Process Cards */}
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 mb-10">
+              {[
+                {
+                  step: '01',
+                  icon: FileText,
+                  title: 'Post Your App',
+                  desc: 'Submit your staging URL, web app, or mobile build with target requirements.',
+                },
+                {
+                  step: '02',
+                  icon: Search,
+                  title: 'Define Test Tasks',
+                  desc: 'List the specific user flows, checkout steps, or edge cases you want checked.',
+                },
+                {
+                  step: '03',
+                  icon: Users,
+                  title: 'Matched QA Testing',
+                  desc: 'Everyday testers on matching devices run real-world testing sessions.',
+                },
+                {
+                  step: '04',
+                  icon: CheckCircle2,
+                  title: 'Get Verified Reports',
+                  desc: 'Receive organized bug logs, screenshot proofs, and executive summaries.',
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs hover:border-emerald-200 hover:shadow-md transition flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/80 shadow-2xs">
+                        <item.icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-xs font-black tracking-widest text-slate-300 uppercase">
+                        STEP {item.step}
+                      </span>
                     </div>
-                    <div className="mt-4 text-sm font-semibold leading-6 text-slate-700">
+                    <h3 className="text-base font-extrabold text-slate-900 leading-snug">
                       {item.title}
-                    </div>
+                    </h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 font-medium">
+                      {item.desc}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-xl font-black text-slate-900">Your report includes:</h3>
-                <div className="mt-5 space-y-3 text-slate-700">
+            {/* Report Deliverables Banner */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <div className="grid gap-6 md:grid-cols-3 items-center">
+                <div className="md:col-span-1">
+                  <span className="text-xs font-extrabold text-emerald-600 uppercase tracking-wider block mb-1">
+                    Complete Deliverable
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900">Your Report Includes:</h3>
+                  <p className="mt-1 text-xs text-slate-500 font-medium">Everything your team needs to fix issues fast.</p>
+                </div>
+                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold text-slate-700">
                   {reportItems.map((item) => (
-                    <div key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-green-600" />
+                    <div key={item} className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-3 border border-slate-100">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                       <span>{item}</span>
                     </div>
                   ))}

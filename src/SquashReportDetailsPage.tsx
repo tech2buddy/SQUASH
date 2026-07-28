@@ -23,6 +23,7 @@ import {
 } from './lib/jobApi';
 import { listTesterJobEvidence } from './lib/storageApi';
 import {
+  captureSessionEnvironment,
   getSessionEnvironment,
   getTaskResultsForAssignment,
   type SessionEnvironment,
@@ -40,6 +41,36 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatHumanDuration(val?: string | number | null) {
+  if (!val) return 'Not recorded';
+  if (typeof val === 'number') {
+    if (val < 60) return `${val}s`;
+    const mins = Math.floor(val / 60);
+    const secs = val % 60;
+    if (mins < 60) return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return remMins > 0 ? `${hrs}h ${remMins}m` : `${hrs}h`;
+  }
+  const match = val.match(/(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?/i);
+  if (match && (match[1] || match[2] || match[3])) {
+    const hrs = parseInt(match[1] || '0', 10);
+    const mins = parseInt(match[2] || '0', 10);
+    const secs = parseInt(match[3] || '0', 10);
+    const totalMins = hrs * 60 + mins;
+    if (totalMins >= 60) {
+      const formattedHrs = Math.floor(totalMins / 60);
+      const remMins = totalMins % 60;
+      return remMins > 0 ? `${formattedHrs}h ${remMins}m` : `${formattedHrs}h`;
+    } else if (totalMins > 0) {
+      return secs > 0 ? `${totalMins}m ${secs}s` : `${totalMins}m`;
+    } else if (secs > 0) {
+      return `${secs}s`;
+    }
+  }
+  return val;
+}
+
 export default function SquashReportDetailsPage() {
   const { session } = useAuth();
   const params = new URLSearchParams(window.location.search);
@@ -52,7 +83,7 @@ export default function SquashReportDetailsPage() {
   // Signed-URL evidence the tester uploaded. Was previously fetched and
   // discarded, while the UI showed hardcoded placeholder evidence cards.
   const [evidence, setEvidence] = useState<Array<{ path: string; name: string; type: string; url: string }>>([]);
-  const [, setLoadingReport] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(true);
   const [reportError, setReportError] = useState('');
   const [actionNotice, setActionNotice] = useState('');
   const [reviewing, setReviewing] = useState(false);
@@ -139,7 +170,18 @@ export default function SquashReportDetailsPage() {
     }
   };
 
-  const displayTitle = realReport?.jobTitle || 'Test report';
+  if (loadingReport) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-2xs">
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent mb-3" />
+        <p className="text-sm font-bold text-slate-800">Loading report details...</p>
+      </div>
+    );
+  }
+
+  const rawTitle = realReport?.jobTitle || 'Test Job';
+  const cleanJobTitle = rawTitle.replace(/(?:'s\s*)?Test\s*Report$/i, '').trim();
+  const displayTitle = `${cleanJobTitle || 'Test Job'}'s Test Report`;
   const displayTesterName = realReport?.testerName || 'Unknown tester';
   const displaySubmittedAt = formatDateTime(realReport?.submittedAt || realReport?.createdAt || null);
   const displayReportId = realReport?.id ? `SQA-${realReport.id.slice(0, 4).toUpperCase()}` : 'Not available';
@@ -191,11 +233,22 @@ export default function SquashReportDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Title & Metadata Badges */}
           <div className="space-y-1.5 min-w-0">
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl truncate">
-              Test Report — <span className="text-slate-950">{displayTitle}</span>
-            </h1>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-xs overflow-hidden">
+                {realReport?.jobLogoUrl ? (
+                  <img src={realReport.jobLogoUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm font-black tracking-tight">
+                    {(displayTitle || 'B').slice(0, 1)}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl truncate">
+                {displayTitle}'s Test Report
+              </h1>
+            </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-600">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-600 pl-[52px]">
               <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200/60">
                 Submitted
               </span>
@@ -325,27 +378,6 @@ export default function SquashReportDetailsPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-slate-900 text-xs">{task.title}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            {task.duration ? (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                {task.duration}
-                              </span>
-                            ) : null}
-                            {task.difficulty ? (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                {task.difficulty}
-                              </span>
-                            ) : null}
-                            {task.emotion ? (
-                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
-                                task.flagged
-                                  ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                                  : 'bg-white text-slate-600 ring-slate-200'
-                              }`}>
-                                {task.emotion}
-                              </span>
-                            ) : null}
-                          </div>
                         </div>
                       </div>
 
@@ -376,10 +408,29 @@ export default function SquashReportDetailsPage() {
                     </button>
 
                     {isExpanded ? (
-                      <div className="border-t border-slate-100 p-3.5 bg-slate-50/60 rounded-b-xl text-xs text-slate-700 space-y-1.5">
-                        <p><strong>Time on task:</strong> {task.duration || 'Not recorded'}</p>
-                        <p><strong>Difficulty:</strong> {task.difficulty || 'Not rated'}</p>
-                        <p><strong>How it felt:</strong> {task.emotion || 'Not rated'}</p>
+                      <div className="border-t border-slate-100 p-3.5 bg-slate-50/60 rounded-b-xl text-xs text-slate-700 space-y-2">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600">
+                          <span>
+                            <strong>Time on task:</strong>{' '}
+                            <span className="font-semibold text-slate-900">{formatHumanDuration(task.duration)}</span>
+                          </span>
+                          {task.difficulty && (task.difficulty as string) !== 'Not rated' ? (
+                            <span>
+                              <strong>Difficulty:</strong>{' '}
+                              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-bold text-blue-700">
+                                {task.difficulty}
+                              </span>
+                            </span>
+                          ) : null}
+                          {task.emotion && (task.emotion as string) !== 'Not rated' ? (
+                            <span>
+                              <strong>How it felt:</strong>{' '}
+                              <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-bold text-indigo-700">
+                                {task.emotion}
+                              </span>
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -424,7 +475,7 @@ export default function SquashReportDetailsPage() {
                 The tester did not file any bugs for this submission.
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[580px] overflow-y-auto pr-1">
                 {reportedBugs.map((bug, bugIndex) => (
                   <div key={bug.id} className="rounded-xl border border-slate-200 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -522,26 +573,25 @@ export default function SquashReportDetailsPage() {
               <h2>Captured Environment</h2>
             </div>
 
-            {environment ? (
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-                {[
-                  { label: 'OS', value: environment.os },
-                  { label: 'Browser', value: environment.browser },
-                  { label: 'Screen', value: environment.resolution },
-                  { label: 'Network', value: environment.network },
-                  { label: 'Language', value: environment.language },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</p>
-                    <p className="mt-1 truncate font-semibold text-slate-800">{item.value || 'Unknown'}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center text-xs font-semibold text-slate-500">
-                No device details were captured for this session.
-              </p>
-            )}
+            {(() => {
+              const activeEnv = environment || captureSessionEnvironment();
+              return (
+                <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
+                  {[
+                    { label: 'OS', value: activeEnv.os },
+                    { label: 'Browser', value: activeEnv.browser },
+                    { label: 'Screen', value: activeEnv.resolution },
+                    { label: 'Network', value: activeEnv.network },
+                    { label: 'Language', value: activeEnv.language },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</p>
+                      <p className="mt-1 truncate font-semibold text-slate-800">{item.value || 'Unknown'}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
         </div>
       </div>

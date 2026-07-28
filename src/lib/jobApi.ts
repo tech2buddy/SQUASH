@@ -758,6 +758,23 @@ export async function getAssignmentBugReports(assignmentId: string): Promise<Sav
   }));
 }
 
+/**
+ * Permanently deletes bug reports by their IDs from the database.
+ * Called when a tester resets a task so bugs logged for that task are removed.
+ */
+export async function deleteBugReportsByIds(ids: string[]): Promise<void> {
+  if (!isSupabaseConfigured || ids.length === 0) return;
+
+  const { error } = await supabase
+    .from('bug_reports')
+    .delete()
+    .in('id', ids);
+
+  if (error) {
+    console.warn('Failed to delete bug reports:', error);
+  }
+}
+
 export async function attachEvidenceToBugReport(input: {
   bugId: string;
   testerId: string;
@@ -1308,6 +1325,7 @@ export type DeveloperSubmissionDetails = {
   assignmentId: string;
   jobId: string;
   jobTitle: string;
+  jobLogoUrl?: string | null;
   jobPlatform: string;
   jobCategory: string;
   testerId: string;
@@ -1388,6 +1406,7 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
     assignmentId: submission.assignment_id,
     jobId: submission.job_id,
     jobTitle: job?.title || 'Bug Report Submission',
+    jobLogoUrl: job?.logo_url || null,
     jobPlatform: job?.platform || 'App',
     jobCategory: job?.category || 'mobile-app-testing',
     testerId: submission.tester_id,

@@ -112,5 +112,13 @@
   "110": "SquashTesterJobDetailPage.tsx",
   "111": "diagnose_account_identity.sql",
   "112": "SquashAdminLoginPage.tsx",
-  "113": "SquashPrivateAdminAccessPage.tsx"
+  "113": "SquashPrivateAdminAccessPage.tsx",
+  "114": "testBrief.ts",
+  "115": "SquashAdminPayoutsPage.tsx",
+  "116": "SquashSignupPage.tsx",
+  "117": "phase40_structured_test_results.sql",
+  "118": "testBrief.ts",
+  "119": "PublicFooter.tsx",
+  "120": "DeveloperHeaderNav.tsx",
+  "121": "DeveloperLayout.tsx"
 }

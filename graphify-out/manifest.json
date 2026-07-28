@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "src/SquashActiveTestScreen.tsx": {
-    "mtime": 1785251605.972123,
-    "ast_hash": "c59f73708d81b20f6fd480eb753b340d",
+    "mtime": 1785265879.2917683,
+    "ast_hash": "fc4345ea2f574d6f4932ebd8a0a5e0cc",
     "semantic_hash": ""
   },
   "src/SquashAdminDashboardPage.tsx": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "src/SquashDeveloperViewsPage.tsx": {
-    "mtime": 1785249983.4706023,
-    "ast_hash": "d8da9e5a23463e933a8933334ec9a504",
+    "mtime": 1785258001.3261652,
+    "ast_hash": "85e49ef994b578748e328608896db6c1",
     "semantic_hash": ""
   },
   "src/SquashForDevelopersPage.tsx": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "src/SquashReportDetailsPage.tsx": {
-    "mtime": 1785249983.4995604,
-    "ast_hash": "6cee2c7ffaaaea039fed0f104ba860c0",
+    "mtime": 1785264420.7825134,
+    "ast_hash": "af45108f34187aee6266976741d7def6",
     "semantic_hash": ""
   },
   "src/SquashResetPasswordPage.tsx": {
@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "src/SquashTesterReportsPage.tsx": {
-    "mtime": 1785249983.5290053,
-    "ast_hash": "41fe517cf9717f5374f2c92b2c1d8935",
+    "mtime": 1785262439.9597337,
+    "ast_hash": "5298d677b0432959d29146a8f88bd221",
     "semantic_hash": ""
   },
   "src/SquashTesterSettingsPage.tsx": {
@@ -260,8 +260,8 @@
     "semantic_hash": ""
   },
   "src/components/DeveloperLayout.tsx": {
-    "mtime": 1785249983.3917997,
-    "ast_hash": "ae1ed56212c17757570515e176872083",
+    "mtime": 1785259693.4824755,
+    "ast_hash": "e7edd1da392cd869870685ccadc2cd7f",
     "semantic_hash": ""
   },
   "src/components/FeaturedTesterCard.tsx": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/lib/jobApi.ts": {
-    "mtime": 1785251632.7746725,
-    "ast_hash": "9f56ad51cecfe57c173cc5e54da9f8b8",
+    "mtime": 1785265538.172496,
+    "ast_hash": "4511eeebf5e379574fd55cf998e84b6d",
     "semantic_hash": ""
   },
   "src/lib/notificationApi.ts": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "src/components/TesterLayout.tsx": {
-    "mtime": 1785249983.3966024,
-    "ast_hash": "79c6e9cbcf4a383ae6da2be479cd89ab",
+    "mtime": 1785257032.5391757,
+    "ast_hash": "c4ddb43bc51a1e2fc4c614d421961501",
     "semantic_hash": ""
   },
   ".agents/rules/graphify.md": {
@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "src/lib/testLabApi.ts": {
-    "mtime": 1785251411.1747985,
-    "ast_hash": "ac648b181e2157f36ea99fc38e5bf694",
+    "mtime": 1785262050.763668,
+    "ast_hash": "1841f43f35ffee6658f33b16be457cf6",
     "semantic_hash": ""
   },
   "api/create-checkout.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "src/SquashTesterReportDetailPage.tsx": {
-    "mtime": 1785249983.5210042,
-    "ast_hash": "8862814c1582d4c8b1851c9870a0de09",
+    "mtime": 1785264453.99632,
+    "ast_hash": "2a894573fe9c65aa7311f469f324a0cc",
     "semantic_hash": ""
   },
   "src/lib/jobAttachmentApi.ts": {

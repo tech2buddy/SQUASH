@@ -26,7 +26,6 @@ export default function TesterLayout() {
   const location = useLocation();
   const path = location.pathname;
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const isTestLab = path === '/test-lab';
 
   let activeKey: NavItem['key'] = 'dashboard';
   if (path.startsWith('/tester-jobs') || path === '/job-board') {
@@ -141,25 +140,23 @@ export default function TesterLayout() {
       {/* Main Column: Fixed Top Header + Isolated Scroll Content */}
       <div className="flex flex-1 flex-col h-screen min-w-0 overflow-hidden">
         {/* Header - Fixed to Top */}
-        {!isTestLab ? (
-          <header className="shrink-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl px-4 py-3.5 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setIsMobileSidebarOpen(true)} className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-600 lg:hidden hover:bg-slate-50 transition shadow-sm" aria-label="Open navigation menu">
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="hidden md:flex max-w-md items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 min-w-[280px] lg:min-w-[360px]">
-                  <Search className="h-4 w-4 text-slate-400" />
-                  <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search jobs, apps, tasks..." />
-                </div>
+        <header className="shrink-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl px-4 py-3.5 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => setIsMobileSidebarOpen(true)} className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-600 lg:hidden hover:bg-slate-50 transition shadow-sm" aria-label="Open navigation menu">
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="hidden md:flex max-w-md items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 min-w-[280px] lg:min-w-[360px]">
+                <Search className="h-4 w-4 text-slate-400" />
+                <input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" placeholder="Search jobs, apps, tasks..." />
               </div>
-              <TesterHeaderNav />
             </div>
-          </header>
-        ) : null}
+            <TesterHeaderNav />
+          </div>
+        </header>
 
         {/* Scrollable Content Container */}
-        <main className={isTestLab ? 'flex-1 overflow-y-auto p-0' : 'flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8'}>
+        <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 pb-24 lg:pb-8">
           <Outlet />
         </main>
       </div>

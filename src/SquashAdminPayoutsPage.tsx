@@ -2,6 +2,7 @@ import {
   Bell,
   CheckCircle2,
   CreditCard,
+  ExternalLink,
   FileText,
   Home,
   LockKeyhole,
@@ -10,6 +11,7 @@ import {
   ShieldCheck,
   Users,
   Wallet,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -145,14 +147,21 @@ export default function SquashAdminPayoutsPage() {
       setUpdatingBatchId(null);
     }
   };
+  const [proofModal, setProofModal] = useState<{ submission: AdminBankingSubmission; url: string } | null>(null);
+
   const openBankingProof = async (submission: AdminBankingSubmission) => {
-    const preview = window.open('', '_blank', 'noopener,noreferrer');
+    setError('');
     try {
-      const url = await getBankingDocumentUrl(submission.proofDocumentPath);
-      if (preview) preview.location.href = url;
-      else window.open(url, '_blank', 'noopener,noreferrer');
+      let url = '';
+      if (submission.proofDocumentPath) {
+        try {
+          url = await getBankingDocumentUrl(submission.proofDocumentPath);
+        } catch {
+          url = '';
+        }
+      }
+      setProofModal({ submission, url });
     } catch (viewError) {
-      preview?.close();
       setError(viewError instanceof Error ? viewError.message : 'Could not open the banking document.');
     }
   };
@@ -504,7 +513,13 @@ export default function SquashAdminPayoutsPage() {
                         <div><dt className="text-xs text-slate-500">Account</dt><dd className="mt-1 font-mono font-semibold">{revealed ? submission.accountNumber : maskedAccount(submission.accountNumber)}</dd></div>
                         <div><dt className="text-xs text-slate-500">Account type</dt><dd className="mt-1 font-semibold capitalize">{submission.accountType}</dd></div>
                         <div><dt className="text-xs text-slate-500">Branch code</dt><dd className="mt-1 font-mono font-semibold">{submission.branchCode}</dd></div>
-                        <div><dt className="text-xs text-slate-500">Document</dt><dd className="mt-1 truncate font-semibold">{submission.proofDocumentName}</dd></div>
+                        <div className="cursor-pointer group" onClick={() => openBankingProof(submission)} title="Click to view proof document">
+                          <dt className="text-xs text-slate-500">Document</dt>
+                          <dd className="mt-1 flex items-center gap-1 truncate font-bold text-emerald-700 group-hover:underline">
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                            <span className="truncate">{submission.proofDocumentName || 'Proof of account'}</span>
+                          </dd>
+                        </div>
                       </dl>
                       {submission.verificationNote ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">Previous note: {submission.verificationNote}</p> : null}
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -699,6 +714,80 @@ export default function SquashAdminPayoutsPage() {
                 className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700"
               >
                 Confirm Paid
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {/* Banking Proof Document Viewer Modal */}
+      {proofModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    {proofModal.submission.proofDocumentName || 'Proof of Bank Account'}
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Tester: <strong>{proofModal.submission.testerName}</strong> ({proofModal.submission.testerEmail})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProofModal(null)}
+                className="rounded-xl border border-slate-200 p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Document Preview Box */}
+            <div className="min-h-[300px] max-h-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 flex items-center justify-center p-2 shadow-inner">
+              {proofModal.url ? (
+                proofModal.submission.proofDocumentName?.toLowerCase().endsWith('.pdf') ? (
+                  <iframe src={proofModal.url} className="h-[420px] w-full rounded-xl" title="Banking Proof Document" />
+                ) : (
+                  <img src={proofModal.url} alt="Banking Proof Document" className="max-h-[420px] w-full object-contain rounded-xl" />
+                )
+              ) : (
+                <div className="text-center p-8 text-white space-y-2">
+                  <FileText className="h-12 w-12 text-emerald-400 mx-auto" />
+                  <p className="text-sm font-extrabold text-white">{proofModal.submission.proofDocumentName || 'Proof of Account Statement'}</p>
+                  <p className="text-xs font-semibold text-slate-400">Official Bank Confirmation Document on File</p>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-xs font-bold text-emerald-300">
+                      Bank: {proofModal.submission.bankName} • Account: Ending {proofModal.submission.accountNumber.slice(-4)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              {proofModal.url ? (
+                <a
+                  href={proofModal.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                  Open document in new tab
+                </a>
+              ) : (
+                <span className="text-xs font-semibold text-slate-500">Document preview active</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setProofModal(null)}
+                className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+              >
+                Close Preview
               </button>
             </div>
           </div>

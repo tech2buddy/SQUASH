@@ -23,6 +23,7 @@ import {
 } from './lib/jobApi';
 import { listTesterJobEvidence, uploadBugReportFile } from './lib/storageApi';
 import {
+  captureSessionEnvironment,
   getSessionEnvironment,
   getTaskResultsForAssignment,
   type SessionEnvironment,
@@ -40,11 +41,41 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatHumanDuration(val?: string | number | null) {
+  if (!val) return 'Not recorded';
+  if (typeof val === 'number') {
+    if (val < 60) return `${val}s`;
+    const mins = Math.floor(val / 60);
+    const secs = val % 60;
+    if (mins < 60) return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return remMins > 0 ? `${hrs}h ${remMins}m` : `${hrs}h`;
+  }
+  const match = val.match(/(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?/i);
+  if (match && (match[1] || match[2] || match[3])) {
+    const hrs = parseInt(match[1] || '0', 10);
+    const mins = parseInt(match[2] || '0', 10);
+    const secs = parseInt(match[3] || '0', 10);
+    const totalMins = hrs * 60 + mins;
+    if (totalMins >= 60) {
+      const formattedHrs = Math.floor(totalMins / 60);
+      const remMins = totalMins % 60;
+      return remMins > 0 ? `${formattedHrs}h ${remMins}m` : `${formattedHrs}h`;
+    } else if (totalMins > 0) {
+      return secs > 0 ? `${totalMins}m ${secs}s` : `${totalMins}m`;
+    } else if (secs > 0) {
+      return `${secs}s`;
+    }
+  }
+  return val;
+}
+
 export default function SquashTesterReportDetailPage() {
   const { submissionId } = useParams();
   const { session } = useAuth();
   const [report, setReport] = useState<DeveloperSubmissionDetails | null>(null);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadNotice, setUploadNotice] = useState('');
   const [expandedTask, setExpandedTask] = useState<number | null>(1); // expand task 2 by default
@@ -112,7 +143,18 @@ export default function SquashTesterReportDetailPage() {
     }
   };
 
-  const displayTitle = report?.jobTitle || 'Test report';
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-2xs">
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent mb-3" />
+        <p className="text-sm font-bold text-slate-800">Loading report details...</p>
+      </div>
+    );
+  }
+
+  const rawTitle = report?.jobTitle || 'Test Job';
+  const cleanJobTitle = rawTitle.replace(/(?:'s\s*)?Test\s*Report$/i, '').trim();
+  const displayTitle = `${cleanJobTitle || 'Test Job'}'s Test Report`;
   const displayTesterName = session?.name || report?.testerName || 'Unknown tester';
   const displaySubmittedAt = formatDateTime(report?.submittedAt || report?.createdAt || null);
   const displayReportId = report?.id ? `SQA-${report.id.slice(0, 4).toUpperCase()}` : 'Not available';
@@ -154,15 +196,24 @@ export default function SquashTesterReportDetailPage() {
           {/* Title & Metadata Badges */}
           <div className="space-y-1.5 min-w-0">
             <div className="flex items-center gap-3">
-              <Link to="/tester/reports" className="text-slate-400 hover:text-slate-600 transition">
+              <Link to="/tester/reports" className="text-slate-400 hover:text-slate-600 transition shrink-0">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-xs overflow-hidden">
+                {report?.jobLogoUrl ? (
+                  <img src={report.jobLogoUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm font-black tracking-tight">
+                    {(cleanJobTitle || 'B').slice(0, 1)}
+                  </span>
+                )}
+              </div>
               <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl truncate">
-                Test Report — <span className="text-slate-950">{displayTitle}</span>
+                {displayTitle}
               </h1>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-600 pl-8">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-600 pl-[84px]">
               <span className="rounded-full border border-amber-200/60 bg-amber-50 px-2.5 py-0.5 text-xs font-bold capitalize text-amber-700">
                 {(report?.status || 'submitted').replace('_', ' ')}
               </span>
@@ -197,51 +248,27 @@ export default function SquashTesterReportDetailPage() {
         </div>
       </section>
 
-      {/* Metric Summary Cards Row (4 Cards Across) */}
+      {/* Metric Summary Cards Row (4 Cards Across, Fully Dynamic) */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {/* Card 1: Tasks Tested */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-            <FileText className="h-5.5 w-5.5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 leading-tight">3</p>
-            <p className="text-xs font-semibold text-slate-500">Tasks Tested</p>
-          </div>
-        </div>
-
-        {/* Card 2: Passed */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-            <CheckCircle2 className="h-5.5 w-5.5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 leading-tight">2</p>
-            <p className="text-xs font-semibold text-slate-500">Passed</p>
-          </div>
-        </div>
-
-        {/* Card 3: Failed */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
-            <XCircle className="h-5.5 w-5.5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 leading-tight">1</p>
-            <p className="text-xs font-semibold text-slate-500">Failed</p>
-          </div>
-        </div>
-
-        {/* Card 4: Bug Found */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-            <Bug className="h-5.5 w-5.5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 leading-tight">1</p>
-            <p className="text-xs font-semibold text-slate-500">Bug Found</p>
-          </div>
-        </div>
+        {[
+          { value: taskResultsList.length, label: 'Tasks Tested', icon: FileText, tone: 'bg-blue-50 text-blue-600 border-blue-100' },
+          { value: taskResultsList.filter((t) => t.status === 'pass').length, label: 'Passed', icon: CheckCircle2, tone: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+          { value: taskResultsList.filter((t) => t.status === 'fail').length, label: 'Failed', icon: XCircle, tone: 'bg-rose-50 text-rose-600 border-rose-100' },
+          { value: reportedBugs.length, label: 'Bugs Found', icon: Bug, tone: 'bg-amber-50 text-amber-600 border-amber-100' },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex items-center gap-4">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${card.tone}`}>
+                <Icon className="h-5.5 w-5.5" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-slate-900 leading-tight">{card.value}</p>
+                <p className="text-xs font-semibold text-slate-500">{card.label}</p>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       {/* Notices */}
@@ -308,27 +335,6 @@ export default function SquashTesterReportDetailPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-slate-900 text-xs">{task.title}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            {task.duration ? (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                {task.duration}
-                              </span>
-                            ) : null}
-                            {task.difficulty ? (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                {task.difficulty}
-                              </span>
-                            ) : null}
-                            {task.emotion ? (
-                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
-                                task.flagged
-                                  ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                                  : 'bg-white text-slate-600 ring-slate-200'
-                              }`}>
-                                {task.emotion}
-                              </span>
-                            ) : null}
-                          </div>
                         </div>
                       </div>
 
@@ -359,10 +365,29 @@ export default function SquashTesterReportDetailPage() {
                     </button>
 
                     {isExpanded ? (
-                      <div className="border-t border-slate-100 p-3.5 bg-slate-50/60 rounded-b-xl text-xs text-slate-700 space-y-1.5">
-                        <p><strong>Time on task:</strong> {task.duration || 'Not recorded'}</p>
-                        <p><strong>Difficulty:</strong> {task.difficulty || 'Not rated'}</p>
-                        <p><strong>How it felt:</strong> {task.emotion || 'Not rated'}</p>
+                      <div className="border-t border-slate-100 p-3.5 bg-slate-50/60 rounded-b-xl text-xs text-slate-700 space-y-2">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600">
+                          <span>
+                            <strong>Time on task:</strong>{' '}
+                            <span className="font-semibold text-slate-900">{formatHumanDuration(task.duration)}</span>
+                          </span>
+                          {task.difficulty && (task.difficulty as string) !== 'Not rated' ? (
+                            <span>
+                              <strong>Difficulty:</strong>{' '}
+                              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-bold text-blue-700">
+                                {task.difficulty}
+                              </span>
+                            </span>
+                          ) : null}
+                          {task.emotion && (task.emotion as string) !== 'Not rated' ? (
+                            <span>
+                              <strong>How it felt:</strong>{' '}
+                              <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-bold text-indigo-700">
+                                {task.emotion}
+                              </span>
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -400,7 +425,7 @@ export default function SquashTesterReportDetailPage() {
                 You did not file any bugs for this submission.
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[580px] overflow-y-auto pr-1">
                 {reportedBugs.map((bug, bugIndex) => (
                   <div key={bug.id} className="rounded-xl border border-slate-200 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -486,26 +511,25 @@ export default function SquashTesterReportDetailPage() {
               <h2>Captured Environment</h2>
             </div>
 
-            {environment ? (
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-                {[
-                  { label: 'OS', value: environment.os },
-                  { label: 'Browser', value: environment.browser },
-                  { label: 'Screen', value: environment.resolution },
-                  { label: 'Network', value: environment.network },
-                  { label: 'Language', value: environment.language },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</p>
-                    <p className="mt-1 truncate font-semibold text-slate-800">{item.value || 'Unknown'}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center text-xs font-semibold text-slate-500">
-                No device details were captured for this session.
-              </p>
-            )}
+            {(() => {
+              const activeEnv = environment || captureSessionEnvironment();
+              return (
+                <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
+                  {[
+                    { label: 'OS', value: activeEnv.os },
+                    { label: 'Browser', value: activeEnv.browser },
+                    { label: 'Screen', value: activeEnv.resolution },
+                    { label: 'Network', value: activeEnv.network },
+                    { label: 'Language', value: activeEnv.language },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</p>
+                      <p className="mt-1 truncate font-semibold text-slate-800">{item.value || 'Unknown'}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
         </div>
       </div>

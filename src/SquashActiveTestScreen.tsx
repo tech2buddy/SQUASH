@@ -11,20 +11,20 @@ import {
   ListOrdered,
   Monitor,
   Paperclip,
-  Search,
   Slash,
   Square,
   Target,
+  Video,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from './auth';
 import type { TaskOutcome } from './lib/testBrief';
-import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, getAssignmentBugReports, type SavedBugReportItem, type TesterAssignment } from './lib/jobApi';
+import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, getAssignmentBugReports, deleteBugReportsByIds, type SavedBugReportItem, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
 import { testerPayoutForJob } from './lib/pricing';
-import TesterHeaderNav from './components/TesterHeaderNav';
 import {
   captureSessionEnvironment,
   completeTestLabTask,
@@ -81,26 +81,37 @@ export default function SquashActiveTestScreen() {
   const [severity, setSeverity] = useState('Medium');
   const [bugNotice, setBugNotice] = useState('');
   const [progressNotice, setProgressNotice] = useState('');
-  const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingSecondsLeft, setRecordingSecondsLeft] = useState(60);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState('');
   const [recordedVideoDuration, setRecordedVideoDuration] = useState(0);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [evidencePreviewUrl, setEvidencePreviewUrl] = useState('');
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const recordingStartedAtRef = useRef<number | null>(null);
-  const mediaChunksRef = useRef<Blob[]>([]);
-  const recordedVideoBlobRef = useRef<Blob | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
   const evidenceInputRef = useRef<HTMLInputElement | null>(null);
-  const countdownIntervalRef = useRef<number | null>(null);
-  const recordingIntervalRef = useRef<number | null>(null);
   const completedTasks = useMemo(() => taskState.filter(Boolean).length, [taskState]);
   const progressPercent = useMemo(
     () => Math.round((completedTasks / taskState.length) * 100),
     [completedTasks, taskState.length],
   );
+
+  const [liveTime, setLiveTime] = useState('');
+  useEffect(() => {
+    const updateClock = () => {
+      setLiveTime(
+        new Intl.DateTimeFormat('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }).format(new Date())
+      );
+    };
+    updateClock();
+    const timer = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const fetchSavedBugs = (assignmentId: string) => {
     getAssignmentBugReports(assignmentId)
@@ -170,8 +181,22 @@ export default function SquashActiveTestScreen() {
     }
   };
 
+  const getTaskBugTitlePrefix = (index: number) => `Issue in Task ${index + 1}:`;
+
   const toggleTask = (index: number, checked: boolean) => {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
+
+    // When resetting a task, remove its bugs from UI state AND permanently from the database
+    if (!checked) {
+      const prefix = getTaskBugTitlePrefix(index);
+      setSavedBugs((prev) => {
+        const toDelete = prev.filter((bug) => bug.title.startsWith(prefix));
+        if (toDelete.length > 0) {
+          deleteBugReportsByIds(toDelete.map((b) => b.id)).catch(() => {});
+        }
+        return prev.filter((bug) => !bug.title.startsWith(prefix));
+      });
+    }
 
     if (!labSessionId) return;
     const taskKey = `task-${index + 1}`;
@@ -203,143 +228,39 @@ export default function SquashActiveTestScreen() {
       }
     }
     setTaskState((previous) => previous.map((done, taskIndex) => taskIndex === index ? true : done));
+
+    // Auto-fill only the bug title so the tester knows which task it refers to
+    if (outcome === 'fail' || outcome === 'blocked') {
+      const taskName = tasks[index] || `Task ${index + 1}`;
+      setBugTitle(`${getTaskBugTitlePrefix(index)} ${taskName}`);
+    }
+
     try {
       await recordTestTaskOutcome({ sessionId: labSessionId, taskKey: `task-${index + 1}`, outcome, note });
       await refreshTaskResults(labSessionId);
-      if (outcome === 'fail') {
-        const taskName = tasks[index] || `Task ${index + 1}`;
-        const structuredTask = assignment?.jobBrief.tasks[index];
-        setBugTitle(`Issue in Task ${index + 1}: ${taskName}`);
-        setBugSteps(structuredTask?.instructions || `1. Perform task: ${taskName}\n2. Observe error/unexpected behavior.`);
-        setBugNotice('Failed task loaded into Bug Report form below.');
-      }
     } catch (error) {
       setProgressNotice(error instanceof Error ? error.message : 'Could not save this task result.');
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, '0');
-    const secs = (seconds % 60).toString().padStart(2, '0');
-    return `${mins}:${secs}`;
-  };
-
-  const clearIntervals = () => {
-    if (countdownIntervalRef.current) {
-      window.clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-    if (recordingIntervalRef.current) {
-      window.clearInterval(recordingIntervalRef.current);
-      recordingIntervalRef.current = null;
-    }
-  };
-
-  const stopMediaStream = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
-  };
-
-  const stopRecording = (autoStopped = false) => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    clearIntervals();
-    setIsRecording(false);
-    recordingStartedAtRef.current = null;
-    if (autoStopped) {
-      setBugNotice('Recording stopped automatically after 60 seconds.');
-    }
-  };
-
-  const startMediaRecording = async () => {
+  const recordTaskRating = async (index: number, difficultyRating?: 'Easy' | 'Neutral' | 'Difficult', emotionRating?: 'Smooth' | 'Confusing' | 'Frustrating') => {
+    if (!labSessionId) return;
     try {
-      if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getDisplayMedia ||
-        typeof MediaRecorder === 'undefined'
-      ) {
-        setBugNotice('Screen recording is not supported on this browser.');
-        return;
-      }
-
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
+      await completeTestLabTask({
+        sessionId: labSessionId,
+        taskKey: `task-${index + 1}`,
+        difficultyRating,
+        emotionRating,
       });
-      mediaStreamRef.current = stream;
-      mediaChunksRef.current = [];
-      recordedVideoBlobRef.current = null;
-
-      const recorder = new MediaRecorder(stream, {
-        videoBitsPerSecond: 900_000,
-        audioBitsPerSecond: 64_000,
-      });
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) mediaChunksRef.current.push(event.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(mediaChunksRef.current, { type: 'video/webm' });
-        recordedVideoBlobRef.current = blob;
-        if (recordedVideoUrl) {
-          URL.revokeObjectURL(recordedVideoUrl);
-        }
-        const previewUrl = URL.createObjectURL(blob);
-        setRecordedVideoUrl(previewUrl);
-        const elapsed = recordingStartedAtRef.current
-          ? Math.min(60, Math.max(1, Math.round((Date.now() - recordingStartedAtRef.current) / 1000)))
-          : Math.max(1, 60 - recordingSecondsLeft);
-        setRecordedVideoDuration(Math.max(1, elapsed));
-        recordingStartedAtRef.current = null;
-
-        stopMediaStream();
-      };
-
-      recorder.start(200);
-      setIsRecording(true);
-      setRecordingSecondsLeft(60);
-      setBugNotice('');
-      recordingStartedAtRef.current = Date.now();
-
-      recordingIntervalRef.current = window.setInterval(() => {
-        setRecordingSecondsLeft((prev) => {
-          if (prev <= 1) {
-            stopRecording(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      await refreshTaskResults(labSessionId);
     } catch {
-      setBugNotice('Could not start recording. Please allow screen recording permissions.');
-      setRecordCountdown(null);
-      stopMediaStream();
+      // Non-blocking rating save
     }
   };
 
-  const startRecordingWithCountdown = () => {
-    if (isRecording) return;
-    setBugNotice('');
-    setRecordCountdown(3);
-    countdownIntervalRef.current = window.setInterval(() => {
-      setRecordCountdown((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearIntervals();
-          startMediaRecording();
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+
+
+
 
   const selectEvidence = (file: File | null) => {
     if (!file) return;
@@ -350,7 +271,15 @@ export default function SquashActiveTestScreen() {
     if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
     setEvidenceFile(file);
     setEvidencePreviewUrl(URL.createObjectURL(file));
-    setBugNotice(`${file.type.startsWith('image/') ? 'Screenshot' : 'Video'} ready to upload.`);
+    setBugNotice(`Attached: ${file.name}`);
+  };
+
+  const removeEvidence = () => {
+    if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
+    setEvidenceFile(null);
+    setEvidencePreviewUrl('');
+    if (evidenceInputRef.current) evidenceInputRef.current.value = '';
+    setBugNotice('');
   };
 
   const captureScreenshot = async () => {
@@ -399,9 +328,7 @@ export default function SquashActiveTestScreen() {
       try {
         let screenshotPath: string | null = null;
         let videoPath: string | null = null;
-        const recordedBlob = recordedVideoBlobRef.current;
-        const uploadFile = evidenceFile
-          ?? (recordedBlob ? new File([recordedBlob], `recording-${Date.now()}.webm`, { type: recordedBlob.type || 'video/webm' }) : null);
+        const uploadFile = evidenceFile;
         if (uploadFile) {
           const uploadType = uploadFile.type.startsWith('image/') ? 'screenshot' : 'video';
           const upload = await uploadBugReportFile(uploadFile, uploadType, session.userId, assignment.jobId);
@@ -444,7 +371,6 @@ export default function SquashActiveTestScreen() {
     setEvidenceFile(null);
     if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
     setEvidencePreviewUrl('');
-    recordedVideoBlobRef.current = null;
     if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
     setRecordedVideoUrl('');
     setRecordedVideoDuration(0);
@@ -459,13 +385,13 @@ export default function SquashActiveTestScreen() {
       setProgressNotice(error instanceof Error ? error.message : 'Could not save progress right now.');
     }
   };
-  const submitTest = async () => {
-    if (evidenceFile || recordedVideoBlobRef.current) {
-      setProgressNotice('Evidence is attached but not uploaded yet. Click Save Bug Report before submitting the test.');
+  const openReviewModal = () => {
+    if (evidenceFile) {
+      setProgressNotice('Evidence is attached but not uploaded yet. Click Save Bug Report before submitting.');
       return;
     }
     if (bugDescription.trim() || bugTitle.trim() || bugSteps.trim() || bugExpected.trim() || bugActual.trim()) {
-      setProgressNotice('You have an unsaved bug report. Save it or clear the description before submitting the test.');
+      setProgressNotice('You have an unsaved bug report. Save it or clear the fields before submitting.');
       return;
     }
     if (completedTasks < taskState.length) {
@@ -476,23 +402,34 @@ export default function SquashActiveTestScreen() {
       setProgressNotice('The secure Test Lab session is still loading. Please try again.');
       return;
     }
-    if (assignment && session?.userId) {
-      try {
+    setProgressNotice('');
+    setShowReviewModal(true);
+  };
+
+  const submitTest = async () => {
+    if (!reportSummary.trim()) {
+      setProgressNotice('Please write an executive summary before final submission.');
+      return;
+    }
+    setSubmittingReport(true);
+    setProgressNotice('');
+    try {
+      if (assignment && session?.userId) {
         await submitAssignmentReport({
           assignmentId: assignment.id,
           testerId: session.userId,
           jobId: assignment.jobId,
-          summary: reportSummary || `Completed ${completedTasks} of ${taskState.length} tasks.`,
+          summary: reportSummary.trim(),
         });
         if (labSessionId) await markTestLabSubmitted(labSessionId);
-      } catch (error) {
-        setProgressNotice(error instanceof Error ? error.message : 'Could not submit this test right now.');
-        return;
       }
+      setProgressNotice('Test submitted successfully.');
+      navigate('/tester/reports');
+    } catch (error) {
+      setProgressNotice(error instanceof Error ? error.message : 'Could not submit this test right now.');
+    } finally {
+      setSubmittingReport(false);
     }
-
-    setProgressNotice('Test submitted successfully.');
-    navigate('/tester/reports');
   };
 
   useEffect(() => {
@@ -526,136 +463,152 @@ export default function SquashActiveTestScreen() {
   }, [labSessionId, tasks.length, taskState, taskResults]);
   useEffect(
     () => () => {
-      clearIntervals();
-      stopMediaStream();
       if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
       if (evidencePreviewUrl) URL.revokeObjectURL(evidencePreviewUrl);
     },
     [recordedVideoUrl, evidencePreviewUrl],
   );
 
+  if (loadingAssignment) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-2xs">
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent mb-3" />
+        <p className="text-sm font-bold text-slate-800">Loading test lab environment...</p>
+        <p className="text-xs text-slate-500 mt-1">Preparing test brief, tasks, and environment metrics</p>
+      </div>
+    );
+  }
+
+  if (assignmentError && !assignment) {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-2xs space-y-3">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
+          <Target className="h-6 w-6" />
+        </div>
+        <h2 className="text-base font-bold text-slate-900">No active test selected</h2>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          {assignmentError || 'You do not have an active test assignment running right now. Choose a job from Available Jobs to start testing.'}
+        </p>
+        <a
+          href="/tester-jobs"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+        >
+          Browse Available Jobs
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-[calc(100vh-2rem)] bg-[#f8fafc] text-slate-900 flex flex-col justify-between">
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-2.5 sm:px-6 shadow-2xs">
-        {/* Left: Job Logo + Title + Metadata Badges */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-xs overflow-hidden">
-            {assignment?.jobLogoUrl ? (
-              <img src={assignment.jobLogoUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-xs font-black tracking-tight">
-                {(assignment?.jobTitle || 'B').slice(0, 1)}
-              </span>
-            )}
-          </div>
+    <div className="space-y-4">
+      {/* Top Banner Card (Job Banner) */}
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Job Logo & Title & Metadata Badges */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-xs overflow-hidden">
+              {assignment?.jobLogoUrl ? (
+                <img src={assignment.jobLogoUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-sm font-black tracking-tight">
+                  {(assignment?.jobTitle || 'T').slice(0, 1)}
+                </span>
+              )}
+            </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0">
-            <h1 className="text-base font-bold tracking-tight text-slate-900 truncate sm:text-lg">
-              {assignment?.jobTitle || 'Bolt — Checkout Flow Test'}
-            </h1>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <h1 className="text-base font-extrabold tracking-tight text-slate-900 truncate sm:text-lg">
+                {assignment?.jobTitle || 'Active Test'}
+              </h1>
 
-            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">
-              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-100">
-                Test in progress
-              </span>
-              <span className="text-slate-300">|</span>
-              <span>
-                Payout <strong className="ml-1 font-bold text-emerald-600">R{assignmentPayout}</strong>
-              </span>
-              <span className="text-slate-300">|</span>
-              <span className="inline-flex items-center gap-1 text-slate-500">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                {assignment?.dueAt ? new Date(assignment.dueAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '25 May 2025, 23:59'}
-              </span>
+              <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-slate-500">
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-100">
+                  Test in progress
+                </span>
+                <span className="text-slate-300">|</span>
+                <span>
+                  Payout <strong className="ml-0.5 font-bold text-emerald-600">R{assignmentPayout}</strong>
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                  <Calendar className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  {liveTime || '28 Jul 2026, 22:07:53'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Right Header Navigation & Profile. The Test Lab renders its own
-            header instead of using TesterLayout, so the search field is
-            repeated here to stay consistent with every other tester page. */}
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="hidden items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 px-4 py-2 lg:flex lg:min-w-[280px]">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              placeholder="Search jobs, apps, tasks..."
-            />
-          </div>
-          <TesterHeaderNav />
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="flex-1 w-full mx-auto max-w-[1600px] px-4 py-5 sm:px-8 sm:py-6 space-y-5">
-        {/* Responsive 2-Column Grid */}
+      {/* Main Responsive 2-Column Grid */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-start">
           {/* Left Column (Brief & Tasks) */}
           <div className="lg:col-span-7 space-y-4">
             {/* 1. Developer Brief Card */}
-            <section className="apple-bento-card p-4">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-3 border-b border-slate-100 pb-2.5">
+            <section className="apple-bento-card p-4 sm:p-5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-4 border-b border-slate-100 pb-2.5">
                 <Code2 className="h-4 w-4 text-slate-500" />
                 <h2>Developer Brief</h2>
               </div>
 
-              <div className="space-y-2.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                 {/* Objective */}
-                <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-2 items-start">
-                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
                     <Target className="h-3.5 w-3.5 text-rose-500" /> Objective
                   </span>
-                  <p className="text-slate-700 leading-relaxed font-medium">
-                    {assignment?.jobBrief.objective || assignment?.jobFocusAreas || assignment?.jobDescription || 'Verify that users can add a payment method and proceed through the checkout flow without errors.'}
+                  <p className="text-slate-800 leading-relaxed font-semibold">
+                    {assignment?.jobBrief?.objective || assignment?.jobFocusAreas || assignment?.jobDescription || 'Execute test tasks and report bugs found.'}
                   </p>
                 </div>
 
                 {/* Test Link */}
-                <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-2 items-center">
-                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
                     <Link2 className="h-3.5 w-3.5 text-blue-500" /> Test link
                   </span>
-                  <div className="flex items-center justify-between gap-3 min-w-0">
-                    <a
-                      href={assignment?.jobAppUrl || '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-blue-600 hover:underline truncate"
-                    >
-                      {assignment?.jobAppUrl || 'https://bolt.new/checkout'}
-                    </a>
-                    {assignment?.jobAppUrl ? (
+                  {assignment?.jobAppUrl ? (
+                    <div className="flex items-center justify-between gap-2 min-w-0">
                       <a
                         href={assignment.jobAppUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs inline-flex items-center gap-1"
+                        className="font-bold text-blue-600 hover:underline truncate"
                       >
-                        Open test website <ExternalLink className="h-3 w-3" />
+                        {assignment.jobAppUrl}
                       </a>
-                    ) : null}
-                  </div>
+                      <a
+                        href={assignment.jobAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs inline-flex items-center gap-1"
+                      >
+                        Open <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 font-medium italic">No link provided</span>
+                  )}
                 </div>
 
                 {/* Required Environment */}
-                <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-2 items-start">
-                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
                     <Monitor className="h-3.5 w-3.5 text-indigo-500" /> Required environment
                   </span>
-                  <span className="text-slate-700 font-medium">
-                    {assignment?.jobBrief.requiredEnvironment || assignment?.jobPlatform || 'Windows 11, Chrome (latest), 1920 x 1080'}
-                  </span>
+                  <p className="text-slate-800 font-semibold leading-relaxed">
+                    {assignment?.jobBrief?.requiredEnvironment || assignment?.jobPlatform || 'Browser'}
+                  </p>
                 </div>
 
                 {/* Out of Scope */}
-                <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-2 items-start">
-                  <span className="font-bold text-slate-500 flex items-center gap-1.5">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
+                  <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
                     <Ban className="h-3.5 w-3.5 text-amber-500" /> Out of scope
                   </span>
-                  <span className="text-slate-600 font-medium">
-                    {assignment?.jobBrief.outOfScope || 'Promotions, coupon codes, saved addresses, and account deletion.'}
-                  </span>
+                  <p className="text-slate-700 font-medium leading-relaxed">
+                    {assignment?.jobBrief?.outOfScope || 'None'}
+                  </p>
                 </div>
               </div>
             </section>
@@ -833,6 +786,49 @@ export default function SquashActiveTestScreen() {
                                   </button>
                                 ) : null}
                               </div>
+
+                              {/* UX Task Ratings (Option A: Difficulty & How it felt) */}
+                              <div className="mt-3 pt-2.5 border-t border-slate-100/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-bold text-slate-500">Difficulty:</span>
+                                  <div className="flex items-center gap-1">
+                                    {(['Easy', 'Neutral', 'Difficult'] as const).map((level) => (
+                                      <button
+                                        key={level}
+                                        type="button"
+                                        onClick={() => void recordTaskRating(index, level, undefined)}
+                                        className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all ${
+                                          result?.difficultyRating === level
+                                            ? 'bg-slate-900 text-white shadow-2xs'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                      >
+                                        {level}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-bold text-slate-500">How it felt:</span>
+                                  <div className="flex items-center gap-1">
+                                    {(['Smooth', 'Confusing', 'Frustrating'] as const).map((feel) => (
+                                      <button
+                                        key={feel}
+                                        type="button"
+                                        onClick={() => void recordTaskRating(index, undefined, feel)}
+                                        className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all ${
+                                          result?.emotionRating === feel
+                                            ? 'bg-slate-900 text-white shadow-2xs'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                      >
+                                        {feel}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -848,6 +844,39 @@ export default function SquashActiveTestScreen() {
                 })}
               </div>
             </section>
+
+            {/* Logged Bugs Card — directly under Test Tasks */}
+            {savedBugs.length > 0 ? (
+              <section className="apple-bento-card p-4">
+                <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                    <Bug className="h-4 w-4 text-emerald-600" />
+                    <h2>Logged Bugs ({savedBugs.length})</h2>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-600">Saved to session</span>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {savedBugs.map((bug) => (
+                    <div key={bug.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-bold text-slate-800 line-clamp-1">{bug.title}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          bug.severity === 'Critical' ? 'bg-rose-100 text-rose-700' :
+                          bug.severity === 'High' ? 'bg-orange-100 text-orange-700' :
+                          bug.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {bug.severity}
+                        </span>
+                      </div>
+                      {bug.stepsToReproduce ? (
+                        <p className="mt-0.5 text-slate-500 line-clamp-1 text-[11px] font-medium">{bug.stepsToReproduce}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
 
           {/* Right Column (Evidence, Bug Report, Captured Environment) */}
@@ -873,19 +902,38 @@ export default function SquashActiveTestScreen() {
               />
 
               {/* Dotted Upload Drop Area */}
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 text-center transition hover:bg-slate-50">
+              <div
+                onClick={() => evidenceInputRef.current?.click()}
+                className="cursor-pointer flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 text-center transition hover:border-emerald-400 hover:bg-emerald-50/20"
+              >
                 {evidencePreviewUrl || recordedVideoUrl ? (
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">{evidenceFile?.name || 'Screen recording ready'}</p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">Evidence will attach when saving the bug report.</p>
+                  <div className="space-y-2 w-full">
+                    {evidencePreviewUrl && evidenceFile?.type.startsWith('image/') ? (
+                      <img src={evidencePreviewUrl} alt="Evidence preview" className="max-h-36 mx-auto rounded-lg border border-slate-200 object-contain shadow-2xs" />
+                    ) : (
+                      <p className="text-xs font-bold text-slate-800">{evidenceFile?.name || 'File ready'}</p>
+                    )}
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xs font-bold text-slate-800 truncate max-w-[200px]">{evidenceFile?.name}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeEvidence();
+                        }}
+                        className="rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div>
                     <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-2xs text-slate-400 mb-1.5">
-                      <Camera className="h-4 w-4" />
+                      <Camera className="h-4 w-4 text-emerald-600" />
                     </div>
-                    <p className="text-xs font-bold text-slate-800">No evidence added yet</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Add a screenshot, screen recording, or file.</p>
+                    <p className="text-xs font-bold text-slate-800">Click to upload screenshot or evidence</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Supports PNG, JPG, WEBP, MP4</p>
                   </div>
                 )}
               </div>
@@ -901,11 +949,12 @@ export default function SquashActiveTestScreen() {
                 </button>
                 <button
                   type="button"
-                  onClick={isRecording ? () => stopRecording(false) : startRecordingWithCountdown}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] font-bold text-rose-600 hover:bg-rose-100 transition shadow-2xs"
+                  disabled
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-100 px-1.5 py-1.5 text-[10px] font-bold text-slate-400 cursor-not-allowed opacity-75"
+                  title="Screen recording will be available in the upcoming release"
                 >
-                  <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-                  {isRecording ? 'Stop' : 'Record screen'}
+                  <Video className="h-3.5 w-3.5 text-slate-400" /> Record video
+                  <span className="rounded-full bg-slate-200 px-1 py-0.2 text-[8px] font-extrabold text-slate-600">Soon</span>
                 </button>
                 <button
                   type="button"
@@ -915,13 +964,6 @@ export default function SquashActiveTestScreen() {
                   <Paperclip className="h-3.5 w-3.5 text-slate-500" /> Attach file
                 </button>
               </div>
-
-              {recordCountdown !== null ? (
-                <p className="mt-2 text-xs font-semibold text-amber-700 text-center">Starting in {recordCountdown}s...</p>
-              ) : null}
-              {isRecording ? (
-                <p className="mt-2 text-xs font-semibold text-rose-600 text-center">Recording: {formatDuration(60 - recordingSecondsLeft)}</p>
-              ) : null}
 
               {evidencePreviewUrl && evidenceFile?.type.startsWith('image/') ? (
                 <img src={evidencePreviewUrl} alt="Evidence preview" className="mt-2.5 max-h-36 w-full rounded-lg border border-slate-200 object-contain" />
@@ -1039,38 +1081,7 @@ export default function SquashActiveTestScreen() {
               </div>
             </section>
 
-            {/* Logged Bugs Card */}
-            {savedBugs.length > 0 ? (
-              <section className="apple-bento-card p-4">
-                <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <Bug className="h-4 w-4 text-emerald-600" />
-                    <h2>Logged Bugs ({savedBugs.length})</h2>
-                  </div>
-                  <span className="text-[11px] font-semibold text-emerald-600">Saved to session</span>
-                </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {savedBugs.map((bug) => (
-                    <div key={bug.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 text-xs">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-slate-800 line-clamp-1">{bug.title}</span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          bug.severity === 'Critical' ? 'bg-rose-100 text-rose-700' :
-                          bug.severity === 'High' ? 'bg-orange-100 text-orange-700' :
-                          bug.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                        }`}>
-                          {bug.severity}
-                        </span>
-                      </div>
-                      {bug.stepsToReproduce ? (
-                        <p className="mt-0.5 text-slate-500 line-clamp-1 text-[11px] font-medium">{bug.stepsToReproduce}</p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
 
             {/* 3. Captured Environment Card */}
             <section className="apple-bento-card p-4">
@@ -1099,10 +1110,9 @@ export default function SquashActiveTestScreen() {
             </section>
           </div>
         </div>
-      </main>
 
       {/* Floating Bottom Action Bar */}
-      <footer className="sticky bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-2.5 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <footer className="fixed bottom-0 left-0 right-0 lg:left-[260px] z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-2.5 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Readiness Progress Bar */}
           <div className="flex items-center gap-3 flex-1 w-full sm:max-w-md">
@@ -1136,7 +1146,7 @@ export default function SquashActiveTestScreen() {
             </button>
             <button
               type="button"
-              onClick={submitTest}
+              onClick={openReviewModal}
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4.5 py-2 text-xs font-bold text-white shadow-sm transition"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1148,6 +1158,85 @@ export default function SquashActiveTestScreen() {
         </div>
         {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-emerald-600 text-center">{progressNotice}</p> : null}
       </footer>
+
+      {/* Review & Executive Summary Submission Modal */}
+      {showReviewModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Review & Executive Summary</h3>
+                  <p className="text-xs text-slate-500">Provide your overall test executive summary before final submission.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                className="rounded-xl border border-slate-200 p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Overview Stats Row */}
+            <div className="grid grid-cols-3 gap-2.5 text-center">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Tasks Tested</span>
+                <span className="text-lg font-black text-slate-900">{completedTasks} / {taskState.length}</span>
+              </div>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bugs Reported</span>
+                <span className="text-lg font-black text-slate-900">{savedBugs.length}</span>
+              </div>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Readiness</span>
+                <span className="text-lg font-black text-emerald-600">100%</span>
+              </div>
+            </div>
+
+            {/* Executive Summary Input Area */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-extrabold text-slate-800 block">
+                Write Executive Summary <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={4}
+                value={reportSummary}
+                onChange={(e) => setReportSummary(e.target.value)}
+                placeholder="Provide a clear, detailed summary of your overall app testing experience, performance observations, and key recommendations for the developer..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 transition leading-relaxed font-medium"
+              />
+              <p className="text-[11px] text-slate-400 font-medium">This executive summary will be included in the report delivered to the developer.</p>
+            </div>
+
+            {progressNotice ? (
+              <p className="text-xs font-semibold text-rose-600 text-center">{progressNotice}</p>
+            ) : null}
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Back to Test Lab
+              </button>
+              <button
+                type="button"
+                disabled={submittingReport}
+                onClick={submitTest}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
+              >
+                {submittingReport ? 'Submitting...' : 'Final Submit Test Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -36,15 +36,15 @@ export default function SquashHomepage() {
   const testimonials = [
     {
       quote:
-        'Squash helped us find checkout issues before launch. The feedback was fast, practical, and easy to act on.',
-      name: 'Sipho N.',
-      role: 'Founder, PayFlow',
+        "Building a great app is hard; testing it shouldn't be. SQUASH helps engineering teams ship faster with 100% confidence by turning real user testing into structured, developer-ready reports.",
+      name: 'M. Khosa',
+      role: 'Founder, SQUASH',
     },
     {
       quote:
-        'We got clear bug reports, helpful usability notes, and real everyday users who matched our audience.',
-      name: 'Lerato D.',
-      role: 'CTO, HealthApp',
+        "As a builder, nothing hurts more than losing users on day one to silent bugs you didn't catch. SQUASH was created to give every startup access to enterprise-grade QA from day one.",
+      name: 'M. Khosa',
+      role: 'Founder, SQUASH',
     },
   ];
 

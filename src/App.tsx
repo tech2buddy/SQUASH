@@ -18,6 +18,7 @@ import SquashAuthCallbackPage from './SquashAuthCallbackPage';
 import SquashTesterDashboardPage from './SquashTesterDashboardPage';
 import SquashTesterMyTestsPage from './SquashTesterMyTestsPage';
 import SquashTesterJobBoard from './SquashTesterJobBoard';
+import SquashTesterJobDetailPage from './SquashTesterJobDetailPage';
 import SquashTesterProfilePage from './SquashTesterProfilePage';
 import SquashTesterEarningsPage from './SquashTesterEarningsPage';
 import SquashTesterReportsPage from './SquashTesterReportsPage';
@@ -384,6 +385,7 @@ export default function App() {
       >
         <Route path="/tester/dashboard" element={<SquashTesterDashboardPage />} />
         <Route path="/tester-jobs" element={<SquashTesterJobBoard />} />
+        <Route path="/tester-jobs/:jobId" element={<SquashTesterJobDetailPage />} />
         <Route path="/job-board" element={<SquashTesterJobBoard />} />
         <Route path="/active-test" element={<SquashTesterMyTestsPage />} />
         <Route path="/tester/my-tests" element={<SquashTesterMyTestsPage />} />

@@ -439,7 +439,19 @@ export default function SquashTesterJobBoard() {
             {/* Job Cards */}
             <div className="space-y-4">
               {paginatedJobs.map((job) => (
-                <div key={job.name} className="apple-bento-card p-5 min-w-0">
+                <div
+                  key={job.name}
+                  role={job.jobId ? 'link' : undefined}
+                  tabIndex={job.jobId ? 0 : undefined}
+                  onClick={job.jobId ? () => navigate(`/tester-jobs/${job.jobId}`) : undefined}
+                  onKeyDown={job.jobId ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/tester-jobs/${job.jobId}`);
+                    }
+                  } : undefined}
+                  className={`apple-bento-card p-5 min-w-0 ${job.jobId ? 'cursor-pointer transition hover:border-green-200' : ''}`}
+                >
                   {/* Top row: logo + title + category + action */}
                   <div className="flex items-start gap-3.5">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-base font-extrabold ${job.logoUrl ? 'border border-slate-200 bg-white text-slate-900' : job.accent}`}>
@@ -484,7 +496,10 @@ export default function SquashTesterJobBoard() {
                             {isLong ? (
                               <button
                                 type="button"
-                                onClick={() => setExpandedJobs((prev) => ({ ...prev, [job.name]: !prev[job.name] }))}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedJobs((prev) => ({ ...prev, [job.name]: !prev[job.name] }));
+                                }}
                                 className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-green-700 hover:text-green-800 hover:underline transition"
                               >
                                 {isExpanded ? 'View Less ▲' : 'View More ▼'}
@@ -523,7 +538,10 @@ export default function SquashTesterJobBoard() {
                       return (
                         <button
                           type="button"
-                          onClick={() => handleApply(job)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleApply(job);
+                          }}
                           disabled={Boolean(isApplying || isPending || isRejected)}
                           className={`rounded-full px-5 py-2.5 text-xs font-bold transition apple-press-effect ${
                             isAccepted

@@ -254,6 +254,25 @@ export async function getActiveJobs(): Promise<DeveloperJob[]> {
   return (data || []).map(mapJob);
 }
 
+/**
+ * Fetches a single active job for a tester deciding whether to apply.
+ * Restricted to `active` so drafts and completed jobs are never reachable
+ * by guessing an id.
+ */
+export async function getActiveJobById(jobId: string): Promise<DeveloperJob | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', jobId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (error) throw new Error(formatSupabaseError(error, 'Unable to load this job right now.'));
+  return data ? mapJob(data) : null;
+}
+
 
 export type JobApplication = {
   id: string;

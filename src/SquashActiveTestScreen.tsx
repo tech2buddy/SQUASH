@@ -22,7 +22,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth';
 import { getTesterAssignmentById, getTesterPrimaryAssignment, saveAssignmentBugReport, submitAssignmentReport, type TesterAssignment } from './lib/jobApi';
 import { uploadBugReportFile } from './lib/storageApi';
-import { getOrCreateTestLabSession, markTestLabSubmitted, saveTestLabProgress } from './lib/testLabApi';
+import {
+  completeTestLabTask,
+  getOrCreateTestLabSession,
+  getTestLabTaskResults,
+  markTestLabSubmitted,
+  reopenTestLabTask,
+  saveTestLabProgress,
+  startTestLabTask,
+  DIFFICULTY_RATINGS,
+  EMOTION_RATINGS,
+  type DifficultyRating,
+  type EmotionRating,
+  type TestTaskResult,
+} from './lib/testLabApi';
 
 type TestingTypeConfig = {
   bg: string; border: string; text: string; dot: string;
@@ -110,6 +123,8 @@ export default function SquashActiveTestScreen() {
   const [loadingAssignment, setLoadingAssignment] = useState(false);
   const [tasks, setTasks] = useState(fallbackTasks);
   const [taskState, setTaskState] = useState(fallbackTasks.map((_, index) => index < 2));
+  const [taskResults, setTaskResults] = useState<TestTaskResult[]>([]);
+  const [ratingPromptIndex, setRatingPromptIndex] = useState<number | null>(null);
   const [bugDescription, setBugDescription] = useState('');
   const [reportSummary, setReportSummary] = useState('');
   const [severity, setSeverity] = useState('Medium');
@@ -163,6 +178,9 @@ export default function SquashActiveTestScreen() {
             const savedProgress = labSession.metadata as { task_state?: boolean[]; report_summary?: string };
             if (Array.isArray(savedProgress.task_state)) setTaskState(savedProgress.task_state);
             if (savedProgress.report_summary) setReportSummary(savedProgress.report_summary);
+            return getTestLabTaskResults(labSession.id).then((results) => {
+              setTaskResults(results);
+            });
           })
           .catch(() => {});
         const parsedTasks = (item.jobTasks || '')
@@ -186,8 +204,50 @@ export default function SquashActiveTestScreen() {
     };
   }, [assignmentId, session?.userId]);
 
+  const refreshTaskResults = async (sessionId: string) => {
+    try {
+      setTaskResults(await getTestLabTaskResults(sessionId));
+    } catch {
+      // Instrumentation is additive: if it fails the checklist still works.
+    }
+  };
+
   const toggleTask = (index: number, checked: boolean) => {
     setTaskState((prev) => prev.map((item, idx) => (idx === index ? checked : item)));
+
+    if (!labSessionId) return;
+    const taskKey = `task-${index + 1}`;
+
+    if (checked) {
+      // Ask how it felt right after completing, while it is still fresh.
+      setRatingPromptIndex(index);
+      completeTestLabTask({ sessionId: labSessionId, taskKey })
+        .then(() => {
+          // Start the next unfinished task so its duration is measured.
+          const nextIndex = taskState.findIndex((done, idx) => idx !== index && !done);
+          if (nextIndex >= 0) return startTestLabTask(labSessionId, `task-${nextIndex + 1}`);
+          return undefined;
+        })
+        .then(() => refreshTaskResults(labSessionId))
+        .catch(() => {});
+    } else {
+      setRatingPromptIndex(null);
+      reopenTestLabTask(labSessionId, taskKey)
+        .then(() => refreshTaskResults(labSessionId))
+        .catch(() => {});
+    }
+  };
+
+  const rateTask = (index: number, rating: { difficulty?: DifficultyRating; emotion?: EmotionRating }) => {
+    if (!labSessionId) return;
+    completeTestLabTask({
+      sessionId: labSessionId,
+      taskKey: `task-${index + 1}`,
+      difficultyRating: rating.difficulty,
+      emotionRating: rating.emotion,
+    })
+      .then(() => refreshTaskResults(labSessionId))
+      .catch(() => {});
   };
 
   const formatDuration = (seconds: number) => {
@@ -458,6 +518,27 @@ export default function SquashActiveTestScreen() {
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [assignment, labSessionId, reportSummary, taskState, tasks]);
+
+  // Starts the clock on the first unfinished task. Runs after the autosave
+  // above has had time to create the task rows, since startTestLabTask
+  // updates an existing row rather than creating one.
+  useEffect(() => {
+    if (!labSessionId || !tasks.length) return;
+    const firstOpen = taskState.findIndex((done) => !done);
+    if (firstOpen < 0) return;
+    const alreadyRunning = taskResults.some(
+      (result) => result.taskKey === `task-${firstOpen + 1}` && result.startedAt,
+    );
+    if (alreadyRunning) return;
+
+    const timer = window.setTimeout(() => {
+      startTestLabTask(labSessionId, `task-${firstOpen + 1}`)
+        .then(() => getTestLabTaskResults(labSessionId))
+        .then(setTaskResults)
+        .catch(() => {});
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [labSessionId, tasks.length, taskState, taskResults]);
   useEffect(
     () => () => {
       clearIntervals();
@@ -600,19 +681,99 @@ export default function SquashActiveTestScreen() {
                   </div>
 
                   <div className="mt-3.5 space-y-2">
-                    {tasks.map((task, index) => (
-                      <label key={task} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-3.5 py-3 hover:bg-slate-100/60 transition cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={taskState[index]}
-                          onChange={(e) => toggleTask(index, e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-slate-900 focus:ring-slate-900"
-                        />
-                        <span className={`text-xs ${taskState[index] ? 'font-bold text-slate-900 line-through opacity-60' : 'font-medium text-slate-700'}`}>
-                          {task}
-                        </span>
-                      </label>
-                    ))}
+                    {tasks.map((task, index) => {
+                      const result = taskResults.find((item) => item.taskKey === `task-${index + 1}`);
+                      const showRatingPrompt = ratingPromptIndex === index && taskState[index];
+                      return (
+                        <div key={task} className="rounded-2xl border border-slate-100 bg-slate-50/50">
+                          <label className="flex cursor-pointer items-start gap-3 px-3.5 py-3 transition hover:bg-slate-100/60">
+                            <input
+                              type="checkbox"
+                              checked={taskState[index]}
+                              onChange={(e) => toggleTask(index, e.target.checked)}
+                              className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-slate-900 focus:ring-slate-900"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className={`block text-xs ${taskState[index] ? 'font-bold text-slate-900 line-through opacity-60' : 'font-medium text-slate-700'}`}>
+                                {task}
+                              </span>
+                              {result?.durationSeconds != null || result?.difficultyRating || result?.emotionRating ? (
+                                <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                                  {result.durationSeconds != null ? (
+                                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
+                                      {formatDuration(result.durationSeconds)}
+                                    </span>
+                                  ) : null}
+                                  {result.difficultyRating ? (
+                                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
+                                      {result.difficultyRating}
+                                    </span>
+                                  ) : null}
+                                  {result.emotionRating ? (
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
+                                      result.emotionRating === 'Confusing' || result.emotionRating === 'Frustrating'
+                                        ? 'bg-amber-50 text-amber-700 ring-amber-200'
+                                        : 'bg-white text-slate-600 ring-slate-200'
+                                    }`}>
+                                      {result.emotionRating}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              ) : null}
+                            </span>
+                          </label>
+
+                          {showRatingPrompt ? (
+                            <div className="border-t border-slate-100 px-3.5 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-[11px] font-bold text-slate-700">How was that step?</div>
+                                <button
+                                  type="button"
+                                  onClick={() => setRatingPromptIndex(null)}
+                                  className="text-[10px] font-semibold text-slate-400 hover:text-slate-600"
+                                >
+                                  Skip
+                                </button>
+                              </div>
+
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {EMOTION_RATINGS.map((emotion) => (
+                                  <button
+                                    key={emotion}
+                                    type="button"
+                                    onClick={() => rateTask(index, { emotion })}
+                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
+                                      result?.emotionRating === emotion
+                                        ? 'bg-slate-900 text-white'
+                                        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-300'
+                                    }`}
+                                  >
+                                    {emotion}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {DIFFICULTY_RATINGS.map((difficulty) => (
+                                  <button
+                                    key={difficulty}
+                                    type="button"
+                                    onClick={() => rateTask(index, { difficulty })}
+                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
+                                      result?.difficultyRating === difficulty
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-300'
+                                    }`}
+                                  >
+                                    {difficulty}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

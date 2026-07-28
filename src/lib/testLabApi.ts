@@ -42,6 +42,12 @@ export async function saveTestLabProgress(input: { sessionId: string; tasks: str
   if (sessionError) throw sessionError;
 
   const now = new Date().toISOString();
+
+  // Only creates missing task rows -- it must not update existing ones.
+  // Task status, started_at, completed_at and the difficulty/emotion ratings
+  // are owned by startTestLabTask/completeTestLabTask. This autosave runs on
+  // an interval, so writing status here would repeatedly reset a task to
+  // 'not_started' and destroy the timing data those functions record.
   const taskRows = input.tasks.map((title, index) => ({
     session_id: input.sessionId,
     assignment_id: session.assignment_id,
@@ -51,12 +57,11 @@ export async function saveTestLabProgress(input: { sessionId: string; tasks: str
     task_order: index + 1,
     title,
     instructions: title,
-    status: input.taskState[index] ? 'completed' : 'not_started',
-    completed_at: input.taskState[index] ? now : null,
+    status: 'not_started',
   }));
   if (taskRows.length) {
     const { error: taskError } = await (supabase.from('test_task_results') as any)
-      .upsert(taskRows, { onConflict: 'session_id,task_key' });
+      .upsert(taskRows, { onConflict: 'session_id,task_key', ignoreDuplicates: true });
     if (taskError) throw taskError;
   }
 
@@ -65,6 +70,113 @@ export async function saveTestLabProgress(input: { sessionId: string; tasks: str
     .eq('id', input.sessionId);
   if (error) throw error;
 }
+export const DIFFICULTY_RATINGS = ['Very easy', 'Easy', 'Neutral', 'Difficult', 'Very difficult'] as const;
+export const EMOTION_RATINGS = ['Smooth', 'Clear', 'Neutral', 'Confusing', 'Frustrating'] as const;
+
+export type DifficultyRating = (typeof DIFFICULTY_RATINGS)[number];
+export type EmotionRating = (typeof EMOTION_RATINGS)[number];
+
+export type TestTaskResult = {
+  taskKey: string;
+  taskOrder: number;
+  title: string;
+  status: 'not_started' | 'active' | 'completed' | 'skipped';
+  startedAt: string | null;
+  completedAt: string | null;
+  difficultyRating: DifficultyRating | null;
+  emotionRating: EmotionRating | null;
+  /** Seconds spent on the task, when both timestamps exist. */
+  durationSeconds: number | null;
+};
+
+function mapTaskResult(row: any): TestTaskResult {
+  const startedAt = row.started_at || null;
+  const completedAt = row.completed_at || null;
+  return {
+    taskKey: row.task_key,
+    taskOrder: row.task_order,
+    title: row.title,
+    status: row.status,
+    startedAt,
+    completedAt,
+    difficultyRating: row.difficulty_rating || null,
+    emotionRating: row.emotion_rating || null,
+    durationSeconds:
+      startedAt && completedAt
+        ? Math.max(0, Math.round((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 1000))
+        : null,
+  };
+}
+
+export async function getTestLabTaskResults(sessionId: string): Promise<TestTaskResult[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await (supabase.from('test_task_results') as any)
+    .select('task_key, task_order, title, status, started_at, completed_at, difficulty_rating, emotion_rating')
+    .eq('session_id', sessionId)
+    .order('task_order', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(mapTaskResult);
+}
+
+/**
+ * Marks a task as started, so the time a tester actually spends on it can be
+ * measured. Never overwrites an existing started_at -- reopening a task
+ * should not reset how long it originally took.
+ */
+export async function startTestLabTask(sessionId: string, taskKey: string) {
+  if (!isSupabaseConfigured) return;
+  const { data: existing, error: readError } = await (supabase.from('test_task_results') as any)
+    .select('started_at, status').eq('session_id', sessionId).eq('task_key', taskKey).maybeSingle();
+  if (readError) throw readError;
+  if (!existing || existing.started_at || existing.status === 'completed') return;
+
+  const { error } = await (supabase.from('test_task_results') as any)
+    .update({ status: 'active', started_at: new Date().toISOString() })
+    .eq('session_id', sessionId)
+    .eq('task_key', taskKey);
+  if (error) throw error;
+}
+
+/**
+ * Completes a task and records how it felt. The ratings are what turn a
+ * checklist into usability evidence -- a developer can see which steps were
+ * rated Confusing or Frustrating and how long each one took.
+ */
+export async function completeTestLabTask(input: {
+  sessionId: string;
+  taskKey: string;
+  difficultyRating?: DifficultyRating | null;
+  emotionRating?: EmotionRating | null;
+}) {
+  if (!isSupabaseConfigured) return;
+  const now = new Date().toISOString();
+
+  // Backfill started_at for tasks completed before they were ever marked
+  // active, so duration is never computed against a null start.
+  const { data: existing } = await (supabase.from('test_task_results') as any)
+    .select('started_at').eq('session_id', input.sessionId).eq('task_key', input.taskKey).maybeSingle();
+
+  const payload: Record<string, unknown> = { status: 'completed', completed_at: now };
+  if (!existing?.started_at) payload.started_at = now;
+  if (input.difficultyRating !== undefined) payload.difficulty_rating = input.difficultyRating;
+  if (input.emotionRating !== undefined) payload.emotion_rating = input.emotionRating;
+
+  const { error } = await (supabase.from('test_task_results') as any)
+    .update(payload)
+    .eq('session_id', input.sessionId)
+    .eq('task_key', input.taskKey);
+  if (error) throw error;
+}
+
+export async function reopenTestLabTask(sessionId: string, taskKey: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await (supabase.from('test_task_results') as any)
+    .update({ status: 'active', completed_at: null })
+    .eq('session_id', sessionId)
+    .eq('task_key', taskKey);
+  if (error) throw error;
+}
+
 export async function markTestLabSubmitted(sessionId: string) {
   if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const now = new Date().toISOString();

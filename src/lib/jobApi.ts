@@ -704,6 +704,51 @@ export async function saveAssignmentBugReport(input: {
   if (error) throw new Error(formatSupabaseError(error, 'Unable to update this job right now.'));
 }
 
+export type SavedBugReportItem = {
+  id: string;
+  assignmentId: string;
+  title: string;
+  description: string;
+  stepsToReproduce: string | null;
+  expectedResult: string | null;
+  actualResult: string | null;
+  severity: 'Low' | 'Medium' | 'High' | 'Critical';
+  frequency: string | null;
+  screenshotPath: string | null;
+  videoPath: string | null;
+  createdAt: string;
+};
+
+export async function getAssignmentBugReports(assignmentId: string): Promise<SavedBugReportItem[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('bug_reports')
+    .select('*')
+    .eq('assignment_id', assignmentId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn('Failed to load bug reports for assignment:', error);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    assignmentId: row.assignment_id,
+    title: row.title,
+    description: row.description,
+    stepsToReproduce: row.steps_to_reproduce,
+    expectedResult: row.expected_result,
+    actualResult: row.actual_result,
+    severity: row.severity,
+    frequency: (row as any).frequency || 'sometimes',
+    screenshotPath: row.screenshot_path,
+    videoPath: row.video_path,
+    createdAt: row.created_at,
+  }));
+}
+
 export async function attachEvidenceToBugReport(input: {
   bugId: string;
   testerId: string;
@@ -1245,6 +1290,8 @@ export type BugReportDetail = {
   screenshotPath: string | null;
   videoPath: string | null;
   reproductionSteps: string[];
+  expectedResult: string | null;
+  actualResult: string | null;
 };
 
 export type DeveloperSubmissionDetails = {
@@ -1306,7 +1353,11 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
       severity: b.severity || 'Medium',
       screenshotPath: b.screenshot_path || null,
       videoPath: b.video_path || null,
-      reproductionSteps: (b.reproduction_steps || '').split('\n').filter(Boolean),
+      // Column is steps_to_reproduce. This previously read a non-existent
+      // `reproduction_steps`, so a tester's steps never reached the report.
+      reproductionSteps: (b.steps_to_reproduce || '').split('\n').map((step: string) => step.trim()).filter(Boolean),
+      expectedResult: b.expected_result || null,
+      actualResult: b.actual_result || null,
     }));
 
   const rawScores = {

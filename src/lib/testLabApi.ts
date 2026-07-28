@@ -35,6 +35,65 @@ export async function getOrCreateTestLabSession(input: { assignmentId: string; j
   return mapSession(data);
 }
 
+export type SessionEnvironment = {
+  os: string;
+  browser: string;
+  resolution: string;
+  network: string;
+  language: string;
+};
+
+/**
+ * Captures the tester's real device context. A bug report is far more
+ * actionable when the developer can see what it was reproduced on, and this
+ * previously showed hardcoded values (Windows 11 / Chrome 150 / 1920x1080).
+ */
+export function captureSessionEnvironment(): SessionEnvironment {
+  const nav = typeof navigator === 'undefined' ? undefined : (navigator as any);
+  const uaData = nav?.userAgentData;
+  const ua = nav?.userAgent || '';
+
+  const browserFromUa = () => {
+    const match = ua.match(/(Firefox|Edg|OPR|Chrome|Safari)\/([\d.]+)/);
+    if (!match) return 'Unknown browser';
+    const name = match[1] === 'Edg' ? 'Edge' : match[1] === 'OPR' ? 'Opera' : match[1];
+    return `${name} ${match[2].split('.')[0]}`;
+  };
+
+  const osFromUa = () => {
+    if (/Windows NT 10/.test(ua)) return 'Windows 10/11';
+    if (/Windows/.test(ua)) return 'Windows';
+    if (/Android ([\d.]+)/.test(ua)) return `Android ${ua.match(/Android ([\d.]+)/)![1]}`;
+    if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+    if (/Mac OS X/.test(ua)) return 'macOS';
+    if (/Linux/.test(ua)) return 'Linux';
+    return 'Unknown OS';
+  };
+
+  return {
+    os: uaData?.platform || osFromUa(),
+    browser: browserFromUa(),
+    resolution:
+      typeof window !== 'undefined' && window.screen
+        ? `${window.screen.width} x ${window.screen.height}`
+        : 'Unknown',
+    // effectiveType reflects measured speed (4g/3g/2g), which matters for the
+    // low-data testing SQUASH sells.
+    network: nav?.connection?.effectiveType ? String(nav.connection.effectiveType).toUpperCase() : 'Unknown',
+    language: nav?.language || 'Unknown',
+  };
+}
+
+/** Environment captured for a submitted assignment, if the tester recorded one. */
+export async function getSessionEnvironment(assignmentId: string): Promise<SessionEnvironment | null> {
+  if (!isSupabaseConfigured || !assignmentId) return null;
+  const { data, error } = await (supabase.from('test_lab_sessions') as any)
+    .select('metadata').eq('assignment_id', assignmentId).maybeSingle();
+  if (error || !data) return null;
+  const environment = (data.metadata || {}).environment;
+  return environment && typeof environment === 'object' ? (environment as SessionEnvironment) : null;
+}
+
 export async function saveTestLabProgress(input: { sessionId: string; tasks: string[]; taskState: boolean[]; reportSummary: string }) {
   if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const progressPercent = input.taskState.length ? Math.round((input.taskState.filter(Boolean).length / input.taskState.length) * 100) : 0;
@@ -67,7 +126,15 @@ export async function saveTestLabProgress(input: { sessionId: string; tasks: str
   }
 
   const { error } = await (supabase.from('test_lab_sessions') as any)
-    .update({ progress_percent: progressPercent, last_saved_at: now, metadata: { task_state: input.taskState, report_summary: input.reportSummary } })
+    .update({
+      progress_percent: progressPercent,
+      last_saved_at: now,
+      metadata: {
+        task_state: input.taskState,
+        report_summary: input.reportSummary,
+        environment: captureSessionEnvironment(),
+      },
+    })
     .eq('id', input.sessionId);
   if (error) throw error;
 }
@@ -118,6 +185,24 @@ export async function getTestLabTaskResults(sessionId: string): Promise<TestTask
   const { data, error } = await (supabase.from('test_task_results') as any)
     .select('task_key, task_order, title, status, started_at, completed_at, difficulty_rating, emotion_rating, outcome, outcome_note')
     .eq('session_id', sessionId)
+    .order('task_order', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(mapTaskResult);
+}
+
+/**
+ * Task results for a submitted report, keyed by assignment rather than
+ * session -- report pages hold an assignmentId, not a lab session id.
+ *
+ * Readable by the tester who produced it, the developer who owns the job,
+ * and admins (see the test_task_results RLS policy in phase 13), so the same
+ * call backs the tester, developer and admin report views.
+ */
+export async function getTaskResultsForAssignment(assignmentId: string): Promise<TestTaskResult[]> {
+  if (!isSupabaseConfigured || !assignmentId) return [];
+  const { data, error } = await (supabase.from('test_task_results') as any)
+    .select('task_key, task_order, title, status, started_at, completed_at, difficulty_rating, emotion_rating')
+    .eq('assignment_id', assignmentId)
     .order('task_order', { ascending: true });
   if (error) throw error;
   return (data || []).map(mapTaskResult);

@@ -80,22 +80,22 @@ export default function SquashTesterReportsPage() {
 
   
 
-  const reports = useMemo(
-    () =>
-      realReports.map((report, index) => ({
-        submissionId: report.id,
-        title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
-        id: `Report #${String(index + 1).padStart(4, '0')}`,
-        app: report.jobTitle,
-        platform: report.jobPlatform,
-        submitted: formatDate(report.submittedAt || report.createdAt),
-        status: toReportStatus(report.status),
-earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : report.status === 'rejected' ? 'Not earned' : 'Awaiting approval',
-        hasVideo: report.videoBugCount > 0,
-        bugCount: report.bugCount,
-      })),
-    [realReports],
-  );
+  const reports = useMemo(() => {
+    // No placeholder report here: showing a fake "R80 Awaiting approval" row
+    // to a tester with no submissions implies earnings that do not exist.
+    return realReports.map((report, index) => ({
+      submissionId: report.id,
+      title: report.summary?.split('.')[0]?.slice(0, 42) || 'Submitted test report',
+      id: `Report #${String(index + 1).padStart(4, '0')}`,
+      app: report.jobTitle,
+      platform: report.jobPlatform,
+      submitted: formatDate(report.submittedAt || report.createdAt),
+      status: toReportStatus(report.status),
+      earnings: report.status === 'approved' ? `${formatRands(report.amountZar)} Approved` : report.status === 'rejected' ? 'Not earned' : 'Awaiting approval',
+      hasVideo: report.videoBugCount > 0,
+      bugCount: report.bugCount,
+    }));
+  }, [realReports]);
 
   const summaryCards = [
     { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },

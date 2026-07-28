@@ -33,10 +33,10 @@ export default function DeveloperLayout() {
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: Home, key: 'dashboard' },
-    { label: 'Jobs', href: '/developer/jobs', icon: ClipboardList, key: 'jobs' },
+    { label: 'My Jobs', href: '/developer/jobs', icon: ClipboardList, key: 'jobs' },
     { label: 'Applications', href: '/developer/applications', icon: UserCircle2, key: 'applications' },
-    { label: 'Reports', href: '/developer/reports', icon: FileText, key: 'reports' },
-    { label: 'Billing', href: '/billing', icon: CreditCard, key: 'billing' },
+    { label: 'Test Reports', href: '/developer/reports', icon: FileText, key: 'reports' },
+    { label: 'Payments', href: '/billing', icon: CreditCard, key: 'billing' },
     { label: 'Settings', href: '/developer/settings', icon: UserCircle2, key: 'settings' },
   ];
 

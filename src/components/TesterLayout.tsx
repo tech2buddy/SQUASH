@@ -106,19 +106,19 @@ export default function TesterLayout() {
       )}
 
       {/* Apple Glassmorphism Sidebar - Fixed 100vh */}
-      <aside className={`hidden ${isTestLab ? 'w-[180px]' : 'w-[260px]'} shrink-0 border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:flex lg:h-screen lg:flex-col overflow-y-auto`}>
-        <div className={`flex items-center gap-3 border-b border-slate-200/60 ${isTestLab ? 'px-4 py-4' : 'px-6 py-6'}`}>
+      <aside className="hidden w-[260px] shrink-0 border-r border-slate-200/60 bg-white/70 backdrop-blur-xl lg:flex lg:h-screen lg:flex-col overflow-y-auto">
+        <div className="flex items-center gap-3 border-b border-slate-200/60 px-6 py-6">
           <img
             src="/squash-logo.png"
             alt="SQUASH logo"
-            className={isTestLab ? 'h-9 w-9 rounded-xl border border-slate-200 object-cover shadow-sm' : 'h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm'}
+            className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm"
           />
-          <Link to="/" className={isTestLab ? 'text-lg font-black tracking-tight text-slate-900 hover:text-green-700' : 'text-2xl font-black tracking-tight text-slate-900 hover:text-green-700'}>
+          <Link to="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">
             SQUASH
           </Link>
         </div>
 
-        <nav className={`flex-1 space-y-2 ${isTestLab ? 'px-2 py-4' : 'px-4 py-6'}`}>
+        <nav className="flex-1 space-y-2 px-4 py-6">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeKey === item.key;
@@ -126,7 +126,7 @@ export default function TesterLayout() {
               <Link
                 to={item.href}
                 key={item.label}
-                className={`apple-press-effect flex items-center gap-3 rounded-xl ${isTestLab ? 'px-3 py-2.5 text-sm' : 'px-4 py-3'} font-semibold transition-all duration-200 ${
+                className={`apple-press-effect flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200 ${
                   isActive ? 'bg-slate-900 text-white shadow-md' : 'text-slate-700 hover:bg-black/[0.04]'
                 }`}
               >

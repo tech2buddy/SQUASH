@@ -230,7 +230,7 @@ export default function SquashDeveloperBillingPage() {
         </div>
       ) : null}
 
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {[
           { title: 'Posted job budget', value: formatRands(summary.postedBudget), note: `${jobs.length} job${jobs.length === 1 ? '' : 's'} recorded`, icon: Wallet },
           { title: 'Verified payments', value: formatRands(summary.recordedPaid), note: `${summary.paidCount} confirmed payment${summary.paidCount === 1 ? '' : 's'}`, icon: Receipt },
@@ -239,14 +239,14 @@ export default function SquashDeveloperBillingPage() {
         ].map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-5">
+            <div key={card.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs sm:rounded-3xl sm:p-5">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-600 sm:text-sm">{card.title}</div>
-                  <div className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">{card.value}</div>
-                  <div className="mt-2 text-xs text-slate-500">{card.note}</div>
+                  <div className="mt-1.5 text-2xl font-black text-slate-900 sm:text-3xl">{card.value}</div>
+                  <div className="mt-1 text-xs text-slate-500">{card.note}</div>
                 </div>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-green-50 text-green-700">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
                   <Icon className="h-5 w-5" />
                 </span>
               </div>
@@ -257,12 +257,15 @@ export default function SquashDeveloperBillingPage() {
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-6 py-5">
-              <h2 className="text-2xl font-bold text-slate-900">Payment history</h2>
-              <p className="mt-2 text-sm text-slate-600">Only payment attempts stored by the secure payment service appear here.</p>
+          {/* Payment History Card */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs sm:rounded-3xl">
+            <div className="border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+              <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">Payment history</h2>
+              <p className="mt-1 text-xs text-slate-500 sm:text-sm sm:text-slate-600">Only payment attempts stored by the secure payment service appear here.</p>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-slate-100 text-left text-sm text-slate-500">
@@ -292,29 +295,52 @@ export default function SquashDeveloperBillingPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Native Card View */}
+            <div className="block md:hidden divide-y divide-slate-100">
+              {payments.length ? payments.map((payment) => (
+                <div key={payment.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 text-sm">{jobNames.get(payment.jobId) || 'Job payment'}</span>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${paymentStatusClasses(payment.status)}`}>
+                      {paymentStatusLabel(payment.status)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{formatDate(payment.paidAt || payment.createdAt)}</span>
+                    <span className="font-black text-slate-900 text-sm">{formatRands(payment.amountZar)}</span>
+                  </div>
+                </div>
+              )) : (
+                <div className="px-4 py-8 text-center text-xs text-slate-500">No verified payment records yet.</div>
+              )}
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-6 py-5">
-              <h2 className="text-2xl font-bold text-slate-900">Job budgets</h2>
-              <p className="mt-2 text-sm text-slate-600">Package values are budgets, not proof that payment occurred.</p>
+          {/* Job Budgets Card */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs sm:rounded-3xl">
+            <div className="border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+              <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">Job budgets</h2>
+              <p className="mt-1 text-xs text-slate-500 sm:text-sm sm:text-slate-600">Package values are budgets, not proof that payment occurred.</p>
             </div>
             <div className="divide-y divide-slate-100">
               {jobs.length ? jobs.map((job) => (
-                <div key={job.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-                  <div>
-                    <div className="font-semibold text-slate-900">{job.title}</div>
-                    <div className="mt-1 text-xs text-slate-500">{job.category}</div>
+                <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
+                  <div className="min-w-0">
+                    <div className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">{job.title}</div>
+                    <div className="mt-0.5 text-xs text-slate-500 font-medium">{job.category}</div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{jobStatusLabel(job.status)}</span>
-                    <span className="font-bold text-slate-900">{formatRands(job.totalAmountZar)}</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-50 sm:border-t-0">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">{jobStatusLabel(job.status)}</span>
+                      <span className="font-extrabold text-slate-900">{formatRands(job.totalAmountZar)}</span>
+                    </div>
                     {paymentsEnabled && job.status === 'draft' ? (
                       <button
                         type="button"
                         disabled={retryingJobId === job.id}
                         onClick={() => handleCompletePayment(job.id)}
-                        className="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                        className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60 shrink-0"
                       >
                         {retryingJobId === job.id ? 'Starting...' : 'Complete payment'}
                       </button>
@@ -322,7 +348,7 @@ export default function SquashDeveloperBillingPage() {
                   </div>
                 </div>
               )) : (
-                <div className="px-6 py-12 text-center text-sm text-slate-500">No job budgets yet.</div>
+                <div className="px-4 py-8 text-center text-xs text-slate-500 sm:text-sm">No job budgets yet.</div>
               )}
             </div>
           </div>

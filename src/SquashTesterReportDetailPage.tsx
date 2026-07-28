@@ -189,7 +189,7 @@ export default function SquashTesterReportDetailPage() {
   const reportedBugs = report?.bugs ?? [];
 
   return (
-    <div className="space-y-5 pb-16">
+    <div className="space-y-5 pb-40 lg:pb-24">
       {/* Top Banner Card (Integrated smoothly with TesterLayout) */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -535,7 +535,7 @@ export default function SquashTesterReportDetailPage() {
       </div>
 
       {/* Floating Bottom Action Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 lg:left-[260px] z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <footer className="fixed bottom-[60px] left-0 right-0 lg:bottom-0 lg:left-[260px] z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left Status Indicator */}
           <div className="flex items-center gap-2.5 text-xs font-bold text-slate-800">

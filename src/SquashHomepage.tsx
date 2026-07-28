@@ -377,8 +377,11 @@ export default function SquashHomepage() {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
+                {/* Keyed by quote, not name: both cards are from the same
+                    founder, so name alone was not unique and React warned
+                    about duplicate keys. */}
                 {testimonials.map((item) => (
-                  <div key={item.name} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div key={item.quote} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div className="mb-4 flex items-center gap-1 text-green-600">
                       {[1, 2, 3, 4, 5].map((value) => (
                         <Star key={value} className="h-4 w-4 fill-current" />

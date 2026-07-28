@@ -539,36 +539,11 @@ export function SquashDeveloperReportsPage() {
 
   const filteredReports = useMemo(() => {
     const sorted = submittedReports.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    const list = jobId ? sorted.filter((r) => r.jobId === jobId) : sorted;
-    if (list.length === 0) {
-      return [
-        {
-          id: 'sqa-demo-2841',
-          jobId: jobId || 'job-demo',
-          jobTitle: 'Bolt Checkout Flow',
-          jobCategory: 'web',
-          testerId: 'tester-1',
-          testerName: 'Mzwakhe Khosa',
-          testerEmail: 'mzwakhekhoza25@gmail.com',
-          status: 'submitted' as const,
-          createdAt: new Date().toISOString(),
-          summary: 'Login and checkout confirmation worked as expected. A repeatable issue prevented a newly added Visa card from appearing in the payment-method list until the page was refreshed.',
-          criticalBugCount: 1,
-          payoutAmount: 80,
-          scores: { usability: 4, performance: 5, onboarding: 5, bugSeverity: 4, deviceCompatibility: 5 },
-          bugs: [
-            {
-              id: 'BUG-01',
-              title: 'New payment method does not appear until refresh',
-              severity: 'Medium' as const,
-              description: 'A repeatable issue prevented a newly added Visa card from appearing in the payment-method list until the page was refreshed.',
-              stepsToReproduce: ['Open Billing', 'Select Add payment method', 'Enter valid Visa details', 'Select Save card'],
-            },
-          ],
-        },
-      ];
-    }
-    return list;
+    // Deliberately no placeholder report. This previously fabricated a full
+    // submission -- attributed to a real tester's name and email, with an
+    // invented bug and an R80 payout -- whenever a developer had none, which
+    // is indistinguishable from a genuine report.
+    return jobId ? sorted.filter((r) => r.jobId === jobId) : sorted;
   }, [submittedReports, jobId]);
 
   return (

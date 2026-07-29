@@ -11,7 +11,6 @@ import {
   Sparkles,
   Star,
   TrendingUp,
-  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import PublicFooter from './PublicFooter';
@@ -31,7 +30,7 @@ type ItemWithIcon = {
 export default function SquashForTestersPage() {
   usePageMeta({
     title: 'For Testers',
-    description: 'Earn money testing apps and websites in South Africa. Find bugs, complete usability tests, and get paid via EFT — flexible, remote work on your own schedule.',
+    description: 'Earn money testing apps and websites in South Africa. Find bugs, complete usability tests, and get paid via EFT â€” flexible, remote work on your own schedule.',
     path: '/for-testers',
   });
 

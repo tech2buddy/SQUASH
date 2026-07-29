@@ -112,6 +112,8 @@ function ProtectedRoute({
   return children;
 }
 
+import CookieConsentBanner from './components/CookieConsentBanner';
+
 function LogoutRoute() {
   const { logout } = useAuth();
 
@@ -124,7 +126,8 @@ function LogoutRoute() {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path="/" element={<SquashHomepage />} />
       <Route path="/for-developers" element={<SquashForDevelopersPage />} />
       <Route path="/for-testers" element={<SquashForTestersPage />} />
@@ -426,6 +429,8 @@ export default function App() {
 
       <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
+    <CookieConsentBanner />
+    </>
   );
 }
 

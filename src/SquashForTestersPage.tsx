@@ -5,8 +5,13 @@ import {
   CheckCircle2,
   Compass,
   Laptop2,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
   Star,
+  TrendingUp,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import PublicFooter from './PublicFooter';
@@ -197,6 +202,106 @@ export default function SquashForTestersPage() {
                   <p className="mt-3 leading-7 text-slate-600">{step.text}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Recommended Setup for Best Performance Card - 3D Animated Motion Card */}
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/60 p-6 sm:p-10 shadow-sm transition-all duration-500 hover:shadow-xl hover:border-emerald-200">
+            {/* Ambient Background Glow */}
+            <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl transition duration-500 group-hover:bg-emerald-500/10" />
+
+            <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+              {/* Left Column: Text & Badges */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-red-200/80 bg-red-50/80 px-3.5 py-1.5 text-xs font-extrabold text-red-700 shadow-2xs">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white shadow-xs">
+                    <Laptop2 className="h-3 w-3" />
+                  </div>
+                  <span>Optimal Performance Setup</span>
+                </div>
+
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+                  Laptop / PC + Mobile Phone Recommended
+                </h2>
+
+                <p className="text-sm sm:text-base leading-relaxed text-slate-600 font-medium max-w-2xl">
+                  While mobile app tests can be performed directly on your smartphone, pairing your <strong>Mobile Device</strong> with a <strong>Laptop or PC</strong> guarantees optimal performance, priority job invites for web QA jobs, and faster screen recording management.
+                </p>
+
+                {/* Motion Specs Pills */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <div className="flex items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-2xs hover:border-slate-300 transition">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Priority Web QA Invites</span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-2xs hover:border-slate-300 transition">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Maximum Earnings Potential</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: 3D Motion Device Graphic Visual */}
+              <div className="lg:col-span-5 relative flex items-center justify-center pt-4 lg:pt-0">
+                <div className="relative w-full max-w-xs sm:max-w-sm aspect-[4/3] flex items-center justify-center">
+                  
+                  {/* Laptop 3D Graphic Canvas */}
+                  <div className="absolute inset-x-2 bottom-2 rounded-2xl border border-slate-200 bg-slate-900 p-3 shadow-2xl transition-transform duration-500 group-hover:-translate-y-2 group-hover:rotate-1">
+                    {/* Screen */}
+                    <div className="aspect-[16/10] w-full rounded-xl bg-slate-950 p-2.5 flex flex-col justify-between border border-slate-800 relative overflow-hidden">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                          <div className="h-2 w-2 rounded-full bg-amber-500/80" />
+                          <div className="h-2 w-2 rounded-full bg-red-600/80" />
+                        </div>
+                        <div className="text-[9px] font-mono font-bold text-red-500">SQUASH Web QA Active</div>
+                      </div>
+                      <div className="space-y-1.5 py-2">
+                        <div className="h-2 w-3/4 rounded bg-slate-800 animate-pulse" />
+                        <div className="h-2 w-1/2 rounded bg-slate-800" />
+                        <div className="h-2 w-5/6 rounded bg-slate-800/80" />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold border-t border-slate-800/60 pt-1">
+                        <span className="flex items-center gap-1"><Monitor className="h-3 w-3 text-red-500" /> Desktop / PC</span>
+                        <span className="text-red-500 font-bold">Web Active</span>
+                      </div>
+                    </div>
+                    {/* Laptop Keyboard Base */}
+                    <div className="mt-1 flex items-center justify-center">
+                      <div className="h-1 w-12 rounded-full bg-slate-700" />
+                    </div>
+                  </div>
+
+                  {/* Smartphone 3D Graphic Canvas (Overlapping in Perspective) */}
+                  <div className="absolute -left-2 top-0 w-28 sm:w-32 rounded-2xl border-2 border-slate-900 bg-white p-1.5 shadow-2xl transition-transform duration-500 group-hover:translate-x-2 group-hover:-translate-y-3 group-hover:-rotate-3">
+                    <div className="rounded-xl bg-slate-900 p-2 text-white space-y-2">
+                      <div className="flex justify-center">
+                        <div className="h-1 w-5 rounded-full bg-slate-700" />
+                      </div>
+                      <div className="space-y-1 py-1">
+                        <div className="flex items-center gap-1">
+                          <Smartphone className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                          <span className="text-[9px] font-bold text-white truncate">Mobile QA</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded bg-red-500/30" />
+                        <div className="h-1.5 w-2/3 rounded bg-slate-700" />
+                      </div>
+                      <div className="rounded-lg bg-red-600 py-0.5 text-center text-[9px] font-extrabold text-white shadow-xs">
+                        Mobile Active
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             </div>
           </div>
         </section>

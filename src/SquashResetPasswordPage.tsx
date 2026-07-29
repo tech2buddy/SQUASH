@@ -75,7 +75,12 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
       await resetPasswordForEmail(email.trim());
       setSuccessNotice(`Password reset link sent! Check ${email} for instructions to reset your password.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send password reset email. Please try again.');
+      // Guard against an error whose message is empty or a stringified empty
+      // object -- that surfaced in the UI as literally "{}", which told the
+      // user nothing.
+      const raw = err instanceof Error ? err.message?.trim() : '';
+      const usable = raw && raw !== '{}' && raw !== '[object Object]' ? raw : '';
+      setError(usable || 'Failed to send password reset email. Please try again.');
     } finally {
       setSubmitting(false);
     }

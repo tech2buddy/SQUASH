@@ -180,9 +180,9 @@ export default function DeveloperHeaderNav() {
         <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${profileOpen ? 'rotate-180 text-green-700' : ''}`} />
       </button>
 
-      {/* Notifications Dropdown - Aligned Flush to Right edge of Header Controls */}
+      {/* Notifications Dropdown */}
       {notificationsOpen && (
-        <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 max-w-[calc(100vw-1.5rem)] rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 px-1">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Developer Notifications</h3>

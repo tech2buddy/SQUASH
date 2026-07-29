@@ -27,13 +27,11 @@ export default function MobileTabBar({ role }: { role: 'tester' | 'developer' })
   const tabs = role === 'tester' ? TESTER_TABS : DEVELOPER_TABS;
 
   return (
-    <div className="fixed bottom-3 left-3 right-3 z-50 lg:hidden">
-      <div className="mx-auto max-w-sm overflow-hidden rounded-full border border-slate-200/90 bg-white/90 p-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
-        <nav className="flex items-center justify-around gap-1 px-1">
+    <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
+      <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
+        <nav className="flex items-center justify-between gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            // Reports and Home each cover several routes, so they can't just
-            // compare against tab.href like the rest.
             const isActive =
               tab.label === 'Reports'
                 ? location.pathname.startsWith('/developer/reports')
@@ -47,14 +45,14 @@ export default function MobileTabBar({ role }: { role: 'tester' | 'developer' })
               <Link
                 key={tab.label}
                 to={tab.href}
-                className={`relative flex flex-1 flex-col items-center justify-center rounded-full py-1.5 px-2 transition-all duration-200 apple-press-effect ${
+                className={`relative flex flex-1 flex-col items-center justify-center rounded-2xl py-2 px-2.5 transition-all duration-200 apple-press-effect ${
                   isActive
-                    ? 'bg-slate-900 text-white shadow-xs font-extrabold'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 font-bold'
                     : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/60 font-semibold'
                 }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-white' : ''}`} />
-                <span className="text-[10px] tracking-tight leading-tight mt-0.5">
+                <Icon className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
+                <span className="text-[11px] font-bold tracking-tight leading-none mt-1">
                   {tab.label}
                 </span>
               </Link>

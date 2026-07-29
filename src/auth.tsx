@@ -448,7 +448,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
           redirectTo,
         });
-        if (error) throw error;
+        if (error) {
+          // Supabase auth errors do not always carry a usable `message`, and
+          // an empty one previously rendered in the UI as literally "{}".
+          // Log the full object for diagnosis and surface something readable.
+          console.error('resetPasswordForEmail failed', error);
+          const status = (error as { status?: number }).status;
+          if (status === 429) {
+            throw new Error('Too many reset requests. Please wait a minute and try again.');
+          }
+          throw new Error(
+            error.message?.trim()
+              || 'We could not send the reset email right now. Please try again shortly.',
+          );
+        }
       },
       updatePassword: async (newPassword: string) => {
         if (!isSupabaseConfigured) {

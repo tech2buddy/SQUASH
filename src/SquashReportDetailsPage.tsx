@@ -227,7 +227,7 @@ export default function SquashReportDetailsPage() {
   };
 
   return (
-    <div className="space-y-5 pb-40 lg:pb-24">
+    <div className="space-y-5 pb-20 sm:pb-24">
       {/* Top Banner Card (Integrated smoothly with DeveloperLayout) */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -593,12 +593,50 @@ export default function SquashReportDetailsPage() {
               );
             })()}
           </section>
+
+          {/* 3. Mobile Review Action Card (Visible on mobile only for spacious tap targets and no overflow) */}
+          <section className="block sm:hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shrink-0">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              </span>
+              <span>Report complete • All required evidence included</span>
+            </div>
+
+            <button
+              type="button"
+              disabled={reviewing}
+              onClick={() => handleReviewAction('approved')}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3.5 px-4 text-sm font-bold text-white shadow-sm transition disabled:opacity-50"
+            >
+              <CheckCircle2 className="h-4.5 w-4.5" /> Approve Report & Release Payment
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                disabled={reviewing}
+                onClick={() => handleReviewAction('changes_requested')}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-slate-500" /> Request Changes
+              </button>
+              <button
+                type="button"
+                disabled={reviewing}
+                onClick={() => handleReviewAction('rejected')}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-slate-500" /> Reject Report
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 
-      {/* Floating Bottom Action Bar */}
-      <footer className="fixed bottom-[60px] left-0 right-0 lg:bottom-0 lg:left-[260px] z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Fixed Bottom Action Bar for Desktop (hidden on mobile to give bottom nav bar full breathing room) */}
+      <footer className="hidden sm:block fixed bottom-0 left-0 right-0 lg:left-[260px] z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md px-6 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left Status Indicator */}
           <div className="flex items-center gap-2.5 text-xs font-bold text-slate-800">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
@@ -608,12 +646,12 @@ export default function SquashReportDetailsPage() {
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               disabled={reviewing}
               onClick={() => handleReviewAction('changes_requested')}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
             >
               <MessageSquare className="h-3.5 w-3.5 text-slate-500" /> Request Changes
             </button>
@@ -621,7 +659,7 @@ export default function SquashReportDetailsPage() {
               type="button"
               disabled={reviewing}
               onClick={() => handleReviewAction('rejected')}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
             >
               <ShieldAlert className="h-3.5 w-3.5 text-slate-500" /> Reject Report
             </button>
@@ -629,7 +667,7 @@ export default function SquashReportDetailsPage() {
               type="button"
               disabled={reviewing}
               onClick={() => handleReviewAction('approved')}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
             >
               <CheckCircle2 className="h-4 w-4" /> Approve Report & Release Payment
             </button>

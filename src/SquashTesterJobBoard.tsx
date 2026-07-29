@@ -1,9 +1,11 @@
 import {
   Check,
   ChevronDown,
+  Search,
   SlidersHorizontal,
   Star,
-  } from 'lucide-react';
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import TesterBadge from './components/TesterBadge';
@@ -74,7 +76,19 @@ export default function SquashTesterJobBoard() {
   const [applicationError, setApplicationError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const JOBS_PER_PAGE = 6;
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (searchText) count++;
+    if (jobTypeFilter !== 'Any') count++;
+    if (platformFilter !== 'Any') count++;
+    if (testTypeFilter !== 'Any') count++;
+    if (timeFilter !== 'Any') count++;
+    if (minPay > 0) count++;
+    return count;
+  }, [searchText, jobTypeFilter, platformFilter, testTypeFilter, timeFilter, minPay]);
 
   
 
@@ -377,48 +391,118 @@ export default function SquashTesterJobBoard() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
       <div className="space-y-6 min-w-0">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-up">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Available Test Jobs</h1>
-                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
-                  Browse and apply for test jobs. Earn money while helping improve amazing apps.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSortBy((prev) => (prev === 'Newest' ? 'Highest Pay' : 'Newest'))}
-                className="flex w-fit items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect"
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-up">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Available Test Jobs</h1>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
+              Browse and apply for test jobs. Earn money while helping improve amazing apps.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileFilterOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect xl:hidden"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500" />
+              <span>Filters</span>
+              {activeFilterCount > 0 ? (
+                <span className="grid h-4.5 min-w-4.5 place-items-center rounded-full bg-emerald-600 px-1 text-[10px] font-extrabold text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+
+            <div className="relative inline-flex items-center">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'Newest' | 'Highest Pay')}
+                className="appearance-none rounded-full border border-slate-200/80 bg-white py-2 pl-4 pr-8 text-xs font-bold text-slate-700 shadow-2xs outline-none hover:bg-slate-50 cursor-pointer transition"
               >
-                Sort by: {sortBy} <ChevronDown className="h-3.5 w-3.5" />
-              </button>
+                <option value="Newest">Sort: Newest</option>
+                <option value="Highest Pay">Sort: Highest Pay</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-slate-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Search Bar */}
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search test jobs by keyword, platform, or skills..."
+            className="w-full rounded-2xl border border-slate-200/80 bg-white py-2.5 pl-10 pr-4 text-xs sm:text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 shadow-2xs"
+          />
+          {searchText ? (
+            <button
+              type="button"
+              onClick={() => setSearchText('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+
+        {/* Category Tabs */}
+        <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 flex overflow-x-auto gap-2.5 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {tabs.map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setActiveTab(tab.label)}
+              className={`shrink-0 flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 apple-press-effect ${
+                activeTab === tab.label
+                  ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                  : 'border-slate-200/80 bg-white text-slate-600 hover:bg-slate-100/60'
+              }`}
+            >
+              {tab.label}
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                  activeTab === tab.label
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Top Testers Mobile Horizontal Spotlight (Visible on mobile only so top testers are prominent) */}
+        {topTesters.length > 0 ? (
+          <div className="block xl:hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                <span>Top Testers Community</span>
+              </div>
+              <a href="/tester/leaderboard" className="text-[11px] font-bold text-emerald-700 hover:underline">
+                View All →
+              </a>
             </div>
 
-            {/* Category Tabs */}
-            <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 flex overflow-x-auto gap-2.5 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.label}
-                  type="button"
-                  onClick={() => setActiveTab(tab.label)}
-                  className={`shrink-0 flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 apple-press-effect ${
-                    activeTab === tab.label
-                      ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
-                      : 'border-slate-200/80 bg-white text-slate-600 hover:bg-slate-100/60'
-                  }`}
-                >
-                  {tab.label}
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                      activeTab === tab.label
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
+            <div className="-mx-3 px-3 flex gap-2.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {topTesters.map((tester, index) => (
+                <div key={tester.name} className="shrink-0 flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-2.5 min-w-[170px]">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-extrabold text-emerald-800 shrink-0">
+                    #{index + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">{tester.name}</div>
+                    <div className="text-[10px] text-slate-500 font-semibold">{tester.testsCompleted} tests completed</div>
+                  </div>
+                </div>
               ))}
             </div>
+          </div>
+        ) : null}
 
             {jobsError ? (
               <div className="rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-xs font-bold text-red-700">
@@ -603,7 +687,7 @@ export default function SquashTesterJobBoard() {
             </div>
           </div>
 
-        <div className="space-y-6">
+        <div className="hidden xl:block space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-xl font-bold text-slate-900">Filters</div>
@@ -734,31 +818,118 @@ export default function SquashTesterJobBoard() {
             <a href="/guides" className="mt-4 inline-block text-sm font-semibold text-green-700">View Testing Guide -&gt;</a>
           </div>
 
-            <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
-                <Star className="h-5 w-5 text-amber-500" /> Top Testers
-              </div>
-              <div className="mt-4 space-y-4">
-                {topTesters.map((tester, index) => (
-                  <div key={tester.name} className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+          <div className="mt-5 rounded-3xl border border-slate-200 bg-[#ffffff] p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
+              <Star className="h-5 w-5 text-amber-500" /> Top Testers
+            </div>
+            <div className="mt-4 space-y-4">
+              {topTesters.map((tester, index) => (
+                <div key={tester.name} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
                       {index + 1}
                     </div>
-                      <div>
-                        <div className="font-semibold text-slate-900">{tester.name}</div>
-                        <div className="mt-1">
-                          <TesterBadge testsCompleted={tester.testsCompleted} rating={tester.rating} />
-                        </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">{tester.name}</div>
+                      <div className="mt-1">
+                        <TesterBadge testsCompleted={tester.testsCompleted} rating={tester.rating} />
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-slate-700">{tester.testsCompleted} tests</div>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-700">{tester.testsCompleted} tests</div>
                 </div>
               ))}
             </div>
             <a href="/tester/leaderboard" className="mt-4 inline-block text-sm font-semibold text-green-700">View Leaderboard -&gt;</a>
           </div>
         </div>
+
+        {/* Mobile Filter Slide-Over Drawer Modal */}
+        {isMobileFilterOpen ? (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-xs xl:hidden animate-fade-in">
+            <div
+              className="fixed inset-0"
+              onClick={() => setIsMobileFilterOpen(false)}
+            />
+            <div className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-slate-200 bg-white p-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2 text-base font-extrabold text-slate-900">
+                  <SlidersHorizontal className="h-4.5 w-4.5 text-emerald-700" />
+                  <span>Filter Jobs</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4 text-xs sm:text-sm">
+                <div>
+                  <label className="mb-1.5 block font-bold text-slate-700">Job Type</label>
+                  <select
+                    value={jobTypeFilter}
+                    onChange={(e) => setJobTypeFilter(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-800 outline-none"
+                  >
+                    <option>Any</option>
+                    <option>Mobile App</option>
+                    <option>Web App</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-bold text-slate-700">Platform</label>
+                  <select
+                    value={platformFilter}
+                    onChange={(e) => setPlatformFilter(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-800 outline-none"
+                  >
+                    <option>Any</option>
+                    <option>Android</option>
+                    <option>iOS</option>
+                    <option>Web App</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-bold text-slate-700">Minimum Pay: R{minPay}</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="500"
+                    step="50"
+                    value={minPay}
+                    onChange={(e) => setMinPay(parseInt(e.target.value, 10))}
+                    className="w-full accent-emerald-600"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetFilters();
+                      setIsMobileFilterOpen(false);
+                    }}
+                    className="flex-1 rounded-xl border border-slate-200 py-3 font-bold text-slate-600 hover:bg-slate-50 transition"
+                  >
+                    Reset All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFilterOpen(false)}
+                    className="flex-1 rounded-xl bg-emerald-600 py-3 font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                  >
+                    Show Results
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
   );
 }

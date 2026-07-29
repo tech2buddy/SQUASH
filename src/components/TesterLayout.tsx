@@ -55,7 +55,7 @@ export default function TesterLayout() {
   ];
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
+    <div className="flex min-h-screen min-h-dvh w-full lg:h-screen lg:overflow-hidden bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
       {/* Mobile Drawer Overlay */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
@@ -138,7 +138,7 @@ export default function TesterLayout() {
       </aside>
 
       {/* Main Column: Fixed Top Header + Isolated Scroll Content */}
-      <div className="flex flex-1 flex-col h-screen min-w-0 overflow-hidden">
+      <div className="flex flex-1 flex-col min-w-0 lg:h-screen lg:overflow-hidden">
         {/* Header - Fixed to Top */}
         <header className="shrink-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl px-4 py-3.5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
@@ -155,8 +155,8 @@ export default function TesterLayout() {
           </div>
         </header>
 
-        {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 pb-24 lg:pb-8">
+        {/* Content Container */}
+        <main className="flex-1 min-w-0 p-3.5 sm:p-5 pb-28 lg:pb-8 lg:overflow-y-auto">
           <Outlet />
         </main>
       </div>

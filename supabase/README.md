@@ -181,3 +181,42 @@ No notification was ever received when a tester applied to a job, when a develop
 Adds `notify_user(...)`, a `security definer` RPC that writes the notification only if the caller is an admin, is notifying themselves, or shares a job with the recipient as the opposite party (developer ↔ tester via `job_applications` or `test_assignments`). Loosening the INSERT policy instead would have let any authenticated user push arbitrary notifications to anyone.
 
 Banking-status notifications were unaffected — `notify_tester_banking_status()` is a `security definer` trigger and already bypassed RLS.
+## Phase 41: Tester qualification foundation
+
+Run `supabase/phase41_tester_qualification_foundation.sql` after Phase 40.
+
+This creates the secure data foundation for the SQUASH Tester Academy: qualification status, two-attempt qualification records, consent records, and separate quiz/sample variants. A tester can never receive the same quiz or practical sample variant twice; the second attempt is assigned the alternate assessment and training scenario.
+
+All tester profiles that existed at the initial rollout are grandfathered as `approved`, so current testers are not interrupted. New tester profiles begin as `not_started`.
+
+Phase 41 intentionally does **not** block job applications yet. The application gate is switched on only in Phase 5, once the Academy, sample test, and admin review workflow have all shipped. This prevents a new tester from being blocked before there is a complete in-product way to qualify.
+
+The migration also prevents a tester from setting their own qualification status through the existing profile-update policy. Qualification state may only change through the protected SQUASH workflow.
+
+## Phase 42: Controlled practical qualification sample
+
+Run `supabase/phase42_tester_qualification_sample_test.sql` after Phase 41.
+
+This adds the private qualification-sample report table and the `qualification-evidence` storage bucket. The practical sample is separate from paid jobs, has no developer or payment data, and requires a structured report plus one to three private evidence files. Evidence is stored inside the tester and attempt folder, with tester/admin-only access and the existing malware scan endpoint.
+
+The application assigns `checkout-flow-v1` on the first attempt and `booking-flow-v1` on the retry. These are deliberately different simulated flows, so a retry cannot simply repeat the original test.
+## Phase 43: Administrator qualification review
+
+Run `supabase/phase43_tester_qualification_review.sql` after Phase 42.
+
+This adds `review_tester_qualification_attempt`, a protected administrator-only review function. It records the reviewer, decision and note, then atomically updates the tester's qualification status. `approved` unlocks qualification; `retry_required` makes exactly one fresh alternate quiz and sample flow available; `declined` closes the application. Retry and decline decisions require a clear reviewer note.
+## Phase 44: Qualification gate, notifications and probation
+
+Run `supabase/phase44_tester_qualification_gate_notifications.sql` after Phase 43.
+
+This is the launch gate: only active testers with `qualification_status = 'approved'` can insert a paid job application. Qualification decisions also create an in-app notification linked to the Tester Academy. Newly approved testers receive a visible 30-day quality and safety monitoring period; it does not prevent them from applying, but gives SQUASH an early operational review window.
+## Phase 45: Qualification quality rubric
+
+Run `supabase/phase45_tester_qualification_quality_rubric.sql` after Phase 44.
+
+Every qualification decision now records four 1–5 reviewer scores: report clarity, reproducibility, evidence quality and task coverage. Approval is enforced only at 70% or above, with no category below 3. The score is kept with the qualification attempt and included in the approval notification, making the admission standard auditable and consistent.
+## Phase 46: Operational new-tester probation
+
+Run `supabase/phase46_tester_probation_operations.sql` after Phase 45.
+
+This turns the 30-day quality and safety monitoring period into an auditable admin workflow. From `/A31/probation`, an administrator can clear a reliable tester, extend the observation period by 7–90 days, or restrict future paid-job applications while an issue is investigated. Every decision needs a written reason, preserves the tester’s history, and sends a private in-app notification to the tester.

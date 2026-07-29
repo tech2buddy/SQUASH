@@ -23,6 +23,7 @@ import { applyToJob, getActiveJobs, getTesterApplications, getTesterAssignments,
 import { testerPayoutForJob } from './lib/pricing';
 import { getSpecializationLabel } from './components/testerSpecializations';
 import { getTestTypeByKey } from './lib/testTypes';
+import { getTesterQualificationStatus, type QualificationStatus } from './lib/testerQualificationApi';
 
 type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
 
@@ -74,6 +75,7 @@ export default function SquashTesterJobBoard() {
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [applicationNotice, setApplicationNotice] = useState('');
   const [applicationError, setApplicationError] = useState('');
+  const [qualificationStatus, setQualificationStatus] = useState<QualificationStatus | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -166,6 +168,14 @@ export default function SquashTesterJobBoard() {
 
   useEffect(() => {
     if (!session?.userId) return;
+    let active = true;
+    void getTesterQualificationStatus(session.userId)
+      .then((status) => { if (active) setQualificationStatus(status); })
+      .catch(() => { if (active) setQualificationStatus('not_started'); });
+    return () => { active = false; };
+  }, [session?.userId]);
+  useEffect(() => {
+    if (!session?.userId) return;
 
     getTesterSpecializations(session.userId)
       .then((savedSpecializations) => {
@@ -220,6 +230,10 @@ export default function SquashTesterJobBoard() {
       return;
     }
 
+    if (qualificationStatus !== 'approved') {
+      navigate('/tester-qualification');
+      return;
+    }
     if (job.developerId === session.userId) {
       setApplicationError('You cannot apply to a job you posted yourself. Switch to another tester account to test this flow.');
       return;
@@ -624,7 +638,7 @@ export default function SquashTesterJobBoard() {
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleApply(job);
+                            if (job.source === 'supabase' && qualificationStatus !== 'approved') { navigate('/tester-qualification'); } else { handleApply(job); }
                           }}
                           disabled={Boolean(isApplying || isPending || isRejected)}
                           className={`rounded-full px-5 py-2.5 text-xs font-bold transition apple-press-effect ${
@@ -637,7 +651,7 @@ export default function SquashTesterJobBoard() {
                                   : 'bg-slate-900 text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300'
                           }`}
                         >
-                          {isApplying ? 'Applying…' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : 'Apply Now'}
+                          {isApplying ? 'Applying…' : isAccepted ? 'Start Test' : isPending ? 'Applied' : isRejected ? 'Not selected' : job.source === 'supabase' && qualificationStatus !== 'approved' ? 'Finish Academy' : 'Apply Now'}
                         </button>
                       );
                     })()}

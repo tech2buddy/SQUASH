@@ -7,6 +7,7 @@ import {
   Menu,
   Search,
   Settings,
+  ShieldCheck,
   UserCircle2,
   X,
 } from 'lucide-react';
@@ -19,7 +20,7 @@ type NavItem = {
   label: string;
   href: string;
   icon: ComponentType<{ className?: string }>;
-  key: 'dashboard' | 'jobs' | 'tests' | 'reports' | 'earnings' | 'profile' | 'settings';
+  key: 'dashboard' | 'qualification' | 'jobs' | 'tests' | 'reports' | 'earnings' | 'profile' | 'settings';
 };
 
 export default function TesterLayout() {
@@ -30,6 +31,8 @@ export default function TesterLayout() {
   let activeKey: NavItem['key'] = 'dashboard';
   if (path.startsWith('/tester-jobs') || path === '/job-board') {
     activeKey = 'jobs';
+  } else if (path.startsWith('/tester-qualification')) {
+    activeKey = 'qualification';
   } else if (path.startsWith('/tester/my-tests') || path === '/active-test' || path === '/test-lab') {
     activeKey = 'tests';
   } else if (path.startsWith('/tester/reports') || path.startsWith('/tester/submissions')) {
@@ -46,6 +49,7 @@ export default function TesterLayout() {
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/tester/dashboard', icon: Home, key: 'dashboard' },
+    { label: 'Tester Academy', href: '/tester-qualification', icon: ShieldCheck, key: 'qualification' },
     { label: 'Available Jobs', href: '/tester-jobs', icon: BriefcaseBusiness, key: 'jobs' },
     { label: 'My Tests', href: '/tester/my-tests', icon: CheckSquare, key: 'tests' },
     { label: 'Reports', href: '/tester/reports', icon: FileText, key: 'reports' },

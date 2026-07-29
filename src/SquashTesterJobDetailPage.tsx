@@ -6,6 +6,7 @@ import { getCategoryById, type TestCategoryId } from './components/testCategorie
 import { getSpecializationLabel } from './components/testerSpecializations';
 import { applyToJob, getActiveJobById, getTesterApplications, type DeveloperJob } from './lib/jobApi';
 import { testerPayoutForJob } from './lib/pricing';
+import { getTesterQualificationStatus, type QualificationStatus } from './lib/testerQualificationApi';
 import { getTestTypeByKey } from './lib/testTypes';
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
@@ -19,6 +20,7 @@ export default function SquashTesterJobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
+  const [qualificationStatus, setQualificationStatus] = useState<QualificationStatus | null>(null);
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState('');
   const [applyError, setApplyError] = useState('');
@@ -47,6 +49,15 @@ export default function SquashTesterJobDetailPage() {
   }, [jobId]);
 
   useEffect(() => {
+    if (!session?.userId) return;
+    let active = true;
+    void getTesterQualificationStatus(session.userId)
+      .then((status) => { if (active) setQualificationStatus(status); })
+      .catch(() => { if (active) setQualificationStatus('not_started'); });
+    return () => { active = false; };
+  }, [session?.userId]);
+
+  useEffect(() => {
     if (!session?.userId || !jobId) return;
     let active = true;
 
@@ -68,6 +79,10 @@ export default function SquashTesterJobDetailPage() {
   const handleApply = async () => {
     if (!job || !session?.userId) {
       setApplyError('Please log in with a tester account before applying.');
+      return;
+    }
+    if (qualificationStatus !== 'approved') {
+      setApplyError('Complete the SQUASH Tester Academy and receive approval before applying to paid jobs.');
       return;
     }
     if (job.developerId === session.userId) {
@@ -250,6 +265,8 @@ export default function SquashTesterJobDetailPage() {
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
             This is your own job posting, so you cannot apply to it.
           </div>
+        ) : qualificationStatus !== null && qualificationStatus !== 'approved' ? (
+          <div className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="font-bold text-amber-900">Finish your Tester Academy first</div><p className="mt-1 text-sm leading-6 text-amber-800">Paid job applications unlock after your quiz, controlled sample test and SQUASH review are complete.</p></div><Link to="/tester-qualification" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white">Continue Academy</Link></div>
         ) : applicationStatus === 'accepted' ? (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-green-700">

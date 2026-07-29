@@ -35,7 +35,7 @@ export default function SquashOnboardingPage() {
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const fallbackPath = useMemo(() => (targetRole === 'developer' ? '/post-job' : targetRole === 'tester' ? '/tester-jobs' : '/'), [targetRole]);
+  const fallbackPath = useMemo(() => (targetRole === 'developer' ? '/post-job' : targetRole === 'tester' ? '/tester-qualification' : '/'), [targetRole]);
   const finishPath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : fallbackPath;
 
   useEffect(() => {
@@ -325,7 +325,7 @@ export default function SquashOnboardingPage() {
                     disabled={saving}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {saving ? 'Saving setup...' : isDeveloper ? 'Save and post first job' : 'Save and browse jobs'}
+                    {saving ? 'Saving setup...' : isDeveloper ? 'Save and post first job' : 'Save and continue application'}
                     <ArrowRight className="h-4 w-4" />
                   </button>
                   <button

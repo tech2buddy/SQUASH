@@ -239,6 +239,8 @@ export default function SquashAdminDashboardPage() {
           <nav className="flex-1 space-y-2 px-4 py-6">
             {[
               { label: 'Overview', href: '/A31/dashboard', icon: Home, active: true },
+              { label: 'Qualifications', href: '/A31/qualifications', icon: BadgeCheck },
+              { label: 'Probation watch', href: '/A31/probation', icon: Clock3 },
               { label: 'Payout Queue', href: '/A31/payouts', icon: CreditCard },
               { label: 'Users', href: '/A31/users', icon: Users },
               { label: 'Jobs', href: '/A31/jobs', icon: FileText },

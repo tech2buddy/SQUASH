@@ -7,12 +7,14 @@ const SCANNABLE_BUCKETS = new Set([
   'bug-screenshots',
   'bug-videos',
   'tester-banking-documents',
+  'qualification-evidence',
   'job-attachments',
   'job-logos',
   'tester-profile-photos',
 ]);
 
 const SCAN_TIMEOUT_MS = 25_000;
+const FAIL_CLOSED_BUCKETS = new Set(['tester-banking-documents', 'qualification-evidence']);
 
 function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';
@@ -71,14 +73,12 @@ export default async function handler(req: any, res: any) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
 
-  // No scanning provider configured: fail closed for banking documents
-  // (they are reviewed by admins and are the highest-value target), but
-  // allow other uploads through so the platform still works. This is
-  // recorded so the gap is visible rather than silent.
+  // Sensitive banking documents and practical-qualification evidence fail
+  // closed. Other evidence remains available with an explicit audit record.
   if (!scanApiKey) {
-    if (bucket === 'tester-banking-documents') {
+    if (FAIL_CLOSED_BUCKETS.has(bucket)) {
       await supabase.storage.from(bucket).remove([path]);
-      return res.status(503).json({ error: 'Document scanning is unavailable. Please try again later.' });
+      return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
     }
     await recordScan(supabase, {
       bucket, path, userId: user.id, status: 'error', threats: ['scanner_not_configured'],
@@ -120,12 +120,12 @@ export default async function handler(req: any, res: any) {
       bucket, path, userId: user.id, status: 'error', threats: ['scan_failed'],
     });
 
-    // Banking documents fail closed; everything else is allowed through
-    // with the failure recorded, so a scanner outage cannot block testers
-    // from submitting bug reports.
-    if (bucket === 'tester-banking-documents') {
+    // Banking documents and qualification evidence fail closed. The latter is
+    // part of an admission decision, so reviewers must never see an unscanned file.
+    // Other report evidence remains available with the failure recorded.
+    if (FAIL_CLOSED_BUCKETS.has(bucket)) {
       await supabase.storage.from(bucket).remove([path]);
-      return res.status(503).json({ error: 'Document scanning is unavailable. Please try again later.' });
+      return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
     }
     return res.status(200).json({ scanned: false, clean: true });
   }

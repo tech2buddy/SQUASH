@@ -28,6 +28,8 @@ import SquashTesterNotificationsPage from './SquashTesterNotificationsPage';
 import SquashTesterBankingPage from './SquashTesterBankingPage';
 import SquashTesterLevelBenefitsPage from './SquashTesterLevelBenefitsPage';
 import SquashTesterLeaderboardPage from './SquashTesterLeaderboardPage';
+import SquashTesterQualificationPage from './SquashTesterQualificationPage';
+import SquashTesterQualificationSamplePage from './SquashTesterQualificationSamplePage';
 import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
 import SquashApiDocsPage from './SquashApiDocsPage';
@@ -36,6 +38,8 @@ import SquashChooseWorkspacePage from './SquashChooseWorkspacePage';
 import SquashOnboardingPage from './SquashOnboardingPage';
 import SquashAdminDashboardPage from './SquashAdminDashboardPage';
 import SquashAdminPayoutsPage from './SquashAdminPayoutsPage';
+import SquashAdminQualificationsPage from './SquashAdminQualificationsPage';
+import SquashAdminProbationPage from './SquashAdminProbationPage';
 import SquashAdminUsersPage from './SquashAdminUsersPage';
 import SquashAdminUserProfilePage from './SquashAdminUserProfilePage';
 import SquashAdminJobsPage from './SquashAdminJobsPage';
@@ -276,6 +280,23 @@ export default function App() {
       />
 
       <Route
+        path="/A31/qualifications"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminQualificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/A31/probation"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminProbationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/A31/payouts"
         element={
           <ProtectedRoute allowedRole="admin">
@@ -387,6 +408,8 @@ export default function App() {
         }
       >
         <Route path="/tester/dashboard" element={<SquashTesterDashboardPage />} />
+        <Route path="/tester-qualification" element={<SquashTesterQualificationPage />} />
+        <Route path="/tester-qualification/sample" element={<SquashTesterQualificationSamplePage />} />
         <Route path="/tester-jobs" element={<SquashTesterJobBoard />} />
         <Route path="/tester-jobs/:jobId" element={<SquashTesterJobDetailPage />} />
         <Route path="/job-board" element={<SquashTesterJobBoard />} />

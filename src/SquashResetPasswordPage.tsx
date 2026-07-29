@@ -1,13 +1,55 @@
 import { ArrowLeft, CheckCircle2, Eye, KeyRound, Lock, Mail } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
 import { useAuth } from './auth';
+import { supabase } from './lib/supabase';
+
+type RecoveryState = 'checking' | 'ready' | 'invalid';
 
 export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'update' }) {
   const { resetPasswordForEmail, updatePassword } = useAuth();
   const navigate = useNavigate();
+
+  // Clicking the emailed link lands here with a recovery token in the URL.
+  // The Supabase client parses it asynchronously (detectSessionInUrl), so the
+  // page previously showed the form immediately and updateUser() could fire
+  // before a session existed, failing with "Auth session missing". This waits
+  // for the recovery session and gives a clear message if the link is bad.
+  const [recovery, setRecovery] = useState<RecoveryState>(mode === 'update' ? 'checking' : 'ready');
+
+  useEffect(() => {
+    if (mode !== 'update') return;
+    let active = true;
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (event === 'PASSWORD_RECOVERY' || session) setRecovery('ready');
+    });
+
+    // Covers the case where the session was already restored before this
+    // listener attached.
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      if (data.session) setRecovery('ready');
+      else {
+        // Give the client a moment to finish parsing the URL fragment before
+        // declaring the link invalid.
+        window.setTimeout(() => {
+          if (!active) return;
+          supabase.auth.getSession().then(({ data: retry }) => {
+            if (active) setRecovery(retry.session ? 'ready' : 'invalid');
+          });
+        }, 1500);
+      }
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [mode]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,6 +98,10 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
 
     try {
       await updatePassword(password);
+      // The recovery link leaves an active session behind. Sign out so the
+      // user actually signs in with the new password, rather than landing on
+      // /login already authenticated and being bounced straight through.
+      await supabase.auth.signOut();
       setSuccessNotice('Your password has been successfully updated! Redirecting to login...');
       setTimeout(() => {
         navigate('/login', { replace: true });
@@ -110,6 +156,24 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
                   Return to Login
                 </Link>
               </div>
+            </div>
+          ) : mode === 'update' && recovery === 'checking' ? (
+            <div className="py-6 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-3 border-green-600 border-t-transparent" />
+              <p className="text-sm font-semibold text-slate-700">Verifying your reset link...</p>
+            </div>
+          ) : mode === 'update' && recovery === 'invalid' ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                This password reset link is invalid or has expired. Reset links can only be used once,
+                and expire after a short time.
+              </div>
+              <Link
+                to="/forgot-password"
+                className="block w-full rounded-2xl bg-green-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-green-700"
+              >
+                Request a new reset link
+              </Link>
             </div>
           ) : mode === 'request' ? (
             <form onSubmit={handleRequestReset} className="space-y-4">

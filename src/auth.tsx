@@ -243,28 +243,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
+    // If the user lands anywhere with a password recovery token hash (e.g. #type=recovery),
+    // automatically direct them to the /reset-password route with token intact.
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      if (window.location.pathname !== '/reset-password') {
+        window.location.replace(`/reset-password${window.location.hash}`);
+        return;
+      }
     }
 
     let mounted = true;
 
     const loadSession = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      if (error || !data.session?.user) {
+      if (!isSupabaseConfigured) {
+        setSession(null);
         setLoading(false);
         return;
       }
 
       try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (!data.session?.user) {
+          setSession(null);
+          return;
+        }
+
         const profileSession = await readProfileSession(data.session.user.id, data.session.user.email ?? '');
         if (!mounted) return;
         if (profileSession) {
-
           setSession(profileSession);
         }
       } finally {
@@ -274,8 +281,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     loadSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, authSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!mounted) return;
+      if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/reset-password') {
+        window.location.replace('/reset-password');
+        return;
+      }
       if (!authSession?.user) {
         setSession(null);
         setLoading(false);

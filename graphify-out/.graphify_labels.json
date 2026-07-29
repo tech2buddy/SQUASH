@@ -101,7 +101,7 @@
   "99": "phase38_file_scanning.sql",
   "100": "phase39b_assignment_status_cast.sql",
   "101": "SquashAdminUserProfilePage.tsx",
-  "103": "SquashTesterJobBoard.tsx",
+  "102": "TesterLayout.tsx",
   "104": "SquashDeveloperJobDetailPage.tsx",
   "105": "SquashTesterJobBoard.tsx",
   "106": "supabase.ts",
@@ -111,9 +111,17 @@
   "111": "diagnose_account_identity.sql",
   "112": "SquashAdminLoginPage.tsx",
   "113": "SquashPrivateAdminAccessPage.tsx",
+  "114": "SquashLoginPage.tsx",
   "115": "SquashAdminPayoutsPage.tsx",
   "116": "SquashSignupPage.tsx",
   "117": "phase40_structured_test_results.sql",
-  "119": "PublicFooter.tsx",
-  "120": "DeveloperHeaderNav.tsx"
+  "118": "bankingApi.ts",
+  "122": "SquashPricingPage.tsx",
+  "123": "SquashAboutPage.tsx",
+  "124": "SquashForDevelopersPage.tsx",
+  "125": "SquashForTestersPage.tsx",
+  "126": "FeaturedTesterCard.tsx",
+  "128": "SquashOnboardingPage.tsx",
+  "129": "SquashHomepage.tsx",
+  "131": "phase40_notification_delivery_fix.sql"
 }

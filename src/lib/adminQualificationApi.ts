@@ -34,18 +34,18 @@ export async function getAdminQualificationReviews(): Promise<AdminQualification
   if (!attempts?.length) return [];
 
   const attemptIds = attempts.map((attempt: any) => attempt.id);
-  const testerIds = [...new Set(attempts.map((attempt: any) => attempt.tester_id))];
+  const testerIds = [...new Set<string>(attempts.map((attempt: any) => attempt.tester_id as string))];
   const [{ data: reports, error: reportError }, { data: profiles, error: profileError }] = await Promise.all([
     (supabase.from('tester_qualification_sample_reports') as any)
       .select('attempt_id, task_outcomes, bug_title, steps_to_reproduce, expected_result, actual_result, severity, reproducibility, tester_notes, environment, evidence_paths, submitted_at')
       .in('attempt_id', attemptIds),
-    supabase.from('profiles').select('id, full_name, email').in('id', testerIds),
+    (supabase.from('profiles') as any).select('id, full_name, email').in('id', testerIds),
   ]);
   if (reportError) throw new Error(reportError.message || SERVICE_UNAVAILABLE_MESSAGE);
   if (profileError) throw new Error(profileError.message || SERVICE_UNAVAILABLE_MESSAGE);
 
-  const reportByAttempt = new Map((reports || []).map((report: any) => [report.attempt_id, report]));
-  const profileById = new Map((profiles || []).map((profile) => [profile.id, profile]));
+  const reportByAttempt = new Map<string, any>((reports || []).map((report: any) => [report.attempt_id, report] as [string, any]));
+  const profileById = new Map<string, any>((profiles || []).map((profile: any) => [profile.id, profile] as [string, any]));
 
   return attempts.flatMap((attempt: any) => {
     const report = reportByAttempt.get(attempt.id);

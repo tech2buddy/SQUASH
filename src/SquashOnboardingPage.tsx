@@ -2,6 +2,7 @@ import { ArrowRight, BriefcaseBusiness, CheckCircle2, Globe, MapPin, ShieldCheck
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useAuth, type UserRole } from './auth';
+import { supabase } from './lib/supabase';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import {
   getDeveloperProfile,
@@ -131,6 +132,8 @@ export default function SquashOnboardingPage() {
         await replaceTesterSpecializations(session.userId, selectedSpecializations);
       }
 
+      const { error: onboardingError } = await supabase.auth.updateUser({ data: { onboarding_completed: true } });
+      if (onboardingError) throw onboardingError;
       await refreshSessionProfile();
       navigate(finishPath, { replace: true });
     } catch (saveError) {

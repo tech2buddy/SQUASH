@@ -52,7 +52,10 @@ export default function SquashAuthCallbackPage() {
           if (refreshedSession.roles.includes(targetRole)) {
             await activateRole(targetRole);
             setStatusText('Redirecting to your workspace...');
-            navigate(targetRole === 'developer' ? '/dashboard' : '/tester/dashboard', { replace: true });
+            const destination = refreshedSession.onboardingCompleted === false
+              ? '/onboarding/' + targetRole
+              : targetRole === 'developer' ? '/dashboard' : '/tester/dashboard';
+            navigate(destination, { replace: true });
           } else {
             const activePath = defaultSessionPath(refreshedSession);
             navigate(activePath, { replace: true });

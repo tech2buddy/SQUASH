@@ -13,6 +13,7 @@ type AuthSession = {
   name: string;
   isAuthenticated: true;
   userId?: string;
+  onboardingCompleted?: boolean;
 };
 
 
@@ -104,6 +105,10 @@ async function readProfileSession(
   fallbackEmail: string,
   targetRole?: WorkspaceRole,
 ): Promise<AuthSession | null> {
+  const { data: activeAuthUserData, error: activeAuthUserError } = await supabase.auth.getUser();
+  if (activeAuthUserError) throw activeAuthUserError;
+  const onboardingCompleted = activeAuthUserData.user?.user_metadata?.onboarding_completed !== false;
+
   let { data, error } = await supabase
     .from('profiles')
     .select('id, role, full_name, email')
@@ -172,6 +177,7 @@ async function readProfileSession(
     email: profile.email || fallbackEmail,
     name: profile.full_name,
     userId: profile.id,
+    onboardingCompleted: profile.role === 'admin' ? true : onboardingCompleted,
     isAuthenticated: true,
   };
 }
@@ -183,6 +189,7 @@ export function roleHomePath(role: UserRole): string {
 
 export function defaultSessionPath(session: AuthSession): string {
   if (session.role === 'admin') return '/A31/dashboard';
+  if (session.onboardingCompleted === false) return '/onboarding/' + session.role;
   return roleHomePath(session.role);
 }
 
@@ -347,6 +354,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             data: {
               role,
               full_name: name.trim(),
+              onboarding_completed: false,
             },
           },
         });

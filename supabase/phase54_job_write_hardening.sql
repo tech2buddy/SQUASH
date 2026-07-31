@@ -28,12 +28,11 @@ begin;
 -- Revoke the blanket grant and re-issue it only over the fields a developer is
 -- genuinely editing: the brief. Money, status, size and test type are ours.
 --
--- Note the omissions and why:
---   status              -- set by the payment webhook and admin workflow
---   total_amount_zar    -- derived from package_key x testers_needed
---   testers_needed      -- changes the price after it has been quoted
---   package_key         -- changes the rate, and gates verification (phase 47)
---   developer_id        -- reassigning a job to another account
+-- `status` and `developer_id` are withheld outright -- there is no legitimate
+-- client-side reason to write either. The commercial fields (price, tester
+-- count, test type) stay grantable because a developer genuinely edits them
+-- while building a draft; the trigger below is what stops them moving once the
+-- job is quoted or paid.
 
 revoke update on public.jobs from authenticated;
 
@@ -44,11 +43,20 @@ grant update (
   platform,
   category,
   description,
+  additional_info,
   tasks,
   focus_areas,
+  target_scenario,
+  test_objective,
+  test_restrictions,
+  test_workflow,
+  lab_config,
   preferred_specializations,
   live_session_enabled,
   live_session_at,
+  package_key,
+  total_amount_zar,
+  testers_needed,
   updated_at
 ) on public.jobs to authenticated;
 
@@ -79,16 +87,35 @@ begin
       using errcode = 'check_violation';
   end if;
 
-  if new.total_amount_zar is distinct from old.total_amount_zar
-     or new.testers_needed is distinct from old.testers_needed
-     or new.package_key is distinct from old.package_key then
-    raise exception 'The price, tester count and test type of a job cannot be changed after it is created'
-      using errcode = 'check_violation';
-  end if;
-
   if new.developer_id is distinct from old.developer_id then
     raise exception 'A job cannot be transferred to another account'
       using errcode = 'check_violation';
+  end if;
+
+  -- Price, tester count and test type stay editable while the job is an unpaid
+  -- draft -- that is just someone still filling in the form, and blocking it
+  -- would break the post-job flow for no security benefit.
+  --
+  -- They lock the moment the job leaves draft OR a payment has been started
+  -- against it. The payment check is the important half: without it a developer
+  -- could open checkout at R2 200, drop the total to R100 while the Yoco page
+  -- sits open, and rely on the amount having already been captured.
+  if new.total_amount_zar is distinct from old.total_amount_zar
+     or new.testers_needed is distinct from old.testers_needed
+     or new.package_key is distinct from old.package_key then
+
+    if old.status is distinct from 'draft'::public.job_status then
+      raise exception 'The price, tester count and test type cannot change once a job has been submitted'
+        using errcode = 'check_violation';
+    end if;
+
+    if exists (
+      select 1 from public.job_payments
+      where job_id = old.id and status in ('creating', 'pending', 'succeeded')
+    ) then
+      raise exception 'This job already has a payment in progress, so its price cannot change'
+        using errcode = 'check_violation';
+    end if;
   end if;
 
   return new;

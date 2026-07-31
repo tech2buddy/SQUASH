@@ -137,6 +137,47 @@ Known limits, in plain terms: a determined faker can tether through a real SA mo
 
 ---
 
+## 4b. Write privileges — read before adding any `grant`
+
+Phases 54–56 came out of a security review that found three classes of hole. All three had the same root cause: **a row-level policy restricts *which rows* a user may touch, never *which columns*.** `jobs` and `tester_profiles` both had blanket `grant update … to authenticated`, so the policies were doing much less than they appeared to.
+
+**The single most important consequence: a developer could take a job live without paying.**
+
+```js
+supabase.from('jobs').update({ status: 'active' }).eq('id', jobId)
+```
+
+Yoco checkout, the webhook, the double-payment guards — all bypassed by one client write to the field the webhook was meant to own. The same hole let a developer drop `total_amount_zar` to R1, which *also* silently underpays every tester, since payouts are `total_amount_zar × 0.62`.
+
+Now enforced in two layers, deliberately redundant:
+
+| Table | Client may write | Enforced by |
+|---|---|---|
+| `jobs` | the brief; price/testers/type **only while an unpaid draft** | column grant + `guard_job_commercial_fields` + `guard_job_insert_status` |
+| `tester_profiles` | `bio`, `is_public`, `preferred_payout_method` | column grant + `guard_tester_qualification_fields` |
+| `profiles` | everything except `id` and `role` | `guard_profile_identity_fields` |
+
+**Rules for future work:**
+
+- **Never write `grant update on public.<table> to authenticated`.** Always name columns. A blanket grant is what created all of this.
+- **`status` is not a client field.** A job goes live when its payment succeeds. The service role (webhook) and admins are the only writers.
+- Reputation (`rating`, `tests_completed`, `approval_rate`), money (`available_balance_zar`) and enforcement state (`verification_strikes`, `premium_types_blocked_until`) are all trigger-protected. Phase 51's revocation system was one `UPDATE` from decorative before phase 55.
+- Column privileges are checked against the **columns named in the statement**, not against which values changed — so a client sending an unchanged `status` still fails. `updateDeveloperJob` omits it for exactly this reason.
+
+### What `anon` can read (phase 56)
+
+The anon key is public by design, so anything granted to `anon` is a bulk scrape, not a targeted read. Previously `anon` held blanket SELECT on `jobs`, `tester_profiles` and `tester_specializations` — which by phases 47/51 meant **reviewer accusations were world-readable**. `revoked_reason` is a mandatory 20+ character written accusation about a named person; that is a defamation exposure, not just a privacy one.
+
+Now column-limited. `anon` sees the shop window only:
+
+- **jobs** — title, platform, category, price, tester count, logo. **Not** `app_url` (customers' unreleased staging environments), the brief, or `lab_config`.
+- **tester_profiles** — bio, rating, tests completed, approval rate. **Not** balance, payout method, strikes or probation.
+- **tester_specializations** — key and verification status. **Not** notes, reasons or evidence paths.
+
+No public page queries these tables at all, so the restriction cost nothing. Before adding a public page that does, check the column grants rather than assuming `select('*')` works.
+
+---
+
 ## 5. Money flow — read this carefully
 
 ### The split

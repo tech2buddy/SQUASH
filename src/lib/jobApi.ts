@@ -160,7 +160,10 @@ export async function updateDeveloperJob(jobId: string, input: DeveloperJobInput
     live_session_enabled: input.liveSessionEnabled,
     live_session_at: input.liveSessionAt,
     lab_config: input.testBrief,
-    status: input.status || 'active',
+    // `status` is deliberately absent. Phase 54 revoked the client's UPDATE
+    // privilege on it -- a job goes live when its payment succeeds, not because
+    // the browser asked. Naming the column here would fail the whole statement
+    // on privileges even when the value is unchanged.
   };
   if (input.logoUrl) payload.logo_url = input.logoUrl;
 
@@ -195,7 +198,10 @@ export async function createDeveloperJob(input: DeveloperJobInput): Promise<Deve
     live_session_enabled: input.liveSessionEnabled,
     live_session_at: input.liveSessionAt,
     lab_config: input.testBrief,
-    status: input.status || 'active',
+    // Always a draft. Phase 54 refuses any other value from a non-admin insert,
+    // and the previous 'active' default would have made a job live without
+    // payment had a caller ever omitted the status.
+    status: 'draft',
   };
   if (input.logoUrl) payload.logo_url = input.logoUrl;
 

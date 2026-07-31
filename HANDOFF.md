@@ -283,12 +283,34 @@ Two hard-won lessons:
 
 **Known gaps:**
 
-- Test coverage is 16 tests, concentrated on pricing/payout math. Most of the app is untested.
-- Referrals is a stub — `getTesterReferrals()` returns `[]`.
+- Test coverage is 64 tests, concentrated on pricing/payout math and the specialization/telemetry invariants. Most of the UI is still untested.
 - `SquashCertificatePage` still uses hardcoded data (`// TODO: Replace with Supabase query`).
 - "Allow direct invites" setting is disabled/"Coming soon" — no invite feature exists to gate.
 - Orphaned Storage files remain after job deletion (DB rows cascade; files don't).
-- One pre-existing lint error in `auth.tsx` (`setState` in effect) plus ~75 warnings.
+- ~67 lint warnings, dominated by `react-hooks/set-state-in-effect`. No errors — `npm run check` passes.
+- **Migrations 47–53 are written but unapplied.** Apply in order; 51 and 52 rewrite functions from 47, and 50 depends on 48.
+
+### Referrals (phase 53)
+
+Previously a stub: `getTesterReferrals()` returned `[]`, the page rendered mock rows under a literal "TODO: Replace with Supabase referral records" subtitle, and the invite button pushed a row into React state that vanished on refresh.
+
+Now backed by `tester_referrals`. The funnel is `invited → signed_up → reward_ready`, where `reward_ready` is reached from an **approved submission**, not from signup — otherwise the incentive is to harvest accounts.
+
+**The reward amount is deliberately unset.** `reward_zar` stays null until an admin sets it, because what a referral is worth is a commercial decision with margin implications, not something to invent in a migration. Nothing in phase 53 touches payouts; wire it to money deliberately once the number is chosen.
+
+Referral codes are random values on `tester_profiles.referral_code`. The page used to derive a "code" by slicing the tester's user id, which put part of a primary key into links people paste into WhatsApp groups.
+
+### Bundle size
+
+The app was one 1.3 MB chunk (301 kB gzipped) — every admin screen downloaded before a first-time visitor saw the homepage, on a product that sells 2G/3G testing. `App.tsx` now lazy-loads every route except the homepage, login, signup and 404, which stay eager because a loading flash on the first screen is worse than the bytes.
+
+Initial JS is now ~524 kB / **142 kB gzipped**. The remainder is React, Supabase, the router and the eager pages. The 500 kB build warning still fires; it measures uncompressed minified size and is not worth suppressing.
+
+`react-icons` was removed — it was an 84 MB install used for three footer icons, now inline SVGs in `BrandIcons.tsx`. It was tree-shaking well, so this saved install time rather than bundle size (~2 kB).
+
+### Canonical domain
+
+Everything now points at `https://www.squashqa.co.za`. `index.html` previously mixed a `www` canonical with bare-domain `og:url`, `og:image`, `twitter:image` and all the JSON-LD `@id` values, and `SquashForDevelopersPage` advertised a `squash.app` domain that is not yours. Given the bare domain redirects (and that redirect has already broken one integration), scrapers that do not follow redirects were missing the preview image.
 
 ---
 

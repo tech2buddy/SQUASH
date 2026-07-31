@@ -39,3 +39,57 @@ export function GitHubIcon({ className = 'h-5 w-5' }: { className?: string }) {
     </svg>
   );
 }
+
+/**
+ * Social icons drawn inline rather than pulled from react-icons.
+ *
+ * `react-icons/tb` is a barrel re-exporting several thousand components; the
+ * footer needed three of them, and the dependency was 84 MB installed. These
+ * are stroked outlines matching the Tabler set they replace, so the footer
+ * looks the same.
+ */
+function socialProps(className: string) {
+  return {
+    className,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.75,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+    focusable: 'false' as const,
+  };
+}
+
+export function InstagramIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg {...socialProps(className)}>
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <circle cx="12" cy="12" r="3" />
+      <line x1="16.5" y1="7.5" x2="16.51" y2="7.5" />
+    </svg>
+  );
+}
+
+export function XIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg {...socialProps(className)}>
+      <path d="M4 4l11.733 16H20L8.267 4H4z" />
+      <line x1="4" y1="20" x2="10.5" y2="13.5" />
+      <line x1="13.5" y1="10.5" x2="20" y2="4" />
+    </svg>
+  );
+}
+
+export function LinkedInIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg {...socialProps(className)}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <line x1="8" y1="11" x2="8" y2="16" />
+      <line x1="8" y1="8" x2="8" y2="8.01" />
+      <line x1="12" y1="16" x2="12" y2="11" />
+      <path d="M16 16v-3a2 2 0 0 0-4 0" />
+    </svg>
+  );
+}

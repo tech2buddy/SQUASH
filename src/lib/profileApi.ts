@@ -261,17 +261,108 @@ export async function getTesterLeaderboard(): Promise<TesterLeaderboardEntry[]> 
   });
 }
 
+export type TesterReferralStatus =
+  | 'invited'
+  | 'signed_up'
+  | 'approved_work'
+  | 'reward_ready'
+  | 'expired';
+
 export type TesterReferralEntry = {
+  id: string;
   name: string;
   email: string;
-  status: 'invited' | 'signed_up' | 'approved_work' | 'reward_ready' | 'pending' | 'completed';
+  status: TesterReferralStatus;
   detail: string;
   date: string;
+  rewardZar: number | null;
 };
 
-export async function getTesterReferrals(_userId: string): Promise<TesterReferralEntry[]> {
-  // TODO: Implement actual referrals table in Supabase
-  return [];
+const REFERRAL_DETAIL: Record<TesterReferralStatus, string> = {
+  invited: 'Invite sent — waiting for signup',
+  signed_up: 'Signed up — waiting for their first approved test',
+  approved_work: 'Completing their first test',
+  reward_ready: 'First test approved',
+  expired: 'Invite expired',
+};
+
+/**
+ * Real referral records (supabase/phase53_tester_referrals.sql).
+ *
+ * This page previously rendered mock data under a literal "TODO" subtitle and
+ * an invite button that only pushed a row into React state.
+ *
+ * `reward_ready` means the referred tester has had a submission approved — it
+ * does not mean money is owed. The reward amount is deliberately unset in the
+ * migration; see the note there before wiring this to payouts.
+ */
+export async function getTesterReferrals(userId: string): Promise<TesterReferralEntry[]> {
+  if (!isSupabaseConfigured || !userId) return [];
+
+  const { data, error } = await (supabase.rpc as any)('get_tester_referrals');
+  if (error) throw new Error(error.message || 'Unable to load your referrals right now.');
+
+  return ((data || []) as Array<{
+    id: string;
+    invited_email: string;
+    referred_name: string | null;
+    status: TesterReferralStatus;
+    invited_at: string;
+    signed_up_at: string | null;
+    qualified_at: string | null;
+    reward_zar: number | null;
+  }>).map((row) => ({
+    id: row.id,
+    // Only known once they actually sign up; an unaccepted invite is just an
+    // address, and inventing a name for it would be a lie on the tester's page.
+    name: row.referred_name || 'Pending signup',
+    email: row.invited_email,
+    status: row.status,
+    detail: REFERRAL_DETAIL[row.status] ?? '',
+    date: row.qualified_at || row.signed_up_at || row.invited_at,
+    rewardZar: row.reward_zar,
+  }));
+}
+
+/** The tester's shareable code, generated on first use. */
+export async function getReferralCode(): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_or_create_referral_code');
+  if (error) return null;
+  return typeof data === 'string' ? data : null;
+}
+
+export async function inviteTesterReferral(email: string): Promise<TesterReferralEntry> {
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+
+  const { data, error } = await (supabase.rpc as any)('create_tester_referral', { p_email: email });
+  if (error) throw new Error(error.message || 'Unable to send that invite right now.');
+
+  const row = data as { id: string; invited_email: string; status: TesterReferralStatus; invited_at: string };
+  return {
+    id: row.id,
+    name: 'Pending signup',
+    email: row.invited_email,
+    status: row.status,
+    detail: REFERRAL_DETAIL[row.status] ?? '',
+    date: row.invited_at,
+    rewardZar: null,
+  };
+}
+
+/**
+ * Links a newly created account to whoever referred it. Called once, just after
+ * signup. Returns false when the code is unknown, self-referring, or the
+ * account is already credited — none of which are errors worth interrupting
+ * signup for.
+ */
+export async function claimReferral(code: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !code.trim()) return false;
+
+  const { data, error } = await (supabase.rpc as any)('claim_tester_referral', { p_code: code });
+  if (error) return false;
+  return data === true;
 }
 
 export type UserSettings = {

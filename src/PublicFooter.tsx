@@ -1,5 +1,5 @@
 import { Mail } from 'lucide-react';
-import { TbBrandInstagram, TbBrandLinkedin, TbBrandX } from 'react-icons/tb';
+import { InstagramIcon, LinkedInIcon, XIcon } from './BrandIcons';
 
 const footerLinks = {
   Platform: [
@@ -42,7 +42,7 @@ export default function PublicFooter() {
           <div className="mt-6 flex items-center gap-4">
             <a href="https://www.instagram.com/squash_za?igsh=MThtZnI5enUydXp4dw%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-slate-400 transition hover:text-pink-600">
               <span className="sr-only">Instagram</span>
-              <TbBrandInstagram className="h-5 w-5" strokeWidth={1.75} />
+              <InstagramIcon className="h-5 w-5" />
             </a>
             <a href="mailto:Squashqa@gmail.com" className="text-slate-400 transition hover:text-green-600">
               <span className="sr-only">Email</span>
@@ -50,11 +50,11 @@ export default function PublicFooter() {
             </a>
             <a href="#" className="text-slate-400 transition hover:text-sky-500">
               <span className="sr-only">Twitter</span>
-              <TbBrandX className="h-5 w-5" strokeWidth={1.75} />
+              <XIcon className="h-5 w-5" />
             </a>
             <a href="#" className="text-slate-400 transition hover:text-blue-700">
               <span className="sr-only">LinkedIn</span>
-              <TbBrandLinkedin className="h-5 w-5" strokeWidth={1.75} />
+              <LinkedInIcon className="h-5 w-5" />
             </a>
           </div>
         </div>

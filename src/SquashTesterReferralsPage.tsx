@@ -15,11 +15,16 @@ import {
   Users,
   Award,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import TesterMobileDrawer from './components/TesterMobileDrawer';
 import MobileTabBar from './components/MobileTabBar';
-import { getTesterReferrals, type TesterReferralEntry } from './lib/profileApi';
+import {
+  getReferralCode,
+  getTesterReferrals,
+  inviteTesterReferral,
+  type TesterReferralEntry,
+} from './lib/profileApi';
 
 function statusClasses(status: string) {
   if (status === 'reward_ready') return 'bg-green-50 text-green-700 ring-green-100';
@@ -32,20 +37,22 @@ export default function SquashTesterReferralsPage() {
   const { session } = useAuth();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [referrals, setReferrals] = useState<TesterReferralEntry[]>([]);
+  const [referralCode, setReferralCode] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    if (!session?.userId) return;
     let mounted = true;
 
-    Promise.all([
-      session?.userId ? getTesterReferrals(session.userId) : Promise.resolve([]),
-    ])
-      .then(([referralData]) => {
-        if (mounted) {
-          setReferrals(referralData);
-        }
+    Promise.all([getTesterReferrals(session.userId), getReferralCode()])
+      .then(([referralData, code]) => {
+        if (!mounted) return;
+        setReferrals(referralData);
+        setReferralCode(code || '');
       })
-      .catch(() => {
-        // Handle error silently or log
+      .catch((error: Error) => {
+        if (mounted) setLoadError(error.message || 'Could not load your referrals right now.');
       });
 
     return () => {
@@ -54,11 +61,11 @@ export default function SquashTesterReferralsPage() {
   }, [session?.userId, session?.role]);
 
   const testerName = session?.name || 'Tester';
-  const referralCode = useMemo(() => {
-    const source = session?.userId || session?.email || 'tester';
-    return source.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || 'TESTER';
-  }, [session?.email, session?.userId]);
-  const referralLink = `https://squash.app/signup?role=tester&ref=${referralCode}`;
+  // Issued by the database rather than derived from the user id, which used to
+  // leak part of a primary key into a link people paste into group chats.
+  const referralLink = referralCode
+    ? `https://www.squashqa.co.za/signup?role=tester&ref=${referralCode}`
+    : '';
   const [email, setEmail] = useState('');
   const [inviteNotice, setInviteNotice] = useState('');
   const [copied, setCopied] = useState(false);
@@ -87,7 +94,7 @@ export default function SquashTesterReferralsPage() {
     }
   };
 
-  const sendInvite = () => {
+  const sendInvite = async () => {
     setInviteNotice('');
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !trimmed.includes('@')) {
@@ -95,18 +102,19 @@ export default function SquashTesterReferralsPage() {
       return;
     }
 
-    setReferrals((prev) => [
-      {
-        name: 'Pending invite',
-        email: trimmed,
-        status: 'invited',
-        detail: 'Waiting for signup',
-        date: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-    setEmail('');
-    setInviteNotice('Invite saved. We will email your friend shortly.');
+    setSending(true);
+    try {
+      // Persisted, unlike the previous version, which pushed a row into React
+      // state and lost it on refresh.
+      const created = await inviteTesterReferral(trimmed);
+      setReferrals((prev) => [created, ...prev.filter((item) => item.email !== created.email)]);
+      setEmail('');
+      setInviteNotice('Invite recorded. Share your link with them so it gets credited to you.');
+    } catch (error) {
+      setInviteNotice(error instanceof Error ? error.message : 'Could not save that invite.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -182,10 +190,10 @@ export default function SquashTesterReferralsPage() {
                 </div>
                 <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Referral code</div>
-                  <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{referralCode}</div>
+                  <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{referralCode || '·······'}</div>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                    <input readOnly value={referralLink} className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none" />
-                    <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700">
+                    <input readOnly value={referralLink} placeholder="Generating your link..." className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none" />
+                    <button type="button" disabled={!referralLink} onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50">
                       {copied ? <CheckCircle2 className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
                       {copied ? 'Copied' : 'Copy'}
                     </button>
@@ -195,10 +203,13 @@ export default function SquashTesterReferralsPage() {
 
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="text-2xl font-bold text-slate-900">Send an invite</h2>
-                <p className="mt-1 text-sm text-slate-600">Prepare an invite now. Email delivery will connect to backend notifications later.</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  We'll record the invite so it is credited to you. Send them your link above — that
+                  is what links their signup to your account.
+                </p>
                 <div className="mt-5 flex flex-col gap-3">
                   <label className="block"><span className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Mail className="h-4 w-4 text-slate-400" /> Email address</span><input value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" placeholder="friend@example.com" /></label>
-                  <button type="button" onClick={sendInvite} className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">Prepare invite</button>
+                  <button type="button" disabled={sending} onClick={() => void sendInvite()} className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:opacity-50">{sending ? 'Saving...' : 'Save invite'}</button>
                 </div>
                 {inviteNotice ? <div className="mt-4 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{inviteNotice}</div> : null}
               </div>
@@ -208,11 +219,25 @@ export default function SquashTesterReferralsPage() {
               <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-6 py-5">
                   <h2 className="text-2xl font-bold text-slate-900">Referral tracker</h2>
-                  <p className="mt-1 text-sm text-slate-600">TODO: Replace with Supabase referral records.</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Everyone you have invited, and how far they have got.
+                  </p>
                 </div>
+                {loadError ? (
+                  <div className="px-6 py-4 text-sm font-semibold text-red-700">{loadError}</div>
+                ) : null}
+                {!loadError && referrals.length === 0 ? (
+                  <div className="px-6 py-10 text-center">
+                    <Users className="mx-auto h-8 w-8 text-slate-300" />
+                    <p className="mt-3 text-sm font-semibold text-slate-600">No referrals yet</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Share your link above — referrals are credited when someone signs up through it.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="divide-y divide-slate-100">
                   {referrals.map((referral) => (
-                    <div key={`${referral.email}-${referral.status}`} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
+                    <div key={referral.id} className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
                       <div className="flex min-w-0 items-start gap-4">
                         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-50 text-slate-600 ring-1 ring-slate-200"><Users className="h-5 w-5" /></div>
                         <div className="min-w-0">

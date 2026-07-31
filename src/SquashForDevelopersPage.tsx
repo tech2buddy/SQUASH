@@ -247,7 +247,7 @@ export default function SquashForDevelopersPage() {
                 </p>
                 <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-900 p-4 text-sm leading-6 text-slate-100">
 {`<script
-  src="https://squash.app/widget.js"
+  src="https://www.squashqa.co.za/widget.js"
   data-job="YOUR-JOB-ID">
 </script>`}
                 </pre>
@@ -269,7 +269,7 @@ export default function SquashForDevelopersPage() {
                 </p>
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-700">
                   <div><span className="font-semibold">You submit:</span> https://myapp.com/staging</div>
-                  <div><span className="font-semibold">We create:</span> squash.app/test/JOB-ID</div>
+                  <div><span className="font-semibold">We create:</span> www.squashqa.co.za/test/JOB-ID</div>
                 </div>
               </div>
             </div>

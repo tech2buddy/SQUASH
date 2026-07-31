@@ -3,10 +3,12 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth, type WorkspaceRole } from './auth';
 import { GitHubIcon, GoogleIcon } from './BrandIcons';
+import { claimReferral } from './lib/profileApi';
 
 export default function SquashSignupPage() {
   const [searchParams] = useSearchParams();
   const requestedRole = searchParams.get('role');
+  const referralCode = searchParams.get('ref') || '';
   const initialRole: WorkspaceRole = requestedRole === 'tester' ? 'tester' : 'developer';
   const [role, setRole] = useState<WorkspaceRole>(initialRole);
   const [name, setName] = useState('');
@@ -78,6 +80,13 @@ export default function SquashSignupPage() {
         setNotice('Account created. You can now login.');
         navigate('/login?role=' + role, { replace: true });
         return;
+      }
+
+      // Credit whoever referred them. The new account links itself, so a
+      // referrer cannot claim someone who never used their link. Failure here
+      // must never block a signup that already succeeded.
+      if (referralCode) {
+        await claimReferral(referralCode).catch(() => false);
       }
 
       const onboardingPath = `/onboarding/${role}${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`;

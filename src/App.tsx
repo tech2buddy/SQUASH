@@ -1,69 +1,103 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
-import SquashActiveTestScreen from './SquashActiveTestScreen';
-import SquashAboutPage from './SquashAboutPage';
-import SquashDeveloperDashboard from './SquashDeveloperDashboard';
-import SquashDeveloperBillingPage from './SquashDeveloperBillingPage';
-import SquashDeveloperSettingsPage from './SquashDeveloperSettingsPage';
-import SquashForDevelopersPage from './SquashForDevelopersPage';
-import SquashForTestersPage from './SquashForTestersPage';
+
+/**
+ * Route-level code splitting.
+ *
+ * The whole app used to ship as one 1.3 MB chunk, which is a bad look for a
+ * product whose pitch is testing on 2G and 3G: a first-time visitor on a slow
+ * connection downloaded every admin screen before seeing the homepage.
+ *
+ * Eager below the fold of this comment: the landing page and the two auth
+ * screens. They are the entry points, and a loading flash on the first thing
+ * someone sees is worse than the bytes. Everything else -- every dashboard,
+ * every admin screen, every policy page -- loads on demand.
+ */
 import SquashHomepage from './SquashHomepage';
 import SquashLoginPage from './SquashLoginPage';
-import SquashPostJobPage from './SquashPostJobPage';
-import SquashPricingPage from './SquashPricingPage';
-import SquashReportDetailsPage from './SquashReportDetailsPage';
 import SquashSignupPage from './SquashSignupPage';
-import SquashResetPasswordPage from './SquashResetPasswordPage';
-import SquashAuthCallbackPage from './SquashAuthCallbackPage';
-import SquashTesterDashboardPage from './SquashTesterDashboardPage';
-import SquashTesterMyTestsPage from './SquashTesterMyTestsPage';
-import SquashTesterJobBoard from './SquashTesterJobBoard';
-import SquashTesterJobDetailPage from './SquashTesterJobDetailPage';
-import SquashTesterProfilePage from './SquashTesterProfilePage';
-import SquashTesterEarningsPage from './SquashTesterEarningsPage';
-import SquashTesterReportsPage from './SquashTesterReportsPage';
-import SquashTesterReportDetailPage from './SquashTesterReportDetailPage';
-import SquashTesterSettingsPage from './SquashTesterSettingsPage';
-import SquashTesterNotificationsPage from './SquashTesterNotificationsPage';
-import SquashTesterBankingPage from './SquashTesterBankingPage';
-import SquashTesterLevelBenefitsPage from './SquashTesterLevelBenefitsPage';
-import SquashTesterLeaderboardPage from './SquashTesterLeaderboardPage';
-import SquashTesterQualificationPage from './SquashTesterQualificationPage';
-import SquashTesterQualificationSamplePage from './SquashTesterQualificationSamplePage';
-import SquashInfoPage from './SquashInfoPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
-import SquashApiDocsPage from './SquashApiDocsPage';
-import SquashLiveSessionPage from './SquashLiveSessionPage';
-import SquashChooseWorkspacePage from './SquashChooseWorkspacePage';
-import SquashOnboardingPage from './SquashOnboardingPage';
-import SquashAdminDashboardPage from './SquashAdminDashboardPage';
-import SquashAdminPayoutsPage from './SquashAdminPayoutsPage';
-import SquashAdminQualificationsPage from './SquashAdminQualificationsPage';
-import SquashAdminSpecializationsPage from './SquashAdminSpecializationsPage';
-import SquashAdminProbationPage from './SquashAdminProbationPage';
-import SquashAdminUsersPage from './SquashAdminUsersPage';
-import SquashAdminUserProfilePage from './SquashAdminUserProfilePage';
-import SquashAdminJobsPage from './SquashAdminJobsPage';
-import SquashAdminJobDetailPage from './SquashAdminJobDetailPage';
-import SquashDeveloperJobDetailPage from './SquashDeveloperJobDetailPage';
-import SquashAdminReportsPage from './SquashAdminReportsPage';
-import SquashAdminReportDetailPage from './SquashAdminReportDetailPage';
-import SquashAdminSecurityPage from './SquashAdminSecurityPage';
-import SquashAdminOperationsPage from './SquashAdminOperationsPage';
-import SquashPrivateAdminMagicPage from './SquashPrivateAdminMagicPage';
-import SquashAdminMfaPage from './SquashAdminMfaPage';
-import SquashSupportPage from './SquashSupportPage';
-import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
-import {
-  SquashDeveloperActivityPage,
-  SquashDeveloperJobsPage,
-  SquashDeveloperApplicationsPage,
-  SquashDeveloperReportsPage,
-  SquashDeveloperSubmissionsPage,
-  SquashReportAttachmentsPage,
-} from './SquashDeveloperViewsPage';
 import DeveloperLayout from './components/DeveloperLayout';
 import TesterLayout from './components/TesterLayout';
+import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
+
+const SquashActiveTestScreen = lazy(() => import('./SquashActiveTestScreen'));
+const SquashAboutPage = lazy(() => import('./SquashAboutPage'));
+const SquashDeveloperDashboard = lazy(() => import('./SquashDeveloperDashboard'));
+const SquashDeveloperBillingPage = lazy(() => import('./SquashDeveloperBillingPage'));
+const SquashDeveloperSettingsPage = lazy(() => import('./SquashDeveloperSettingsPage'));
+const SquashForDevelopersPage = lazy(() => import('./SquashForDevelopersPage'));
+const SquashForTestersPage = lazy(() => import('./SquashForTestersPage'));
+const SquashPostJobPage = lazy(() => import('./SquashPostJobPage'));
+const SquashPricingPage = lazy(() => import('./SquashPricingPage'));
+const SquashReportDetailsPage = lazy(() => import('./SquashReportDetailsPage'));
+const SquashResetPasswordPage = lazy(() => import('./SquashResetPasswordPage'));
+const SquashAuthCallbackPage = lazy(() => import('./SquashAuthCallbackPage'));
+const SquashTesterDashboardPage = lazy(() => import('./SquashTesterDashboardPage'));
+const SquashTesterMyTestsPage = lazy(() => import('./SquashTesterMyTestsPage'));
+const SquashTesterJobBoard = lazy(() => import('./SquashTesterJobBoard'));
+const SquashTesterJobDetailPage = lazy(() => import('./SquashTesterJobDetailPage'));
+const SquashTesterProfilePage = lazy(() => import('./SquashTesterProfilePage'));
+const SquashTesterEarningsPage = lazy(() => import('./SquashTesterEarningsPage'));
+const SquashTesterReportsPage = lazy(() => import('./SquashTesterReportsPage'));
+const SquashTesterReportDetailPage = lazy(() => import('./SquashTesterReportDetailPage'));
+const SquashTesterSettingsPage = lazy(() => import('./SquashTesterSettingsPage'));
+const SquashTesterNotificationsPage = lazy(() => import('./SquashTesterNotificationsPage'));
+const SquashTesterBankingPage = lazy(() => import('./SquashTesterBankingPage'));
+const SquashTesterLevelBenefitsPage = lazy(() => import('./SquashTesterLevelBenefitsPage'));
+const SquashTesterLeaderboardPage = lazy(() => import('./SquashTesterLeaderboardPage'));
+const SquashTesterQualificationPage = lazy(() => import('./SquashTesterQualificationPage'));
+const SquashTesterQualificationSamplePage = lazy(() => import('./SquashTesterQualificationSamplePage'));
+const SquashInfoPage = lazy(() => import('./SquashInfoPage'));
+const SquashApiDocsPage = lazy(() => import('./SquashApiDocsPage'));
+const SquashLiveSessionPage = lazy(() => import('./SquashLiveSessionPage'));
+const SquashChooseWorkspacePage = lazy(() => import('./SquashChooseWorkspacePage'));
+const SquashOnboardingPage = lazy(() => import('./SquashOnboardingPage'));
+const SquashAdminDashboardPage = lazy(() => import('./SquashAdminDashboardPage'));
+const SquashAdminPayoutsPage = lazy(() => import('./SquashAdminPayoutsPage'));
+const SquashAdminQualificationsPage = lazy(() => import('./SquashAdminQualificationsPage'));
+const SquashAdminSpecializationsPage = lazy(() => import('./SquashAdminSpecializationsPage'));
+const SquashAdminProbationPage = lazy(() => import('./SquashAdminProbationPage'));
+const SquashAdminUsersPage = lazy(() => import('./SquashAdminUsersPage'));
+const SquashAdminUserProfilePage = lazy(() => import('./SquashAdminUserProfilePage'));
+const SquashAdminJobsPage = lazy(() => import('./SquashAdminJobsPage'));
+const SquashAdminJobDetailPage = lazy(() => import('./SquashAdminJobDetailPage'));
+const SquashDeveloperJobDetailPage = lazy(() => import('./SquashDeveloperJobDetailPage'));
+const SquashAdminReportsPage = lazy(() => import('./SquashAdminReportsPage'));
+const SquashAdminReportDetailPage = lazy(() => import('./SquashAdminReportDetailPage'));
+const SquashAdminSecurityPage = lazy(() => import('./SquashAdminSecurityPage'));
+const SquashAdminOperationsPage = lazy(() => import('./SquashAdminOperationsPage'));
+const SquashPrivateAdminMagicPage = lazy(() => import('./SquashPrivateAdminMagicPage'));
+const SquashAdminMfaPage = lazy(() => import('./SquashAdminMfaPage'));
+const SquashSupportPage = lazy(() => import('./SquashSupportPage'));
+
+// Named exports, so the module is unwrapped to a default for lazy().
+const SquashDeveloperActivityPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashDeveloperActivityPage })),
+);
+const SquashDeveloperJobsPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashDeveloperJobsPage })),
+);
+const SquashDeveloperApplicationsPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashDeveloperApplicationsPage })),
+);
+const SquashDeveloperReportsPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashDeveloperReportsPage })),
+);
+const SquashDeveloperSubmissionsPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashDeveloperSubmissionsPage })),
+);
+const SquashReportAttachmentsPage = lazy(() =>
+  import('./SquashDeveloperViewsPage').then((m) => ({ default: m.SquashReportAttachmentsPage })),
+);
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center text-sm font-semibold text-slate-500">
+      Loading...
+    </div>
+  );
+}
 import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
 import { supabase } from './lib/supabase';
 
@@ -132,6 +166,7 @@ function LogoutRoute() {
 export default function App() {
   return (
     <>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
       <Route path="/" element={<SquashHomepage />} />
       <Route path="/for-developers" element={<SquashForDevelopersPage />} />
@@ -462,6 +497,7 @@ export default function App() {
 
       <Route path="*" element={<SquashNotFoundPage />} />
     </Routes>
+    </Suspense>
     <CookieConsentBanner />
     </>
   );

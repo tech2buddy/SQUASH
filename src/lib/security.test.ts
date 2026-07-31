@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import jobHardeningSql from '../../supabase/phase54_job_write_hardening.sql?raw';
 import profileHardeningSql from '../../supabase/phase55_tester_profile_hardening.sql?raw';
 import readMinimisationSql from '../../supabase/phase56_public_read_minimisation.sql?raw';
+import crossTesterSql from '../../supabase/phase57_cross_tester_pii.sql?raw';
 import jobApiSource from './jobApi.ts?raw';
+import profileApiSource from './profileApi.ts?raw';
 
 /**
  * Regression tests for the findings in the security review.
@@ -175,5 +177,72 @@ describe('public read minimisation (phase 56)', () => {
     expect(readMinimisationSql).toContain(
       'alter table public.tester_qualification_rollout enable row level security',
     );
+  });
+});
+
+describe('cross-tester PII (phase 57)', () => {
+  it('removes the is_public branch that exposed every listed tester', () => {
+    // Phase 56 column-limited anon and stopped there. A free tester account is
+    // trivially obtained, so the authenticated leak was worth the same to an
+    // attacker -- balance, strikes, probation notes and revocation reasons for
+    // essentially every tester on the platform.
+    expect(crossTesterSql).toContain(
+      'drop policy if exists "tester_profiles_public_or_own_or_admin" on public.tester_profiles',
+    );
+    expect(crossTesterSql).toContain(
+      'drop policy if exists "tester_specializations_read_public_or_own_or_admin" on public.tester_specializations',
+    );
+  });
+
+  it('replaces them with own-or-admin only', () => {
+    expect(crossTesterSql).toMatch(
+      /create policy "tester_profiles_own_or_admin"[\s\S]{0,120}user_id = auth\.uid\(\) or public\.is_admin\(\)/,
+    );
+    expect(crossTesterSql).toMatch(
+      /create policy "tester_specializations_own_or_admin"[\s\S]{0,120}tester_id = auth\.uid\(\) or public\.is_admin\(\)/,
+    );
+  });
+
+  it('keeps nothing sensitive in the curated public views', () => {
+    const views = crossTesterSql.slice(crossTesterSql.indexOf('create view public.tester_leaderboard'));
+    for (const column of [
+      'available_balance_zar',
+      'preferred_payout_method',
+      'verification_strikes',
+      'premium_types_blocked_until',
+      'probation_status',
+      'probation_note',
+      'verification_note',
+      'revoked_reason',
+      'evidence_path',
+    ]) {
+      expect(views, `${column} must not appear in a public view`).not.toMatch(
+        new RegExp(`\\b${column}\\b`),
+      );
+    }
+  });
+
+  it('publishes only verified specializations, not review outcomes', () => {
+    // 'rejected' and 'revoked' are the results of a review and stay private.
+    expect(crossTesterSql).toMatch(/ts\.verification_status = 'approved'/);
+  });
+
+  it('does not grant the public views to anon', () => {
+    expect(crossTesterSql).not.toMatch(/grant select on public\.tester_leaderboard to[^;]*anon/);
+    expect(crossTesterSql).not.toMatch(
+      /grant select on public\.tester_public_specializations to[^;]*anon/,
+    );
+  });
+
+  it('points the leaderboard at the view instead of the locked base table', () => {
+    const start = profileApiSource.indexOf('export async function getTesterLeaderboard');
+    // Bound the slice to this function; profileApi legitimately reads
+    // tester_profiles elsewhere for the caller's own row.
+    const fn = profileApiSource.slice(start, profileApiSource.indexOf('\nexport ', start + 1));
+    expect(fn).toContain("from('tester_leaderboard')");
+    expect(fn).not.toContain("from('tester_profiles')");
+    // The old query also joined profiles!inner, which no ordinary tester has
+    // ever been able to read for other users.
+    expect(fn).not.toContain('profiles!inner');
   });
 });

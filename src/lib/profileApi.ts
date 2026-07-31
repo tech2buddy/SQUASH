@@ -232,33 +232,51 @@ export type TesterLeaderboardEntry = {
   specialty: string;
 };
 
+/**
+ * Reads the `tester_leaderboard` view rather than `tester_profiles`.
+ *
+ * Phase 57 removed the "any listed profile is readable by anyone" branch from
+ * that table -- it was letting any signed-in tester read every other tester's
+ * balance, strikes and probation notes. The view is the sanctioned path for
+ * cross-tester reputation: a fixed, curated column set with nothing sensitive
+ * in it, and it computes rank, tier and quality score in SQL rather than
+ * approximating them here.
+ *
+ * The previous query also joined `profiles!inner`, which no ordinary tester has
+ * ever been allowed to read for other users -- so this was returning a
+ * "leaderboard" of at most the caller themselves.
+ */
 export async function getTesterLeaderboard(): Promise<TesterLeaderboardEntry[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from('tester_profiles')
-    .select('rating, tests_completed, approval_rate, profiles!inner(full_name)')
-    .order('rating', { ascending: false })
-    .order('tests_completed', { ascending: false })
+  const { data, error } = await (supabase.from('tester_leaderboard') as any)
+    .select('rank, full_name, city, rating, tests_completed, approval_rate, approved_tests, quality_score, tier')
+    .order('rank', { ascending: true })
     .limit(10);
 
   if (error) throw error;
 
-  return (data || []).map((row: any, index: number) => {
-    const testsCompleted = row.tests_completed || 0;
-    const rating = row.rating || 0;
-    return {
-      rank: index + 1,
-      name: row.profiles?.full_name || 'Anonymous Tester',
-      city: row.profiles?.city || 'South Africa',
-      rating,
-      testsCompleted,
-      approvedTests: testsCompleted,
-      approvalRate: row.approval_rate || 0,
-      score: Math.round(testsCompleted * 12 + rating * 80),
-      specialty: 'Testing',
-    };
-  });
+  return ((data || []) as Array<{
+    rank: number;
+    full_name: string | null;
+    city: string | null;
+    rating: number | null;
+    tests_completed: number | null;
+    approval_rate: number | null;
+    approved_tests: number | null;
+    quality_score: number | null;
+    tier: string | null;
+  }>).map((row) => ({
+    rank: row.rank,
+    name: row.full_name || 'Anonymous Tester',
+    city: row.city || 'South Africa',
+    rating: row.rating || 0,
+    testsCompleted: row.tests_completed || 0,
+    approvedTests: row.approved_tests || 0,
+    approvalRate: row.approval_rate || 0,
+    score: row.quality_score || 0,
+    specialty: row.tier || 'new',
+  }));
 }
 
 /** Mirrors the `referral_status` enum defined in phase 12. */

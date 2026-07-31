@@ -176,6 +176,23 @@ Now column-limited. `anon` sees the shop window only:
 
 No public page queries these tables at all, so the restriction cost nothing. Before adding a public page that does, check the column grants rather than assuming `select('*')` works.
 
+### What one logged-in tester can read about another (phase 57)
+
+Phase 56 closed `anon` and stopped there, which was half a fix — a free tester account is trivially obtained, so the authenticated leak was worth roughly the same to an attacker. Both `tester_profiles` and `tester_specializations` had an `is_public = true` branch (and `is_public` defaults to true), so **any signed-in user could read every tester's balance, payout method, verification strikes, ban expiry, probation notes, reviewer notes and revocation reasons.** A tester could enumerate their competition's earnings and disciplinary history.
+
+Both base tables are now **own-or-admin only**. The unchanged `*_select_developer_applicants` policies still let a developer see testers who applied to their jobs.
+
+Cross-tester reputation now goes through two curated `security_invoker = false` views:
+
+- **`tester_leaderboard`** — name, city, rating, counts, tier, rank. Nothing else.
+- **`tester_public_specializations`** — key and verified date, **`approved` rows only**; `rejected` and `revoked` are review outcomes and stay private.
+
+These are definer views precisely so the base tables can stay locked. **Do not add columns to either without re-reading what they replaced.** Neither is granted to `anon`.
+
+`getTesterLeaderboard()` reads the view now. It previously queried `tester_profiles` with `profiles!inner`, which no ordinary tester has ever been permitted to read for other users — so the "leaderboard" was returning at most the caller themselves.
+
+**Residual, by design:** a qualified tester can still read `app_url` for every active job, because the job detail page shows "You will test: …" before they apply. That is a product decision, not an oversight — but it means the vetted-tester pool is the trust boundary protecting customers' unreleased staging URLs. If that is too wide, gate `app_url` behind an accepted assignment.
+
 ---
 
 ## 5. Money flow — read this carefully

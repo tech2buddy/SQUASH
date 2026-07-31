@@ -261,12 +261,14 @@ export async function getTesterLeaderboard(): Promise<TesterLeaderboardEntry[]> 
   });
 }
 
+/** Mirrors the `referral_status` enum defined in phase 12. */
 export type TesterReferralStatus =
   | 'invited'
   | 'signed_up'
   | 'approved_work'
   | 'reward_ready'
-  | 'expired';
+  | 'rewarded'
+  | 'cancelled';
 
 export type TesterReferralEntry = {
   id: string;
@@ -283,7 +285,8 @@ const REFERRAL_DETAIL: Record<TesterReferralStatus, string> = {
   signed_up: 'Signed up — waiting for their first approved test',
   approved_work: 'Completing their first test',
   reward_ready: 'First test approved',
-  expired: 'Invite expired',
+  rewarded: 'Reward paid',
+  cancelled: 'Cancelled',
 };
 
 /**
@@ -304,23 +307,23 @@ export async function getTesterReferrals(userId: string): Promise<TesterReferral
 
   return ((data || []) as Array<{
     id: string;
-    invited_email: string;
+    referred_email: string;
     referred_name: string | null;
     status: TesterReferralStatus;
     invited_at: string;
     signed_up_at: string | null;
-    qualified_at: string | null;
-    reward_zar: number | null;
+    reward_ready_at: string | null;
+    reward_amount_zar: number | null;
   }>).map((row) => ({
     id: row.id,
     // Only known once they actually sign up; an unaccepted invite is just an
     // address, and inventing a name for it would be a lie on the tester's page.
     name: row.referred_name || 'Pending signup',
-    email: row.invited_email,
+    email: row.referred_email,
     status: row.status,
     detail: REFERRAL_DETAIL[row.status] ?? '',
-    date: row.qualified_at || row.signed_up_at || row.invited_at,
-    rewardZar: row.reward_zar,
+    date: row.reward_ready_at || row.signed_up_at || row.invited_at,
+    rewardZar: row.reward_amount_zar,
   }));
 }
 
@@ -333,20 +336,57 @@ export async function getReferralCode(): Promise<string | null> {
   return typeof data === 'string' ? data : null;
 }
 
+/**
+ * Records an invite.
+ *
+ * Inserted directly rather than through an RPC because phase 12 already grants
+ * exactly this: `tester_referrals_insert_own` permits a tester to write their
+ * own row provided it starts at 'invited' with no reward attached. Phase 53's
+ * trigger applies the daily cap and rejects addresses that already have an
+ * account, so the ceiling is enforced server-side either way.
+ */
 export async function inviteTesterReferral(email: string): Promise<TesterReferralEntry> {
   if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
 
-  const { data, error } = await (supabase.rpc as any)('create_tester_referral', { p_email: email });
-  if (error) throw new Error(error.message || 'Unable to send that invite right now.');
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please log in again before sending an invite.');
 
-  const row = data as { id: string; invited_email: string; status: TesterReferralStatus; invited_at: string };
+  // The row carries the code it was issued under, so a later code rotation
+  // does not rewrite the history of who was invited with what.
+  const code = await getReferralCode();
+  if (!code) throw new Error('Your referral code is not ready yet. Try again in a moment.');
+
+  const { data, error } = await (supabase.from('tester_referrals') as any)
+    .insert({
+      referrer_id: user.id,
+      // A check constraint requires this to already be lowercased.
+      referred_email: email.trim().toLowerCase(),
+      referral_code: code,
+      status: 'invited',
+    })
+    .select('id, referred_email, status, created_at')
+    .single();
+
+  if (error) {
+    if (error.code === '23505') throw new Error('You have already invited that person.');
+    throw new Error(error.message || 'Unable to save that invite right now.');
+  }
+
+  const row = data as {
+    id: string;
+    referred_email: string;
+    status: TesterReferralStatus;
+    created_at: string;
+  };
   return {
     id: row.id,
     name: 'Pending signup',
-    email: row.invited_email,
+    email: row.referred_email,
     status: row.status,
     detail: REFERRAL_DETAIL[row.status] ?? '',
-    date: row.invited_at,
+    date: row.created_at,
     rewardZar: null,
   };
 }

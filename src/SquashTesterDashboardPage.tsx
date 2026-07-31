@@ -18,9 +18,12 @@ import { useAuth } from './auth';
 import { getTesterSpecializations, replaceTesterSpecializations, getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
 import {
   getTesterSpecializationDetails,
+  isSpecializationActive,
+  requestVerificationChallenge,
   submitSpecializationEvidence,
-  type SpecializationVerificationStatus,
+  usesChallenge,
 } from './lib/specializationApi';
+import type { SpecializationDisplayStatus } from './components/SpecializationChecklist';
 import {
   getTesterAssignments,
   getTesterEarningsSummary,
@@ -89,8 +92,11 @@ export default function SquashTesterDashboardPage() {
   const [earningsError, setEarningsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [specializations, setSpecializations] = useState<string[]>([]);
-  const [verification, setVerification] = useState<Record<string, SpecializationVerificationStatus>>({});
+  const [verification, setVerification] = useState<Record<string, SpecializationDisplayStatus>>({});
   const [verifyingKey, setVerifyingKey] = useState('');
+  const [challenge, setChallenge] = useState<
+    { key: string; promptText: string; expiresAt: string } | null
+  >(null);
   const [verificationError, setVerificationError] = useState('');
   const [verificationNotice, setVerificationNotice] = useState('');
   const evidenceInputRef = useRef<HTMLInputElement | null>(null);
@@ -98,11 +104,16 @@ export default function SquashTesterDashboardPage() {
 
   const refreshVerification = useCallback(async (userId: string) => {
     const details = await getTesterSpecializationDetails(userId);
+    // An approved-but-lapsed verification is shown as expired, not verified --
+    // the application gate rejects it, so implying otherwise sets the tester up
+    // for a refusal they were told would not happen.
     setVerification(
-      Object.fromEntries(details.map((item) => [item.key, item.status])) as Record<
-        string,
-        SpecializationVerificationStatus
-      >,
+      Object.fromEntries(
+        details.map((item) => [
+          item.key,
+          item.status === 'approved' && !isSpecializationActive(item) ? 'expired' : item.status,
+        ]),
+      ) as Record<string, SpecializationDisplayStatus>,
     );
     return details;
   }, []);
@@ -204,10 +215,35 @@ export default function SquashTesterDashboardPage() {
     });
   };
 
-  const handleRequestVerification = (id: string) => {
-    pendingVerificationKey.current = id;
+  const handleRequestVerification = async (id: string) => {
     setVerificationError('');
     setVerificationNotice('');
+
+    // Language claims are proved by answering a prompt issued now, so the
+    // recording cannot have been made in advance or by somebody else. Network
+    // and assistive-technology claims go straight to upload.
+    if (usesChallenge(id)) {
+      try {
+        const issued = await requestVerificationChallenge(id);
+        if (issued) {
+          setChallenge({ key: id, ...issued });
+          return;
+        }
+      } catch (error) {
+        setVerificationError(
+          error instanceof Error ? error.message : 'Unable to start verification right now.',
+        );
+        return;
+      }
+    }
+
+    pendingVerificationKey.current = id;
+    evidenceInputRef.current?.click();
+  };
+
+  const handleChallengeUpload = () => {
+    if (!challenge) return;
+    pendingVerificationKey.current = challenge.key;
     evidenceInputRef.current?.click();
   };
 
@@ -224,6 +260,7 @@ export default function SquashTesterDashboardPage() {
     try {
       await submitSpecializationEvidence(session.userId, key, file);
       await refreshVerification(session.userId);
+      setChallenge(null);
       setVerificationNotice(
         `Evidence for ${getSpecializationLabel(key)} is with our reviewers. You'll be notified once it's checked.`,
       );
@@ -816,6 +853,42 @@ export default function SquashTesterDashboardPage() {
                 <p className="mt-3 text-xs font-semibold text-slate-500">
                   Uploading and scanning your evidence…
                 </p>
+              ) : null}
+
+              {challenge ? (
+                <div className="mt-4 rounded-2xl border border-slate-900 bg-slate-900 p-5 text-white">
+                  <div className="text-xs font-black uppercase tracking-wider text-green-400">
+                    Verification challenge · {getSpecializationLabel(challenge.key)}
+                  </div>
+                  <p className="mt-3 text-base font-bold leading-7">{challenge.promptText}</p>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-300">
+                    Record yourself answering this out loud, then upload the video. You have until{' '}
+                    <strong className="text-white">
+                      {new Intl.DateTimeFormat('en-ZA', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }).format(new Date(challenge.expiresAt))}
+                    </strong>
+                    . The question is chosen at random and changes every time, so record it yourself,
+                    now — a recording made in advance or by someone else will not pass review.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleChallengeUpload}
+                      className="rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700"
+                    >
+                      Upload my recording
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChallenge(null)}
+                      className="rounded-xl border border-white/20 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : null}
 
               <input

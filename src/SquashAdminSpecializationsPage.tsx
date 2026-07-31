@@ -18,15 +18,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
 import { getSpecializationLabel, getSpecializationOption } from './components/testerSpecializations';
 import {
+  getChallengePrompt,
   getSpecializationCoverage,
   getSpecializationEvidenceUrl,
   getSpecializationMatchQuality,
+  isSpecializationActive,
+  listApprovedSpecializations,
   listPendingSpecializations,
+  revokeSpecialization,
   reviewSpecialization,
   type MatchQualityRow,
   type PendingSpecializationReview,
   type SpecializationCoverageRow,
 } from './lib/specializationApi';
+
+type IssuedChallenge = {
+  promptText: string;
+  issuedAt: string;
+  answeredWithinWindow: boolean;
+};
 
 function formatDate(value: string | null) {
   if (!value) return 'Unknown';
@@ -50,17 +60,22 @@ export default function SquashAdminSpecializationsPage() {
   const [updating, setUpdating] = useState<'approved' | 'rejected' | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [issuedChallenge, setIssuedChallenge] = useState<IssuedChallenge | null>(null);
+  const [approved, setApproved] = useState<PendingSpecializationReview[]>([]);
+  const [revoking, setRevoking] = useState('');
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const [pending, coverageRows, quality] = await Promise.all([
+      const [pending, verified, coverageRows, quality] = await Promise.all([
         listPendingSpecializations(),
+        listApprovedSpecializations(),
         getSpecializationCoverage(),
         getSpecializationMatchQuality(),
       ]);
       setQueue(pending);
+      setApproved(verified);
       setCoverage(coverageRows);
       setMatchQuality(quality);
       setSelectedId((current) =>
@@ -81,6 +96,27 @@ export default function SquashAdminSpecializationsPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  // The prompt this tester was actually given. Without it a reviewer cannot do
+  // the one check that catches a borrowed or reused recording: does the answer
+  // fit the question that was asked?
+  useEffect(() => {
+    if (!selectedId) {
+      setIssuedChallenge(null);
+      return;
+    }
+    let active = true;
+    getChallengePrompt(selectedId)
+      .then((prompt) => {
+        if (active) setIssuedChallenge(prompt);
+      })
+      .catch(() => {
+        if (active) setIssuedChallenge(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedId]);
 
   const selected = useMemo(
     () => queue.find((item) => item.id === selectedId) || null,
@@ -125,6 +161,52 @@ export default function SquashAdminSpecializationsPage() {
       );
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const revoke = async (item: PendingSpecializationReview) => {
+    const label = getSpecializationLabel(item.key);
+    // Free text rather than a preset list: the reason is permanent, it is the
+    // record of an accusation against a real person, and the RPC rejects
+    // anything under 20 characters precisely so it cannot be a shrug.
+    const reason = window.prompt(
+      `Why is ${item.testerName}'s "${label}" verification being revoked?\n\nThis is recorded permanently and counts as a strike. A second strike pauses them from all specialized test types for 180 days.`,
+      '',
+    );
+    if (reason === null) return;
+    if (reason.trim().length < 20) {
+      setError('Give a specific written reason of at least 20 characters when revoking.');
+      return;
+    }
+
+    setRevoking(item.id);
+    setError('');
+    setNotice('');
+    try {
+      const result = await revokeSpecialization(item.id, reason);
+      const parts = [`${label} revoked for ${item.testerName} (strike ${result.strikes}).`];
+      if (result.blockedUntil) {
+        parts.push(
+          `They are now paused from all specialized test types until ${formatDate(result.blockedUntil)}.`,
+        );
+      }
+      if (result.affectedSubmissions > 0) {
+        // Money is never moved as a side effect of revocation -- the admin is
+        // told what is in flight and decides separately.
+        parts.push(
+          `${result.affectedSubmissions} in-flight submission${
+            result.affectedSubmissions === 1 ? '' : 's'
+          } relied on this claim and need${result.affectedSubmissions === 1 ? 's' : ''} a separate review.`,
+        );
+      }
+      setNotice(parts.join(' '));
+      await load();
+    } catch (revokeError) {
+      setError(
+        revokeError instanceof Error ? revokeError.message : 'Could not revoke this verification.',
+      );
+    } finally {
+      setRevoking('');
     }
   };
 
@@ -254,6 +336,13 @@ export default function SquashAdminSpecializationsPage() {
                       <div className="mt-1 text-xs text-slate-500">
                         {row.pending} awaiting review · {row.declared} unverified claims
                       </div>
+                      {row.expired > 0 || row.revoked > 0 ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-700">
+                          {row.expired > 0 ? `${row.expired} expired` : ''}
+                          {row.expired > 0 && row.revoked > 0 ? ' · ' : ''}
+                          {row.revoked > 0 ? `${row.revoked} revoked` : ''}
+                        </div>
+                      ) : null}
                     </div>
                   ))
                 )}
@@ -287,6 +376,57 @@ export default function SquashAdminSpecializationsPage() {
                 ))}
               </div>
             </section>
+
+            {/* Revocation. Verification is a snapshot; this is what makes it
+                continuous — and what gives a caught tester something to lose. */}
+            {!loading && approved.length > 0 ? (
+              <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="font-black text-slate-900">Currently verified</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Revoking blocks the tester from that test type immediately and records a strike. It
+                  does not touch money — any in-flight work is reported so you can review it
+                  separately.
+                </p>
+                <div className="mt-4 divide-y divide-slate-100">
+                  {approved.map((item) => {
+                    const lapsed = !isSpecializationActive(item);
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate font-bold text-slate-900">{item.testerName}</div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-700">
+                              {getSpecializationLabel(item.key)}
+                            </span>
+                            <span>verified {formatDate(item.verifiedAt)}</span>
+                            {item.expiresAt ? (
+                              <span
+                                className={
+                                  lapsed ? 'font-bold text-amber-700' : 'text-slate-500'
+                                }
+                              >
+                                {lapsed ? 'expired' : 'expires'} {formatDate(item.expiresAt)}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={revoking === item.id}
+                          onClick={() => void revoke(item)}
+                          className="shrink-0 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                        >
+                          {revoking === item.id ? 'Revoking...' : 'Revoke'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
 
             {loading ? (
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">
@@ -349,7 +489,23 @@ export default function SquashAdminSpecializationsPage() {
                     <p className="mt-1 text-sm text-slate-500">
                       {selected.testerEmail} · submitted {formatDate(selected.submittedAt)}
                     </p>
-                    {getSpecializationOption(selected.key)?.evidenceHint ? (
+                    {issuedChallenge ? (
+                      <div className="mt-4 rounded-2xl border border-slate-900 bg-slate-900 p-4 text-white">
+                        <div className="text-[11px] font-black uppercase tracking-wider text-green-400">
+                          Randomised prompt issued to this tester
+                        </div>
+                        <p className="mt-2 text-sm font-bold leading-6">{issuedChallenge.promptText}</p>
+                        <p className="mt-2 text-[11px] font-semibold text-slate-300">
+                          Check the recording answers <em>this</em> question. A response that does not
+                          fit was almost certainly recorded before the prompt was issued.
+                        </p>
+                        {!issuedChallenge.answeredWithinWindow ? (
+                          <p className="mt-2 rounded-lg bg-red-500/20 px-2.5 py-1.5 text-[11px] font-bold text-red-200">
+                            Submitted outside the 30-minute window.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : getSpecializationOption(selected.key)?.evidenceHint ? (
                       <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
                         <strong className="text-slate-800">What was asked for:</strong>{' '}
                         {getSpecializationOption(selected.key)?.evidenceHint}

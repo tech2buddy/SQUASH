@@ -11,7 +11,12 @@ import { supabase, isSupabaseConfigured, SERVICE_UNAVAILABLE_MESSAGE } from './s
  * administrator approves it (`approved`). Only `approved` satisfies the
  * job-application trigger.
  */
-export type SpecializationVerificationStatus = 'declared' | 'pending' | 'approved' | 'rejected';
+export type SpecializationVerificationStatus =
+  | 'declared'
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'revoked';
 
 export type TesterSpecialization = {
   id: string;
@@ -23,13 +28,32 @@ export type TesterSpecialization = {
   evidenceName: string | null;
   submittedAt: string | null;
   verifiedAt: string | null;
+  /** Null means no expiry. Network specializations expire yearly (phase 51). */
+  expiresAt: string | null;
+  revokedReason: string | null;
+  challengeExpiresAt: string | null;
 };
+
+/**
+ * A verification only satisfies the application gate while it is approved *and*
+ * unexpired — the same predicate `enforce_job_application_specialization` uses.
+ * Anything checking "is this tester verified" must go through here rather than
+ * comparing status alone, or the UI will promise access the database refuses.
+ */
+export function isSpecializationActive(item: TesterSpecialization): boolean {
+  if (item.status !== 'approved') return false;
+  if (!item.expiresAt) return true;
+  return new Date(item.expiresAt).getTime() > Date.now();
+}
 
 export type SpecializationCoverageRow = {
   key: string;
+  /** Approved and unexpired — the number that can actually be staffed. */
   approved: number;
   pending: number;
   declared: number;
+  expired: number;
+  revoked: number;
   requiresVerification: boolean;
 };
 
@@ -50,6 +74,9 @@ type SpecializationRow = {
   evidence_name: string | null;
   submitted_at: string | null;
   verified_at: string | null;
+  expires_at: string | null;
+  revoked_reason: string | null;
+  challenge_expires_at: string | null;
 };
 
 function mapSpecialization(row: SpecializationRow): TesterSpecialization {
@@ -63,11 +90,14 @@ function mapSpecialization(row: SpecializationRow): TesterSpecialization {
     evidenceName: row.evidence_name,
     submittedAt: row.submitted_at,
     verifiedAt: row.verified_at,
+    expiresAt: row.expires_at,
+    revokedReason: row.revoked_reason,
+    challengeExpiresAt: row.challenge_expires_at,
   };
 }
 
 const SPECIALIZATION_COLUMNS =
-  'id, tester_id, specialization_key, verification_status, verification_note, evidence_path, evidence_name, submitted_at, verified_at';
+  'id, tester_id, specialization_key, verification_status, verification_note, evidence_path, evidence_name, submitted_at, verified_at, expires_at, revoked_reason, challenge_expires_at';
 
 /** Every specialization a tester holds, with its verification state. */
 export async function getTesterSpecializationDetails(testerId: string): Promise<TesterSpecialization[]> {
@@ -82,10 +112,88 @@ export async function getTesterSpecializationDetails(testerId: string): Promise<
   return ((data || []) as SpecializationRow[]).map(mapSpecialization);
 }
 
-/** Just the approved keys -- what the application gate actually accepts. */
+/** Only the keys the application gate actually accepts: approved and unexpired. */
 export async function getApprovedSpecializationKeys(testerId: string): Promise<string[]> {
   const all = await getTesterSpecializationDetails(testerId);
-  return all.filter((item) => item.status === 'approved').map((item) => item.key);
+  return all.filter(isSpecializationActive).map((item) => item.key);
+}
+
+export type VerificationChallenge = {
+  promptText: string;
+  expiresAt: string;
+};
+
+/**
+ * Asks for a challenge before recording language evidence (phase 52).
+ *
+ * The prompt is chosen at random server-side and expires in 30 minutes. The
+ * tester cannot see the pool, cannot re-roll for a prompt they already have
+ * recorded, and cannot extend the deadline — all three are enforced in the RPC,
+ * because all three are exactly what someone reusing a borrowed recording would
+ * try to do.
+ */
+export async function requestVerificationChallenge(
+  specializationKey: string,
+): Promise<VerificationChallenge | null> {
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+
+  const { data, error } = await (supabase.rpc as any)('request_specialization_challenge', {
+    p_specialization_key: specializationKey,
+  });
+  if (error) throw new Error(error.message || 'Unable to start verification right now.');
+
+  const row = (data || [])[0] as { prompt_text: string; expires_at: string } | undefined;
+  if (!row) return null;
+  return { promptText: row.prompt_text, expiresAt: row.expires_at };
+}
+
+/** True when this specialization is proved by answering a live prompt. */
+export function usesChallenge(specializationKey: string): boolean {
+  // Mirrors the seeded prompt pool in phase 52: languages are challenged,
+  // network and assistive-technology claims are not ("record a speed test on
+  // demand" makes no sense).
+  return ['zulu', 'xhosa', 'sotho', 'afrikaans', 'venda', 'tsonga'].includes(specializationKey);
+}
+
+export async function revokeSpecialization(specializationId: string, reason: string) {
+  if (!isSupabaseConfigured) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+
+  const { data, error } = await (supabase.rpc as any)('revoke_tester_specialization', {
+    p_specialization_id: specializationId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message || 'Unable to revoke this verification.');
+
+  const row = (data || [])[0] as
+    | { strikes: number; blocked_until: string | null; affected_submissions: number }
+    | undefined;
+
+  return {
+    strikes: row?.strikes ?? 0,
+    blockedUntil: row?.blocked_until ?? null,
+    affectedSubmissions: row?.affected_submissions ?? 0,
+  };
+}
+
+/** The prompt a tester was given, so a reviewer can check the answer fits it. */
+export async function getChallengePrompt(specializationId: string) {
+  if (!isSupabaseConfigured) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_specialization_challenge_prompt', {
+    p_specialization_id: specializationId,
+  });
+  if (error) return null;
+
+  const row = (data || [])[0] as
+    | { prompt_text: string; issued_at: string; answered_within_window: boolean }
+    | undefined;
+  if (!row) return null;
+
+  return {
+    promptText: row.prompt_text,
+    issuedAt: row.issued_at,
+    answeredWithinWindow: row.answered_within_window,
+  };
 }
 
 /**
@@ -162,12 +270,28 @@ export type PendingSpecializationReview = TesterSpecialization & {
 
 /** Everything awaiting an admin decision, oldest first. */
 export async function listPendingSpecializations(): Promise<PendingSpecializationReview[]> {
+  return listSpecializationsByStatus('pending');
+}
+
+/**
+ * Currently-verified specializations, so an admin has somewhere to revoke one
+ * from. Newest first — a recently approved verification is the likeliest thing
+ * to be looking for after a complaint.
+ */
+export async function listApprovedSpecializations(): Promise<PendingSpecializationReview[]> {
+  return listSpecializationsByStatus('approved');
+}
+
+async function listSpecializationsByStatus(
+  status: SpecializationVerificationStatus,
+): Promise<PendingSpecializationReview[]> {
   if (!isSupabaseConfigured) return [];
 
+  const ascending = status === 'pending';
   const { data, error } = await (supabase.from('tester_specializations') as any)
     .select(SPECIALIZATION_COLUMNS)
-    .eq('verification_status', 'pending')
-    .order('submitted_at', { ascending: true });
+    .eq('verification_status', status)
+    .order(ascending ? 'submitted_at' : 'verified_at', { ascending });
 
   if (error) throw error;
 
@@ -225,12 +349,16 @@ export async function getSpecializationCoverage(): Promise<SpecializationCoverag
     approved_count: number;
     pending_count: number;
     declared_count: number;
+    expired_count: number;
+    revoked_count: number;
     requires_verification: boolean;
   }>).map((row) => ({
     key: row.specialization_key,
     approved: row.approved_count,
     pending: row.pending_count,
     declared: row.declared_count,
+    expired: row.expired_count ?? 0,
+    revoked: row.revoked_count ?? 0,
     requiresVerification: row.requires_verification,
   }));
 }

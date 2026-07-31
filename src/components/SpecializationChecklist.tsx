@@ -5,14 +5,23 @@ import {
 } from './testerSpecializations';
 import type { SpecializationVerificationStatus } from '../lib/specializationApi';
 
-const STATUS_BADGE: Record<SpecializationVerificationStatus, { label: string; className: string }> = {
+/**
+ * `expired` is a display-only state. The database stores an approved row with a
+ * past `expires_at`; the gate rejects it, so the tester must see it as lapsed
+ * rather than verified.
+ */
+export type SpecializationDisplayStatus = SpecializationVerificationStatus | 'expired';
+
+const STATUS_BADGE: Record<SpecializationDisplayStatus, { label: string; className: string }> = {
   approved: { label: 'Verified', className: 'border-green-200 bg-green-50 text-green-700' },
   pending: { label: 'In review', className: 'border-amber-200 bg-amber-50 text-amber-700' },
   rejected: { label: 'Not verified', className: 'border-red-200 bg-red-50 text-red-700' },
+  revoked: { label: 'Revoked', className: 'border-red-200 bg-red-50 text-red-700' },
+  expired: { label: 'Expired', className: 'border-amber-200 bg-amber-50 text-amber-700' },
   declared: { label: 'Unverified', className: 'border-slate-200 bg-slate-50 text-slate-600' },
 };
 
-function VerificationBadge({ status }: { status: SpecializationVerificationStatus }) {
+function VerificationBadge({ status }: { status: SpecializationDisplayStatus }) {
   const badge = STATUS_BADGE[status];
   return (
     <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${badge.className}`}>
@@ -38,7 +47,7 @@ export default function SpecializationChecklist({
    * behaves exactly as before -- the onboarding and post-job flows pass nothing,
    * because neither is the place to prove a specialization.
    */
-  verification?: Record<string, SpecializationVerificationStatus>;
+  verification?: Record<string, SpecializationDisplayStatus>;
   onRequestVerification?: (id: string) => void;
 }) {
   if (readOnly) {

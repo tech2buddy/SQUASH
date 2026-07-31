@@ -96,6 +96,29 @@ Now:
 
 The specialization ids are load-bearing (the requirements table stores them). Add new ids; don't rename existing ones without a migration.
 
+### Revocation, expiry and strikes (phase 51)
+
+Verification at the gate is a snapshot; fraud is continuous. Phase 51 makes it ongoing:
+
+- **Revocation** (`revoke_tester_specialization`) sets status `revoked`, which the gate rejects immediately. A written reason of at least 20 characters is **mandatory and permanent** — it is the record of an accusation against a real person.
+- **Strikes** accumulate on `tester_profiles.verification_strikes`. The second strike sets `premium_types_blocked_until` 180 days out, which blocks *every* gated test type regardless of any individual verification still being approved.
+- **Expiry.** Network specializations (`2g-3g-only`, `township-network`, `rural-network`) expire after 365 days, because someone on a rural link in March may be on fibre by December. Languages and assistive technology do not expire on a timer. See `default_specialization_validity()`.
+- Coverage and capacity now exclude expired and blocked testers. Counting them would report enough testers to staff a job the gate then refuses them all for.
+
+**Revocation never moves money.** It reports how many in-flight submissions relied on the claim and stops there. Automatic forfeiture would let one admin click reverse a developer-approved payment with no separate record; acting on those submissions stays an explicit, separately audited decision. There is a test asserting the RPC touches no payout, balance or submission row — if you are tempted to add forfeiture, add it as its own function.
+
+### Just-in-time verification challenges (phase 52)
+
+A language video uploaded at leisure can be recorded by a cousin, reused across accounts, or bought. Phase 52 attacks the *timing* rather than the content:
+
+1. The tester asks to be verified. `request_specialization_challenge` picks **one random prompt** from a pool and starts a 30-minute clock.
+2. They record an answer and upload inside the window. `submit_specialization_evidence` refuses expired or missing challenges.
+3. The reviewer sees the prompt that was issued (`get_specialization_challenge_prompt`) and checks the answer actually fits it — a much easier judgement than "does this sound native", and the one that catches a borrowed recording.
+
+Three things are deliberate and load-bearing: the prompt pool is **admin-only under RLS** (a tester who could list it would pre-record everything), a live challenge is **returned as-is rather than re-rolled** (so nobody reshuffles until they draw one they already have), and the challenge columns are in the phase 47 guard trigger's reset list (so nobody extends their own deadline with a plain update).
+
+Only languages are challenged. "Record a speed test on demand" makes no sense for a network claim, and assistive-technology setups are not performable to a stopwatch.
+
 ### Measured network conditions (phases 48 and 50)
 
 `test_session_network_samples` records connection readings during an active Test Lab session, so a Low-Data report can state what the connection actually was instead of asserting it.

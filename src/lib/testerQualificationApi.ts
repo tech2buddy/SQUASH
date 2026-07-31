@@ -169,7 +169,10 @@ export async function uploadQualificationEvidence(file: File, testerId: string, 
   try {
     await scanUploadedFile('qualification-evidence', data.path);
   } catch (scanError) {
-    throw new Error(scanError instanceof Error ? scanError.message : 'This evidence file could not be accepted.');
+    throw new Error(
+      scanError instanceof Error ? scanError.message : 'This evidence file could not be accepted.',
+      { cause: scanError },
+    );
   }
   return { path: data.path, name: file.name, type: file.type.startsWith('video/') ? 'video' : 'image' };
 }

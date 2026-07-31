@@ -37,6 +37,7 @@ import {
   startTestLabTask,
   type TestTaskResult,
 } from './lib/testLabApi';
+import { startNetworkSampling } from './lib/networkTelemetry';
 
 const fallbackTasks = [
   'Create an account / Sign up',
@@ -172,6 +173,14 @@ export default function SquashActiveTestScreen() {
       mounted = false;
     };
   }, [assignmentId, session?.userId]);
+
+  // Sample the connection for as long as the tester has the lab open. This is
+  // what turns "the checkout felt slow" into a measured claim on the Low-Data
+  // report; it no-ops on browsers without the Network Information API.
+  useEffect(() => {
+    if (!labSessionId || !session?.userId) return;
+    return startNetworkSampling(labSessionId, session.userId);
+  }, [labSessionId, session?.userId]);
 
   const refreshTaskResults = async (sessionId: string) => {
     try {

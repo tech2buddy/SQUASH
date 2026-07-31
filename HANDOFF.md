@@ -72,6 +72,36 @@ A job holds **one** test type, stored in `jobs.package_key`. (The column name is
 
 Separately, `jobs.category` holds a *platform* category (Mobile App, Website, E-commerce, …) from `src/components/testCategories.tsx`. These are two different axes — don't confuse them. There is also a legacy `jobs.test_workflow` enum column from phase 13 that overlaps conceptually and is largely unused.
 
+### Verified specializations (phase 47) — read before touching the premium types
+
+Three test types charge a premium for a *human attribute* rather than for more time:
+
+| Test type | What the price actually buys |
+|---|---|
+| Low-Data | Someone genuinely on a 2G/3G connection |
+| Localization | Someone who genuinely speaks the language |
+| Accessibility | Someone who genuinely uses assistive technology |
+
+Before phase 47 none of that was checked. A specialization was a self-declared checkbox in `tester_specializations`; the keys drove notification matching (phase 14) and were displayed to developers, but nothing verified them and nothing gated on them. A tester who spoke no isiZulu could be paid for an R180 localization job.
+
+Now:
+
+- `tester_specializations.verification_status` is one of `declared` → `pending` → `approved` / `rejected`. **`declared` is worthless on its own** — it is a claim, not a credential. Pre-existing rows were deliberately left at `declared` rather than grandfathered in.
+- Testers cannot write their own verification state. A trigger (`guard_specialization_verification`) resets those columns on any direct write; only `submit_specialization_evidence` and `review_tester_specialization` can set them, guarded by the `squash.specialization_write` setting — the same pattern phase 43 uses.
+- `test_type_specialization_requirements` maps a `package_key` to the keys that satisfy it. A test type with no rows is unrestricted — bug-hunting, onboarding and usability have none on purpose, because "an ordinary South African with a phone" is the whole point of them.
+- **The gate is a `before insert` trigger on `job_applications`**, not a UI check. An application without an approved matching specialization is refused by the database. Admins bypass it, so a tester can still be placed manually.
+- When a job's `preferred_specializations` overlaps the requirement set, the narrower list wins — that is what lets a developer buy "isiXhosa specifically" rather than "any SA language".
+
+`TEST_TYPE_SPECIALIZATION_REQUIREMENTS` in `src/components/testerSpecializations.ts` mirrors the SQL seed so the UI can explain the rule before someone wastes time applying. **The database is authoritative.** `testerSpecializations.test.ts` parses phase 47 and fails if the two drift — the same guard `pricing.test.ts` puts on the payout formula.
+
+The specialization ids are load-bearing (the requirements table stores them). Add new ids; don't rename existing ones without a migration.
+
+### Measured network conditions (phase 48)
+
+`test_session_network_samples` records `navigator.connection` readings during an active Test Lab session, so a Low-Data report can state what the connection actually was instead of asserting it. `get_session_network_summary()` aggregates it, and `describeNetworkSummary()` renders the one-liner on the developer's report.
+
+The Network Information API is Chromium-only. On Safari and Firefox no samples are written and the report says "not captured" — an absent measurement is never guessed at.
+
 ---
 
 ## 5. Money flow — read this carefully

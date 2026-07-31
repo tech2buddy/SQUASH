@@ -39,6 +39,7 @@ import SquashOnboardingPage from './SquashOnboardingPage';
 import SquashAdminDashboardPage from './SquashAdminDashboardPage';
 import SquashAdminPayoutsPage from './SquashAdminPayoutsPage';
 import SquashAdminQualificationsPage from './SquashAdminQualificationsPage';
+import SquashAdminSpecializationsPage from './SquashAdminSpecializationsPage';
 import SquashAdminProbationPage from './SquashAdminProbationPage';
 import SquashAdminUsersPage from './SquashAdminUsersPage';
 import SquashAdminUserProfilePage from './SquashAdminUserProfilePage';
@@ -284,6 +285,15 @@ export default function App() {
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminQualificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/A31/specializations"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminSpecializationsPage />
           </ProtectedRoute>
         }
       />

@@ -3,8 +3,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
-import { getSpecializationLabel } from './components/testerSpecializations';
+import {
+  getSpecializationLabel,
+  requiredSpecializationsForJob,
+} from './components/testerSpecializations';
 import { applyToJob, getActiveJobById, getTesterApplications, type DeveloperJob } from './lib/jobApi';
+import { getApprovedSpecializationKeys } from './lib/specializationApi';
 import { testerPayoutForJob } from './lib/pricing';
 import { getTesterQualificationStatus, type QualificationStatus } from './lib/testerQualificationApi';
 import { getTestTypeByKey } from './lib/testTypes';
@@ -24,6 +28,22 @@ export default function SquashTesterJobDetailPage() {
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState('');
   const [applyError, setApplyError] = useState('');
+  const [approvedKeys, setApprovedKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!session?.userId) return;
+    let active = true;
+    getApprovedSpecializationKeys(session.userId)
+      .then((keys) => {
+        if (active) setApprovedKeys(keys);
+      })
+      .catch(() => {
+        // The database gate is authoritative; this only drives the explanation.
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.userId]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -125,6 +145,11 @@ export default function SquashTesterJobDetailPage() {
   }
 
   const testType = getTestTypeByKey(job.packageKey);
+  // Mirrors job_application_requirement_keys in phase 47 -- shown so a tester
+  // learns about the requirement here rather than from a rejected application.
+  const requiredKeys = requiredSpecializationsForJob(job.packageKey, job.preferredSpecializations);
+  const meetsRequirement =
+    requiredKeys.length === 0 || requiredKeys.some((key) => approvedKeys.includes(key));
   const category = getCategoryById(job.category as TestCategoryId);
   const payout = testerPayoutForJob(job.totalAmountZar, job.testersNeeded);
   const tasks = (job.tasks || '').split('\n').map((task) => task.trim()).filter(Boolean);
@@ -231,6 +256,44 @@ export default function SquashTesterJobDetailPage() {
         </section>
       ) : null}
 
+      {requiredKeys.length ? (
+        <section className="apple-bento-card p-6">
+          <h2 className="text-lg font-bold text-slate-900">Verification this job requires</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            {testType.label} pays more because SQUASH guarantees the tester really has this. You need
+            one of these verified on your profile before you can apply:
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {requiredKeys.map((id) => (
+              <span
+                key={id}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  approvedKeys.includes(id)
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                {getSpecializationLabel(id)}
+                {approvedKeys.includes(id) ? ' ✓' : ''}
+              </span>
+            ))}
+          </div>
+          {meetsRequirement ? (
+            <p className="mt-3 text-sm font-semibold text-green-700">
+              You're verified for this — you can apply.
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">
+              Not verified yet.{' '}
+              <Link to="/tester/dashboard" className="font-semibold text-green-700 hover:text-green-800">
+                Submit evidence from your dashboard
+              </Link>{' '}
+              and a reviewer will check it.
+            </p>
+          )}
+        </section>
+      ) : null}
+
       {job.preferredSpecializations.length ? (
         <section className="apple-bento-card p-6">
           <h2 className="text-lg font-bold text-slate-900">Tester profile the developer wants</h2>
@@ -242,7 +305,9 @@ export default function SquashTesterJobDetailPage() {
             ))}
           </div>
           <p className="mt-3 text-sm text-slate-500">
-            These are preferences, not hard requirements. You can still apply if some do not match you.
+            {requiredKeys.length
+              ? 'Beyond the verification above, these are preferences rather than hard requirements.'
+              : 'These are preferences, not hard requirements. You can still apply if some do not match you.'}
           </p>
         </section>
       ) : null}

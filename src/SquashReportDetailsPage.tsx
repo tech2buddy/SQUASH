@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ExternalLink,
   FileText,
+  Gauge,
   MessageSquare,
   Monitor,
   Play,
@@ -29,6 +30,11 @@ import {
   type SessionEnvironment,
   type TestTaskResult,
 } from './lib/testLabApi';
+import {
+  describeNetworkSummary,
+  getAssignmentNetworkSummary,
+  type NetworkSummary,
+} from './lib/networkTelemetry';
 
 function formatDateTime(value: string | null) {
   if (!value) return 'Not recorded';
@@ -80,6 +86,7 @@ export default function SquashReportDetailsPage() {
   const [realReport, setRealReport] = useState<DeveloperSubmissionDetails | null>(null);
   const [taskResults, setTaskResults] = useState<TestTaskResult[]>([]);
   const [environment, setEnvironment] = useState<SessionEnvironment | null>(null);
+  const [networkSummary, setNetworkSummary] = useState<NetworkSummary | null>(null);
   // Signed-URL evidence the tester uploaded. Was previously fetched and
   // discarded, while the UI showed hardcoded placeholder evidence cards.
   const [evidence, setEvidence] = useState<Array<{ path: string; name: string; type: string; url: string }>>([]);
@@ -121,6 +128,7 @@ export default function SquashReportDetailsPage() {
             try {
               setTaskResults(await getTaskResultsForAssignment(details.assignmentId));
               setEnvironment(await getSessionEnvironment(details.assignmentId));
+              setNetworkSummary(await getAssignmentNetworkSummary(details.assignmentId));
             } catch {
               setTaskResults([]);
             }
@@ -592,6 +600,26 @@ export default function SquashReportDetailsPage() {
                 </div>
               );
             })()}
+
+            {/* Measured network conditions -- what the Low-Data package is
+                actually selling. Hidden entirely when nothing was captured
+                rather than shown as zeroes. */}
+            {networkSummary ? (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-800">
+                  <Gauge className="h-4 w-4" />
+                  Measured network conditions
+                </div>
+                <p className="mt-2 text-sm font-bold text-slate-900">
+                  {describeNetworkSummary(networkSummary)}
+                </p>
+                <p className="mt-1 text-[11px] font-medium text-emerald-800/80">
+                  Sampled {networkSummary.sampleCount}{' '}
+                  {networkSummary.sampleCount === 1 ? 'time' : 'times'} on the tester's own device and
+                  connection while they worked.
+                </p>
+              </div>
+            ) : null}
           </section>
 
           {/* 3. Mobile Review Action Card (Visible on mobile only for spacious tap targets and no overflow) */}

@@ -8,13 +8,19 @@ import {
   ShieldCheck,
   Star,
   } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type ChangeEvent } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { getTesterTier } from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
+import { getSpecializationLabel } from './components/testerSpecializations';
 
 import { useAuth } from './auth';
 import { getTesterSpecializations, replaceTesterSpecializations, getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
+import {
+  getTesterSpecializationDetails,
+  submitSpecializationEvidence,
+  type SpecializationVerificationStatus,
+} from './lib/specializationApi';
 import {
   getTesterAssignments,
   getTesterEarningsSummary,
@@ -83,6 +89,23 @@ export default function SquashTesterDashboardPage() {
   const [earningsError, setEarningsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [specializations, setSpecializations] = useState<string[]>([]);
+  const [verification, setVerification] = useState<Record<string, SpecializationVerificationStatus>>({});
+  const [verifyingKey, setVerifyingKey] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationNotice, setVerificationNotice] = useState('');
+  const evidenceInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingVerificationKey = useRef('');
+
+  const refreshVerification = useCallback(async (userId: string) => {
+    const details = await getTesterSpecializationDetails(userId);
+    setVerification(
+      Object.fromEntries(details.map((item) => [item.key, item.status])) as Record<
+        string,
+        SpecializationVerificationStatus
+      >,
+    );
+    return details;
+  }, []);
 
   useEffect(() => {
     if (!session?.userId) return;
@@ -95,6 +118,10 @@ export default function SquashTesterDashboardPage() {
       .catch(() => {
         // The dashboard remains empty until Supabase can return verified specializations.
       });
+
+    refreshVerification(session.userId).catch(() => {
+      // Verification badges are additive -- the checklist still works without them.
+    });
 
     return () => {
       mounted = false;
@@ -177,7 +204,40 @@ export default function SquashTesterDashboardPage() {
     });
   };
 
-  
+  const handleRequestVerification = (id: string) => {
+    pendingVerificationKey.current = id;
+    setVerificationError('');
+    setVerificationNotice('');
+    evidenceInputRef.current?.click();
+  };
+
+  const handleEvidenceSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const key = pendingVerificationKey.current;
+    // Reset immediately so picking the same file twice still fires a change.
+    event.target.value = '';
+    if (!file || !key || !session?.userId) return;
+
+    setVerifyingKey(key);
+    setVerificationError('');
+    setVerificationNotice('');
+    try {
+      await submitSpecializationEvidence(session.userId, key, file);
+      await refreshVerification(session.userId);
+      setVerificationNotice(
+        `Evidence for ${getSpecializationLabel(key)} is with our reviewers. You'll be notified once it's checked.`,
+      );
+    } catch (error) {
+      setVerificationError(
+        error instanceof Error ? error.message : 'Unable to submit your evidence right now.',
+      );
+    } finally {
+      setVerifyingKey('');
+      pendingVerificationKey.current = '';
+    }
+  };
+
+
 
   const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
   const submittedAssignmentCount = assignments.filter((assignment) => assignment.status === 'submitted').length;
@@ -737,10 +797,42 @@ export default function SquashTesterDashboardPage() {
             <section className="mt-6 apple-bento-card p-6">
               <h2 className="text-lg font-bold text-slate-900">My Specializations</h2>
               <p className="mt-1 text-xs font-medium text-slate-500">
-                Choose your strengths so we can match you with the right tests.
+                Choose your strengths so we can match you with the right tests. Language, network and
+                assistive-technology specializations pay more, and need to be verified once before you
+                can apply to those jobs.
               </p>
+
+              {verificationNotice ? (
+                <p className="mt-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+                  {verificationNotice}
+                </p>
+              ) : null}
+              {verificationError ? (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                  {verificationError}
+                </p>
+              ) : null}
+              {verifyingKey ? (
+                <p className="mt-3 text-xs font-semibold text-slate-500">
+                  Uploading and scanning your evidence…
+                </p>
+              ) : null}
+
+              <input
+                ref={evidenceInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+                onChange={handleEvidenceSelected}
+                className="hidden"
+              />
+
               <div className="mt-4">
-                <SpecializationChecklist selected={specializations} onToggle={toggleSpecialization} />
+                <SpecializationChecklist
+                  selected={specializations}
+                  onToggle={toggleSpecialization}
+                  verification={verification}
+                  onRequestVerification={handleRequestVerification}
+                />
               </div>
             </section>
 

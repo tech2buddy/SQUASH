@@ -240,6 +240,7 @@ export default function SquashAdminDashboardPage() {
             {[
               { label: 'Overview', href: '/A31/dashboard', icon: Home, active: true },
               { label: 'Qualifications', href: '/A31/qualifications', icon: BadgeCheck },
+              { label: 'Specializations', href: '/A31/specializations', icon: BadgeCheck },
               { label: 'Probation watch', href: '/A31/probation', icon: Clock3 },
               { label: 'Payout Queue', href: '/A31/payouts', icon: CreditCard },
               { label: 'Users', href: '/A31/users', icon: Users },

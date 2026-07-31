@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PlayCircle, UserCircle2, Briefcase, BarChart3, Settings } from 'lucide-react';
+import { Home, ClipboardList, PlayCircle, UserCircle2, Briefcase, BarChart3, Settings, ShieldCheck } from 'lucide-react';
 import { useLocation, Link } from 'react-router';
 
 type Tab = {
@@ -15,6 +15,12 @@ const TESTER_TABS: Tab[] = [
   { label: 'Profile', href: '/tester/profile', icon: UserCircle2 },
 ];
 
+const TESTER_ACADEMY_TABS: Tab[] = [
+  { label: 'Academy', href: '/tester-qualification', icon: ShieldCheck },
+  { label: 'Profile', href: '/tester/profile', icon: UserCircle2 },
+  { label: 'Settings', href: '/tester/settings', icon: Settings },
+];
+
 const DEVELOPER_TABS: Tab[] = [
   { label: 'Home', href: '/dashboard', icon: Home },
   { label: 'Jobs', href: '/developer/jobs', icon: Briefcase },
@@ -22,9 +28,9 @@ const DEVELOPER_TABS: Tab[] = [
   { label: 'Billing', href: '/billing', icon: Settings, activePattern: '/billing' },
 ];
 
-export default function MobileTabBar({ role }: { role: 'tester' | 'developer' }) {
+export default function MobileTabBar({ role, testerQualified = true }: { role: 'tester' | 'developer'; testerQualified?: boolean }) {
   const location = useLocation();
-  const tabs = role === 'tester' ? TESTER_TABS : DEVELOPER_TABS;
+  const tabs = role === 'tester' ? (testerQualified ? TESTER_TABS : TESTER_ACADEMY_TABS) : DEVELOPER_TABS;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
@@ -52,9 +58,7 @@ export default function MobileTabBar({ role }: { role: 'tester' | 'developer' })
                 }`}
               >
                 <Icon className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
-                <span className="text-[11px] font-bold tracking-tight leading-none mt-1">
-                  {tab.label}
-                </span>
+                <span className="text-[11px] font-bold tracking-tight leading-none mt-1">{tab.label}</span>
               </Link>
             );
           })}
@@ -63,4 +67,3 @@ export default function MobileTabBar({ role }: { role: 'tester' | 'developer' })
     </div>
   );
 }
-

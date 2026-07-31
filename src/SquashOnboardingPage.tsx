@@ -2,6 +2,7 @@ import { ArrowRight, BriefcaseBusiness, CheckCircle2, Globe, MapPin, ShieldCheck
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useAuth, type UserRole } from './auth';
+import TesterApplicationProgress from './components/TesterApplicationProgress';
 import { supabase } from './lib/supabase';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import {
@@ -157,16 +158,11 @@ export default function SquashOnboardingPage() {
             />
             <span className="text-3xl font-black tracking-tight text-slate-900">SQUASH</span>
           </Link>
-          <button
-            type="button"
-            onClick={() => navigate(finishPath, { replace: true })}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Skip for now
-          </button>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+        {!isDeveloper ? <div className="mt-7"><TesterApplicationProgress current={1} /></div> : null}
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
           <aside className="rounded-[30px] border border-green-100 bg-green-50 p-6 shadow-sm">
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
               <ShieldCheck className="h-4 w-4" /> Quick setup
@@ -330,13 +326,6 @@ export default function SquashOnboardingPage() {
                   >
                     {saving ? 'Saving setup...' : isDeveloper ? 'Save and post first job' : 'Save and continue application'}
                     <ArrowRight className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate(finishPath, { replace: true })}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Ill finish this later
                   </button>
                 </div>
               </form>

@@ -44,7 +44,7 @@ export default function PublicFooter() {
               <span className="sr-only">Instagram</span>
               <TbBrandInstagram className="h-5 w-5" strokeWidth={1.75} />
             </a>
-            <a href="mailto:Squashqa@gmail.com" className="text-slate-400 transition hover:text-green-600">
+            <a href="mailto:support@squashqa.co.za" className="text-slate-400 transition hover:text-green-600">
               <span className="sr-only">Email</span>
               <Mail className="h-5 w-5" />
             </a>

@@ -31,8 +31,10 @@ import {
   type TestTaskResult,
 } from './lib/testLabApi';
 import {
+  describeNetworkConfidence,
   describeNetworkSummary,
   getAssignmentNetworkSummary,
+  networkConfidence,
   type NetworkSummary,
 } from './lib/networkTelemetry';
 
@@ -604,22 +606,43 @@ export default function SquashReportDetailsPage() {
             {/* Measured network conditions -- what the Low-Data package is
                 actually selling. Hidden entirely when nothing was captured
                 rather than shown as zeroes. */}
-            {networkSummary ? (
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-800">
-                  <Gauge className="h-4 w-4" />
-                  Measured network conditions
-                </div>
-                <p className="mt-2 text-sm font-bold text-slate-900">
-                  {describeNetworkSummary(networkSummary)}
-                </p>
-                <p className="mt-1 text-[11px] font-medium text-emerald-800/80">
-                  Sampled {networkSummary.sampleCount}{' '}
-                  {networkSummary.sampleCount === 1 ? 'time' : 'times'} on the tester's own device and
-                  connection while they worked.
-                </p>
-              </div>
-            ) : null}
+            {networkSummary
+              ? (() => {
+                  const confidence = networkConfidence(networkSummary);
+                  const tone =
+                    confidence === 'observed'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : confidence === 'disputed'
+                        ? 'border-red-200 bg-red-50 text-red-800'
+                        : 'border-amber-200 bg-amber-50 text-amber-800';
+                  return (
+                    <div className={`mt-4 rounded-xl border p-4 ${tone}`}>
+                      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider">
+                        <Gauge className="h-4 w-4" />
+                        {confidence === 'observed'
+                          ? 'Verified network conditions'
+                          : confidence === 'disputed'
+                            ? 'Disputed network conditions'
+                            : 'Reported network conditions'}
+                      </div>
+                      <p className="mt-2 text-sm font-bold text-slate-900">
+                        {describeNetworkSummary(networkSummary)}
+                      </p>
+                      <p className="mt-1 text-[11px] font-medium opacity-90">
+                        {describeNetworkConfidence(networkSummary)}
+                      </p>
+                      <p className="mt-2 text-[11px] font-medium opacity-75">
+                        Sampled {networkSummary.sampleCount}{' '}
+                        {networkSummary.sampleCount === 1 ? 'time' : 'times'} during the session
+                        {networkSummary.rttStddevMs !== null
+                          ? ` · latency variation ±${networkSummary.rttStddevMs} ms`
+                          : ''}
+                        .
+                      </p>
+                    </div>
+                  );
+                })()
+              : null}
           </section>
 
           {/* 3. Mobile Review Action Card (Visible on mobile only for spacious tap targets and no overflow) */}

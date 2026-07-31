@@ -8,13 +8,20 @@ const SCANNABLE_BUCKETS = new Set([
   'bug-videos',
   'tester-banking-documents',
   'qualification-evidence',
+  'specialization-evidence',
   'job-attachments',
   'job-logos',
   'tester-profile-photos',
 ]);
 
 const SCAN_TIMEOUT_MS = 25_000;
-const FAIL_CLOSED_BUCKETS = new Set(['tester-banking-documents', 'qualification-evidence']);
+// Specialization evidence is reviewed by an admin and backs a paid credential,
+// so it fails closed for the same reason qualification evidence does.
+const FAIL_CLOSED_BUCKETS = new Set([
+  'tester-banking-documents',
+  'qualification-evidence',
+  'specialization-evidence',
+]);
 
 function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';

@@ -81,6 +81,7 @@ export default function SquashActiveTestScreen() {
   const [reportSummary, setReportSummary] = useState('');
   const [severity, setSeverity] = useState('Medium');
   const [bugNotice, setBugNotice] = useState('');
+  const [networkWarning, setNetworkWarning] = useState('');
   const [progressNotice, setProgressNotice] = useState('');
   const [recordedVideoUrl, setRecordedVideoUrl] = useState('');
   const [recordedVideoDuration, setRecordedVideoDuration] = useState(0);
@@ -179,7 +180,18 @@ export default function SquashActiveTestScreen() {
   // report; it no-ops on browsers without the Network Information API.
   useEffect(() => {
     if (!labSessionId || !session?.userId) return;
-    return startNetworkSampling(labSessionId, session.userId);
+    return startNetworkSampling(labSessionId, session.userId, (verdict) => {
+      // Told plainly and early rather than scored in silence. A tester on the
+      // office wifi or behind a VPN can still fix this before submitting;
+      // finding out after the developer rejects the report helps nobody.
+      setNetworkWarning(
+        verdict.consistency === 'contradicted'
+          ? verdict.networkKind === 'datacenter'
+            ? 'Your connection looks like a VPN or hosting provider. Turn any VPN off and use your normal mobile connection, or this test may be rejected.'
+            : 'The speeds your browser reports do not match the network we can see. If you are throttling your connection, use your real one instead.'
+          : '',
+      );
+    });
   }, [labSessionId, session?.userId]);
 
   const refreshTaskResults = async (sessionId: string) => {
@@ -1091,6 +1103,15 @@ export default function SquashActiveTestScreen() {
             </section>
 
 
+
+            {networkWarning ? (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <div className="text-xs font-black uppercase tracking-wider text-amber-800">
+                  Check your connection
+                </div>
+                <p className="mt-1.5 text-xs font-semibold leading-5 text-amber-900">{networkWarning}</p>
+              </section>
+            ) : null}
 
             {/* 3. Captured Environment Card */}
             <section className="apple-bento-card p-4">

@@ -96,11 +96,21 @@ Now:
 
 The specialization ids are load-bearing (the requirements table stores them). Add new ids; don't rename existing ones without a migration.
 
-### Measured network conditions (phase 48)
+### Measured network conditions (phases 48 and 50)
 
-`test_session_network_samples` records `navigator.connection` readings during an active Test Lab session, so a Low-Data report can state what the connection actually was instead of asserting it. `get_session_network_summary()` aggregates it, and `describeNetworkSummary()` renders the one-liner on the developer's report.
+`test_session_network_samples` records connection readings during an active Test Lab session, so a Low-Data report can state what the connection actually was instead of asserting it.
 
-The Network Information API is Chromium-only. On Safari and Firefox no samples are written and the report says "not captured" — an absent measurement is never guessed at.
+**Phase 48 was spoofable and phase 50 fixed it.** Originally the tester's own browser wrote these rows, so anyone with the console open could insert `effective_type: '2g'` against their own session and manufacture a perfect report. Phase 50:
+
+- **Revoked the client's insert grant.** `/api/network-probe` holds the service role key and is now the only writer. If that revoke is ever reverted, the whole mechanism becomes decorative — there is a test asserting the line is still in the migration.
+- **Split reported from observed.** `effective_type` / `downlink_kbps` / `rtt_ms` are client hints, recorded but not trusted. `observed_asn`, `observed_network_kind` and `observed_country_code` are derived server-side from the request itself.
+- **Classifies the caller's ASN** against `asn_classifications` (mobile / fixed / datacenter / unknown). A tester claiming a township mobile connection whose packets arrive from AWS or a VPN exit is contradicted by infrastructure rather than by their own testimony. The seeded ASN list is a **starting point that needs maintenance** — ASN ownership changes, and unclassified ASNs are auto-inserted as `unknown` for an admin to label.
+- **Stores a `consistency` verdict** per sample. `contradicted` requires a genuine impossibility, deliberately conservative: a false accusation costs a tester real money.
+- **Excludes legacy rows.** Pre-phase-50 samples are marked `source = 'client'` and never counted; a session with only those summarises as no samples.
+
+**Never describe this to a developer as proof.** Use `networkConfidence()`: `observed` means the origin network was classified, `claimed` means it could not be, `disputed` means the stories conflict. The report copy changes accordingly, and `describeNetworkConfidence()` carries the caveat. Overstating what was checked is a refund and a reputation problem — SQUASH sells honesty about testing conditions.
+
+Known limits, in plain terms: a determined faker can tether through a real SA mobile connection and throttle on top, and DevTools throttling changes `navigator.connection` for real. This makes casual fraud fail and sustained fraud visible. It does not make fraud impossible. The Network Information API is also Chromium-only, so Safari and Firefox sessions record as unverified.
 
 ---
 
@@ -182,8 +192,13 @@ Notable ones:
 | `payment-webhook.ts` | Receives Yoco payment events, activates paid jobs |
 | `send-email.ts` | Transactional email via Resend, rate-limited |
 | `scan-upload.ts` | Malware-scans uploaded files, deletes infected ones |
+| `tester-qualification-quiz.ts` | Serves and scores the qualification quiz |
+| `tester-qualification-sample.ts` | Accepts the practical sample submission |
+| `network-probe.ts` | **Only** writer of network samples; resolves caller ASN (phase 50) |
 
 All use `SUPABASE_SERVICE_ROLE_KEY` and must never be called with client-side credentials.
+
+`network-probe.ts` needs no new environment variables. ASN resolution uses Team Cymru's public DNS interface (`origin.asn.cymru.com`), which needs no key or account — but it is an outbound DNS dependency, so if it becomes unreachable every sample records as `unverified` rather than failing the test.
 
 ---
 

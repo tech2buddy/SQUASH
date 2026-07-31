@@ -10,13 +10,13 @@
     "semantic_hash": "95df3aeaf40a147c043be9d1807d8226"
   },
   "package.json": {
-    "mtime": 1785250032.8328285,
-    "ast_hash": "21ea94c62fc4ae5bfe7b6e7de7bde650",
+    "mtime": 1785357308.7352774,
+    "ast_hash": "14aefbbc812617ba4b249ef51c6fdfb1",
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1785249983.4119244,
-    "ast_hash": "5eaa36d2e755980ec32b30bee2e453b3",
+    "mtime": 1785357970.6454003,
+    "ast_hash": "2cda61847f0ea1fff4d0a2d999f08d8c",
     "semantic_hash": ""
   },
   "src/BrandIcons.tsx": {
@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "src/SquashAdminDashboardPage.tsx": {
-    "mtime": 1785166607.3165944,
-    "ast_hash": "0885d195d0dde028c6b7797c7b46ae9e",
+    "mtime": 1785357970.647779,
+    "ast_hash": "78b0118a361c89e49069bb23f86c3b1e",
     "semantic_hash": ""
   },
   "src/SquashAdminJobDetailPage.tsx": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "src/SquashAuthCallbackPage.tsx": {
-    "mtime": 1785249983.4385948,
-    "ast_hash": "688045cdd2bbf7a2f76b3d6a6b1acc97",
+    "mtime": 1785361143.8930316,
+    "ast_hash": "da06db88706f67606795d5f65aa54981",
     "semantic_hash": ""
   },
   "src/SquashCertificatePage.tsx": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/SquashForTestersPage.tsx": {
-    "mtime": 1785279345.6412156,
-    "ast_hash": "d10d3d5b8d90e288dea2897c9cd43c1c",
+    "mtime": 1785344530.572775,
+    "ast_hash": "527207f6c40a3069e793c1370151699b",
     "semantic_hash": ""
   },
   "src/SquashHomepage.tsx": {
@@ -135,8 +135,8 @@
     "semantic_hash": ""
   },
   "src/SquashInfoPage.tsx": {
-    "mtime": 1785249983.4766035,
-    "ast_hash": "88aa7bcbdb21ca3775dd76b1b1a2612a",
+    "mtime": 1785342296.9434652,
+    "ast_hash": "a7e06e561efef34a6e5733c72767b6da",
     "semantic_hash": ""
   },
   "src/SquashLiveSessionPage.tsx": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "src/SquashOnboardingPage.tsx": {
-    "mtime": 1785249983.4820504,
-    "ast_hash": "f42806d66f7a42235d8209be934665e5",
+    "mtime": 1785361015.2041328,
+    "ast_hash": "3481c43f052dc6ed0784f3a8b8a7008b",
     "semantic_hash": ""
   },
   "src/SquashPostJobPage.tsx": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/SquashTesterJobBoard.tsx": {
-    "mtime": 1785333757.8435402,
-    "ast_hash": "2f9a7607bc03a2ae77d785de1b8bb8f2",
+    "mtime": 1785357218.011225,
+    "ast_hash": "85bf57fa1f37b91d4fb15ebf561ef8c6",
     "semantic_hash": ""
   },
   "src/SquashTesterLeaderboardPage.tsx": {
@@ -250,8 +250,8 @@
     "semantic_hash": ""
   },
   "src/auth.tsx": {
-    "mtime": 1785335333.1638258,
-    "ast_hash": "f2827e76b22ad9d60b2517e0b3066c8f",
+    "mtime": 1785361143.8824549,
+    "ast_hash": "d4a71c0a74bc9a0afe80094ddefdff4f",
     "semantic_hash": ""
   },
   "src/components/DeveloperHeaderNav.tsx": {
@@ -445,9 +445,9 @@
     "semantic_hash": "466c1a2cbd21e5a2448e20368ad3ccde"
   },
   "tsconfig.json": {
-    "mtime": 1776863350.1764028,
-    "ast_hash": "a11893ef9052edaf822ea348bfbe61ff",
-    "semantic_hash": "a11893ef9052edaf822ea348bfbe61ff"
+    "mtime": 1785357313.9107554,
+    "ast_hash": "fa47d71147093ade4ebe07953907946c",
+    "semantic_hash": ""
   },
   "vercel.json": {
     "mtime": 1785063499.185592,
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "src/components/TesterLayout.tsx": {
-    "mtime": 1785333143.394703,
-    "ast_hash": "1b97d5b6498691171d9d50592dcae1f3",
+    "mtime": 1785349076.0749345,
+    "ast_hash": "d14cf900e3e679f351b65dada8b897ba",
     "semantic_hash": ""
   },
   ".agents/rules/graphify.md": {
@@ -475,13 +475,13 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1785186659.0109835,
-    "ast_hash": "c81aeb5db3d012f8bd56ca3b75e193cb",
+    "mtime": 1785341717.3814178,
+    "ast_hash": "16234421715ee84b8d12cdc5cbf038a1",
     "semantic_hash": ""
   },
   "supabase/README.md": {
-    "mtime": 1785281668.014947,
-    "ast_hash": "48eb501984379110e9327a08022eb789",
+    "mtime": 1785357985.0513165,
+    "ast_hash": "9c27ff473b9190cfb33188e35bdd641a",
     "semantic_hash": ""
   },
   "public/about-hero.png": {
@@ -655,8 +655,8 @@
     "semantic_hash": ""
   },
   "src/SquashSupportPage.tsx": {
-    "mtime": 1785248949.2210011,
-    "ast_hash": "d6dbde6af4e7cced95012a43e4cea9d4",
+    "mtime": 1785343870.0859346,
+    "ast_hash": "8b7cc1725807d2b33939a4d4ba9bff25",
     "semantic_hash": ""
   },
   "src/SquashTesterBankingPage.tsx": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "src/lib/supportApi.ts": {
-    "mtime": 1784944616.9422991,
-    "ast_hash": "c04711ee7a621577d517ff1fe63371b0",
+    "mtime": 1785342590.0677466,
+    "ast_hash": "b82efe5342581984e89c0b33061a78fd",
     "semantic_hash": ""
   },
   "supabase/phase20_payments_operations.sql": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   ".claude/launch.json": {
-    "mtime": 1785156847.640741,
-    "ast_hash": "cf00f731a3cb267780f76c3dfa19dad1",
+    "mtime": 1785357488.3282409,
+    "ast_hash": "9fdaa82b5a28309d9b4dc6978e073cea",
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
@@ -860,8 +860,8 @@
     "semantic_hash": ""
   },
   "api/scan-upload.ts": {
-    "mtime": 1785240763.4972215,
-    "ast_hash": "f71e57cbe7383ff7ae03415f7f1b704f",
+    "mtime": 1785355311.7722845,
+    "ast_hash": "30078e9d66b2b1b213fe523b618c852a",
     "semantic_hash": ""
   },
   "src/lib/scanApi.ts": {
@@ -890,8 +890,8 @@
     "semantic_hash": ""
   },
   "src/SquashTesterJobDetailPage.tsx": {
-    "mtime": 1785249983.511795,
-    "ast_hash": "0059d913c2678ca4e5c8c9bb85ea97e5",
+    "mtime": 1785357163.7082953,
+    "ast_hash": "97f38c9bb8e2711aa246b06d4a1e4187",
     "semantic_hash": ""
   },
   "supabase/diagnose_account_identity.sql": {
@@ -917,6 +917,176 @@
   "supabase/diagnose_notification_leak.sql": {
     "mtime": 1785334299.5356078,
     "ast_hash": "401921c1690c6d24ff0022ec9245170f",
+    "semantic_hash": ""
+  },
+  "src/components/CookieConsentBanner.tsx": {
+    "mtime": 1785342974.807897,
+    "ast_hash": "b175efda66f6b29b2406138358237930",
+    "semantic_hash": ""
+  },
+  "src/lib/defaultPolicies.ts": {
+    "mtime": 1785342912.244732,
+    "ast_hash": "6d43860e1f2308836b511ea38f9243ae",
+    "semantic_hash": ""
+  },
+  "api/tester-qualification-quiz.ts": {
+    "mtime": 1785349382.722875,
+    "ast_hash": "cef8cc502988706810226800cb420a9f",
+    "semantic_hash": ""
+  },
+  "api/tester-qualification-sample.ts": {
+    "mtime": 1785355409.381311,
+    "ast_hash": "d608040d91cf2bc0666c3202de0bf96f",
+    "semantic_hash": ""
+  },
+  "remotion.config.ts": {
+    "mtime": 1785357300.415925,
+    "ast_hash": "93cd333f7e8e07691fb9b25286ed90c2",
+    "semantic_hash": ""
+  },
+  "remotion/Root.tsx": {
+    "mtime": 1785357285.8366895,
+    "ast_hash": "4e12885c777b87d64efe8894a391e7fc",
+    "semantic_hash": ""
+  },
+  "remotion/SquashIntro.tsx": {
+    "mtime": 1785360439.8025267,
+    "ast_hash": "0adb45972164dd5b1d1d5b685cc56ec4",
+    "semantic_hash": ""
+  },
+  "remotion/index.ts": {
+    "mtime": 1785357292.1173842,
+    "ast_hash": "f80d830d60d1913e6845ca6d7d25a420",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene01Hook.tsx": {
+    "mtime": 1785360173.4032092,
+    "ast_hash": "b9ce1eb53482b06d72c0b53518eed0ba",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene02Cost.tsx": {
+    "mtime": 1785360205.9340992,
+    "ast_hash": "c24de9a5da0804ac5ea7358389fab410",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene03Reveal.tsx": {
+    "mtime": 1785360257.4552388,
+    "ast_hash": "675f9574eacd02c93474babeb1b1d6bc",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene04HowItWorks.tsx": {
+    "mtime": 1785360312.1752322,
+    "ast_hash": "2dac6057e879559704a5b58ec51e0aa5",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene05Proof.tsx": {
+    "mtime": 1785360353.781229,
+    "ast_hash": "303332c2ade940be181bd2028de0eb56",
+    "semantic_hash": ""
+  },
+  "remotion/scenes/Scene06Cta.tsx": {
+    "mtime": 1785360379.9478166,
+    "ast_hash": "28f3b8a2d9769677cdc57e85847e3679",
+    "semantic_hash": ""
+  },
+  "remotion/theme.ts": {
+    "mtime": 1785359961.9503973,
+    "ast_hash": "f1bd30cb1266cce49a3dba4c2e6379ef",
+    "semantic_hash": ""
+  },
+  "src/SquashAdminProbationPage.tsx": {
+    "mtime": 1785357970.6502883,
+    "ast_hash": "5fd4d03bc13aacf06e10b5f2fe48acd4",
+    "semantic_hash": ""
+  },
+  "src/SquashAdminQualificationsPage.tsx": {
+    "mtime": 1785357970.6487825,
+    "ast_hash": "824416ef4a3415b0e2377fc273f23e09",
+    "semantic_hash": ""
+  },
+  "src/SquashTesterQualificationPage.tsx": {
+    "mtime": 1785357243.0040781,
+    "ast_hash": "7dcf19a532c8a635d689b54a32e4f94c",
+    "semantic_hash": ""
+  },
+  "src/SquashTesterQualificationSamplePage.tsx": {
+    "mtime": 1785355237.5140026,
+    "ast_hash": "46dbd75a80772738cf048dfc4e8a4b13",
+    "semantic_hash": ""
+  },
+  "src/lib/adminProbationApi.ts": {
+    "mtime": 1785357816.6984363,
+    "ast_hash": "43fe6b9693f7547751d07d6e98807d6f",
+    "semantic_hash": ""
+  },
+  "src/lib/adminQualificationApi.ts": {
+    "mtime": 1785359643.29202,
+    "ast_hash": "9f897f7d1ce5e8db473353c34abdc76b",
+    "semantic_hash": ""
+  },
+  "src/lib/testerQualificationApi.ts": {
+    "mtime": 1785357074.3714755,
+    "ast_hash": "2167a71c7c1fb2ebb4d537bf87b32c44",
+    "semantic_hash": ""
+  },
+  "supabase/phase41_tester_qualification_foundation.sql": {
+    "mtime": 1785347796.6920948,
+    "ast_hash": "f79e022bc0cdef5521775591e9cf53f7",
+    "semantic_hash": ""
+  },
+  "supabase/phase42_tester_qualification_sample_test.sql": {
+    "mtime": 1785354937.1399941,
+    "ast_hash": "3edea5288982ce624a8da209282e2774",
+    "semantic_hash": ""
+  },
+  "supabase/phase43_tester_qualification_review.sql": {
+    "mtime": 1785355808.2161486,
+    "ast_hash": "2ecbe939bb5369b44e61e7b3b6b90a5d",
+    "semantic_hash": ""
+  },
+  "supabase/phase44_tester_qualification_gate_notifications.sql": {
+    "mtime": 1785357056.121807,
+    "ast_hash": "0f95ce92d655d0a4134990045f9e8409",
+    "semantic_hash": ""
+  },
+  "supabase/phase45_tester_qualification_quality_rubric.sql": {
+    "mtime": 1785357455.6112795,
+    "ast_hash": "bdbd489cb0d2adff324e72fce261ed83",
+    "semantic_hash": ""
+  },
+  "supabase/phase46_tester_probation_operations.sql": {
+    "mtime": 1785357798.3605547,
+    "ast_hash": "16d5f7260962b9bf396827ca87f81bf8",
+    "semantic_hash": ""
+  },
+  "remotion/README.md": {
+    "mtime": 1785357553.9882448,
+    "ast_hash": "d3807f1b86a46c64e2354a9acba6014e",
+    "semantic_hash": ""
+  },
+  "remotion/components/Device.tsx": {
+    "mtime": 1785361178.08531,
+    "ast_hash": "aa07016d7da5d212846db7adeda3b252",
+    "semantic_hash": ""
+  },
+  "remotion/components/Display.tsx": {
+    "mtime": 1785360038.3909888,
+    "ast_hash": "d9ee888b8c234b93455e50f9a6e4ea10",
+    "semantic_hash": ""
+  },
+  "remotion/components/Frame.tsx": {
+    "mtime": 1785360010.7949758,
+    "ast_hash": "f086f0564fb69ca361e16b9b749b5420",
+    "semantic_hash": ""
+  },
+  "remotion/components/Grain.tsx": {
+    "mtime": 1785359979.5217133,
+    "ast_hash": "30d383020bb9a7dfb249aec4f54693bc",
+    "semantic_hash": ""
+  },
+  "remotion/components/Squashmark.tsx": {
+    "mtime": 1785360074.3740058,
+    "ast_hash": "2908d82f9225fd2f33f28f2416485c62",
     "semantic_hash": ""
   }
 }

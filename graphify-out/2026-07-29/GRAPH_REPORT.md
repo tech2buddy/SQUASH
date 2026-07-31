@@ -1,18 +1,13 @@
 # Graph Report - SQUASH  (2026-07-29)
 
 ## Corpus Check
-- 168 files · ~371,195 words
+- 201 files · ~397,234 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 966 nodes · 1315 edges · 132 communities (96 shown, 36 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 9 edges (avg confidence: 0.5)
+- 1082 nodes · 1450 edges · 141 communities (104 shown, 37 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 10 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `57d822d0`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - useAuth
@@ -69,7 +64,6 @@
 - phase22_developer_payments.sql
 - DeveloperLayout.tsx
 - phase21_weekly_eft_controls.sql
-- SquashPrivateAdminMagicPage.tsx
 - paymentApi.ts
 - useSupabaseRealtime.ts
 - eslint-plugin-react-refresh
@@ -88,78 +82,79 @@
 - TrustedLogosRow.tsx
 - phase38_file_scanning.sql
 - SquashAdminUserProfilePage.tsx
-- TesterLayout.tsx
-- SquashTesterJobBoard.tsx
+- package.json
 - SquashDeveloperJobDetailPage.tsx
 - SquashTesterJobBoard.tsx
 - supabase.ts
 - SquashDeveloperDashboard.tsx
 - SquashOnboardingPage.tsx
-- canEmbedPreview
+- eslint-plugin-react-hooks
 - SquashTesterJobDetailPage.tsx
 - SquashAdminPayoutsPage.tsx
 - SquashSignupPage.tsx
 - phase40_structured_test_results.sql
 - bankingApi.ts
-- DeveloperHeaderNav.tsx
-- PublicFooter.tsx
+- eslint-plugin-react-refresh
+- @tailwindcss/vite
+- @types/node
 - SquashPricingPage.tsx
 - SquashAboutPage.tsx
 - SquashForDevelopersPage.tsx
 - SquashForTestersPage.tsx
-- DeveloperLayout.tsx
+- @types/react-dom
 - SquashOnboardingPage.tsx
-- PublicFooter.tsx
-- SquashTesterReportDetailPage.tsx
+- phase42_tester_qualification_sample_test.sql
+- phase44_tester_qualification_gate_notifications.sql
+- phase45_tester_qualification_quality_rubric.sql
 
 ## God Nodes (most connected - your core abstractions)
-1. `SquashAdminDashboardPage()` - 16 edges
-2. `compilerOptions` - 16 edges
-3. `useAuth()` - 15 edges
-4. `SQUASH Supabase Backend Notes` - 14 edges
-5. `formatSupabaseError()` - 14 edges
-6. `SquashAdminSecurityPage()` - 12 edges
-7. `mapJob()` - 11 edges
-8. `SQUASH — System Handoff` - 11 edges
-9. `SquashTesterDashboardPage()` - 11 edges
-10. `SquashAdminPayoutsPage()` - 11 edges
+1. `useAuth()` - 23 edges
+2. `SQUASH Supabase Backend Notes` - 20 edges
+3. `compilerOptions` - 16 edges
+4. `formatSupabaseError()` - 14 edges
+5. `SquashAdminSecurityPage()` - 12 edges
+6. `mapJob()` - 11 edges
+7. `SQUASH — System Handoff` - 11 edges
+8. `SquashTesterDashboardPage()` - 11 edges
+9. `SquashAdminPayoutsPage()` - 11 edges
+10. `public.set_updated_at()` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `SquashTesterDashboardPage()` --calls--> `getTesterAssignments()`  [EXTRACTED]
-  src/SquashTesterDashboardPage.tsx → src/lib/jobApi.ts
-- `SquashAdminDashboardPage()` --calls--> `useAuth()`  [EXTRACTED]
-  src/SquashAdminDashboardPage.tsx → src/auth.tsx
-- `SquashAdminJobsPage()` --calls--> `useAuth()`  [EXTRACTED]
-  src/SquashAdminJobsPage.tsx → src/auth.tsx
+- `SquashTesterJobBoard()` --calls--> `getTesterQualificationStatus()`  [EXTRACTED]
+  src/SquashTesterJobBoard.tsx → src/lib/testerQualificationApi.ts
+- `SquashTesterJobDetailPage()` --calls--> `getTesterQualificationStatus()`  [EXTRACTED]
+  src/SquashTesterJobDetailPage.tsx → src/lib/testerQualificationApi.ts
+- `SquashResetPasswordPage()` --calls--> `useAuth()`  [EXTRACTED]
+  src/SquashResetPasswordPage.tsx → src/auth.tsx
+- `DeveloperHeaderNav()` --calls--> `useAuth()`  [EXTRACTED]
+  src/components/DeveloperHeaderNav.tsx → src/auth.tsx
 - `SquashAdminOperationsPage()` --calls--> `useAuth()`  [EXTRACTED]
   src/SquashAdminOperationsPage.tsx → src/auth.tsx
-- `SquashTesterDashboardPage()` --calls--> `useAuth()`  [EXTRACTED]
-  src/SquashTesterDashboardPage.tsx → src/auth.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (132 total, 36 thin omitted)
+## Communities (141 total, 37 thin omitted)
 
 ### Community 0 - "useAuth"
-Cohesion: 0.19
-Nodes (15): countTable(), getAdminOverview(), getAdminReports(), getRecentAdminUsers(), emptyOverview, formatDate(), formatRand(), JobFilter (+7 more)
+Cohesion: 0.05
+Nodes (45): NavItem, authHeaders(), beginTesterQualification(), getQualificationQuiz(), getQualificationSample(), getTesterQualificationProfile(), getTesterQualificationStatus(), QualificationAttempt (+37 more)
 
 ### Community 1 - "auth.tsx"
-Cohesion: 0.12
-Nodes (16): Next phase, Phase 1 setup, Phase 2 auth setup, Phase 34: Platform commission pricing, Phase 35: Test-type-based pricing, Phase 35b: Backfill legacy package_key values, Phase 36: Notification and privacy preferences actually do something, Phase 37: service_role table grants for the payment/email serverless functions (+8 more)
+Cohesion: 0.09
+Nodes (22): Next phase, Phase 1 setup, Phase 2 auth setup, Phase 34: Platform commission pricing, Phase 35: Test-type-based pricing, Phase 35b: Backfill legacy package_key values, Phase 36: Notification and privacy preferences actually do something, Phase 37: service_role table grants for the payment/email serverless functions (+14 more)
 
 ### Community 2 - "testLab.tsx"
 Cohesion: 0.06
 Nodes (16): ActiveTest, canEmbedPreview(), DeviceMetadata, IssueFrequency, IssueReport, IssueSeverity, NoteType, ProductPreview() (+8 more)
 
 ### Community 3 - "package.json"
-Cohesion: 0.07
-Nodes (29): lucide-react, dependencies, lucide-react, react, react-dom, react-icons, react-router, resend (+21 more)
+Cohesion: 0.13
+Nodes (15): lucide-react, dependencies, lucide-react, react, react-dom, react-icons, react-router, resend (+7 more)
 
 ### Community 4 - "PublicFooter.tsx"
-Cohesion: 0.22
-Nodes (6): saveTesterBankingDetails(), allowedAttachmentTypes, DeveloperJobAttachment, uploadDeveloperJobAttachments(), InfectedFileError, scanUploadedFile()
+Cohesion: 0.24
+Nodes (5): allowedAttachmentTypes, DeveloperJobAttachment, uploadDeveloperJobAttachments(), InfectedFileError, scanUploadedFile()
 
 ### Community 5 - "schema.sql"
 Cohesion: 0.16
@@ -174,16 +169,16 @@ Cohesion: 0.22
 Nodes (5): IssueReportForm(), TesterJobEvidence, uploadBugReportFile(), UploadFileType, UploadResult
 
 ### Community 8 - "notificationApi.ts"
-Cohesion: 0.10
-Nodes (30): AuthContext, AuthContextValue, AuthProvider(), AuthResult, AuthSession, clearStoredWorkspace(), defaultSessionPath(), isSafeInternalPath() (+22 more)
+Cohesion: 0.06
+Nodes (49): AuthContext, AuthContextValue, AuthProvider(), AuthResult, AuthSession, clearStoredWorkspace(), defaultSessionPath(), isSafeInternalPath() (+41 more)
 
 ### Community 9 - "compilerOptions"
 Cohesion: 0.09
 Nodes (21): DOM, ES2023, src, vite/client, compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, jsx (+13 more)
 
 ### Community 10 - "SquashTesterLeaderboardPage.tsx"
-Cohesion: 0.14
-Nodes (14): PublicPolicy, isSupabaseConfigured, supabase, supabaseAnonKey, supabaseUrl, ApplicationStatus, AssignmentStatus, Database (+6 more)
+Cohesion: 0.06
+Nodes (55): AdminActivityLog, AdminOverview, AdminPayoutBatch, AdminPayoutRow, AdminPolicyRow, AdminReportRow, AdminUserDetail, AdminUserRow (+47 more)
 
 ### Community 11 - "SquashTesterMyTestsPage.tsx"
 Cohesion: 0.39
@@ -194,8 +189,8 @@ Cohesion: 0.05
 Nodes (39): 1.1 Core Platform Purpose, 1.2 Technology Stack, 1.3 Role & Access Control Model, 1. System Overview & Architecture, 2. End-to-End System Workflow Architecture, 3.1 Overview, 3.2 Key Pages & Navigation, 3.3 Detailed Developer Workflows (+31 more)
 
 ### Community 15 - "SquashDeveloperBillingPage.tsx"
-Cohesion: 0.13
-Nodes (3): footerLinks, PublicPage, categories
+Cohesion: 0.14
+Nodes (6): footerLinks, PublicPage, CertificateRecord, CERTIFICATES, TODO: Replace with Supabase query, SquashCertificatePage()
 
 ### Community 17 - "SquashOnboardingPage.tsx"
 Cohesion: 0.29
@@ -226,20 +221,20 @@ Cohesion: 0.67
 Nodes (3): public.jobs, public.test_lab_sessions, test_lab_sessions_set_updated_at
 
 ### Community 43 - "TesterLayout.tsx"
-Cohesion: 0.18
-Nodes (13): DEVELOPER_TABS, MobileTabBar(), Tab, TESTER_TABS, Props, TesterMobileDrawer(), rankIcon(), rankTone() (+5 more)
+Cohesion: 0.13
+Nodes (16): DeveloperHeaderNav(), formatRelativeTime(), NavItem, DEVELOPER_TABS, MobileTabBar(), Tab, TESTER_TABS, Props (+8 more)
 
 ### Community 44 - "SquashTesterProfilePage.tsx"
 Cohesion: 0.40
 Nodes (5): BankingForm, BankingView, emptyForm, SquashTesterBankingPage(), verificationMessage()
 
 ### Community 45 - "devDependencies"
-Cohesion: 0.07
-Nodes (27): eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks (+19 more)
+Cohesion: 0.12
+Nodes (17): eslint, @eslint/js, devDependencies, eslint, @eslint/js, tailwindcss, @types/react, typescript (+9 more)
 
 ### Community 46 - "supportApi.ts"
-Cohesion: 0.23
-Nodes (17): createModerationCase(), createOperationalIncident(), createSupportTicket(), getAdminSupportTickets(), getMySupportTickets(), getOperationalReadiness(), mapTicket(), ModerationCase (+9 more)
+Cohesion: 0.17
+Nodes (22): createModerationCase(), createOperationalIncident(), createSupportTicket(), getAdminSupportTickets(), getMySupportTickets(), getOperationalReadiness(), mapTicket(), ModerationCase (+14 more)
 
 ### Community 47 - "resolvePostLoginPath"
 Cohesion: 0.60
@@ -286,20 +281,20 @@ Cohesion: 0.67
 Nodes (3): job_payments_set_updated_at, public.job_payments, public.payment_webhook_events
 
 ### Community 65 - "DeveloperLayout.tsx"
-Cohesion: 0.21
-Nodes (13): AdminJobRow, getAdminJobs(), getTestTypeByKey(), TEST_TYPES, TestTypeConfig, TestTypeKey, formatDate(), formatRand() (+5 more)
-
-### Community 72 - "SquashPrivateAdminMagicPage.tsx"
-Cohesion: 0.10
-Nodes (8): SquashDeveloperActivityPage(), SquashDeveloperApplicationsPage(), SquashDeveloperJobsPage(), SquashDeveloperReportsPage(), SquashDeveloperSubmissionsPage(), SquashReportAttachmentsPage(), SquashNotFoundPage(), SquashPrivateAdminMagicPage()
+Cohesion: 0.27
+Nodes (12): AdminQualificationReview, getAdminQualificationReviews(), getQualificationEvidenceUrl(), QualificationReviewDecision, QualificationReviewRubric, QualificationTaskOutcome, reviewTesterQualification(), defaultRubric (+4 more)
 
 ### Community 80 - "eslint-plugin-react-refresh"
-Cohesion: 0.23
-Nodes (13): AdminPayoutRow, getAdminActivityLogs(), getAdminPolicies(), saveAdminPolicy(), checklist, emptyDraft(), emptyOverview, fallbackPolicies (+5 more)
+Cohesion: 0.22
+Nodes (10): public.guard_tester_qualification_fields(), public.is_tester_qualified(), public.tester_profiles, public.tester_qualification_attempts, public.tester_qualification_consents, public.tester_qualification_rollout, public.tester_qualification_variants, tester_profiles_guard_qualification_fields (+2 more)
 
 ### Community 81 - "@tailwindcss/vite"
 Cohesion: 0.70
 Nodes (4): formatDate(), formatRand(), SquashAdminJobDetailPage(), statusClass()
+
+### Community 82 - "@types/node"
+Cohesion: 0.25
+Nodes (8): scripts, build, check, dev, lint, preview, test, typecheck
 
 ### Community 83 - "@types/react-dom"
 Cohesion: 0.83
@@ -318,8 +313,8 @@ Cohesion: 0.11
 Nodes (17): 10. Conventions, 1. What SQUASH is, 2. Stack, 3. Roles and routing, 4. Test types and pricing, 5. Money flow — read this carefully, 6. Database, 7. Serverless functions (`/api`) (+9 more)
 
 ### Community 92 - "SquashDeveloperSettingsPage.tsx"
-Cohesion: 0.08
-Nodes (37): BankingVerificationStatus, getTesterEarningsSummary(), TesterEarningsSummary, DeveloperProfileSettings, getDeveloperProfile(), getTesterProfile(), getTesterSpecializations(), getUserSettings() (+29 more)
+Cohesion: 0.07
+Nodes (41): getTesterBankingDetails(), TesterAssignment, TesterEarningsSummary, DeveloperProfileSettings, getDeveloperProfile(), getTesterProfile(), getTesterReferrals(), getTesterSpecializations() (+33 more)
 
 ### Community 93 - "SquashTesterSettingsPage.tsx"
 Cohesion: 0.48
@@ -330,12 +325,16 @@ Cohesion: 0.83
 Nodes (3): formatDate(), SquashAdminReportsPage(), statusClass()
 
 ### Community 96 - "scan-upload.ts"
-Cohesion: 0.70
-Nodes (4): bearerToken(), handler(), recordScan(), SCANNABLE_BUCKETS
+Cohesion: 0.60
+Nodes (5): bearerToken(), FAIL_CLOSED_BUCKETS, handler(), recordScan(), SCANNABLE_BUCKETS
 
 ### Community 101 - "SquashAdminUserProfilePage.tsx"
 Cohesion: 0.83
 Nodes (3): formatDate(), SquashAdminUserProfilePage(), statusClass()
+
+### Community 103 - "package.json"
+Cohesion: 0.29
+Nodes (6): engines, node, name, private, type, version
 
 ### Community 104 - "SquashDeveloperJobDetailPage.tsx"
 Cohesion: 0.47
@@ -354,52 +353,44 @@ Cohesion: 0.21
 Nodes (11): AppNotification, backfillDeveloperNotifications(), backfilledDevelopers, createNotification(), getUnreadNotificationCount(), getUserNotifications(), NotificationPreferenceKey, NotificationType (+3 more)
 
 ### Community 108 - "SquashOnboardingPage.tsx"
-Cohesion: 0.17
-Nodes (8): AdminActivityLog, AdminOverview, AdminPayoutBatch, AdminPolicyRow, AdminReportRow, AdminUserDetail, isMissingTableError(), writeAdminActivity()
+Cohesion: 0.24
+Nodes (9): bearerToken(), handler(), isText(), outcomes, reproducibilities, SampleScenario, SampleTask, scenarios (+1 more)
+
+### Community 110 - "SquashTesterJobDetailPage.tsx"
+Cohesion: 0.38
+Nodes (8): AdminProbationTester, getAdminProbationTesters(), ProbationDecision, ProbationStatus, reviewTesterProbation(), daysRemaining(), formatDate(), SquashAdminProbationPage()
 
 ### Community 115 - "SquashAdminPayoutsPage.tsx"
-Cohesion: 0.29
-Nodes (12): getAdminPayoutBatches(), getAdminPayoutQueue(), mapPayoutBatch(), prepareFridayPayoutBatch(), updateAdminPayoutStatus(), updatePayoutBatchStatus(), emptyOverview, formatDate() (+4 more)
+Cohesion: 0.47
+Nodes (5): bearerToken(), handler(), publicQuestion(), QuizQuestion, quizzes
 
 ### Community 116 - "SquashSignupPage.tsx"
-Cohesion: 0.43
-Nodes (6): AdminUserRow, getAdminUsers(), formatDate(), roleClass(), SquashAdminUsersPage(), UserFilter
+Cohesion: 0.47
+Nodes (4): public.is_tester_qualified(), public.sync_tester_probation_status(), public.tester_profiles, tester_profiles_sync_qualification_probation
 
 ### Community 118 - "bankingApi.ts"
-Cohesion: 0.27
-Nodes (8): AdminBankingSubmission, BankAccountType, BankingRow, getAdminBankingQueue(), getTesterBankingDetails(), mapBankingDetails(), reviewTesterBanking(), TesterBankingDetails
-
-### Community 121 - "PublicFooter.tsx"
-Cohesion: 0.50
-Nodes (4): CertificateRecord, CERTIFICATES, TODO: Replace with Supabase query, SquashCertificatePage()
-
-### Community 130 - "PublicFooter.tsx"
-Cohesion: 0.83
-Nodes (3): formatDateTime(), formatHumanDuration(), SquashReportDetailsPage()
-
-### Community 132 - "SquashTesterReportDetailPage.tsx"
-Cohesion: 0.83
-Nodes (3): formatDateTime(), formatHumanDuration(), SquashTesterReportDetailPage()
+Cohesion: 0.24
+Nodes (9): AdminBankingSubmission, BankAccountType, BankingRow, BankingVerificationStatus, getAdminBankingQueue(), mapBankingDetails(), reviewTesterBanking(), saveTesterBankingDetails() (+1 more)
 
 ## Knowledge Gaps
-- **291 isolated node(s):** `RecoveryState`, `RedirectBanner`, `Tab`, `TESTER_TABS`, `DEVELOPER_TABS` (+286 more)
+- **327 isolated node(s):** `QuizQuestion`, `quizzes`, `SampleTask`, `SampleScenario`, `scenarios` (+322 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useAuth()` connect `notificationApi.ts` to `useAuth`, `DeveloperLayout.tsx`, `SquashDeveloperSettingsPage.tsx`, `supportApi.ts`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
+- **Why does `useAuth()` connect `notificationApi.ts` to `TesterLayout.tsx`, `SquashDeveloperSettingsPage.tsx`, `supportApi.ts`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **Why does `scanUploadedFile()` connect `PublicFooter.tsx` to `bankingApi.ts`, `storageApi.ts`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
-- **Why does `TesterAssignment` connect `SquashTesterJobBoard.tsx` to `SquashDeveloperSettingsPage.tsx`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **What connects `RecoveryState`, `RedirectBanner`, `Tab` to the rest of the system?**
-  _291 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `uploadBugReportFile()` connect `storageApi.ts` to `testLab.tsx`, `PublicFooter.tsx`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `QuizQuestion`, `quizzes`, `SampleTask` to the rest of the system?**
+  _327 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `useAuth` be split into smaller, more focused modules?**
+  _Cohesion score 0.05427547363031234 - nodes in this community are weakly interconnected._
 - **Should `auth.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected._
 - **Should `testLab.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._
-- **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._

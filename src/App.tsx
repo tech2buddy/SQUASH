@@ -19,7 +19,11 @@ import SquashSignupPage from './SquashSignupPage';
 import SquashNotFoundPage from './SquashNotFoundPage';
 import DeveloperLayout from './components/DeveloperLayout';
 import TesterLayout from './components/TesterLayout';
+// Eager: it wraps the tester routes, so every one of them waits on it anyway.
+import TesterQualificationGate from './components/TesterQualificationGate';
 import SquashUtilityPage, { utilityIcons } from './SquashUtilityPage';
+import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
+import { supabase } from './lib/supabase';
 
 const SquashActiveTestScreen = lazy(() => import('./SquashActiveTestScreen'));
 const SquashAboutPage = lazy(() => import('./SquashAboutPage'));
@@ -98,8 +102,6 @@ function RouteFallback() {
     </div>
   );
 }
-import { defaultSessionPath, routeRole, useAuth, type UserRole } from './auth';
-import { supabase } from './lib/supabase';
 
 function ProtectedRoute({
   children,
@@ -138,6 +140,10 @@ function ProtectedRoute({
   }
 
   const canAccessRoute = session.roles.includes(allowedRole) || (allowedRole !== 'admin' && session.roles.includes('admin'));
+
+  if (allowedRole !== 'admin' && session.roles.includes(allowedRole) && session.onboardingCompleted === false) {
+    return <Navigate to={`/onboarding/${allowedRole}`} replace />;
+  }
 
   if (!canAccessRoute) {
     return <Navigate to={defaultSessionPath(session)} replace />;
@@ -452,6 +458,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
+        <Route element={<TesterQualificationGate />}>
         <Route path="/tester/dashboard" element={<SquashTesterDashboardPage />} />
         <Route path="/tester-qualification" element={<SquashTesterQualificationPage />} />
         <Route path="/tester-qualification/sample" element={<SquashTesterQualificationSamplePage />} />
@@ -493,6 +500,7 @@ export default function App() {
             />
           }
         />
+        </Route>
       </Route>
 
       <Route path="*" element={<SquashNotFoundPage />} />

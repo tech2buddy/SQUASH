@@ -43,6 +43,7 @@ type ProfileRow = {
   role: SupabaseProfileRole;
   full_name: string;
   email: string;
+  city?: string | null;
 };
 
 // Which workspace a dual-role account is currently viewing is a per-device
@@ -107,11 +108,11 @@ async function readProfileSession(
 ): Promise<AuthSession | null> {
   const { data: activeAuthUserData, error: activeAuthUserError } = await supabase.auth.getUser();
   if (activeAuthUserError) throw activeAuthUserError;
-  const onboardingCompleted = activeAuthUserData.user?.user_metadata?.onboarding_completed !== false;
+  const metadataOnboardingCompleted = activeAuthUserData.user?.user_metadata?.onboarding_completed !== false;
 
   let { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, email')
+    .select('id, role, full_name, email, city')
     .eq('id', userId)
     .maybeSingle();
 
@@ -136,7 +137,7 @@ async function readProfileSession(
           full_name: fullName,
           email: authUser.email || fallbackEmail,
         })
-        .select('id, role, full_name, email')
+        .select('id, role, full_name, email, city')
         .single();
 
       if (!insertError && newProfile) {
@@ -170,6 +171,11 @@ async function readProfileSession(
     (storedWorkspace && roles.includes(storedWorkspace) && storedWorkspace) ||
     fallbackRole;
   const activeRole = roles.includes(preferredRole) ? preferredRole : roles[0];
+  // Tester onboarding is based on real profile data, not only a browser or metadata flag.
+  // City is required by the tester basics form, so an empty city means onboarding is incomplete.
+  const onboardingCompleted = activeRole === 'tester'
+    ? Boolean(profile.city?.trim())
+    : profile.role === 'admin' ? true : metadataOnboardingCompleted;
 
   return {
     role: activeRole,
@@ -177,7 +183,7 @@ async function readProfileSession(
     email: profile.email || fallbackEmail,
     name: profile.full_name,
     userId: profile.id,
-    onboardingCompleted: profile.role === 'admin' ? true : onboardingCompleted,
+    onboardingCompleted,
     isAuthenticated: true,
   };
 }

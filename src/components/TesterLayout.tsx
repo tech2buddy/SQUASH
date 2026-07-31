@@ -2,6 +2,7 @@ import {
   BriefcaseBusiness,
   CheckSquare,
   CircleDollarSign,
+  LockKeyhole,
   FileText,
   Home,
   Menu,
@@ -11,8 +12,10 @@ import {
   UserCircle2,
   X,
 } from 'lucide-react';
-import { type ComponentType, useState } from 'react';
+import { type ComponentType, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
+import { useAuth } from '../auth';
+import { getTesterQualificationStatus, type QualificationStatus } from '../lib/testerQualificationApi';
 import TesterHeaderNav from './TesterHeaderNav';
 import MobileTabBar from './MobileTabBar';
 
@@ -21,12 +24,36 @@ type NavItem = {
   href: string;
   icon: ComponentType<{ className?: string }>;
   key: 'dashboard' | 'qualification' | 'jobs' | 'tests' | 'reports' | 'earnings' | 'profile' | 'settings';
+  locked?: boolean;
 };
 
 export default function TesterLayout() {
   const location = useLocation();
+  const { session } = useAuth();
   const path = location.pathname;
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [qualificationStatus, setQualificationStatus] = useState<QualificationStatus | null>(null);
+
+  useEffect(() => {
+    if (!session?.userId) return;
+    let active = true;
+    const refreshQualificationStatus = async () => {
+      try {
+        const nextStatus = await getTesterQualificationStatus(session.userId!);
+        if (active) setQualificationStatus(nextStatus);
+      } catch {
+        if (active) setQualificationStatus('not_started');
+      }
+    };
+    void refreshQualificationStatus();
+    const interval = window.setInterval(() => { void refreshQualificationStatus(); }, 30_000);
+    window.addEventListener('focus', refreshQualificationStatus);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshQualificationStatus);
+    };
+  }, [session?.userId]);
 
   let activeKey: NavItem['key'] = 'dashboard';
   if (path.startsWith('/tester-jobs') || path === '/job-board') {
@@ -47,7 +74,9 @@ export default function TesterLayout() {
     activeKey = 'dashboard';
   }
 
-  const navItems: NavItem[] = [
+  const qualificationPending = qualificationStatus !== 'approved';
+  const availableBeforeApproval: NavItem['key'][] = ['qualification', 'profile', 'settings'];
+  const baseNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/tester/dashboard', icon: Home, key: 'dashboard' },
     { label: 'Tester Academy', href: '/tester-qualification', icon: ShieldCheck, key: 'qualification' },
     { label: 'Available Jobs', href: '/tester-jobs', icon: BriefcaseBusiness, key: 'jobs' },
@@ -57,6 +86,12 @@ export default function TesterLayout() {
     { label: 'Profile', href: '/tester/profile', icon: UserCircle2, key: 'profile' },
     { label: 'Settings', href: '/tester/settings', icon: Settings, key: 'settings' },
   ];
+  const navItems = baseNavItems
+    .filter((item) => !(qualificationStatus === 'approved' && item.key === 'qualification'))
+    .map((item): NavItem => ({
+      ...item,
+      locked: qualificationPending && !availableBeforeApproval.includes(item.key),
+    }));
 
   return (
     <div className="flex min-h-screen min-h-dvh w-full lg:h-screen lg:overflow-hidden bg-[#f5f5f7] text-slate-900 selection:bg-green-100">
@@ -89,6 +124,7 @@ export default function TesterLayout() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeKey === item.key;
+                if (item.locked) return <div key={item.label} aria-disabled="true" className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-400 opacity-70"><Icon className="h-5 w-5" /><span>{item.label}</span><LockKeyhole className="ml-auto h-4 w-4" /></div>;
                 return (
                   <Link
                     to={item.href}
@@ -125,6 +161,7 @@ export default function TesterLayout() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeKey === item.key;
+            if (item.locked) return <div key={item.label} aria-disabled="true" className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-400 opacity-70"><Icon className="h-4 w-4" /><span>{item.label}</span><LockKeyhole className="ml-auto h-4 w-4" /></div>;
             return (
               <Link
                 to={item.href}
@@ -165,7 +202,7 @@ export default function TesterLayout() {
         </main>
       </div>
 
-      <MobileTabBar role="tester" />
+      <MobileTabBar role="tester" testerQualified={qualificationStatus === 'approved'} />
     </div>
   );
 }

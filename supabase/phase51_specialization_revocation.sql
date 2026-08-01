@@ -344,7 +344,11 @@ grant execute on function public.get_expiring_specializations(integer) to authen
 -- testers to staff a job the gate would then refuse them all for. These two
 -- replace the phase 49 versions with the same predicate the trigger uses.
 
-create or replace function public.get_specialization_coverage()
+-- create or replace cannot change a function's OUT-parameter row type; phase 49
+-- returned 4 columns and this returns 7, so the old one has to go first.
+drop function if exists public.get_specialization_coverage();
+
+create function public.get_specialization_coverage()
 returns table (
   specialization_key text,
   approved_count integer,

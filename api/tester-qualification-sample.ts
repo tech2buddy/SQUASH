@@ -81,7 +81,10 @@ export default async function handler(req: any, res: any) {
     ? await attemptQuery.eq('id', attemptId).maybeSingle()
     : await attemptQuery.maybeSingle();
 
-  if (attemptError) return res.status(500).json({ error: 'Unable to load your sample test.' });
+  if (attemptError) {
+    console.error('tester-qualification-sample: attempt lookup failed', attemptError);
+    return res.status(500).json({ error: 'Unable to load your sample test.' });
+  }
   if (!attempt) return res.status(404).json({ error: 'Pass the QA foundations quiz before opening the practical sample.' });
   const scenario = scenarios[attempt.sample_variant_key];
   if (!scenario) return res.status(503).json({ error: 'This practical sample is not available right now.' });
@@ -94,7 +97,10 @@ export default async function handler(req: any, res: any) {
         .eq('id', attempt.id)
         .eq('tester_id', user.id)
         .eq('status', 'quiz_passed');
-      if (startError) return res.status(500).json({ error: 'Unable to start your sample test.' });
+      if (startError) {
+        console.error('tester-qualification-sample: could not move attempt to sample_in_progress', startError);
+        return res.status(500).json({ error: 'Unable to start your sample test.' });
+      }
       attempt.status = 'sample_in_progress';
     }
     if (!['sample_in_progress', 'sample_submitted'].includes(attempt.status)) {
@@ -147,7 +153,10 @@ export default async function handler(req: any, res: any) {
     environment: environment && typeof environment === 'object' ? environment : {},
     evidence_paths: evidencePaths,
   });
-  if (reportError) return res.status(500).json({ error: 'Unable to save your practical sample.' });
+  if (reportError) {
+    console.error('tester-qualification-sample: report insert failed', reportError);
+    return res.status(500).json({ error: 'Unable to save your practical sample.' });
+  }
 
   const { error: submitError } = await supabase
     .from('tester_qualification_attempts')
@@ -155,7 +164,10 @@ export default async function handler(req: any, res: any) {
     .eq('id', attempt.id)
     .eq('tester_id', user.id)
     .eq('status', 'sample_in_progress');
-  if (submitError) return res.status(500).json({ error: 'Your sample was saved but could not be queued for review. Contact SQUASH support.' });
+  if (submitError) {
+    console.error('tester-qualification-sample: could not mark attempt sample_submitted', submitError);
+    return res.status(500).json({ error: 'Your sample was saved but could not be queued for review. Contact SQUASH support.' });
+  }
 
   return res.status(200).json({ submitted: true });
 }

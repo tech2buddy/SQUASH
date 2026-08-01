@@ -70,7 +70,13 @@ export default async function handler(req: any, res: any) {
     ? await attemptQuery.eq('id', attemptId).maybeSingle()
     : await attemptQuery.maybeSingle();
 
-  if (attemptError) return res.status(500).json({ error: 'Unable to load your qualification.' });
+  if (attemptError) {
+    // Was previously swallowed -- the client only ever saw "Unable to load
+    // your qualification.", with the actual Postgres error visible nowhere.
+    // Logged here so it shows up in Vercel's function logs for this route.
+    console.error('tester-qualification-quiz: attempt lookup failed', attemptError);
+    return res.status(500).json({ error: 'Unable to load your qualification.' });
+  }
   if (!attempt) return res.status(404).json({ error: 'Start your qualification before opening the quiz.' });
 
   const questions = quizzes[attempt.quiz_variant_key];
@@ -116,6 +122,9 @@ export default async function handler(req: any, res: any) {
     .eq('tester_id', user.id)
     .eq('status', 'quiz_in_progress');
 
-  if (updateError) return res.status(500).json({ error: 'Unable to save your quiz result.' });
+  if (updateError) {
+    console.error('tester-qualification-quiz: result save failed', updateError);
+    return res.status(500).json({ error: 'Unable to save your quiz result.' });
+  }
   return res.status(200).json({ passed, score, total: questions.length, passMark: PASS_MARK, sampleVariantKey: attempt.sample_variant_key });
 }

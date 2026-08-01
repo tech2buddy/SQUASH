@@ -64,12 +64,23 @@ export default function SquashTesterQualificationPage() {
         msg.toLowerCase().includes('current qualification attempt') ||
         msg.toLowerCase().includes('in progress')
       ) {
-        const nextQuiz = await getQualificationQuiz();
-        if (nextQuiz) {
-          setQuiz(nextQuiz);
-          setAnswers({});
-          setStatus('quiz_in_progress');
-          setError('');
+        // A quiz attempt already exists server-side, so re-fetch it rather
+        // than surfacing the "already in progress" message. This inner call
+        // used to be unguarded: if it also failed, the exception escaped the
+        // outer catch entirely -- setError(msg) below never ran, and the
+        // button just stopped spinning with no explanation. Wrapped so a
+        // second failure here still reaches the user.
+        try {
+          const nextQuiz = await getQualificationQuiz();
+          if (nextQuiz) {
+            setQuiz(nextQuiz);
+            setAnswers({});
+            setStatus('quiz_in_progress');
+            setError('');
+            return;
+          }
+        } catch (retryError) {
+          setError(retryError instanceof Error ? retryError.message : msg);
           return;
         }
       }

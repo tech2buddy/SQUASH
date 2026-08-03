@@ -17,34 +17,9 @@ type SampleScenario = {
   tasks: SampleTask[];
 };
 
-const scenarios: Record<string, SampleScenario> = {
-  'checkout-flow-v1': {
-    key: 'checkout-flow-v1',
-    title: 'Checkout flow sample',
-    productName: 'Northstar Store',
-    objective: 'Verify that a customer can complete a standard card checkout in this simulated store.',
-    environment: 'Desktop or mobile browser. Use only the sample details shown in the lab; no real payment is taken.',
-    outOfScope: 'Do not test real card numbers, real accounts, browser extensions or unrelated pages.',
-    tasks: [
-      { id: 'choose-plan', title: 'Choose the Standard plan', instruction: 'Select the Standard plan on the sample checkout.', expectedResult: 'The selected plan and R149 total are shown.' },
-      { id: 'enter-details', title: 'Enter sample customer details', instruction: 'Use the sample name and email provided in the checkout panel.', expectedResult: 'The details are accepted and the Pay button becomes available.' },
-      { id: 'complete-payment', title: 'Attempt the sample payment', instruction: 'Select Card and press Pay R149 once.', expectedResult: 'A simulated confirmation page appears with a successful order reference.' },
-    ],
-  },
-  'booking-flow-v1': {
-    key: 'booking-flow-v1',
-    title: 'Booking flow sample',
-    productName: 'Harbour Studio',
-    objective: 'Verify that a customer can choose a session and receive a booking confirmation in this simulated schedule.',
-    environment: 'Desktop or mobile browser. This is a controlled training scenario; no real booking is created.',
-    outOfScope: 'Do not contact a real business, use personal details, or test dates outside the supplied sample flow.',
-    tasks: [
-      { id: 'choose-session', title: 'Choose a Saturday session', instruction: 'Select the Saturday 10:30 session from the sample schedule.', expectedResult: 'The selected time is reflected in the booking summary.' },
-      { id: 'enter-guest', title: 'Enter the sample guest details', instruction: 'Use the sample guest name and email in the booking panel.', expectedResult: 'The form validates the details and enables Confirm booking.' },
-      { id: 'confirm-booking', title: 'Attempt the booking', instruction: 'Press Confirm booking once.', expectedResult: 'A simulated booking confirmation and reference number appear.' },
-    ],
-  },
-};
+// Scenario content used to be hardcoded here. It now lives in
+// tester_qualification_scenario_templates so admin can edit it -- see
+// phase58_qualification_scenario_templates.sql. loadScenario() below reads it.
 
 const outcomes = new Set(['pass', 'fail', 'blocked', 'not_applicable']);
 const severities = new Set(['low', 'medium', 'high', 'critical']);
@@ -86,8 +61,31 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Unable to load your sample test.' });
   }
   if (!attempt) return res.status(404).json({ error: 'Pass the QA foundations quiz before opening the practical sample.' });
-  const scenario = scenarios[attempt.sample_variant_key];
-  if (!scenario) return res.status(503).json({ error: 'This practical sample is not available right now.' });
+
+  const { data: variantRow } = await supabase
+    .from('tester_qualification_variants')
+    .select('title')
+    .eq('variant_key', attempt.sample_variant_key)
+    .maybeSingle();
+  const { data: templateRow, error: templateError } = await supabase
+    .from('tester_qualification_scenario_templates')
+    .select('product_name, objective, environment, out_of_scope, tasks')
+    .eq('variant_key', attempt.sample_variant_key)
+    .maybeSingle();
+  if (templateError) {
+    console.error('tester-qualification-sample: scenario template lookup failed', templateError);
+    return res.status(500).json({ error: 'Unable to load your sample test.' });
+  }
+  if (!templateRow) return res.status(503).json({ error: 'This practical sample is not available right now.' });
+  const scenario: SampleScenario = {
+    key: attempt.sample_variant_key,
+    title: variantRow?.title || templateRow.product_name,
+    productName: templateRow.product_name,
+    objective: templateRow.objective,
+    environment: templateRow.environment,
+    outOfScope: templateRow.out_of_scope,
+    tasks: (templateRow.tasks || []) as SampleTask[],
+  };
 
   if (req.method === 'GET') {
     if (attempt.status === 'quiz_passed') {

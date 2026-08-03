@@ -260,6 +260,7 @@ export function TestSessionHeader({
   isRecording,
   saveStatus,
   onExit,
+  rewardLabel,
 }: {
   test: ActiveTest;
   workflow: WorkflowConfig;
@@ -267,6 +268,7 @@ export function TestSessionHeader({
   isRecording: boolean;
   saveStatus: string;
   onExit: () => void;
+  rewardLabel?: string;
 }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -280,7 +282,7 @@ export function TestSessionHeader({
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{test.objective}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-          <span className="rounded-2xl bg-green-50 px-4 py-2 text-green-700 ring-1 ring-green-100">Reward R{test.reward}</span>
+          <span className="rounded-2xl bg-green-50 px-4 py-2 text-green-700 ring-1 ring-green-100">{rewardLabel || `Reward R${test.reward}`}</span>
           <span className="rounded-2xl bg-slate-50 px-4 py-2 text-slate-700 ring-1 ring-slate-100">{test.estimatedMinutes} min</span>
           <span className="rounded-2xl bg-slate-50 px-4 py-2 text-slate-700 ring-1 ring-slate-100">Time left {remainingTime}</span>
           <span className={`rounded-2xl px-4 py-2 ring-1 ${isRecording ? 'bg-red-50 text-red-600 ring-red-100' : 'bg-slate-50 text-slate-600 ring-slate-100'}`}>{isRecording ? 'REC active' : 'Recording off'}</span>

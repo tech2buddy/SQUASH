@@ -222,6 +222,7 @@ export default function SquashAdminSpecializationsPage() {
   const navItems = [
     { label: 'Overview', href: '/A31/dashboard', icon: Home },
     { label: 'Qualifications', href: '/A31/qualifications', icon: BadgeCheck },
+    { label: 'Sample Test Template', href: '/A31/qualification-template', icon: BadgeCheck },
     { label: 'Specializations', href: '/A31/specializations', icon: ShieldCheck, active: true },
     { label: 'Probation watch', href: '/A31/probation', icon: Clock3 },
     { label: 'Payout Queue', href: '/A31/payouts', icon: FileText },

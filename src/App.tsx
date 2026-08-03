@@ -60,6 +60,7 @@ const SquashOnboardingPage = lazy(() => import('./SquashOnboardingPage'));
 const SquashAdminDashboardPage = lazy(() => import('./SquashAdminDashboardPage'));
 const SquashAdminPayoutsPage = lazy(() => import('./SquashAdminPayoutsPage'));
 const SquashAdminQualificationsPage = lazy(() => import('./SquashAdminQualificationsPage'));
+const SquashAdminQualificationTemplatePage = lazy(() => import('./SquashAdminQualificationTemplatePage'));
 const SquashAdminSpecializationsPage = lazy(() => import('./SquashAdminSpecializationsPage'));
 const SquashAdminProbationPage = lazy(() => import('./SquashAdminProbationPage'));
 const SquashAdminUsersPage = lazy(() => import('./SquashAdminUsersPage'));
@@ -326,6 +327,15 @@ export default function App() {
         element={
           <ProtectedRoute allowedRole="admin">
             <SquashAdminQualificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/A31/qualification-template"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <SquashAdminQualificationTemplatePage />
           </ProtectedRoute>
         }
       />

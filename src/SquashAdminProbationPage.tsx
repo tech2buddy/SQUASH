@@ -67,6 +67,7 @@ export default function SquashAdminProbationPage() {
   const navItems = [
     { label: 'Overview', href: '/A31/dashboard', icon: Home },
     { label: 'Qualifications', href: '/A31/qualifications', icon: ShieldCheck },
+    { label: 'Sample Test Template', href: '/A31/qualification-template', icon: ShieldCheck },
     { label: 'Probation watch', href: '/A31/probation', icon: Clock3, active: true },
     { label: 'Payout Queue', href: '/A31/payouts', icon: ShieldAlert },
     { label: 'Users', href: '/A31/users', icon: Users },

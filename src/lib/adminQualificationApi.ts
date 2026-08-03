@@ -101,3 +101,65 @@ export async function reviewTesterQualification(input: { attemptId: string; deci
   if (error) throw new Error(error.message || SERVICE_UNAVAILABLE_MESSAGE);
   return data;
 }
+
+export type QualificationScenarioTask = { id: string; title: string; instruction: string; expectedResult: string };
+
+export type QualificationScenarioTemplate = {
+  variantKey: string;
+  title: string;
+  productName: string;
+  objective: string;
+  environment: string;
+  outOfScope: string;
+  tasks: QualificationScenarioTask[];
+  updatedAt: string | null;
+};
+
+export async function getQualificationScenarioTemplates(): Promise<QualificationScenarioTemplate[]> {
+  const { data: variants, error: variantError } = await (supabase.from('tester_qualification_variants') as any)
+    .select('variant_key, title')
+    .eq('kind', 'sample')
+    .order('variant_key', { ascending: true });
+  if (variantError) throw new Error(variantError.message || SERVICE_UNAVAILABLE_MESSAGE);
+  if (!variants?.length) return [];
+
+  const { data: templates, error: templateError } = await (supabase.from('tester_qualification_scenario_templates') as any)
+    .select('variant_key, product_name, objective, environment, out_of_scope, tasks, updated_at')
+    .in('variant_key', variants.map((variant: any) => variant.variant_key));
+  if (templateError) throw new Error(templateError.message || SERVICE_UNAVAILABLE_MESSAGE);
+
+  const templateByKey = new Map<string, any>((templates || []).map((template: any) => [template.variant_key, template] as [string, any]));
+
+  return variants.map((variant: any) => {
+    const template = templateByKey.get(variant.variant_key);
+    return {
+      variantKey: variant.variant_key,
+      title: variant.title,
+      productName: template?.product_name || '',
+      objective: template?.objective || '',
+      environment: template?.environment || '',
+      outOfScope: template?.out_of_scope || '',
+      tasks: Array.isArray(template?.tasks) ? template.tasks as QualificationScenarioTask[] : [],
+      updatedAt: template?.updated_at || null,
+    } satisfies QualificationScenarioTemplate;
+  });
+}
+
+export async function updateQualificationScenarioTemplate(variantKey: string, patch: {
+  productName: string;
+  objective: string;
+  environment: string;
+  outOfScope: string;
+  tasks: QualificationScenarioTask[];
+}) {
+  const { error } = await (supabase.from('tester_qualification_scenario_templates') as any)
+    .update({
+      product_name: patch.productName.trim(),
+      objective: patch.objective.trim(),
+      environment: patch.environment.trim(),
+      out_of_scope: patch.outOfScope.trim(),
+      tasks: patch.tasks,
+    })
+    .eq('variant_key', variantKey);
+  if (error) throw new Error(error.message || SERVICE_UNAVAILABLE_MESSAGE);
+}

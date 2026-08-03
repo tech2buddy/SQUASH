@@ -70,6 +70,11 @@ export default function SquashSignupPage() {
         name,
       });
 
+      if (result.alreadyRegistered) {
+        setError('An account with this email already exists. Please log in instead, or reset your password if you forgot it.');
+        return;
+      }
+
       if (result.requiresEmailConfirmation) {
         setNotice('Account created. Please check your email to confirm your account before logging in.');
         return;

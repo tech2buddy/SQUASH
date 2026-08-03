@@ -20,6 +20,7 @@ type AuthSession = {
 type AuthResult = {
   session: AuthSession | null;
   requiresEmailConfirmation?: boolean;
+  alreadyRegistered?: boolean;
 };
 
 type AuthContextValue = {
@@ -367,6 +368,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) throw error;
         if (!data.user) return { session: null };
+
+        // Supabase does not error when the email is already registered --
+        // it returns a user with an empty identities array and no session,
+        // to avoid leaking which emails exist via a distinct error message.
+        // We still tell the caller directly (not a leak: they just typed
+        // that email into a signup form themselves).
+        if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          return { session: null, alreadyRegistered: true };
+        }
 
         if (!data.session) {
           return { session: null, requiresEmailConfirmation: true };

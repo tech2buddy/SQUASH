@@ -72,7 +72,12 @@ export default function SquashLoginPage() {
       const selectedSession = await activateRole(role);
       navigate(resolvePostLoginPath(selectedSession || { ...activeSession, role }, nextPath), { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to login right now.');
+      const rawMsg = err instanceof Error ? err.message : '';
+      if (rawMsg.includes('Invalid login credentials')) {
+        setError("Incorrect email or password, or you don't have an account yet. Double-check both, or sign up below.");
+      } else {
+        setError(rawMsg || 'Unable to login right now.');
+      }
     } finally {
       setSubmitting(false);
     }

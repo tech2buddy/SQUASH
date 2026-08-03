@@ -134,7 +134,7 @@ export default function SquashAdminUsersPage() {
                   </div>
                   <div className="hidden sm:block">
                     <div className="text-sm font-bold text-slate-900">{adminName}</div>
-                    <div className="text-xs text-slate-500">Owner Admin</div>
+                    <div className="text-xs text-slate-500">Admin</div>
                   </div>
                 </div>
               </div>

@@ -207,7 +207,7 @@ export default function SquashAdminReportDetailPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-xs">
                 <div className="hidden sm:block text-right">
                   <div className="text-sm font-bold">{adminName}</div>
-                  <div className="text-xs text-slate-500">Owner Admin</div>
+                  <div className="text-xs text-slate-500">Admin</div>
                 </div>
               </div>
             </div>

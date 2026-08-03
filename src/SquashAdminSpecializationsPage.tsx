@@ -293,7 +293,7 @@ export default function SquashAdminSpecializationsPage() {
                 <Bell className="h-5 w-5 text-slate-500" />
                 <div className="hidden sm:block">
                   <div className="text-sm font-bold text-slate-900">{adminName}</div>
-                  <div className="text-xs text-slate-500">Owner Admin</div>
+                  <div className="text-xs text-slate-500">Admin</div>
                 </div>
               </div>
             </div>

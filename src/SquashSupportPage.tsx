@@ -137,7 +137,7 @@ const KNOWLEDGE_BASE_FAQS: FAQItem[] = [
     category: 'job',
     id: 'faq-3',
     question: 'How do Developers target specific real devices?',
-    answer: 'When posting a job, Developers choose target operating systems (Android, iOS, Web) and specific device demographics (e.g. Samsung Galaxy, iPhone, Chrome). SQUASH matches your job only to verified testers with those physical devices.',
+    answer: 'When posting a job, Developers choose target operating systems (Android, iOS, Web) and specific device demographics (e.g. Samsung Galaxy, iPhone, Chrome). SQUASH matches your job only to testers with those physical devices.',
     tags: ['job', 'devices', 'android', 'ios', 'web'],
   },
   {

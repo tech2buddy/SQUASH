@@ -383,20 +383,15 @@ export default function SquashForTestersPage() {
             <div className="rounded-[28px] border border-green-200 bg-green-50 p-6 shadow-sm">
               <div className="text-5xl leading-none text-green-600">&#8220;</div>
               <p className="mt-3 leading-7 text-slate-700">
-                Squash gives me the freedom to test apps, find bugs and earn money on my own
-                schedule. Love it!
+                We built Squash so your time and your honesty are worth something. Every report
+                you submit helps a real developer ship something better.
               </p>
-              <div className="mt-5 font-bold text-slate-900">Priya, Top Tester</div>
-              <div className="mt-3 flex items-center gap-1 text-green-600">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Star key={value} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
+              <div className="mt-5 font-bold text-slate-900">M. Khosa, Founder, SQUASH</div>
             </div>
           </div>
 
           <div className="mt-10">
-            <TrustedLogosRow title="Trusted by developers worldwide" />
+            <TrustedLogosRow />
           </div>
 
           <div className="mt-10 rounded-[28px] border border-green-200 bg-green-50 px-6 py-8 shadow-sm sm:px-8">
@@ -404,7 +399,7 @@ export default function SquashForTestersPage() {
               <div>
                 <h3 className="text-2xl font-black text-slate-900">Ready to start testing and earning?</h3>
                 <p className="mt-2 text-base text-slate-600">
-                  Join thousands of testers on Squash and turn your time into rewards.
+                  Join the testers on Squash turning their time into real earnings.
                 </p>
               </div>
               <a

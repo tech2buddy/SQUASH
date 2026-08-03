@@ -80,13 +80,12 @@ export default async function handler(req: any, res: any) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
 
-  // Sensitive banking documents and practical-qualification evidence fail
-  // closed. Other evidence remains available with an explicit audit record.
+  // No scanner configured (Cloudmersive not set up yet) -- operating without
+  // malware scanning for now. Every bucket, including the normally
+  // fail-closed ones, is allowed through unscanned but the gap is recorded
+  // in file_scans so it's auditable. Once CLOUDMERSIVE_API_KEY is set again,
+  // FAIL_CLOSED_BUCKETS below re-engages automatically on scanner failures.
   if (!scanApiKey) {
-    if (FAIL_CLOSED_BUCKETS.has(bucket)) {
-      await supabase.storage.from(bucket).remove([path]);
-      return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
-    }
     await recordScan(supabase, {
       bucket, path, userId: user.id, status: 'error', threats: ['scanner_not_configured'],
     });

@@ -74,7 +74,7 @@ export default function SquashAboutPage() {
             </p>
 
             <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
-              SQUASH connects developers and startups with verified real-world testers who evaluate
+              SQUASH connects developers and startups with everyday real-world testers who evaluate
               apps and websites before launch. Not bots. Not internal teams. Not friends who only
               agree with you. Everyday users who match your market.
             </p>
@@ -140,7 +140,7 @@ export default function SquashAboutPage() {
                 SQUASH changes that entirely
               </div>
               <p className="mt-5 text-lg leading-8 text-slate-600">
-                We connect developers and startups with verified real-world testers who evaluate
+                We connect developers and startups with everyday real-world testers who evaluate
                 apps and websites before launch.
               </p>
               <div className="mt-6 space-y-4 text-base text-slate-700">
@@ -336,7 +336,7 @@ export default function SquashAboutPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <TrustedLogosRow title="Trusted by developers worldwide" />
+          <TrustedLogosRow />
         </section>
 
         <section className="border-t border-slate-200 bg-green-50">

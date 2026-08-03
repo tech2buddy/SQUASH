@@ -30,7 +30,7 @@ type ItemWithIcon = {
 export default function SquashForDevelopersPage() {
   usePageMeta({
     title: 'For Developers',
-    description: 'Post a testing job and get real bug reports and usability feedback from verified South African testers before you launch. Pay per test, no subscriptions.',
+    description: 'Post a testing job and get real bug reports and usability feedback from everyday South African testers before you launch. Pay per test, no subscriptions.',
     path: '/for-developers',
   });
 
@@ -44,7 +44,7 @@ export default function SquashForDevelopersPage() {
     {
       number: '2',
       title: 'Get Testers',
-      text: 'Skilled testers apply and you choose the best fit.',
+      text: 'Everyday testers apply and you choose the best fit.',
       icon: Users,
     },
     {
@@ -102,7 +102,7 @@ export default function SquashForDevelopersPage() {
             </h1>
 
             <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
-              Squash connects you with real testers who find bugs, verify flows and help you
+              Squash connects you with everyday testers who find bugs, verify flows and help you
               deliver flawless digital experiences.
             </p>
 
@@ -275,7 +275,7 @@ export default function SquashForDevelopersPage() {
             </div>
 
             <p className="mt-6 text-center text-sm text-slate-600">
-              Either way, only verified Squash testers can see the testing toolbar. Your real users and
+              Either way, only logged-in Squash testers can see the testing toolbar. Your real users and
               customers are completely unaffected.
             </p>
           </div>
@@ -367,7 +367,7 @@ export default function SquashForDevelopersPage() {
           </div>
 
           <div className="mt-10">
-            <TrustedLogosRow title="Trusted by indie makers, startups and enterprises worldwide" />
+            <TrustedLogosRow />
           </div>
 
           <div className="mt-10 rounded-[28px] border border-green-200 bg-green-50 px-6 py-8 shadow-sm sm:px-8">
@@ -375,7 +375,7 @@ export default function SquashForDevelopersPage() {
               <div>
                 <h3 className="text-2xl font-black text-slate-900">Ready to ship a better product?</h3>
                 <p className="mt-2 text-base text-slate-600">
-                  Join thousands of developers who use Squash to build bug-free apps.
+                  Join the developers using Squash to build bug-free apps.
                 </p>
               </div>
               <a

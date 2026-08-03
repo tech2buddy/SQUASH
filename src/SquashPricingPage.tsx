@@ -47,8 +47,8 @@ export default function SquashPricingPage() {
       icon: ShieldCheck,
     },
     {
-      title: 'Verified Testers',
-      text: 'All testers are screened and rated.',
+      title: 'Rated Testers',
+      text: 'Testers build a track record through ratings and approved reports.',
       icon: Users,
     },
     {

@@ -1,6 +1,6 @@
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
-import { Star, Users, ShieldCheck, Bug, Gauge } from 'lucide-react';
+import { Users, ShieldCheck, Bug, Gauge } from 'lucide-react';
 import { TEST_CATEGORIES } from './components/testCategories';
 import { usePageMeta } from './hooks/usePageMeta';
 
@@ -20,7 +20,7 @@ export default function SquashHomepage() {
     },
     {
       title: 'Everyday users test it',
-      text: 'Qualified testers complete real usability checks, bug hunts, and task-based flows.',
+      text: 'Everyday testers complete real usability checks, bug hunts, and task-based flows.',
     },
     {
       title: 'Get your report',
@@ -382,11 +382,6 @@ export default function SquashHomepage() {
                     about duplicate keys. */}
                 {testimonials.map((item) => (
                   <div key={item.quote} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="mb-4 flex items-center gap-1 text-green-600">
-                      {[1, 2, 3, 4, 5].map((value) => (
-                        <Star key={value} className="h-4 w-4 fill-current" />
-                      ))}
-                    </div>
                     <p className="leading-7 text-slate-600">"{item.quote}"</p>
                     <div className="mt-6 border-t border-slate-100 pt-4">
                       <div className="font-bold text-slate-900">{item.name}</div>

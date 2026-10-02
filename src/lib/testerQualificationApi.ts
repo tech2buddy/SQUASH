@@ -41,6 +41,40 @@ function readError(payload: unknown, fallback: string) {
 }
 
 /**
+ * Parses a response body as JSON, returning `null` when the response either
+ * isn't declared as JSON or doesn't parse. Callers must not treat that `null`
+ * as data -- see `requireJsonPayload`.
+ */
+async function readJsonPayload(response: Response): Promise<unknown> {
+  const contentType = response.headers.get('content-type') || '';
+  if (!/\bapplication\/([\w.+-]+\+)?json\b/i.test(contentType)) return null;
+  return await response.json().catch(() => null);
+}
+
+/**
+ * Guards against a 200 response that carries no usable JSON. This is not
+ * hypothetical: running the frontend with plain `vite` (no `/api` functions
+ * behind it) serves the raw `.ts` module source at
+ * `/api/tester-qualification-quiz` with a 200 and a JavaScript content type.
+ * Without this check the body parses to `null`, the getters return `null`, and
+ * the page reads that as "this tester has no attempt yet" -- so it offers to
+ * start an attempt that the database says already exists, and the tester
+ * dead-ends on "Complete or wait for review of your current qualification
+ * attempt" with nothing to click.
+ *
+ * Only a genuine 404 means "no attempt". Anything else that isn't a real JSON
+ * object is a broken deployment, and per the no-fallback policy documented
+ * below it has to surface as an error the tester can act on.
+ */
+function requireJsonPayload<T>(payload: unknown, fallback: string): T {
+  if (!payload || typeof payload !== 'object') throw new Error(fallback);
+  return payload as T;
+}
+
+const QUIZ_UNAVAILABLE_MESSAGE = 'The qualification service is not responding correctly, so your QA foundations quiz could not be loaded. Please reload the page and try again, and contact support if this keeps happening.';
+const SAMPLE_UNAVAILABLE_MESSAGE = 'The qualification service is not responding correctly, so your practical sample could not be loaded. Please reload the page and try again, and contact support if this keeps happening.';
+
+/**
  * These three functions used to fall back to a client-side copy of the quiz
  * (different questions, different answer key) and to writing progress
  * directly to `tester_qualification_attempts` under a column name
@@ -67,9 +101,9 @@ export async function getQualificationQuiz(): Promise<QualificationQuiz | null> 
   const headers = await authHeaders();
   const response = await fetch('/api/tester-qualification-quiz', { headers });
   if (response.status === 404) return null;
-  const payload = await response.json().catch(() => null);
+  const payload = await readJsonPayload(response);
   if (!response.ok) throw new Error(readError(payload, 'Unable to load the QA foundations quiz. Please try again.'));
-  return payload as QualificationQuiz;
+  return requireJsonPayload<QualificationQuiz>(payload, QUIZ_UNAVAILABLE_MESSAGE);
 }
 
 export async function beginTesterQualification(): Promise<QualificationAttempt> {
@@ -93,9 +127,15 @@ export async function submitQualificationQuiz(attemptId: string, answers: Record
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({ attemptId, answers }),
   });
-  const payload = await response.json().catch(() => null);
+  const payload = await readJsonPayload(response);
   if (!response.ok) throw new Error(readError(payload, 'Unable to submit your QA foundations quiz. Please try again.'));
-  return payload as { passed: boolean; score: number; total: number; passMark: number; sampleVariantKey: string };
+  // Same guard as the getters: a 200 with no usable JSON would otherwise hand
+  // the caller a `null` result whose `passed` reads as undefined -- i.e. the
+  // fabricated "you failed" outcome this file exists to prevent.
+  return requireJsonPayload<{ passed: boolean; score: number; total: number; passMark: number; sampleVariantKey: string }>(
+    payload,
+    'Your QA foundations answers could not be submitted because the qualification service is not responding correctly. Your answers have not been recorded -- please reload the page and try again.',
+  );
 }
 
 export type TesterQualificationProfile = {
@@ -134,7 +174,7 @@ export type QualificationSampleTask = {
 
 export type QualificationSample = {
   attempt: { id: string; attemptNumber: number; status: 'sample_in_progress' | 'sample_submitted'; quizScore: number | null; quizTotal: number | null };
-  scenario: { key: string; title: string; productName: string; objective: string; environment: string; outOfScope: string; tasks: QualificationSampleTask[] };
+  scenario: { key: string; title: string; productName: string; objective: string; environment: string; outOfScope: string; appUrl: string | null; accessInstructions: string | null; logoUrl: string | null; tasks: QualificationSampleTask[] };
 };
 
 /**
@@ -150,23 +190,30 @@ export async function getQualificationSample(): Promise<QualificationSample | nu
   const headers = await authHeaders();
   const response = await fetch('/api/tester-qualification-sample', { headers });
   if (response.status === 404) return null;
-  const payload = await response.json().catch(() => null);
+  const payload = await readJsonPayload(response);
   if (!response.ok) throw new Error(readError(payload, 'Unable to load the practical sample. Please try again.'));
-  return payload as QualificationSample;
+  return requireJsonPayload<QualificationSample>(payload, SAMPLE_UNAVAILABLE_MESSAGE);
 }
 
-export async function submitQualificationSample(input: {
-  attemptId: string;
-  taskOutcomes: Array<{ taskId: string; outcome: 'pass' | 'fail' | 'blocked' | 'not_applicable'; note: string }>;
+export type QualificationIssueReport = {
+  taskId: string;
   bugTitle: string;
   stepsToReproduce: string;
   expectedResult: string;
   actualResult: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   reproducibility: 'always' | 'often' | 'sometimes' | 'once';
+  evidencePaths: string[];
+};
+
+export async function submitQualificationSample(input: {
+  attemptId: string;
+  taskOutcomes: Array<{ taskId: string; outcome: 'pass' | 'fail' | 'blocked' | 'not_applicable'; note: string }>;
+  // One structured issue per task marked fail/blocked -- must exactly match
+  // those taskIds, no more, no fewer. See api/tester-qualification-sample.ts.
+  issueReports: QualificationIssueReport[];
   testerNotes: string;
   environment: Record<string, unknown>;
-  evidencePaths: string[];
 }) {
   const headers = await authHeaders();
   const response = await fetch('/api/tester-qualification-sample', {
@@ -174,9 +221,15 @@ export async function submitQualificationSample(input: {
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
-  const payload = await response.json().catch(() => null);
+  const payload = await readJsonPayload(response);
   if (!response.ok) throw new Error(readError(payload, 'Unable to submit your practical sample. Please try again.'));
-  return payload as { submitted: true };
+  // A 200 with no usable JSON must not read as a successful submission -- that
+  // is exactly the "submitted" confirmation for an unrecorded sample described
+  // above.
+  return requireJsonPayload<{ submitted: true }>(
+    payload,
+    'Your practical sample could not be submitted because the qualification service is not responding correctly. Nothing has been recorded -- please reload the page and try again.',
+  );
 }
 
 export async function uploadQualificationEvidence(file: File, testerId: string, attemptId: string): Promise<QualificationEvidence> {

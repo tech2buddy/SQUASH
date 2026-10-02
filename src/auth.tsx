@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './lib/supabase';
 import { createNotification } from './lib/notificationApi';
+import { formatPersonName } from './lib/displayText';
 
 export type UserRole = 'developer' | 'tester' | 'admin';
 export type WorkspaceRole = Exclude<UserRole, 'admin'>;
@@ -78,6 +79,29 @@ function clearStoredWorkspace(userId: string) {
   } catch {
     // Nothing to clean up if storage is unavailable.
   }
+}
+
+// How long a signed-in browser may sit with no activity before it is signed
+// out automatically. Admin gets a shorter window: it can see payout data and
+// approve tester qualifications, so an unattended admin browser is worth more
+// to an attacker than an unattended tester one.
+export function idleTimeoutMinutes(isAdminAccount: boolean): number {
+  return isAdminAccount ? 15 : 30;
+}
+
+// Where an idle-timed-out session gets redirected to re-authenticate.
+// `role` carries forward the workspace the session actually idled out of, so
+// the login form's Developer/Tester toggle (which defaults to Developer
+// unless told otherwise) matches -- otherwise a tester-only account idling
+// out on a tester page would see "This account does not have a Developer
+// workspace yet" on re-login, purely because the toggle guessed wrong.
+// Admin is deliberately excluded: it is not a toggle value, and the login
+// page's admin branch is driven by `next` matching an /A31/... path, not by
+// `role` at all.
+export function buildIdleSignOutUrl(activeRole: UserRole | undefined, returnPath: string): string {
+  const params = new URLSearchParams({ reason: 'idle', next: returnPath });
+  if (activeRole && activeRole !== 'admin') params.set('role', activeRole);
+  return `/login?${params.toString()}`;
 }
 
 function normalizeRoles(roles: UserRole[]): UserRole[] {
@@ -182,7 +206,7 @@ async function readProfileSession(
     role: activeRole,
     roles,
     email: profile.email || fallbackEmail,
-    name: profile.full_name,
+    name: formatPersonName(profile.full_name),
     userId: profile.id,
     onboardingCompleted,
     isAuthenticated: true,
@@ -212,6 +236,7 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/developer/applications',
     '/developer/reports',
     '/developer/activity',
+    '/developer/support',
     '/report-details/attachments',
     '/billing/payment-methods',
   ]);
@@ -231,6 +256,7 @@ export function routeRole(pathname: string): UserRole | 'public' {
     '/tester/payout-method',
     '/tester/leaderboard',
     '/tester/level-benefits',
+    '/tester/support',
   ]);
   if (developerRoutes.has(pathname)) return 'developer';
   if (testerRoutes.has(pathname)) return 'tester';
@@ -324,6 +350,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  // Idle sign-out. Without this, a signed-in browser stays authenticated
+  // indefinitely -- persistSession + autoRefreshToken silently keep the
+  // token alive forever, so an old session from hours ago is
+  // indistinguishable from a fresh login. That is exactly what produced
+  // "why am I logged in as my own account, not the one I just tried to sign
+  // in as" -- there was no fresh login at all, an old session was simply
+  // still sitting there.
+  //
+  // Admin gets a shorter window than developer/tester: it can see payout
+  // data and approve tester qualifications, so an unattended admin browser
+  // is worth more to an attacker than an unattended tester one. The check is
+  // against the account's full role set, not the currently active workspace
+  // view -- an admin-capable account left idle on a tester page is still one
+  // "Switch Workspace" click away from admin access, so it gets the admin
+  // timeout regardless of which view was open when it went idle.
+  const isAdminAccount = session?.roles.includes('admin') ?? false;
+  useEffect(() => {
+    if (!session) return;
+
+    const timeoutMs = idleTimeoutMinutes(isAdminAccount) * 60_000;
+    const checkIntervalMs = 30_000;
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'] as const;
+
+    let lastActivityAt = Date.now();
+    const markActive = () => { lastActivityAt = Date.now(); };
+    activityEvents.forEach((eventName) => window.addEventListener(eventName, markActive, { passive: true }));
+
+    const interval = window.setInterval(() => {
+      if (Date.now() - lastActivityAt < timeoutMs) return;
+      window.clearInterval(interval);
+      const userId = session?.userId;
+      const returnPath = window.location.pathname + window.location.search;
+      const redirectUrl = buildIdleSignOutUrl(session?.role, returnPath);
+      // Fire-and-forget: redirect regardless of whether signOut succeeds, so
+      // a network hiccup does not leave an idle session sitting open.
+      (isSupabaseConfigured ? supabase.auth.signOut() : Promise.resolve()).finally(() => {
+        if (userId) clearStoredWorkspace(userId);
+        window.location.href = redirectUrl;
+      });
+    }, checkIntervalMs);
+
+    return () => {
+      activityEvents.forEach((eventName) => window.removeEventListener(eventName, markActive));
+      window.clearInterval(interval);
+    };
+    // Re-arm on the identity that actually matters (which account, whether it
+    // is admin-capable) -- not on `session` itself, which gets a new object
+    // identity on every silent token refresh and would otherwise reset the
+    // idle clock roughly hourly regardless of real user activity.
+  }, [session?.email, isAdminAccount]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -530,5 +607,3 @@ export function useAuth() {
   }
   return ctx;
 }
-
-

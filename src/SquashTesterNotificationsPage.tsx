@@ -210,7 +210,7 @@ export default function SquashTesterNotificationsPage() {
                           <a
                             href={item.linkPath}
                             onClick={() => handleMarkRead(item.id)}
-                            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+                            className="squash-btn-primary"
                           >
                             View →
                           </a>

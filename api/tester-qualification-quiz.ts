@@ -53,7 +53,15 @@ export default async function handler(req: any, res: any) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const token = bearerToken(req.headers.authorization);
-  if (!supabaseUrl || !serviceRoleKey || !token) return res.status(401).json({ error: 'Unauthorized' });
+  // A missing server credential is not an authorization failure. Collapsing the
+  // two into one 401 sent a logged-in tester "Unauthorized" when the real fault
+  // was an unset SUPABASE_SERVICE_ROLE_KEY -- indistinguishable from a bad
+  // token, from the browser and from the logs.
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('tester-qualification-quiz: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set in this environment');
+    return res.status(500).json({ error: 'The qualification service is not configured. Please contact SQUASH support.' });
+  }
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);

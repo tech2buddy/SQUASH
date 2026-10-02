@@ -8,6 +8,7 @@ const ALLOWED_BEFORE_APPROVAL = [
   '/tester-qualification',
   '/tester/profile',
   '/tester/settings',
+  '/tester/support',
 ];
 
 function isAllowedBeforeApproval(pathname: string) {

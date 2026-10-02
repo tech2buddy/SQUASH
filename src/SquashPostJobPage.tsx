@@ -430,7 +430,7 @@ export default function SquashPostJobPage() {
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                         index === currentStep
-                          ? 'bg-green-600 text-white'
+                          ? 'bg-[#e63946] text-white'
                           : 'border border-slate-200 bg-slate-50 text-slate-600'
                       }`}
                     >
@@ -439,7 +439,7 @@ export default function SquashPostJobPage() {
                     <div className="min-w-0">
                       <div
                         className={`text-sm font-semibold ${
-                          index === currentStep ? 'text-green-700' : 'text-slate-600'
+                          index === currentStep ? 'text-[#e63946]' : 'text-slate-600'
                         }`}
                       >
                         {step}
@@ -464,7 +464,7 @@ export default function SquashPostJobPage() {
                         value={appName}
                         onChange={(e) => setAppName(e.target.value)}
                         placeholder="e.g. PayFlow Web App"
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition focus:border-green-500"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition focus:border-[#e63946]"
                       />
                     </div>
 
@@ -474,7 +474,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={platform}
                           onChange={(e) => setPlatform(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>Android</option>
                           <option>iOS</option>
@@ -491,7 +491,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={appType}
                           onChange={(e) => setAppType(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>Mobile Application</option>
                           <option>Web Application</option>
@@ -510,7 +510,7 @@ export default function SquashPostJobPage() {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://your-app.com/staging"
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -565,7 +565,7 @@ export default function SquashPostJobPage() {
                       value={shortDescription}
                       onChange={(e) => setShortDescription(e.target.value)}
                       placeholder="Briefly explain what your app does and who it is for..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                     />
                     <div className="mt-2 text-right text-xs text-slate-400">{shortDescription.length} / 300</div>
                   </div>
@@ -581,7 +581,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={testType}
                           onChange={(e) => setTestType(e.target.value as TestCategoryId)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           {TEST_CATEGORIES.map((category) => (
                             <option key={category.id} value={category.id}>
@@ -599,7 +599,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={selectedTestType}
                           onChange={(e) => setSelectedTestType(e.target.value as SelectedTestType)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option value="">Select test type</option>
                           {TEST_TYPES.map((testTypeOption) => (
@@ -619,7 +619,7 @@ export default function SquashPostJobPage() {
                         min={selectedTestTypeConfig?.minTesters || 1}
                         value={testersNeeded}
                         onChange={(e) => setTestersNeeded(Number(e.target.value) || 0)}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                       />
                       {selectedTestTypeConfig ? (
                         <div className="mt-1 text-xs text-slate-500">Minimum {selectedTestTypeConfig.minTesters} testers</div>
@@ -635,8 +635,8 @@ export default function SquashPostJobPage() {
                     )}
                   </div>
 
-                  <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 px-4 py-4 text-sm text-slate-700">
-                    <span className="font-semibold text-green-700">Job budget:</span>{' '}
+                  <div className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-4 text-sm text-slate-700">
+                    <span className="font-semibold text-[#e63946]">Job budget:</span>{' '}
                     {paymentsEnabled
                       ? 'Your draft remains private until payment is confirmed.'
                       : 'This amount is an estimate only. No payment is requested while beta funding is disabled.'}
@@ -655,7 +655,7 @@ export default function SquashPostJobPage() {
                           Add each action as a separate task. These will become checkboxes for testers during the active test.
                         </p>
                       </div>
-                      <div className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700 ring-1 ring-green-100">
+                      <div className="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-[#e63946] ring-1 ring-green-100">
                         {testTasks.filter((task) => task.trim()).length} tasks
                       </div>
                     </div>
@@ -669,11 +669,11 @@ export default function SquashPostJobPage() {
                       {testTasks.map((task, index) => (
                         <div key={`${index}-${task}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                           <div className="flex gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-sm font-bold text-green-700">{index + 1}</div>
-                            <input value={task} onChange={(e) => updateTestTask(index, e.target.value)} placeholder="Task: e.g. Create an account" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500" />
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-sm font-bold text-[#e63946]">{index + 1}</div>
+                            <input value={task} onChange={(e) => updateTestTask(index, e.target.value)} placeholder="Task: e.g. Create an account" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#e63946]" />
                             <button type="button" onClick={() => removeTestTask(index)} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Remove</button>
                           </div>
-                          <input value={taskExpectedOutcomes[index] || ''} onChange={(e) => setTaskExpectedOutcomes((outcomes) => outcomes.map((outcome, outcomeIndex) => outcomeIndex === index ? e.target.value : outcome))} placeholder="Expected result: what should happen when this task is completed?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-green-500" />
+                          <input value={taskExpectedOutcomes[index] || ''} onChange={(e) => setTaskExpectedOutcomes((outcomes) => outcomes.map((outcome, outcomeIndex) => outcomeIndex === index ? e.target.value : outcome))} placeholder="Expected result: what should happen when this task is completed?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-[#e63946]" />
                         </div>
                       ))}
                     </div>
@@ -689,12 +689,12 @@ export default function SquashPostJobPage() {
                           }
                         }}
                         placeholder="Add another task testers must complete..."
-                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500"
+                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#e63946]"
                       />
                       <button
                         type="button"
                         onClick={addTestTask}
-                        className="rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                        className="rounded-2xl bg-[#e63946] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#d62828]"
                       >
                         Add Task
                       </button>
@@ -704,20 +704,20 @@ export default function SquashPostJobPage() {
 
                   <div className="mt-5 grid gap-5 md:grid-cols-2">
                     <label className="block text-sm font-semibold text-slate-700">Main testing objective
-                      <textarea rows={3} value={testObjective} onChange={(e) => setTestObjective(e.target.value)} placeholder="What decision should this test help you make?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                      <textarea rows={3} value={testObjective} onChange={(e) => setTestObjective(e.target.value)} placeholder="What decision should this test help you make?" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#e63946]" />
                     </label>
                     <label className="block text-sm font-semibold text-slate-700">Required environment
-                      <textarea rows={3} value={requiredEnvironment} onChange={(e) => setRequiredEnvironment(e.target.value)} placeholder="Device, OS, browser, network or build requirements" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                      <textarea rows={3} value={requiredEnvironment} onChange={(e) => setRequiredEnvironment(e.target.value)} placeholder="Device, OS, browser, network or build requirements" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#e63946]" />
                     </label>
                     <label className="block text-sm font-semibold text-slate-700">Access instructions <span className="font-normal text-slate-400">(optional)</span>
-                      <textarea rows={3} value={accessInstructions} onChange={(e) => setAccessInstructions(e.target.value)} placeholder="Test account, onboarding route, or safe access instructions" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                      <textarea rows={3} value={accessInstructions} onChange={(e) => setAccessInstructions(e.target.value)} placeholder="Test account, onboarding route, or safe access instructions" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#e63946]" />
                     </label>
                     <label className="block text-sm font-semibold text-slate-700">Evidence rules <span className="font-normal text-slate-400">(optional)</span>
-                      <textarea rows={3} value={evidenceRules} onChange={(e) => setEvidenceRules(e.target.value)} placeholder="Example: attach a screenshot for every failure; record critical issues" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                      <textarea rows={3} value={evidenceRules} onChange={(e) => setEvidenceRules(e.target.value)} placeholder="Example: attach a screenshot for every failure; record critical issues" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#e63946]" />
                     </label>
                   </div>
                   <label className="mt-5 block text-sm font-semibold text-slate-700">Out of scope <span className="font-normal text-slate-400">(optional)</span>
-                    <textarea rows={2} value={outOfScope} onChange={(e) => setOutOfScope(e.target.value)} placeholder="What testers must not test or change" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-green-500" />
+                    <textarea rows={2} value={outOfScope} onChange={(e) => setOutOfScope(e.target.value)} placeholder="What testers must not test or change" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#e63946]" />
                   </label>                  <div className="mt-5">
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Additional Focus Areas <span className="text-xs font-normal text-slate-400 ml-1">(optional)</span>
@@ -727,7 +727,7 @@ export default function SquashPostJobPage() {
                       value={focusAreas}
                       onChange={(e) => setFocusAreas(e.target.value)}
                       placeholder="Example: checkout flow, confusing screens, slow loading, crashes, broken links..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                     />
                   </div>
                 </section>
@@ -742,7 +742,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={ageRange}
                           onChange={(e) => setAgeRange(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>18 - 25</option>
                           <option>26 - 35</option>
@@ -761,7 +761,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={deviceType}
                           onChange={(e) => setDeviceType(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>Android</option>
                           <option>iOS</option>
@@ -780,7 +780,7 @@ export default function SquashPostJobPage() {
                         <select
                           value={experienceLevel}
                           onChange={(e) => setExperienceLevel(e.target.value)}
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>Beginner</option>
                           <option>Intermediate</option>
@@ -800,7 +800,7 @@ export default function SquashPostJobPage() {
                           onChange={(e) =>
                             setTesterTierFilter(e.target.value as 'All' | 'Verified+' | 'Pro+' | 'Elite Only')
                           }
-                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-green-500"
+                          className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-700 outline-none transition focus:border-[#e63946]"
                         >
                           <option>All</option>
                           <option>Verified+</option>
@@ -845,7 +845,7 @@ export default function SquashPostJobPage() {
                       value={additionalInfo}
                       onChange={(e) => setAdditionalInfo(e.target.value)}
                       placeholder="Specific features to focus on, areas of concern, items to avoid..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                     />
                     <div className="mt-2 text-right text-xs text-slate-400">{additionalInfo.length} / 500</div>
                   </div>
@@ -857,7 +857,7 @@ export default function SquashPostJobPage() {
                     <label
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={handleAttachmentDrop}
-                      className="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-green-400 hover:bg-green-50/40"
+                      className="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-[#e63946] hover:bg-rose-50/40"
                     >
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
                         <SlidersHorizontal className="h-6 w-6 text-slate-500" />
@@ -908,7 +908,7 @@ export default function SquashPostJobPage() {
                       type="checkbox"
                       checked={liveSessionEnabled}
                       onChange={(e) => setLiveSessionEnabled(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 accent-green-600"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 accent-[#e63946]"
                     />
                     <span className="text-sm text-slate-700">
                       <span className="font-semibold text-slate-900">Add Live Test Session - R2,000</span>
@@ -919,7 +919,7 @@ export default function SquashPostJobPage() {
                   </label>
 
                   {liveSessionEnabled ? (
-                    <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
+                    <div className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm leading-6 text-slate-700">
                       <div>You will receive a Zoom/Google Meet link 24 hours before your scheduled session.</div>
                       <div>1 tester - 60 minute session - Screen share included</div>
                       <div className="mt-4">
@@ -928,7 +928,7 @@ export default function SquashPostJobPage() {
                           type="datetime-local"
                           value={liveSessionAt}
                           onChange={(event) => setLiveSessionAt(event.target.value)}
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-green-500"
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
                         />
                       </div>
                     </div>
@@ -955,14 +955,14 @@ export default function SquashPostJobPage() {
                       <div className="mt-1 text-lg font-bold text-slate-900">{testerTierFilter}</div>
                       <div className="mt-1 text-sm text-slate-600">{ageRange}, {deviceType}, {experienceLevel}</div>
                     </div>
-                    <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
-                      <div className="text-sm font-semibold text-green-700">Total</div>
-                      <div className="mt-1 text-2xl font-black text-green-700">{hasSelectedTestType ? formatZar(total) : 'Select test type'}</div>
+                    <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+                      <div className="text-sm font-semibold text-[#e63946]">Total</div>
+                      <div className="mt-1 text-2xl font-black text-[#e63946]">{hasSelectedTestType ? formatZar(total) : 'Select test type'}</div>
                       <div className="mt-1 text-sm text-slate-600">{liveSessionEnabled ? 'Includes live session add-on' : hasSelectedTestType ? 'Job total only' : 'Choose a test type first'}</div>
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700">
+                  <div className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm leading-6 text-slate-700">
                     {paymentsEnabled
                       ? 'After payment is confirmed, this job becomes visible to matching testers. Saving as draft keeps it private.'
                       : 'This job will be saved privately as a draft. Online funding will be enabled before launch.'}
@@ -981,17 +981,17 @@ export default function SquashPostJobPage() {
                   </div>
 
                   {currentStep < steps.length - 1 ? (
-                    <button type="button" onClick={goNext} className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
+                    <button type="button" onClick={goNext} className="rounded-2xl bg-[#e63946] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828]">
                       Next: {steps[currentStep + 1]}
                     </button>
                   ) : (
-                    <button type="submit" disabled={submitting} className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300">
+                    <button type="submit" disabled={submitting} className="rounded-2xl bg-[#e63946] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828] disabled:cursor-not-allowed disabled:bg-slate-300">
                       {submitting ? 'Saving...' : paymentsEnabled ? 'Continue to Payment' : 'Save Job Draft'}
                     </button>
                   )}
                 </div>
                 {errorMessage ? <p className="text-sm font-semibold text-red-600">{errorMessage}</p> : null}
-                {feedbackMessage ? <p className="text-sm font-semibold text-green-700">{feedbackMessage}</p> : null}
+                {feedbackMessage ? <p className="text-sm font-semibold text-[#e63946]">{feedbackMessage}</p> : null}
               </div>
 
               <div className="space-y-6">
@@ -1030,9 +1030,9 @@ export default function SquashPostJobPage() {
                   <div className="my-5 border-t border-dashed border-slate-200" />
 
                   {hasSelectedTestType ? (
-                    <div className="mt-5 flex items-center justify-between rounded-2xl bg-green-50 px-4 py-4">
+                    <div className="mt-5 flex items-center justify-between rounded-2xl bg-rose-50 px-4 py-4">
                       <span className="text-lg font-bold text-slate-900">Total</span>
-                      <span className="text-2xl font-black text-green-700">{formatZar(total)}</span>
+                      <span className="text-2xl font-black text-[#e63946]">{formatZar(total)}</span>
                     </div>
                   ) : (
                     <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-500">
@@ -1041,23 +1041,23 @@ export default function SquashPostJobPage() {
                   )}
                 </section>
 
-                <section className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
-                  <div className="text-lg font-bold text-green-800">{paymentsEnabled ? 'Payment and review' : 'Beta job setup'}</div>
+                <section className="rounded-3xl border border-rose-100 bg-rose-50 p-6 shadow-sm">
+                  <div className="text-lg font-bold text-[#d62828]">{paymentsEnabled ? 'Payment and review' : 'Beta job setup'}</div>
                   <div className="mt-4 space-y-3 text-sm text-slate-700">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-green-700" />
+                      <Shield className="h-4 w-4 text-[#e63946]" />
                       <span>{paymentsEnabled ? 'Payment confirmation is required before the job becomes visible' : 'Jobs remain private drafts until funding is enabled'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-700" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       <span>Review tester submissions before approving them</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <RotateCcw className="h-4 w-4 text-green-700" />
+                      <RotateCcw className="h-4 w-4 text-[#e63946]" />
                       <span>Request revisions during submission review</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-green-700" />
+                      <Lock className="h-4 w-4 text-[#e63946]" />
                       <span>{paymentsEnabled ? 'Card details are entered on a hosted checkout page' : 'No payment will be requested in this beta environment'}</span>
                     </div>
                   </div>
@@ -1066,7 +1066,7 @@ export default function SquashPostJobPage() {
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="text-lg font-bold text-slate-900">Auto-calculated</div>
                   <div className="mt-4 text-sm text-slate-500">Total Amount</div>
-                  <div className="mt-2 text-4xl font-black text-green-700">{hasSelectedTestType ? formatZar(total) : 'Pending'}</div>
+                  <div className="mt-2 text-4xl font-black text-[#e63946]">{hasSelectedTestType ? formatZar(total) : 'Pending'}</div>
                   {testerTierFilter === 'Elite Only' ? (
                     <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                       Premium indicator: Elite tester tier selected.
@@ -1082,7 +1082,7 @@ export default function SquashPostJobPage() {
                         <div
                           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                             index === currentStep
-                              ? 'bg-green-600 text-white'
+                              ? 'bg-[#e63946] text-white'
                               : 'border border-slate-200 bg-slate-50 text-slate-600'
                           }`}
                         >

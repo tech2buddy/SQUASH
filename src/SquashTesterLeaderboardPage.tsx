@@ -33,7 +33,7 @@ function rankTone(rank: number) {
   if (rank === 1) return 'bg-amber-50 text-amber-600 ring-amber-100';
   if (rank === 2) return 'bg-slate-100 text-slate-600 ring-slate-200';
   if (rank === 3) return 'bg-orange-50 text-orange-600 ring-orange-100';
-  return 'bg-green-50 text-green-700 ring-green-100';
+  return 'bg-rose-50 text-[#e63946] ring-rose-100';
 }
 
 export default function SquashTesterLeaderboardPage() {
@@ -170,14 +170,14 @@ export default function SquashTesterLeaderboardPage() {
           <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-8 space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
               <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100/80 px-3.5 py-1 text-xs font-extrabold text-rose-800">
                   <Trophy className="h-3.5 w-3.5" /> Community Leaderboard
                 </span>
                 <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Tester Leaderboard</h1>
                 <p className="mt-1 max-w-2xl text-xs text-slate-500 sm:text-sm font-medium">A quality-first ranking system for testers who submit useful, approved reports and help developers ship better products.</p>
               </div>
               <div className="flex flex-wrap gap-2.5">
-                <a href="/tester-jobs" className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect">Find Tests</a>
+                <a href="/tester-jobs" className="squash-btn-primary">Find Tests</a>
                 <a href="/tester/level-benefits" className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect">Level Benefits</a>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function SquashTesterLeaderboardPage() {
 
               <div className="apple-bento-card p-6 flex flex-col justify-between">
                 <div className="flex items-start gap-3.5">
-                  <ShieldCheck className="mt-0.5 h-6 w-6 text-green-600 shrink-0" />
+                  <ShieldCheck className="mt-0.5 h-6 w-6 text-[#e63946] shrink-0" />
                   <div>
                     <h2 className="text-base font-bold text-slate-900">Quality-First Rankings</h2>
                     <p className="mt-1 text-xs leading-relaxed text-slate-600 font-medium">The leaderboard rewards reliable testers. Rankings use approved reports, developer ratings, evidence quality, and admin trust checks.</p>
@@ -232,7 +232,7 @@ export default function SquashTesterLeaderboardPage() {
                       <div className="grid grid-cols-3 gap-2 text-center w-full sm:w-auto sm:min-w-[280px]">
                         <div className="rounded-2xl bg-slate-50 px-2 py-2"><div className="text-[10px] font-bold text-slate-400">Tests</div><div className="text-xs font-extrabold text-slate-900">{row.approvedTests}</div></div>
                         <div className="rounded-2xl bg-slate-50 px-2 py-2"><div className="text-[10px] font-bold text-slate-400">Rating</div><div className="text-xs font-extrabold text-slate-900">{row.rating.toFixed(1)}</div></div>
-                        <div className="rounded-2xl bg-green-50 px-2 py-2"><div className="text-[10px] font-bold text-green-700">Score</div><div className="text-xs font-extrabold text-green-800">{row.score}</div></div>
+                        <div className="rounded-2xl bg-rose-50 px-2 py-2"><div className="text-[10px] font-bold text-[#e63946]">Score</div><div className="text-xs font-extrabold text-rose-800">{row.score}</div></div>
                       </div>
                     </div>
                   );
@@ -242,7 +242,7 @@ export default function SquashTesterLeaderboardPage() {
                     <Users className="mx-auto h-9 w-9 text-slate-300" />
                     <div className="mt-3 text-base font-bold text-slate-900">Leaderboard data is not live yet</div>
                     <p className="mx-auto mt-1.5 max-w-xl text-xs leading-relaxed text-slate-500 font-medium">Once enough real reports are approved, this page will rank testers using verified activity. For now, your own tier and quality score are shown above.</p>
-                    <a href="/tester-jobs" className="mt-4 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect">Complete more tests</a>
+                    <a href="/tester-jobs" className="squash-btn-primary mt-4">Complete more tests</a>
                   </div>
                 ) : null}
               </div>
@@ -264,4 +264,3 @@ export default function SquashTesterLeaderboardPage() {
     </div>
   );
 }
-

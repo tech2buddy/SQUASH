@@ -147,7 +147,7 @@ export default function SquashOnboardingPage() {
   const isDeveloper = targetRole === 'developer';
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ecfdf3_0%,#f8fafc_48%,#f8fafc_100%)] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff1f2_0%,#f8fafc_48%,#f8fafc_100%)] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
@@ -163,8 +163,8 @@ export default function SquashOnboardingPage() {
         {!isDeveloper ? <div className="mt-7"><TesterApplicationProgress current={1} /></div> : null}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-          <aside className="rounded-[30px] border border-green-100 bg-green-50 p-6 shadow-sm">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
+          <aside className="rounded-[30px] border border-rose-100 bg-rose-50 p-6 shadow-sm">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#e63946] ring-1 ring-rose-100">
               <ShieldCheck className="h-4 w-4" /> Quick setup
             </div>
             <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-900">
@@ -181,7 +181,7 @@ export default function SquashOnboardingPage() {
                 : ['Better job matching', 'SA-specific tester strengths', 'Payout preference ready']
               ).map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <CheckCircle2 className="h-4 w-4 text-[#e63946]" />
                   {item}
                 </div>
               ))}
@@ -190,7 +190,7 @@ export default function SquashOnboardingPage() {
 
           <main className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-100">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white ring-1 ring-black/10">
                 {isDeveloper ? <BriefcaseBusiness className="h-7 w-7" /> : <UserRound className="h-7 w-7" />}
               </div>
               <div>
@@ -295,7 +295,7 @@ export default function SquashOnboardingPage() {
                             onClick={() => setPayoutMethod(method.id as typeof payoutMethod)}
                             className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
                               payoutMethod === method.id
-                                ? 'border-green-300 bg-green-50 text-green-700'
+                                ? 'border-[#e63946] bg-rose-50 text-[#e63946]'
                                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                             }`}
                           >
@@ -322,7 +322,7 @@ export default function SquashOnboardingPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#e63946] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? 'Saving setup...' : isDeveloper ? 'Save and post first job' : 'Save and continue application'}
                     <ArrowRight className="h-4 w-4" />

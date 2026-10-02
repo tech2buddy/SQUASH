@@ -35,9 +35,9 @@ export function getTesterTier(testsCompleted: number, rating: number): TesterTie
     return {
       tier: 'verified',
       label: 'Verified',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
+      color: 'text-[#e63946]',
+      bg: 'bg-rose-50',
+      border: 'border-rose-100',
     };
   }
 

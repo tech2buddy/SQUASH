@@ -30,7 +30,7 @@ function formatBytes(bytes: number) {
 }
 
 function paymentBadge(status: string) {
-  if (status === 'succeeded') return { label: 'Paid', className: 'bg-green-100 text-green-800' };
+  if (status === 'succeeded') return { label: 'Paid', className: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/10' };
   if (status === 'pending' || status === 'creating') return { label: 'Awaiting payment', className: 'bg-amber-100 text-amber-800' };
   if (status === 'refunded') return { label: 'Refunded', className: 'bg-sky-100 text-sky-800' };
   return { label: 'Payment failed', className: 'bg-red-100 text-red-700' };
@@ -132,49 +132,76 @@ export default function SquashDeveloperJobDetailPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Link to="/developer/jobs" className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900">
-            <ArrowLeft className="h-4 w-4" /> Back to jobs
+    <div className="developer-page-shell space-y-6">
+      <section className="developer-ambient-hero developer-job-detail-hero relative flex flex-col gap-7 overflow-hidden rounded-[28px] border px-6 py-6 sm:px-8 sm:py-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <Link to="/developer/jobs" className="developer-ambient-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-transform duration-200 hover:-translate-y-0.5">
+            <span className="developer-ambient-eyebrow-icon grid h-6 w-6 place-items-center rounded-full">
+              <ArrowLeft className="h-3.5 w-3.5" />
+            </span>
+            Job portfolio
           </Link>
-          <div className="flex items-center gap-3">
-            {job.logoUrl ? <img src={job.logoUrl} alt="" className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" /> : null}
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">{job.title}</h1>
-              <p className="mt-1 text-sm font-semibold text-slate-500">{category.name} · {job.platform} · {testType.label}</p>
+          <div className="flex min-w-0 items-center gap-4">
+            {job.logoUrl ? (
+              <span className="developer-job-hero-logo shrink-0">
+                <img src={job.logoUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" />
+              </span>
+            ) : (
+              <span className="developer-job-hero-logo grid shrink-0 place-items-center text-xl font-extrabold">
+                {job.title.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <div className="min-w-0">
+              <div className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#ffc8c3]">Testing workspace</div>
+              <h1 className="truncate text-3xl font-extrabold tracking-apple-tight sm:text-4xl">{job.title}</h1>
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold sm:text-sm">
+                <span>{category.name}</span>
+                <span aria-hidden="true">·</span>
+                <span>{job.platform}</span>
+                <span aria-hidden="true">·</span>
+                <span>{testType.label}</span>
+              </p>
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-green-700">{job.status}</span>
+        <div className="flex flex-wrap items-stretch gap-3 lg:justify-end">
+          <div className="developer-ambient-status-card rounded-2xl border px-4 py-3">
+            <div className="developer-ambient-status-label text-[9px] font-extrabold uppercase tracking-[0.15em]">Job status</div>
+            <div className="developer-ambient-status-value mt-1.5 flex items-center gap-2 text-sm font-extrabold capitalize">
+              <span className="h-2 w-2 rounded-full bg-[#5de6ab] shadow-[0_0_12px_rgba(93,230,171,0.7)]" />
+              {job.status}
+            </div>
+          </div>
           {badge ? (
-            <span className={`rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${badge.className}`}>{badge.label}</span>
+            <div className="developer-ambient-status-card rounded-2xl border px-4 py-3">
+              <div className="developer-ambient-status-label text-[9px] font-extrabold uppercase tracking-[0.15em]">Payment</div>
+              <div className="developer-ambient-status-value mt-1.5 text-sm font-extrabold">{badge.label}</div>
+            </div>
           ) : null}
           {job.status === 'draft' ? (
-            <Link to={`/post-job?job=${job.id}`} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">Continue setup</Link>
+            <Link to={`/post-job?job=${job.id}`} className="squash-btn-primary self-center">Continue setup</Link>
           ) : null}
         </div>
-      </div>
+      </section>
 
       {job.status === 'draft' ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs font-semibold text-amber-900">
           This draft is private and testers cannot see it. It goes live once payment is confirmed.
         </div>
       ) : null}
 
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={stat.label} className="apple-interactive-card p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-600">{stat.label}</div>
-                  <div className="mt-1.5 text-2xl font-black text-slate-900">{stat.value}</div>
-                  <div className="mt-1 truncate text-xs text-slate-500">{stat.hint}</div>
+                  <div className="text-xs font-bold text-[#86868b]">{stat.label}</div>
+                  <div className="mt-1.5 text-2xl font-extrabold text-[#1d1d1f] tracking-tight">{stat.value}</div>
+                  <div className="mt-1 truncate text-[11px] text-[#86868b] font-medium">{stat.hint}</div>
                 </div>
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-green-50 text-green-700">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#1d1d1f] text-white shadow-2xs">
                   <Icon className="h-4 w-4" />
                 </span>
               </div>
@@ -184,93 +211,93 @@ export default function SquashDeveloperJobDetailPage() {
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="space-y-5 apple-interactive-card p-6">
           <div>
-            <h2 className="text-lg font-black text-slate-900">Job overview</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{job.description || 'No description provided.'}</p>
+            <h2 className="text-base font-extrabold text-[#1d1d1f] tracking-tight">Job overview</h2>
+            <p className="mt-2 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-[#86868b]">{job.description || 'No description provided.'}</p>
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900">Testing tasks</h3>
+          <div className="border-t border-black/[0.06] pt-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1d1d1f]">Testing tasks</h3>
             {tasks.length ? (
-              <ol className="mt-3 space-y-2 text-sm text-slate-600">{tasks.map((task, index) => <li key={`${task}-${index}`}>{index + 1}. {task}</li>)}</ol>
-            ) : <p className="mt-2 text-sm text-slate-500">No tasks added.</p>}
+              <ol className="mt-2.5 space-y-2 text-xs sm:text-sm text-[#1d1d1f] font-medium">{tasks.map((task, index) => <li key={`${task}-${index}`}>{index + 1}. {task}</li>)}</ol>
+            ) : <p className="mt-2 text-xs text-[#86868b]">No tasks added.</p>}
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900">Focus areas</h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{job.focusAreas || 'No focus areas added.'}</p>
+          <div className="border-t border-black/[0.06] pt-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1d1d1f]">Focus areas</h3>
+            <p className="mt-2 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-[#86868b]">{job.focusAreas || 'No focus areas added.'}</p>
           </div>
           {job.additionalInfo ? (
-            <div>
-              <h3 className="font-bold text-slate-900">Additional information</h3>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{job.additionalInfo}</p>
+            <div className="border-t border-black/[0.06] pt-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1d1d1f]">Additional information</h3>
+              <p className="mt-2 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-[#86868b]">{job.additionalInfo}</p>
             </div>
           ) : null}
-          <div>
-            <h3 className="font-bold text-slate-900">Attachments</h3>
-            <p className="mt-1 text-xs text-slate-500">Only testers accepted onto this job can open these.</p>
-            {attachmentError ? <p className="mt-2 text-sm font-semibold text-red-600">{attachmentError}</p> : attachments.length ? (
+          <div className="border-t border-black/[0.06] pt-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1d1d1f]">Attachments</h3>
+            <p className="mt-1 text-[11px] text-[#86868b]">Only testers accepted onto this job can open these.</p>
+            {attachmentError ? <p className="mt-2 text-xs font-bold text-red-600">{attachmentError}</p> : attachments.length ? (
               <div className="mt-3 space-y-2">{attachments.map((file) => (
-                <a key={file.id} href={file.downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3 text-sm hover:bg-slate-50">
-                  <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-700"><FileText className="h-4 w-4 shrink-0" /><span className="truncate">{file.fileName}</span></span>
-                  <span className="ml-3 shrink-0 text-xs text-slate-400">{formatBytes(file.fileSize)}</span>
+                <a key={file.id} href={file.downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl border border-black/[0.06] bg-[#f5f5f7]/60 px-3.5 py-3 text-xs font-semibold text-[#1d1d1f] hover:bg-[#f5f5f7] transition">
+                  <span className="flex min-w-0 items-center gap-2.5"><FileText className="h-4 w-4 shrink-0 text-[#e63946]" /><span className="truncate">{file.fileName}</span></span>
+                  <span className="ml-3 shrink-0 text-[11px] text-[#86868b] font-normal">{formatBytes(file.fileSize)}</span>
                 </a>
               ))}</div>
-            ) : <p className="mt-2 text-sm text-slate-500">No attachments added.</p>}
+            ) : <p className="mt-2 text-xs text-[#86868b]">No attachments added.</p>}
           </div>
         </section>
 
         <aside className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-black text-slate-900">Job details</h2>
-            <div className="mt-5 space-y-4 text-sm">
-              <div className="flex items-center gap-3"><Users className="h-4 w-4 shrink-0 text-green-600" /><span>{job.testersNeeded} testers · {testType.label}</span></div>
-              <div className="flex items-center gap-3"><CalendarDays className="h-4 w-4 shrink-0 text-green-600" /><span>Created {new Date(job.createdAt).toLocaleDateString('en-ZA')}</span></div>
+          <div className="apple-interactive-card p-6">
+            <h2 className="text-base font-extrabold text-[#1d1d1f] tracking-tight">Job details</h2>
+            <div className="mt-4 space-y-3.5 text-xs sm:text-sm font-semibold">
+              <div className="flex items-center gap-3 text-[#1d1d1f]"><Users className="h-4 w-4 shrink-0 text-[#e63946]" /><span>{job.testersNeeded} testers · {testType.label}</span></div>
+              <div className="flex items-center gap-3 text-[#1d1d1f]"><CalendarDays className="h-4 w-4 shrink-0 text-[#e63946]" /><span>Created {new Date(job.createdAt).toLocaleDateString('en-ZA')}</span></div>
               {payment?.paidAt ? (
-                <div className="flex items-center gap-3"><CreditCard className="h-4 w-4 shrink-0 text-green-600" /><span>Paid {new Date(payment.paidAt).toLocaleDateString('en-ZA')}</span></div>
+                <div className="flex items-center gap-3 text-[#1d1d1f]"><CreditCard className="h-4 w-4 shrink-0 text-[#e63946]" /><span>Paid {new Date(payment.paidAt).toLocaleDateString('en-ZA')}</span></div>
               ) : null}
               {job.appUrl ? (
-                <a href={job.appUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 font-semibold text-green-700 hover:underline">
+                <a href={job.appUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 font-bold text-[#e63946] hover:underline pt-1">
                   <Globe2 className="h-4 w-4 shrink-0" /> <span className="truncate">Open the app being tested</span>
                 </a>
               ) : null}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-semibold text-slate-500">Job total</div>
-            <div className="mt-1 text-3xl font-black text-slate-900">R{job.totalAmountZar.toLocaleString('en-ZA')}</div>
-            <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
-              <div className="flex items-center justify-between text-slate-600">
+          <div className="apple-interactive-card p-6">
+            <div className="text-xs font-bold text-[#86868b] uppercase tracking-wider">Job total</div>
+            <div className="mt-1 text-3xl font-extrabold text-[#1d1d1f] tracking-tight">R{job.totalAmountZar.toLocaleString('en-ZA')}</div>
+            <div className="mt-4 space-y-2 border-t border-black/[0.06] pt-4 text-xs font-medium">
+              <div className="flex items-center justify-between text-[#86868b]">
                 <span>Rate per tester</span>
-                <span className="font-semibold text-slate-900">R{ratePerTester.toLocaleString('en-ZA')}</span>
+                <span className="font-bold text-[#1d1d1f]">R{ratePerTester.toLocaleString('en-ZA')}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-[#86868b]">
                 <span>Testers</span>
-                <span className="font-semibold text-slate-900">{job.testersNeeded}</span>
+                <span className="font-bold text-[#1d1d1f]">{job.testersNeeded}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-[#86868b]">
                 <span>Each tester earns</span>
-                <span className="font-semibold text-slate-900">R{payoutPerTester.toLocaleString('en-ZA')}</span>
+                <span className="font-bold text-[#1d1d1f]">R{payoutPerTester.toLocaleString('en-ZA')}</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-black text-slate-900">Manage</h2>
-            <div className="mt-4 space-y-2">
-              <Link to="/developer/applications" className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <div className="apple-interactive-card p-6">
+            <h2 className="text-base font-extrabold text-[#1d1d1f] tracking-tight">Manage</h2>
+            <div className="mt-3.5 space-y-2 text-xs font-semibold">
+              <Link to="/developer/applications" className="flex items-center justify-between rounded-full border border-black/10 bg-[#f5f5f7] px-4 py-2.5 text-[#1d1d1f] hover:bg-slate-200 transition">
                 Review applicants
                 {activity?.pending ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{activity.pending}</span>
+                  <span className="rounded-full bg-rose-50 border border-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-[#e63946]">{activity.pending}</span>
                 ) : null}
               </Link>
-              <Link to="/developer/reports" className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <Link to="/developer/reports" className="flex items-center justify-between rounded-full border border-black/10 bg-[#f5f5f7] px-4 py-2.5 text-[#1d1d1f] hover:bg-slate-200 transition">
                 Review reports
                 {activity?.submitted ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{activity.submitted}</span>
+                  <span className="rounded-full bg-rose-50 border border-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-[#e63946]">{activity.submitted}</span>
                 ) : null}
               </Link>
-              <Link to="/billing" className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <Link to="/billing" className="flex items-center justify-between rounded-full border border-black/10 bg-[#f5f5f7] px-4 py-2.5 text-[#1d1d1f] hover:bg-slate-200 transition">
                 Billing
               </Link>
             </div>

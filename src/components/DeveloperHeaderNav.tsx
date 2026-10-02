@@ -8,7 +8,6 @@ import {
   LogOut,
   RefreshCw,
   Settings,
-  UserCircle2,
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -131,7 +130,7 @@ export default function DeveloperHeaderNav() {
   };
 
   return (
-    <div ref={containerRef} className="relative flex items-center gap-3 sm:gap-4">
+    <div ref={containerRef} className="relative flex items-center gap-2">
       {/* Notification Bell Icon */}
       <button
         type="button"
@@ -139,18 +138,16 @@ export default function DeveloperHeaderNav() {
           setNotificationsOpen((prev) => !prev);
           setProfileOpen(false);
         }}
-        className={`relative rounded-full border p-2.5 transition ${
+        className={`relative flex h-[32px] w-[32px] items-center justify-center rounded-md border text-[#181817] transition ${
           notificationsOpen
-            ? 'border-green-600 bg-green-50 text-green-700'
-            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            ? 'border-[#DADAD7] bg-[#EEEEEC]'
+            : 'border-[#E7E7E5] bg-[#FFFFFF] hover:bg-[#F7F7F6]'
         }`}
         aria-label="Toggle notifications"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-3.5 w-3.5" />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-            {unreadCount}
-          </span>
+          <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-[#16A34A]" />
         )}
       </button>
 
@@ -161,39 +158,33 @@ export default function DeveloperHeaderNav() {
           setProfileOpen((prev) => !prev);
           setNotificationsOpen(false);
         }}
-        className={`flex items-center gap-3 rounded-2xl border px-3 py-2 text-left shadow-sm transition ${
+        className={`flex h-[32px] items-center gap-2 rounded-md border px-2 text-left transition ${
           profileOpen
-            ? 'border-green-600 bg-green-50/60 ring-2 ring-green-100'
-            : 'border-slate-200 bg-white hover:bg-slate-50'
+            ? 'border-[#DADAD7] bg-[#EEEEEC]'
+            : 'border-[#E7E7E5] bg-[#FFFFFF] hover:bg-[#F7F7F6]'
         }`}
         aria-label="User account menu"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold">
-          <UserCircle2 className="h-7 w-7" />
+        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1D1D1B] text-[10px] font-medium text-white">
+          {developerName.charAt(0).toUpperCase()}
         </div>
-        <div className="hidden sm:block">
-          <div className="text-sm font-bold text-slate-900 leading-tight">{developerName}</div>
-          {/* Role prefix so a multi-role account knows which workspace it's
-              in, plus email: two accounts can share a display name, and
-              without the email there is nothing on screen telling them apart. */}
-          <div className="max-w-[180px] truncate text-xs text-slate-500">Developer · {session?.email || 'developer@squash.co.za'}</div>
-        </div>
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${profileOpen ? 'rotate-180 text-green-700' : ''}`} />
+        <span className="hidden max-w-[120px] truncate text-xs font-medium text-[#181817] sm:inline-block">{developerName}</span>
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${profileOpen ? 'rotate-180' : 'text-[#92928E]'}`} />
       </button>
 
       {/* Notifications Dropdown */}
       {notificationsOpen && (
-        <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 max-w-[calc(100vw-1.5rem)] rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 px-1">
+        <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 max-w-[calc(100vw-1.5rem)] rounded-3xl border border-black/[0.06] bg-white p-5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.06] px-1">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Developer Notifications</h3>
-              <p className="text-xs text-slate-500">{unreadCount} unread alert{unreadCount === 1 ? '' : 's'}</p>
+              <h3 className="text-sm font-extrabold text-[#1d1d1f] tracking-tight">Notifications</h3>
+              <p className="text-xs text-[#86868b]">{unreadCount} unread alert{unreadCount === 1 ? '' : 's'}</p>
             </div>
             {unreadCount > 0 ? (
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#e63946] hover:underline"
               >
                 <Check className="h-3.5 w-3.5" />
                 Mark all read
@@ -202,7 +193,7 @@ export default function DeveloperHeaderNav() {
               <Link
                 to="/developer/activity"
                 onClick={() => setNotificationsOpen(false)}
-                className="text-xs font-semibold text-green-700 hover:underline"
+                className="text-xs font-semibold text-[#e63946] hover:underline"
               >
                 All Activity
               </Link>
@@ -210,36 +201,36 @@ export default function DeveloperHeaderNav() {
           </div>
 
           {/* Desktop Push Permission Banner */}
-          <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-100 p-2.5 text-xs">
+          <div className="mt-3 rounded-2xl bg-[#f5f5f7] border border-black/[0.06] p-3 text-xs">
             {pushPermission === 'granted' ? (
-              <div className="flex items-center justify-between text-green-700 font-semibold px-1">
+              <div className="flex items-center justify-between text-[#e63946] font-semibold px-1">
                 <span className="flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e63946] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e63946]"></span>
                   </span>
                   Real-time push alerts enabled
                 </span>
-                <Zap className="h-3.5 w-3.5 text-green-600" />
+                <Zap className="h-3.5 w-3.5 text-[#e63946]" />
               </div>
             ) : (
               <button
                 type="button"
                 onClick={handleEnablePush}
-                className="w-full flex items-center justify-between rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 transition shadow-sm"
+                className="w-full flex items-center justify-between rounded-xl bg-[#e63946] hover:bg-[#d62828] text-white font-semibold px-3.5 py-2 transition shadow-2xs active:scale-98"
               >
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 text-xs">
                   <Zap className="h-3.5 w-3.5 fill-current" />
                   Enable Desktop Push Alerts
                 </span>
-                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">1-Click</span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">1-Click</span>
               </button>
             )}
           </div>
 
           <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-xs font-semibold text-slate-500">
+              <div className="p-6 text-center text-xs font-normal text-[#86868b] leading-relaxed">
                 No notifications yet. You will be alerted when testers apply or submit reports.
               </div>
             ) : (
@@ -250,32 +241,32 @@ export default function DeveloperHeaderNav() {
                   onClick={() => handleNotificationClick(item)}
                   className={`w-full block rounded-2xl p-3 text-left transition border ${
                     item.status === 'unread'
-                      ? 'bg-green-50/40 border-green-200/80'
-                      : 'bg-white hover:bg-slate-50 border-slate-100/80'
+                      ? 'bg-rose-50/50 border-rose-200/80'
+                      : 'bg-white hover:bg-[#f5f5f7] border-black/[0.06]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       {item.status === 'unread' && (
-                        <span className="h-2 w-2 rounded-full bg-green-600" />
+                        <span className="h-2 w-2 rounded-full bg-[#e63946]" />
                       )}
-                      <span className="text-xs font-bold text-slate-900">{item.title}</span>
+                      <span className="text-xs font-extrabold text-[#1d1d1f]">{item.title}</span>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-400">
+                    <span className="text-[10px] font-semibold text-[#86868b]">
                       {formatRelativeTime(item.createdAt)}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs leading-4 text-slate-600 line-clamp-2">{item.body}</p>
+                  <p className="mt-1 text-xs leading-4 text-[#86868b] line-clamp-2">{item.body}</p>
                 </button>
               ))
             )}
           </div>
 
-          <div className="mt-3 pt-2 border-t border-slate-100 text-center">
+          <div className="mt-3 pt-2 border-t border-black/[0.06] text-center">
             <Link
               to="/developer/applications"
               onClick={() => setNotificationsOpen(false)}
-              className="block text-xs font-bold text-green-700 hover:underline py-1"
+              className="block text-xs font-semibold text-[#e63946] hover:underline py-1"
             >
               Review Tester Submissions →
             </Link>
@@ -285,66 +276,66 @@ export default function DeveloperHeaderNav() {
 
         {/* Profile Dropdown Menu */}
         {profileOpen && (
-          <div className="absolute right-0 top-full mt-3 w-72 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="absolute right-0 top-full mt-3 w-72 rounded-3xl border border-black/[0.06] bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Header info */}
-            <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
-              <div className="text-sm font-bold text-slate-900">{developerName}</div>
-              <div className="text-xs text-slate-500 truncate">{developerEmail}</div>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold text-green-800">
+            <div className="rounded-2xl bg-[#f5f5f7] p-3.5 border border-black/[0.06]">
+              <div className="text-sm font-extrabold text-[#1d1d1f]">{developerName}</div>
+              <div className="text-xs text-[#86868b] truncate">{developerEmail}</div>
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-0.5 text-[10px] font-extrabold text-[#e63946]">
                 <Zap className="h-3 w-3" />
                 Developer Workspace
               </div>
             </div>
 
             {/* Links */}
-            <div className="mt-3 space-y-1 text-sm font-semibold text-slate-700">
+            <div className="mt-3 space-y-1 text-xs font-semibold text-[#1d1d1f]">
               <Link
                 to="/dashboard"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-slate-50 hover:text-slate-900 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[#f5f5f7] transition"
               >
-                <LayoutDashboard className="h-4 w-4 text-slate-400" />
+                <LayoutDashboard className="h-4 w-4 text-[#86868b]" />
                 Developer Dashboard
               </Link>
               <Link
                 to="/choose-workspace"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-slate-50 hover:text-slate-900 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[#f5f5f7] transition"
               >
-                <RefreshCw className="h-4 w-4 text-slate-400" />
-                Switch / Choose Workspace
+                <RefreshCw className="h-4 w-4 text-[#86868b]" />
+                Switch Workspace
               </Link>
               <Link
                 to="/billing"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-slate-50 hover:text-slate-900 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[#f5f5f7] transition"
               >
-                <CreditCard className="h-4 w-4 text-slate-400" />
+                <CreditCard className="h-4 w-4 text-[#86868b]" />
                 Billing & Payment Setup
               </Link>
               <Link
                 to="/developer/applications"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-slate-50 hover:text-slate-900 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[#f5f5f7] transition"
               >
-                <FileText className="h-4 w-4 text-slate-400" />
+                <FileText className="h-4 w-4 text-[#86868b]" />
                 Tester Submissions & Reports
               </Link>
               <Link
                 to="/developer/activity"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-slate-50 hover:text-slate-900 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[#f5f5f7] transition"
               >
-                <Settings className="h-4 w-4 text-slate-400" />
+                <Settings className="h-4 w-4 text-[#86868b]" />
                 Activity & Settings
               </Link>
             </div>
 
-            <div className="mt-3 pt-2 border-t border-slate-100">
+            <div className="mt-3 pt-2 border-t border-black/[0.06]">
               <Link
                 to="/logout"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
               >
                 <LogOut className="h-4 w-4 text-red-500" />
                 Sign Out

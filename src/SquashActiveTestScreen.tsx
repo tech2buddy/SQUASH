@@ -493,7 +493,7 @@ export default function SquashActiveTestScreen() {
   if (loadingAssignment) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-2xs">
-        <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent mb-3" />
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#e63946] border-t-transparent mb-3" />
         <p className="text-sm font-bold text-slate-800">Loading test lab environment...</p>
         <p className="text-xs text-slate-500 mt-1">Preparing test brief, tasks, and environment metrics</p>
       </div>
@@ -527,7 +527,7 @@ export default function SquashActiveTestScreen() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Left: Job Logo & Title & Metadata Badges */}
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-white shadow-xs overflow-hidden">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] font-bold text-white shadow-xs overflow-hidden">
               {assignment?.jobLogoUrl ? (
                 <img src={assignment.jobLogoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -543,16 +543,16 @@ export default function SquashActiveTestScreen() {
               </h1>
 
               <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-slate-500">
-                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-100">
+                <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-[#e63946] border border-rose-100">
                   Test in progress
                 </span>
                 <span className="text-slate-300">|</span>
                 <span>
-                  Payout <strong className="ml-0.5 font-bold text-emerald-600">R{assignmentPayout}</strong>
+                  Payout <strong className="ml-0.5 font-bold text-[#e63946]">R{assignmentPayout}</strong>
                 </span>
                 <span className="text-slate-300">|</span>
                 <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-                  <Calendar className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <Calendar className="h-3.5 w-3.5 text-[#e63946] shrink-0" />
                   {liveTime || '28 Jul 2026, 22:07:53'}
                 </span>
               </div>
@@ -586,7 +586,7 @@ export default function SquashActiveTestScreen() {
                 {/* Test Link */}
                 <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
                   <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
-                    <Link2 className="h-3.5 w-3.5 text-blue-500" /> Test link
+                    <Link2 className="h-3.5 w-3.5 text-[#e63946]" /> Test link
                   </span>
                   {assignment?.jobAppUrl ? (
                     <div className="flex items-center justify-between gap-2 min-w-0">
@@ -594,7 +594,7 @@ export default function SquashActiveTestScreen() {
                         href={assignment.jobAppUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-bold text-blue-600 hover:underline truncate"
+                        className="font-bold text-[#e63946] hover:underline truncate"
                       >
                         {assignment.jobAppUrl}
                       </a>
@@ -615,7 +615,7 @@ export default function SquashActiveTestScreen() {
                 {/* Required Environment */}
                 <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 flex flex-col justify-between">
                   <span className="font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
-                    <Monitor className="h-3.5 w-3.5 text-indigo-500" /> Required environment
+                    <Monitor className="h-3.5 w-3.5 text-[#1d1d1f]" /> Required environment
                   </span>
                   <p className="text-slate-800 font-semibold leading-relaxed">
                     {assignment?.jobBrief?.requiredEnvironment || assignment?.jobPlatform || 'Browser'}
@@ -661,53 +661,53 @@ export default function SquashActiveTestScreen() {
                   return (
                     <div
                       key={task + index}
-                      className={`rounded-xl border transition-all ${
-                        isExpanded ? 'border-blue-200 bg-white shadow-xs' : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                      className={`apple-interactive-card overflow-hidden transition-all ${
+                        isExpanded ? 'ring-1 ring-[#e63946]/30' : ''
                       }`}
                     >
                       {/* Accordion Header */}
                       <button
                         type="button"
                         onClick={() => setExpandedTaskIndex(isExpanded ? -1 : index)}
-                        className="flex w-full items-center gap-2.5 p-3 text-left"
+                        className="flex w-full items-center gap-2.5 p-3.5 text-left"
                       >
                         {/* Number Circle or Check */}
                         <span
-                          className={`flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
                             taskState[index]
-                              ? 'bg-emerald-500 text-white'
+                              ? 'bg-[#1d1d1f] text-white shadow-2xs'
                               : isExpanded
-                              ? 'border-2 border-blue-500 text-blue-600 font-extrabold'
-                              : 'border border-slate-300 bg-white text-slate-600'
+                              ? 'border-2 border-[#e63946] text-[#e63946] font-extrabold'
+                              : 'border border-black/20 bg-white text-[#1d1d1f]'
                           }`}
                         >
                           {taskState[index] ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}
                         </span>
 
                         {/* Task Title */}
-                        <span className="min-w-0 flex-1 text-xs font-bold text-slate-800 uppercase tracking-tight">
+                        <span className="min-w-0 flex-1 text-xs font-extrabold text-[#1d1d1f] tracking-tight">
                           {task}
                         </span>
 
                         {/* Status Badge */}
                         <div className="flex items-center gap-2">
                           {status === 'pass' || status === 'completed' || taskState[index] ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200/60">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[9px] font-extrabold text-[#e63946] border border-rose-100">
                               <CheckCircle2 className="h-3 w-3" /> Done
                             </span>
                           ) : isExpanded ? (
-                            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-600">
-                              In progress
+                            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[9px] font-extrabold text-[#e63946] border border-rose-100">
+                              In Progress
                             </span>
                           ) : (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                            <span className="rounded-full bg-[#f5f5f7] px-2.5 py-0.5 text-[9px] font-semibold text-[#86868b] border border-black/[0.04]">
                               Pending
                             </span>
                           )}
 
                           <ChevronDown
-                            className={`h-4 w-4 text-slate-400 transition-transform ${
-                              isExpanded ? 'rotate-180 text-slate-600' : ''
+                            className={`h-4 w-4 text-[#86868b] transition-transform duration-200 ${
+                              isExpanded ? 'rotate-180 text-[#1d1d1f]' : ''
                             }`}
                           />
                         </div>
@@ -729,19 +729,19 @@ export default function SquashActiveTestScreen() {
                               ) : (
                                 <ol className="space-y-1 text-xs text-slate-700 font-medium">
                                   <li className="flex items-start gap-1.5">
-                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white mt-0.5">1</span>
+                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-[9px] font-bold text-white mt-0.5">1</span>
                                     <span>Navigate to the Billing page.</span>
                                   </li>
                                   <li className="flex items-start gap-2">
-                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white mt-0.5">2</span>
+                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-[9px] font-bold text-white mt-0.5">2</span>
                                     <span>Click "Add payment method".</span>
                                   </li>
                                   <li className="flex items-start gap-2">
-                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white mt-0.5">3</span>
+                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-[9px] font-bold text-white mt-0.5">3</span>
                                     <span>Enter valid card details.</span>
                                   </li>
                                   <li className="flex items-start gap-2">
-                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white mt-0.5">4</span>
+                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-[9px] font-bold text-white mt-0.5">4</span>
                                     <span>Click "Save card".</span>
                                   </li>
                                 </ol>
@@ -766,8 +766,8 @@ export default function SquashActiveTestScreen() {
                                   onClick={() => void recordTaskOutcome(index, 'pass')}
                                   className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-bold transition-all ${
                                     result?.outcome === 'pass' || (taskState[index] && result?.outcome !== 'fail' && result?.outcome !== 'blocked')
-                                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
-                                      : 'border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50/50'
+                                      ? 'border-[#f5f5f7] bg-[#f5f5f7] text-[#1d1d1f] ring-2 ring-black/10'
+                                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                                   }`}
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" /> PASS
@@ -866,15 +866,15 @@ export default function SquashActiveTestScreen() {
               </div>
             </section>
 
-            {/* Logged Bugs Card — directly under Test Tasks */}
+                        {/* Logged Bugs Card — directly under Test Tasks */}
             {savedBugs.length > 0 ? (
               <section className="apple-bento-card p-4">
                 <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <Bug className="h-4 w-4 text-emerald-600" />
+                    <Bug className="h-4 w-4 text-[#e63946]" />
                     <h2>Logged Bugs ({savedBugs.length})</h2>
                   </div>
-                  <span className="text-[11px] font-semibold text-emerald-600">Saved to session</span>
+                  <span className="text-[11px] font-semibold text-[#e63946]">Saved to session</span>
                 </div>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -885,7 +885,7 @@ export default function SquashActiveTestScreen() {
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                           bug.severity === 'Critical' ? 'bg-rose-100 text-rose-700' :
                           bug.severity === 'High' ? 'bg-orange-100 text-orange-700' :
-                          bug.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                          bug.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-[#f5f5f7] text-[#1d1d1f]'
                         }`}>
                           {bug.severity}
                         </span>
@@ -906,7 +906,7 @@ export default function SquashActiveTestScreen() {
             <section className="apple-bento-card p-4">
               <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-                  <Camera className="h-4 w-4 text-blue-600" />
+                  <Camera className="h-4 w-4 text-[#e63946]" />
                   <h2>Evidence for Task {expandedTaskIndex >= 0 ? expandedTaskIndex + 1 : 1}</h2>
                 </div>
                 <span className="text-[11px] font-semibold text-slate-400">
@@ -925,7 +925,7 @@ export default function SquashActiveTestScreen() {
               {/* Dotted Upload Drop Area */}
               <div
                 onClick={() => evidenceInputRef.current?.click()}
-                className="cursor-pointer flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 text-center transition hover:border-emerald-400 hover:bg-emerald-50/20"
+                className="cursor-pointer flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 text-center transition hover:border-rose-300 hover:bg-rose-50/20"
               >
                 {evidencePreviewUrl || recordedVideoUrl ? (
                   <div className="space-y-2 w-full">
@@ -951,7 +951,7 @@ export default function SquashActiveTestScreen() {
                 ) : (
                   <div>
                     <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-2xs text-slate-400 mb-1.5">
-                      <Camera className="h-4 w-4 text-emerald-600" />
+                      <Camera className="h-4 w-4 text-[#e63946]" />
                     </div>
                     <p className="text-xs font-bold text-slate-800">Click to upload screenshot or evidence</p>
                     <p className="mt-0.5 text-[11px] text-slate-500">Supports PNG, JPG, WEBP, MP4</p>
@@ -1011,7 +1011,7 @@ export default function SquashActiveTestScreen() {
                     value={bugTitle}
                     onChange={(event) => setBugTitle(event.target.value)}
                     placeholder="Short, clear summary of the issue"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-[#e63946] focus:ring-1 focus:ring-rose-200 transition"
                   />
                 </div>
 
@@ -1025,7 +1025,7 @@ export default function SquashActiveTestScreen() {
                     value={bugSteps}
                     onChange={(event) => setBugSteps(event.target.value)}
                     placeholder="List the exact steps to reproduce the issue"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-[#e63946] focus:ring-1 focus:ring-rose-200 transition"
                   />
                 </div>
 
@@ -1040,7 +1040,7 @@ export default function SquashActiveTestScreen() {
                       value={bugExpected}
                       onChange={(event) => setBugExpected(event.target.value)}
                       placeholder="What should have happened?"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-[#e63946] focus:ring-1 focus:ring-rose-200 transition"
                     />
                   </div>
                   <div>
@@ -1052,7 +1052,7 @@ export default function SquashActiveTestScreen() {
                       value={bugActual}
                       onChange={(event) => setBugActual(event.target.value)}
                       placeholder="What actually happened?"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-[#e63946] focus:ring-1 focus:ring-rose-200 transition"
                     />
                   </div>
                 </div>
@@ -1066,7 +1066,7 @@ export default function SquashActiveTestScreen() {
                     <select
                       value={severity}
                       onChange={(event) => setSeverity(event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#e63946]"
                     >
                       <option value="Critical">🔴 Critical</option>
                       <option value="High">🟠 High</option>
@@ -1082,7 +1082,7 @@ export default function SquashActiveTestScreen() {
                     <select
                       value={bugFrequency}
                       onChange={(event) => setBugFrequency(event.target.value as 'once' | 'sometimes' | 'every_time')}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#e63946]"
                     >
                       <option value="every_time">Every time</option>
                       <option value="sometimes">Sometimes</option>
@@ -1098,7 +1098,7 @@ export default function SquashActiveTestScreen() {
                 >
                   Save Bug Report
                 </button>
-                {bugNotice ? <p className="text-xs font-semibold text-emerald-600 text-center">{bugNotice}</p> : null}
+                {bugNotice ? <p className="text-xs font-semibold text-slate-700 text-center">{bugNotice}</p> : null}
               </div>
             </section>
 
@@ -1151,7 +1151,7 @@ export default function SquashActiveTestScreen() {
             </span>
             <div className="h-2 flex-1 rounded-full bg-slate-100 overflow-hidden border border-slate-200/50">
               <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                className="h-full rounded-full bg-[#e63946] transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -1177,7 +1177,7 @@ export default function SquashActiveTestScreen() {
             <button
               type="button"
               onClick={openReviewModal}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4.5 py-2 text-xs font-bold text-white shadow-sm transition"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-[#e63946] hover:bg-[#d62828] px-4.5 py-2 text-xs font-bold text-white shadow-sm transition"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -1186,7 +1186,7 @@ export default function SquashActiveTestScreen() {
             </button>
           </div>
         </div>
-        {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-emerald-600 text-center">{progressNotice}</p> : null}
+        {progressNotice ? <p className="mt-1.5 text-xs font-semibold text-slate-700 text-center">{progressNotice}</p> : null}
       </footer>
 
       {/* Review & Executive Summary Submission Modal */}
@@ -1195,7 +1195,7 @@ export default function SquashActiveTestScreen() {
           <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-[#e63946] border border-rose-100">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
                 <div>
@@ -1224,7 +1224,7 @@ export default function SquashActiveTestScreen() {
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Readiness</span>
-                <span className="text-lg font-black text-emerald-600">100%</span>
+                <span className="text-lg font-black text-[#e63946]">100%</span>
               </div>
             </div>
 
@@ -1238,7 +1238,7 @@ export default function SquashActiveTestScreen() {
                 value={reportSummary}
                 onChange={(e) => setReportSummary(e.target.value)}
                 placeholder="Provide a clear, detailed summary of your overall app testing experience, performance observations, and key recommendations for the developer..."
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 transition leading-relaxed font-medium"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#e63946] focus:bg-white focus:ring-2 focus:ring-rose-100 transition leading-relaxed font-medium"
               />
               <p className="text-[11px] text-slate-400 font-medium">This executive summary will be included in the report delivered to the developer.</p>
             </div>
@@ -1259,7 +1259,7 @@ export default function SquashActiveTestScreen() {
                 type="button"
                 disabled={submittingReport}
                 onClick={submitTest}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#e63946] hover:bg-[#d62828] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
               >
                 {submittingReport ? 'Submitting...' : 'Final Submit Test Report'}
               </button>

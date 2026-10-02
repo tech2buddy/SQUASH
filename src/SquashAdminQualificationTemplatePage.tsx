@@ -9,16 +9,21 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './auth';
 import {
+  deleteQualificationScenario,
   getQualificationScenarioTemplates,
-  updateQualificationScenarioTemplate,
+  saveQualificationScenario,
+  uploadQualificationScenarioLogo,
   type QualificationScenarioTask,
   type QualificationScenarioTemplate,
 } from './lib/adminQualificationApi';
 
 type TaskDraft = QualificationScenarioTask;
+
+// `null` selection means "a new sample test that has not been saved yet".
+const NEW_SCENARIO_KEY = '__new__';
 
 function emptyTask(): TaskDraft {
   return { id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title: '', instruction: '', expectedResult: '' };
@@ -28,25 +33,38 @@ export default function SquashAdminQualificationTemplatePage() {
   const { session } = useAuth();
   const [templates, setTemplates] = useState<QualificationScenarioTemplate[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
   const [productName, setProductName] = useState('');
+  const [appUrl, setAppUrl] = useState('');
+  const [accessInstructions, setAccessInstructions] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [objective, setObjective] = useState('');
   const [environment, setEnvironment] = useState('');
   const [outOfScope, setOutOfScope] = useState('');
   const [tasks, setTasks] = useState<TaskDraft[]>([]);
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInput = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const load = async () => {
+  const isNew = selectedKey === NEW_SCENARIO_KEY;
+
+  const load = async (preferKey?: string) => {
     setLoading(true);
     setError('');
     try {
       const list = await getQualificationScenarioTemplates();
       setTemplates(list);
-      setSelectedKey((current) => (list.some((item) => item.variantKey === current) ? current : list[0]?.variantKey || null));
+      setSelectedKey((current) => {
+        const wanted = preferKey || current;
+        return list.some((item) => item.variantKey === wanted) ? wanted : list[0]?.variantKey || null;
+      });
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Could not load sample test templates.');
+      setError(loadError instanceof Error ? loadError.message : 'Could not load sample tests.');
     } finally {
       setLoading(false);
     }
@@ -55,17 +73,40 @@ export default function SquashAdminQualificationTemplatePage() {
   useEffect(() => { void load(); }, []);
 
   const selected = useMemo(() => templates.find((item) => item.variantKey === selectedKey) || null, [templates, selectedKey]);
+  const activeCount = useMemo(() => templates.filter((item) => item.isActive).length, [templates]);
 
   useEffect(() => {
+    if (isNew) return;
     if (!selected) return;
+    setTitle(selected.title);
     setProductName(selected.productName);
+    setAppUrl(selected.appUrl);
+    setAccessInstructions(selected.accessInstructions);
+    setLogoUrl(selected.logoUrl);
     setObjective(selected.objective);
     setEnvironment(selected.environment);
     setOutOfScope(selected.outOfScope);
     setTasks(selected.tasks.length ? selected.tasks : [emptyTask()]);
+    setIsActive(selected.isActive);
     setError('');
     setNotice('');
-  }, [selected]);
+  }, [selected, isNew]);
+
+  const startNewScenario = () => {
+    setSelectedKey(NEW_SCENARIO_KEY);
+    setTitle('');
+    setProductName('');
+    setAppUrl('');
+    setAccessInstructions('');
+    setLogoUrl('');
+    setObjective('');
+    setEnvironment('');
+    setOutOfScope('');
+    setTasks([emptyTask()]);
+    setIsActive(true);
+    setError('');
+    setNotice('');
+  };
 
   const updateTask = (index: number, patch: Partial<TaskDraft>) => {
     setTasks((current) => current.map((task, taskIndex) => (taskIndex === index ? { ...task, ...patch } : task)));
@@ -75,9 +116,13 @@ export default function SquashAdminQualificationTemplatePage() {
   const removeTask = (index: number) => setTasks((current) => current.filter((_, taskIndex) => taskIndex !== index));
 
   const save = async () => {
-    if (!selected) return;
-    if (!productName.trim() || !objective.trim() || !environment.trim() || !outOfScope.trim()) {
-      setError('Fill in product name, objective, environment and out-of-scope before saving.');
+    if (!isNew && !selected) return;
+    if (!title.trim() || !productName.trim() || !objective.trim() || !environment.trim() || !outOfScope.trim()) {
+      setError('Fill in the name, product name, objective, environment and out-of-scope before saving.');
+      return;
+    }
+    if (appUrl.trim() && !/^https:\/\/\S{3,}$/i.test(appUrl.trim())) {
+      setError('The app link must be a full https:// address, or left empty.');
       return;
     }
     const cleanTasks = tasks.filter((task) => task.title.trim() && task.instruction.trim() && task.expectedResult.trim());
@@ -89,19 +134,85 @@ export default function SquashAdminQualificationTemplatePage() {
     setError('');
     setNotice('');
     try {
-      await updateQualificationScenarioTemplate(selected.variantKey, {
+      const savedKey = await saveQualificationScenario(isNew ? null : selected!.variantKey, {
+        title: title.trim(),
         productName: productName.trim(),
         objective: objective.trim(),
         environment: environment.trim(),
         outOfScope: outOfScope.trim(),
+        appUrl: appUrl.trim(),
+        accessInstructions: accessInstructions.trim(),
+        logoUrl: logoUrl.trim(),
         tasks: cleanTasks,
+        isActive,
       });
-      setNotice('Saved. Testers starting the sample test will now see this content.');
-      await load();
+      setNotice(isActive
+        ? 'Saved. New testers reaching the sample stage will now be given this test.'
+        : 'Saved as inactive. No tester will be given this test until you turn it on.');
+      await load(savedKey);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Could not save this template.');
+      setError(saveError instanceof Error ? saveError.message : 'Could not save this sample test.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const uploadLogo = async (file: File | undefined) => {
+    if (!file || !session?.userId) return;
+    setLogoUploading(true);
+    setError('');
+    setNotice('');
+    try {
+      setLogoUrl(await uploadQualificationScenarioLogo(file, session.userId));
+      setNotice('Logo uploaded. Save the sample test to keep it.');
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Could not upload that logo.');
+    } finally {
+      setLogoUploading(false);
+      if (logoInput.current) logoInput.current.value = '';
+    }
+  };
+
+  const remove = async () => {
+    if (!selected) return;
+    if (!window.confirm(`Remove "${selected.title}" completely?`)) return;
+    setRemoving(true);
+    setError('');
+    setNotice('');
+    try {
+      // First call only reports what is in the way, so the second confirmation
+      // can state the real cost to a real tester instead of a generic warning.
+      let result = await deleteQualificationScenario(selected.variantKey);
+
+      if (result.outcome === 'in_use') {
+        const otherLiveTest = templates.some((item) => item.isActive && item.variantKey !== selected.variantKey);
+        const consequence = result.locked > 0
+          ? `${result.locked} tester(s) have already submitted or been reviewed on this test. Their reports cannot be deleted, so this test will be switched off instead of removed.`
+          : otherLiveTest
+            ? `${result.inFlight} tester(s) are part-way through it. They will be moved onto another live test and keep their quiz result.`
+            : `${result.inFlight} tester(s) are part-way through it, and there is no other live test to move them to. Their attempt will be deleted and they will start again from the beginning — including retaking the quiz.`;
+        if (!window.confirm(`${consequence}\n\nContinue?`)) {
+          setRemoving(false);
+          return;
+        }
+        result = await deleteQualificationScenario(selected.variantKey, true);
+      }
+
+      setSelectedKey(null);
+      if (result.outcome === 'retired') {
+        setNotice(`Switched off instead of removed: ${result.locked} submitted or reviewed attempt(s) point at it, and deleting those would erase a tester's qualification record. No new tester will be given it.`);
+      } else if (result.reassigned > 0) {
+        setNotice(`Sample test removed. ${result.reassigned} tester(s) were moved onto another live test.`);
+      } else if (result.reset > 0) {
+        setNotice(`Sample test removed. ${result.reset} tester(s) were reset to the start of the application.`);
+      } else {
+        setNotice('Sample test removed.');
+      }
+      await load();
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : 'Could not remove this sample test.');
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -138,7 +249,7 @@ export default function SquashAdminQualificationTemplatePage() {
           <div className="p-4 pt-0">
             <div className="rounded-3xl border border-green-100 bg-green-50 p-5 text-sm leading-6 text-slate-700">
               <div className="flex items-center gap-2 font-bold text-slate-900"><ShieldCheck className="h-5 w-5 text-green-700" />What this controls</div>
-              <p className="mt-2">This is the content every tester sees in the practical sample stage of Tester Academy — a controlled training scenario, not a real job.</p>
+              <p className="mt-2">The real test every new tester must pass before they can apply to paid jobs. Each one is assigned automatically once they pass the QA foundations quiz.</p>
             </div>
           </div>
         </aside>
@@ -163,14 +274,19 @@ export default function SquashAdminQualificationTemplatePage() {
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {notice ? <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{notice}</div> : null}
             {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div> : null}
-            {loading ? <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">Loading templates...</div> : null}
+            {!loading && activeCount === 0 ? (
+              <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                No sample test is live. Until you turn one on, a new tester cannot start their application at all — they are told to contact support.
+              </div>
+            ) : null}
+            {loading ? <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">Loading sample tests...</div> : null}
 
             {!loading ? (
               <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
                 <section className="h-fit overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                   <div className="border-b border-slate-100 px-5 py-4">
-                    <h2 className="font-black text-slate-900">Scenarios</h2>
-                    <p className="mt-1 text-xs text-slate-500">Testers get one of these at random.</p>
+                    <h2 className="font-black text-slate-900">Sample tests</h2>
+                    <p className="mt-1 text-xs text-slate-500">A new tester is given one active test at random. Inactive ones are never assigned.</p>
                   </div>
                   <div className="divide-y divide-slate-100">
                     {templates.map((item) => (
@@ -180,25 +296,102 @@ export default function SquashAdminQualificationTemplatePage() {
                         onClick={() => setSelectedKey(item.variantKey)}
                         className={`w-full p-5 text-left transition ${selectedKey === item.variantKey ? 'bg-green-50/70' : 'hover:bg-slate-50'}`}
                       >
-                        <div className="font-bold text-slate-900">{item.title}</div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-bold text-slate-900">{item.title}</div>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${item.isActive ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'bg-slate-100 text-slate-500'}`}>
+                            {item.isActive ? 'Live' : 'Off'}
+                          </span>
+                        </div>
                         <div className="mt-1 text-xs text-slate-500">{item.productName || 'Not configured yet'}</div>
                       </button>
                     ))}
+                    {isNew ? (
+                      <div className="bg-green-50/70 p-5 text-left">
+                        <div className="font-bold text-slate-900">{title.trim() || 'New sample test'}</div>
+                        <div className="mt-1 text-xs text-slate-500">Not saved yet</div>
+                      </div>
+                    ) : null}
+                    {!templates.length && !isNew ? (
+                      <p className="px-5 py-6 text-sm font-semibold text-slate-500">No sample test set up yet. Testers cannot start their application until you add one.</p>
+                    ) : null}
+                  </div>
+                  <div className="border-t border-slate-100 p-4">
+                    <button type="button" onClick={startNewScenario} className="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
+                      New sample test
+                    </button>
                   </div>
                 </section>
 
-                {selected ? (
+                {selected || isNew ? (
                   <section className="space-y-5">
                     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                      <h3 className="font-black text-slate-900">{selected.title}</h3>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="font-black text-slate-900">{isNew ? 'New sample test' : selected!.title}</h3>
+                        <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                          Give this to new testers
+                        </label>
+                      </div>
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-semibold text-slate-700">Sample test name
+                          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Sample test: signup flow" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
+                        </label>
                         <label className="block text-sm font-semibold text-slate-700">Product name
                           <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g. Northstar Store" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
+                        </label>
+                        <label className="block text-sm font-semibold text-slate-700">App link
+                          <input value={appUrl} onChange={(e) => setAppUrl(e.target.value)} placeholder="https://... the app testers should open" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
+                          <span className="mt-1 block text-xs font-medium text-slate-500">Optional. Must be https. Leave empty for a written-only exercise.</span>
                         </label>
                         <label className="block text-sm font-semibold text-slate-700">Environment
                           <input value={environment} onChange={(e) => setEnvironment(e.target.value)} placeholder="e.g. Desktop or mobile browser..." className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
                         </label>
                       </div>
+                      <div className="mt-4 block text-sm font-semibold text-slate-700">Logo
+                        <div className="mt-2 flex flex-wrap items-center gap-4">
+                          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                            {logoUrl ? (
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="text-xl font-black text-slate-400">{productName.trim().slice(0, 1).toUpperCase() || '?'}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              ref={logoInput}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              onChange={(e) => void uploadLogo(e.target.files?.[0])}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              disabled={logoUploading}
+                              onClick={() => logoInput.current?.click()}
+                              className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            >
+                              {logoUploading ? 'Uploading...' : logoUrl ? 'Replace logo' : 'Upload logo'}
+                            </button>
+                            {logoUrl ? (
+                              <button
+                                type="button"
+                                onClick={() => setLogoUrl('')}
+                                className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                              >
+                                Remove logo
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        <span className="mt-2 block text-xs font-medium text-slate-500">
+                          PNG, JPEG or WebP, under 1MB. Shown to the tester at the top of their brief. Without one they see the first letter of the product name.
+                        </span>
+                      </div>
+
+                      <label className="mt-4 block text-sm font-semibold text-slate-700">Access instructions
+                        <textarea value={accessInstructions} onChange={(e) => setAccessInstructions(e.target.value)} rows={2} placeholder="Test login, sample card, or anything a tester needs to get in." className="mt-2 w-full resize-y rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
+                        <span className="mt-1 block text-xs font-medium text-slate-500">Shown to every tester doing this test — use throwaway test credentials only, never a real account.</span>
+                      </label>
                       <label className="mt-4 block text-sm font-semibold text-slate-700">Objective
                         <textarea value={objective} onChange={(e) => setObjective(e.target.value)} rows={2} placeholder="What should a tester verify in this scenario?" className="mt-2 w-full resize-y rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" />
                       </label>
@@ -233,9 +426,14 @@ export default function SquashAdminQualificationTemplatePage() {
                       <button type="button" onClick={addTask} className="mt-4 rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700">Add Task</button>
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      {!isNew ? (
+                        <button type="button" disabled={removing} onClick={() => void remove()} className="mr-auto rounded-2xl border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">
+                          {removing ? 'Removing...' : 'Remove this test'}
+                        </button>
+                      ) : null}
                       <button type="button" disabled={saving} onClick={() => void save()} className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-60">
-                        {saving ? 'Saving...' : 'Save template'}
+                        {saving ? 'Saving...' : isNew ? 'Create sample test' : 'Save sample test'}
                       </button>
                     </div>
                   </section>

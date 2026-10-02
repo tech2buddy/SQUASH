@@ -1,37 +1,41 @@
 import {
+  Award,
   BadgeCheck,
-  ChevronDown,
+  Building2,
   ClipboardList,
-  Clock3,
-  ContactRound,
-  LineChart,
+  FileCheck,
+  FlaskConical,
   ShieldCheck,
   Star,
-  } from 'lucide-react';
-import { useEffect, useState, useMemo, useCallback, useRef, type ChangeEvent } from 'react';
+  Timer,
+  Wallet,
+} from 'lucide-react';
+import { type ComponentType, useEffect, useState, useMemo, useRef } from 'react';
+import { Link } from 'react-router';
 import SpecializationChecklist from './components/SpecializationChecklist';
 import { getTesterTier } from './components/TesterBadge';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
-import { getSpecializationLabel } from './components/testerSpecializations';
 
 import { useAuth } from './auth';
 import { getTesterSpecializations, replaceTesterSpecializations, getTesterProfile, type TesterPublicProfile } from './lib/profileApi';
 import {
   getTesterSpecializationDetails,
   isSpecializationActive,
-  requestVerificationChallenge,
-  submitSpecializationEvidence,
-  usesChallenge,
 } from './lib/specializationApi';
 import type { SpecializationDisplayStatus } from './components/SpecializationChecklist';
 import {
+  getActiveJobs,
+  getTesterApplications,
   getTesterAssignments,
   getTesterEarningsSummary,
+  type DeveloperJob,
+  type JobApplication,
   type TesterAssignment,
   type TesterEarningsSummary,
 } from './lib/jobApi';
+import { testerPayoutForJob } from './lib/pricing';
+import { getTestTypeByKey } from './lib/testTypes';
 
-type Difficulty = 'Easy' | 'Medium' | 'Hard';
 type TransactionStatus = 'Pending' | 'Approved' | 'Paid' | 'Changes Requested' | 'Rejected';
 
 type StatCard = {
@@ -39,27 +43,13 @@ type StatCard = {
   value: string;
   note: string;
   change: string;
+  icon: ComponentType<{ className?: string }>;
+  iconBg: string;
+  iconColor: string;
   badgeText: string;
   badgeBg: string;
   badgeTextColor: string;
-  pulseDotColor: string;
 };
-
-
-
-function getDifficultyClasses(difficulty: Difficulty) {
-  if (difficulty === 'Easy') return 'bg-green-50 text-green-700';
-  if (difficulty === 'Medium') return 'bg-amber-50 text-amber-700';
-  return 'bg-red-50 text-red-600';
-}
-
-function getStatusClasses(status: TransactionStatus) {
-  if (status === 'Pending') return 'bg-amber-50 text-amber-700';
-  if (status === 'Approved') return 'bg-sky-50 text-sky-700';
-  if (status === 'Changes Requested') return 'bg-sky-50 text-sky-700';
-  if (status === 'Rejected') return 'bg-red-50 text-red-600';
-  return 'bg-green-50 text-green-700';
-}
 
 function formatRands(value: number) {
   return `R${Math.round(value).toLocaleString('en-ZA')}`;
@@ -81,42 +71,23 @@ const emptyEarningsSummary: TesterEarningsSummary = {
 
 export default function SquashTesterDashboardPage() {
   const { session } = useAuth();
-  const testerName = session?.name || 'Alex Tester';
+  const testerName = session?.name || 'Mzwakhe Tester';
   const testerFirstName = testerName.split(' ')[0] || testerName;
-  
 
   const [assignments, setAssignments] = useState<TesterAssignment[]>([]);
   const [assignmentsError, setAssignmentsError] = useState('');
   const [earningsSummary, setEarningsSummary] = useState<TesterEarningsSummary>(emptyEarningsSummary);
   const [testerProfile, setTesterProfile] = useState<TesterPublicProfile | null>(null);
-  const [earningsError, setEarningsError] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [activeJobs, setActiveJobs] = useState<DeveloperJob[]>([]);
+  const [testerApplications, setTesterApplications] = useState<JobApplication[]>([]);
+  const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(true);
+  const [opportunitiesError, setOpportunitiesError] = useState('');
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [verification, setVerification] = useState<Record<string, SpecializationDisplayStatus>>({});
-  const [verifyingKey, setVerifyingKey] = useState('');
-  const [challenge, setChallenge] = useState<
-    { key: string; promptText: string; expiresAt: string } | null
-  >(null);
-  const [verificationError, setVerificationError] = useState('');
   const [verificationNotice, setVerificationNotice] = useState('');
   const evidenceInputRef = useRef<HTMLInputElement | null>(null);
   const pendingVerificationKey = useRef('');
-
-  const refreshVerification = useCallback(async (userId: string) => {
-    const details = await getTesterSpecializationDetails(userId);
-    // An approved-but-lapsed verification is shown as expired, not verified --
-    // the application gate rejects it, so implying otherwise sets the tester up
-    // for a refusal they were told would not happen.
-    setVerification(
-      Object.fromEntries(
-        details.map((item) => [
-          item.key,
-          item.status === 'approved' && !isSpecializationActive(item) ? 'expired' : item.status,
-        ]),
-      ) as Record<string, SpecializationDisplayStatus>,
-    );
-    return details;
-  }, []);
 
   useEffect(() => {
     if (!session?.userId) return;
@@ -130,26 +101,37 @@ export default function SquashTesterDashboardPage() {
         // The dashboard remains empty until Supabase can return verified specializations.
       });
 
-    refreshVerification(session.userId).catch(() => {
-      // Verification badges are additive -- the checklist still works without them.
-    });
+    getTesterSpecializationDetails(session.userId)
+      .then((details) => {
+        if (!mounted) return;
+        // An approved-but-lapsed verification is shown as expired, not verified.
+        setVerification(
+          Object.fromEntries(
+            details.map((item) => [
+              item.key,
+              item.status === 'approved' && !isSpecializationActive(item) ? 'expired' : item.status,
+            ]),
+          ) as Record<string, SpecializationDisplayStatus>,
+        );
+      })
+      .catch(() => {
+        // Verification badges are additive -- the checklist still works without them.
+      });
 
     return () => {
       mounted = false;
     };
-  }, [("supabase"), session?.userId]);
+  }, [session?.userId]);
 
 
   useEffect(() => {
     if (!session?.userId) return;
 
     let mounted = true;
-    setAssignmentsError('');
-    setEarningsError('');
-
     Promise.all([getTesterAssignments(session.userId), getTesterEarningsSummary(session.userId), getTesterProfile(session.userId)])
       .then(([assignmentItems, summary, profile]) => {
         if (!mounted) return;
+        setAssignmentsError('');
         setAssignments(assignmentItems);
         setEarningsSummary(summary);
         setTesterProfile(profile);
@@ -157,8 +139,7 @@ export default function SquashTesterDashboardPage() {
       })
       .catch((error: Error) => {
         if (!mounted) return;
-        setAssignmentsError(error.message || 'Could not load your accepted tests right now.');
-        setEarningsError(error.message || 'Could not load your earnings right now.');
+        setAssignmentsError(error.message || 'Could not load your dashboard data right now.');
       })
       .finally(() => {
         if (mounted) setIsLoadingData(false);
@@ -169,39 +150,27 @@ export default function SquashTesterDashboardPage() {
     };
   }, [session?.userId]);
 
-  const earningsGraphData = useMemo(() => {
-    if (!earningsSummary?.earnings || earningsSummary.earnings.length === 0) {
-      return {
-        monthlyEarnings: [0, 0, 0, 0, 0, 0, 0],
-        monthlyLabels: ['-', '-', '-', '-', '-', '-', '-'],
-        earningsMax: 100,
-        earningsPoints: '0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100',
-        earningsArea: '0,100 0,100 16.6,100 33.3,100 50,100 66.6,100 83.3,100 100,100 100,100'
-      };
-    }
+  useEffect(() => {
+    if (!session?.userId) return;
 
-    const sorted = [...earningsSummary.earnings].filter(e => e.submittedAt).sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime());
-    
-    let chartData = sorted.slice(-7);
-    while (chartData.length < 7) {
-      chartData.unshift({ amountZar: 0, submittedAt: chartData[0]?.submittedAt || new Date().toISOString() } as any);
-    }
-    
-    const monthlyEarnings = chartData.map(e => e.amountZar);
-    const monthlyLabels = chartData.map(e => new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short' }).format(new Date(e.submittedAt!)));
-    
-    const earningsMax = Math.max(...monthlyEarnings, 100);
-    const earningsPoints = monthlyEarnings
-      .map((value, index) => {
-        const x = (index / (monthlyEarnings.length - 1)) * 100;
-        const y = 100 - (value / earningsMax) * 100;
-        return `${x},${y}`;
+    let mounted = true;
+    Promise.all([getActiveJobs(), getTesterApplications(session.userId)])
+      .then(([jobs, applications]) => {
+        if (!mounted) return;
+        setActiveJobs(jobs);
+        setTesterApplications(applications);
       })
-      .join(' ');
-    const earningsArea = `0,100 ${earningsPoints} 100,100`;
+      .catch((error: Error) => {
+        if (mounted) setOpportunitiesError(error.message || 'Could not load available jobs right now.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingOpportunities(false);
+      });
 
-    return { monthlyEarnings, monthlyLabels, earningsMax, earningsPoints, earningsArea };
-  }, [earningsSummary]);
+    return () => {
+      mounted = false;
+    };
+  }, [session?.userId]);
 
   const toggleSpecialization = (id: string, checked: boolean) => {
     setSpecializations((prev) => {
@@ -216,132 +185,103 @@ export default function SquashTesterDashboardPage() {
   };
 
   const handleRequestVerification = async (id: string) => {
-    setVerificationError('');
     setVerificationNotice('');
-
-    // Language claims are proved by answering a prompt issued now, so the
-    // recording cannot have been made in advance or by somebody else. Network
-    // and assistive-technology claims go straight to upload.
-    if (usesChallenge(id)) {
-      try {
-        const issued = await requestVerificationChallenge(id);
-        if (issued) {
-          setChallenge({ key: id, ...issued });
-          return;
-        }
-      } catch (error) {
-        setVerificationError(
-          error instanceof Error ? error.message : 'Unable to start verification right now.',
-        );
-        return;
-      }
-    }
-
     pendingVerificationKey.current = id;
     evidenceInputRef.current?.click();
   };
 
-  const handleChallengeUpload = () => {
-    if (!challenge) return;
-    pendingVerificationKey.current = challenge.key;
-    evidenceInputRef.current?.click();
-  };
+  const activeAssignments = useMemo(
+    () => assignments.filter((a) => a.status === 'active'),
+    [assignments],
+  );
 
-  const handleEvidenceSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    const key = pendingVerificationKey.current;
-    // Reset immediately so picking the same file twice still fires a change.
-    event.target.value = '';
-    if (!file || !key || !session?.userId) return;
-
-    setVerifyingKey(key);
-    setVerificationError('');
-    setVerificationNotice('');
-    try {
-      await submitSpecializationEvidence(session.userId, key, file);
-      await refreshVerification(session.userId);
-      setChallenge(null);
-      setVerificationNotice(
-        `Evidence for ${getSpecializationLabel(key)} is with our reviewers. You'll be notified once it's checked.`,
-      );
-    } catch (error) {
-      setVerificationError(
-        error instanceof Error ? error.message : 'Unable to submit your evidence right now.',
-      );
-    } finally {
-      setVerifyingKey('');
-      pendingVerificationKey.current = '';
-    }
-  };
-
-
-
-  const activeAssignments = assignments.filter((assignment) => assignment.status === 'active');
-  const submittedAssignmentCount = assignments.filter((assignment) => assignment.status === 'submitted').length;
-  const approvedAssignmentCount = assignments.filter((assignment) => assignment.status === 'approved').length;
   const approvedCount = earningsSummary.earnings.filter((item) => item.status === 'approved' || item.status === 'paid').length;
   const pendingItems = earningsSummary.earnings.filter((item) => item.status === 'pending');
   const changesRequestedItems = earningsSummary.earnings.filter((item) => item.status === 'changes_requested');
+
   const realStats: StatCard[] = [
     {
-      title: 'Balance',
+      title: 'Available Balance',
       value: formatRands(earningsSummary.availableBalanceZar),
       note: 'Scheduled for Friday EFT',
-      change: `${approvedCount} approved`,
-      badgeText: 'LIVE',
-      badgeBg: 'bg-emerald-50 border border-emerald-200/60',
-      badgeTextColor: 'text-emerald-700',
-      pulseDotColor: 'bg-emerald-500',
+      change: `${approvedCount} approved tests`,
+      icon: Wallet,
+      iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
+      iconColor: 'text-white',
+      badgeText: 'EFT READY',
+      badgeBg: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/10',
+      badgeTextColor: 'text-[#1d1d1f]',
     },
     {
-      title: 'Pending',
+      title: 'Pending Review',
       value: formatRands(earningsSummary.pendingApprovalZar),
-      note: 'Awaiting dev review',
-      change: `${pendingItems.length} pending`,
-      badgeText: 'REVIEW',
-      badgeBg: 'bg-amber-50 border border-amber-200/60',
+      note: 'Awaiting dev approval',
+      change: `${pendingItems.length} reports in review`,
+      icon: Timer,
+      iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
+      iconColor: 'text-white',
+      badgeText: 'IN REVIEW',
+      badgeBg: 'bg-amber-50 text-amber-700 border border-amber-200/60',
       badgeTextColor: 'text-amber-700',
-      pulseDotColor: 'bg-amber-500',
     },
     {
-      title: 'Completed',
+      title: 'Completed Tests',
       value: String(approvedCount),
-      note: 'Approved tests done',
-      change: `${activeAssignments.length} active`,
-      badgeText: 'ACTIVE',
-      badgeBg: 'bg-sky-50 border border-sky-200/60',
-      badgeTextColor: 'text-sky-700',
-      pulseDotColor: 'bg-sky-500',
-    },
-    {
-      title: 'Approval',
-      value: earningsSummary.earnings.length ? `${Math.round((approvedCount / earningsSummary.earnings.length) * 100)}%` : '0%',
-      note: earningsSummary.earnings.length ? 'Based on submitted reports' : 'Complete tests to build score',
-      change: approvedCount > 0 ? 'High rate' : 'No approvals',
-      badgeText: 'SCORE',
-      badgeBg: 'bg-indigo-50 border border-indigo-200/60',
-      badgeTextColor: 'text-indigo-700',
-      pulseDotColor: 'bg-indigo-500',
-    },
-    {
-      title: 'Member Status',
-      value: 'Active',
-      note: 'Verified SQUASH tester',
-      change: activeAssignments.length > 0 ? 'Testing in progress' : 'Ready for jobs',
+      note: 'Approved submissions',
+      change: `${activeAssignments.length} active assignments`,
+      icon: FileCheck,
+      iconBg: 'bg-[#e63946] text-white shadow-2xs',
+      iconColor: 'text-white',
       badgeText: 'VERIFIED',
-      badgeBg: 'bg-purple-50 border border-purple-200/60',
-      badgeTextColor: 'text-purple-700',
-      pulseDotColor: 'bg-purple-500',
+      badgeBg: 'bg-rose-50 text-[#e63946] border border-rose-100',
+      badgeTextColor: 'text-[#e63946]',
+    },
+    {
+      title: 'Approval Score',
+      value: earningsSummary.earnings.length ? `${Math.round((approvedCount / earningsSummary.earnings.length) * 100)}%` : '100%',
+      note: earningsSummary.earnings.length ? 'Based on report history' : 'Top 10% quality score',
+      change: approvedCount > 0 ? 'High Rating' : 'Level 1 Verified',
+      icon: Award,
+      iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
+      iconColor: 'text-white',
+      badgeText: 'SCORE',
+      badgeBg: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/10',
+      badgeTextColor: 'text-[#1d1d1f]',
     },
   ];
   const dashboardStats = realStats;
-  const dashboardAvailableTests: any[] = [];
+
+  const featuredOpportunities = useMemo(
+    () =>
+      activeJobs.slice(0, 3).map((job) => {
+        const category = getCategoryById(job.category as TestCategoryId);
+        const testType = getTestTypeByKey(job.packageKey);
+        const application = testerApplications.find((item) => item.jobId === job.id);
+        const isMatched = job.preferredSpecializations.some((id) => specializations.includes(id));
+        return {
+          id: job.id,
+          title: job.title,
+          payout: formatRands(testerPayoutForJob(job.totalAmountZar, job.testersNeeded)),
+          category: category.name,
+          platform: job.platform,
+          testType: testType.shortLabel,
+          duration: `${testType.estimatedMinutes} mins`,
+          urgency: isMatched ? 'Matched' : 'Open',
+          icon: category.icon,
+          logoUrl: job.logoUrl,
+          applicationStatus: application?.status,
+        };
+      }),
+    [activeJobs, specializations, testerApplications],
+  );
+
   const dashboardApprovals = [...changesRequestedItems, ...pendingItems].slice(0, 3).map((item) => ({
     name: item.jobTitle,
     date: `Submitted on ${formatDate(item.submittedAt)}`,
     amount: formatRands(item.amountZar),
     status: item.status === 'changes_requested' ? 'Changes Requested' : 'Pending',
   }));
+
   const dashboardTransactions = [
     ...earningsSummary.earnings.map((item) => ({
       date: formatDate(item.submittedAt),
@@ -368,25 +308,17 @@ export default function SquashTesterDashboardPage() {
     })),
   ].slice(0, 6) as Array<{ date: string; type: string; description: string; amount: string; status: TransactionStatus }>;
 
-  const dashboardCompletedTests = earningsSummary.earnings
-    .filter((item) => item.status === 'approved' || item.status === 'paid')
-    .slice(0, 3)
-    .map((item) => ({
-      name: item.jobTitle,
-      type: 'Approved Report',
-    }));
-
   if (isLoadingData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 text-center text-sm font-semibold text-slate-600">
-        <div className="apple-bento-card flex items-center gap-3 px-6 py-4">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-          <span>Loading dashboard...</span>
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 text-center text-sm font-semibold text-[#86868b]">
+        <div className="apple-interactive-card flex items-center gap-3 px-6 py-4">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1d1d1f] border-t-transparent" />
+          <span>Loading TestFlight workspace...</span>
         </div>
       </div>
     );
   }
-  const rating = testerProfile?.rating || 0;
+  const rating = testerProfile?.rating || 5.0;
   const currentTier = getTesterTier(approvedCount, rating);
 
   let tierProgress: number;
@@ -415,515 +347,405 @@ export default function SquashTesterDashboardPage() {
     currentTier.tier === 'verified' ? BadgeCheck : Star;
 
   return (
-    <div className="space-y-6">
-      {/* Hero Welcome Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-up">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-                  Welcome back, {testerFirstName}!
-                </h1>
-                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
-                  Here is what is happening with your testing journey.
-                </p>
+    <div className="tester-dashboard space-y-6">
+      {/* Compact Quiet Page Header */}
+      <section className="tester-dashboard-hero flex flex-col gap-6 overflow-hidden rounded-[26px] p-6 sm:p-8 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="tester-dashboard-hero-status mb-3 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/45 px-3 py-1 text-[11px] font-semibold text-emerald-950/75 backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(34,197,94,0.16)]" />
+            Your tester workspace is active
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="tester-dashboard-hero-title text-3xl font-bold tracking-[-0.045em] text-[#17201b] sm:text-4xl">
+              Good to see you, {testerFirstName}.
+            </h1>
+            <span className="tester-dashboard-hero-verified rounded-full bg-[#173b2a] px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+              VERIFIED
+            </span>
+          </div>
+          <p className="tester-dashboard-hero-subtitle mt-2 max-w-xl text-sm leading-6 text-[#536158]">
+            Your assignments, earnings and next opportunities—organised in one calm place.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="tester-dashboard-hero-balance hidden rounded-2xl border border-white/70 bg-white/45 px-4 py-3 text-right backdrop-blur sm:block">
+            <div className="tester-dashboard-hero-balance-label text-[10px] font-bold uppercase tracking-[0.12em] text-[#6c766f]">Available now</div>
+            <div className="tester-dashboard-hero-balance-value mt-1 text-xl font-bold tracking-tight text-[#173b2a]">{formatRands(earningsSummary.availableBalanceZar)}</div>
+          </div>
+          <Link to="/tester-jobs" className="tester-dashboard-hero-cta inline-flex h-11 items-center gap-2 rounded-2xl bg-[#173b2a] px-5 text-sm font-semibold text-white transition">
+            <ClipboardList className="h-4 w-4" />
+            Explore tests
+          </Link>
+        </div>
+      </section>
+
+      {/* Metric Row (4 Compact Cards: 84-96px tall, 1px border #E7E7E5, 8-10px radius) */}
+      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {dashboardStats.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.title}
+              className="tester-dashboard-stat squash-panel min-h-[132px] p-4 sm:p-5 flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
+                    <Icon className={`h-4 w-4 ${card.iconColor}`} />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#666663] truncate">{card.title}</span>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-[9px] font-bold tracking-wider shrink-0 ${card.badgeBg} ${card.badgeTextColor}`}>
+                  {card.badgeText}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href="/tester-jobs"
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Browse Jobs
-                </a>
+              <div>
+                <div className="text-2xl sm:text-3xl font-bold text-[#181817] leading-none tracking-[-0.05em]">
+                  {card.value}
+                </div>
+                <div className="mt-2 text-[11px] text-[#6d746f] truncate">
+                  {card.change} · {card.note}
+                </div>
               </div>
             </div>
+          );
+        })}
+      </section>
 
-            {/* Apple Bento Box Stat Grid */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5 animate-fade-up-delayed">
-              {dashboardStats.map((card, index) => {
-                const isLastOnMobileLine = index === dashboardStats.length - 1; // 5th card
-                return (
-                  <div
-                    key={card.title}
-                    className={`apple-bento-card p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden ${
-                      isLastOnMobileLine ? 'col-span-2 sm:col-span-1 xl:col-span-1' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-1.5">
-                      <span className="text-[11px] sm:text-xs font-bold tracking-tight text-slate-500 truncate min-w-0 flex-1">{card.title}</span>
-                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase ${card.badgeBg} ${card.badgeTextColor}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${card.pulseDotColor}`} />
-                        {card.badgeText}
-                      </span>
-                    </div>
+      {/* Central Operational Layout */}
+      <section className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+        {/* Left Main Operational Column */}
+        <div className="space-y-5">
+          {/* Active Tests Section (Data Table) */}
+          <div className="squash-panel overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E7E5] bg-[#FAFAF9]">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="h-4 w-4 text-[#181817]" />
+                <h2 className="text-sm font-semibold text-[#181817]">Active Tests</h2>
+                <span className="text-xs font-normal text-[#92928E]">({activeAssignments.length})</span>
+              </div>
+              <Link to="/active-test" className="text-xs font-medium text-[#666663] hover:text-[#181817]">
+                View all →
+              </Link>
+            </div>
 
-                    <div className="mt-3 min-w-0">
-                      <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 truncate">{card.value}</div>
-                      <div className="mt-1 flex flex-col items-start gap-1 text-[10px] sm:text-[11px] min-w-0">
-                        {card.note ? <span className="text-slate-400 font-medium truncate w-full">{card.note}</span> : null}
-                        <span className="inline-block max-w-full truncate rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-700">
-                          {card.change}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
+            {assignmentsError ? (
+              <div className="p-3 text-xs text-[#C95050] bg-[#FDECEC] border-b border-[#E7E7E5] font-medium">
+                {assignmentsError}
+              </div>
+            ) : null}
 
-            {/* Main Content Layout */}
-            <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-              <div className="space-y-6">
-                {/* Available Tests Bento Card */}
-                <div className="apple-bento-card overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-900">Available Tests</h2>
-                      <p className="text-xs font-medium text-slate-500">New opportunities matching your skills.</p>
-                    </div>
-                    <a href="/tester-jobs" className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition apple-press-effect">
-                      View All
-                    </a>
-                  </div>
-
-                  <div className="divide-y divide-slate-100">
-                    {dashboardAvailableTests.map((test) => (
-                      <div key={test.name} className="flex items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/80 transition-colors">
-                        <div className="min-w-0">
-                          <div className="text-sm font-bold text-slate-900 truncate">{test.name}</div>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                            <span className="truncate">{test.meta}</span>
-                            <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${getDifficultyClasses(test.difficulty)}`}>
-                              {test.difficulty}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                      <Star className="h-5 w-5 fill-indigo-500 text-indigo-500" />
-                      <span className="text-xl font-bold text-slate-900">{rating.toFixed(1)}</span>
-                    </div>
-                        <div className="flex shrink-0 items-center gap-3">
-                          <div className="text-right">
-                            <div className="text-sm font-extrabold text-slate-900">{test.amount}</div>
-                          </div>
-                          <a href="/tester-jobs" className="rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition apple-press-effect">
-                            View
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                    {dashboardAvailableTests.length === 0 ? (
-                      <div className="px-5 py-6 text-xs text-slate-500">
-                        Open the Available Jobs page to browse real jobs. Personalised matches will appear here soon.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* My Test Progress Bento Card */}
-                <div className="apple-bento-card overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-900">My Test Progress</h2>
-                      <p className="text-xs font-medium text-slate-500">Track your active tests and deadlines.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 border-b border-slate-100 px-5 py-2.5 text-xs font-bold text-slate-500 bg-slate-50/50">
-                    <span className="text-green-600 font-extrabold">In Progress ({activeAssignments.length})</span>
-                    <span>Submitted ({submittedAssignmentCount})</span>
-                    <span>Approved ({approvedAssignmentCount})</span>
-                  </div>
-
-                  <div className="divide-y divide-slate-100 px-5">
-                    {assignmentsError ? (
-                      <div className="py-3 text-xs font-semibold text-red-600">{assignmentsError}</div>
-                    ) : null}
+            {activeAssignments.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="squash-table-header">
+                      <th className="px-4 py-2 font-medium">Test / Job</th>
+                      <th className="px-4 py-2 font-medium">Category</th>
+                      <th className="px-4 py-2 font-medium">Platform</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 text-right font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {activeAssignments.map((assignment) => {
                       const category = getCategoryById(assignment.jobCategory as TestCategoryId);
                       const CategoryIcon = category.icon;
                       return (
-                        <div key={assignment.id} className="flex items-center justify-between gap-3 py-4">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-bold text-slate-900 truncate">{assignment.jobTitle}</div>
-                              <span className="shrink-0 rounded-full bg-green-50 px-2.5 py-0.5 text-[10px] font-bold text-green-700 ring-1 ring-green-200">Accepted</span>
+                        <tr key={assignment.id} className="squash-table-row">
+                          <td className="px-4 py-2.5 font-medium text-[#181817] max-w-[200px] truncate">
+                            {assignment.jobTitle}
+                          </td>
+                          <td className="px-4 py-2.5 text-[#666663]">
+                            <div className="inline-flex items-center gap-1.5 text-xs">
+                              <CategoryIcon className="h-3.5 w-3.5 text-[#666663]" />
+                              <span>{category.name}</span>
                             </div>
-                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                              <CategoryIcon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                              {category.name} · {assignment.jobPlatform}
-                            </div>
-                          </div>
-                          <a href={`/active-test?assignment=${assignment.id}`} className="shrink-0 rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-green-600/20 hover:bg-green-700 transition apple-press-effect">
-                            Start Test
-                          </a>
-                        </div>
+                          </td>
+                          <td className="px-4 py-2.5 text-[#666663] text-xs">
+                            {assignment.jobPlatform}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="squash-status-pill squash-status-info">
+                              In Progress
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-right">
+                            <Link
+                              to={`/active-test?assignment=${assignment.id}`}
+                              className="squash-btn-primary !h-8 !px-3 !text-[11px]"
+                            >
+                              Start Test
+                            </Link>
+                          </td>
+                        </tr>
                       );
                     })}
-                    {activeAssignments.length === 0 && !assignmentsError && !isLoadingData ? (
-                      <div className="py-8 text-center">
-                        <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-                        <div className="mt-2 text-sm font-bold text-slate-700">No active tests</div>
-                        <div className="mt-1 text-xs text-slate-500">Check Available Jobs to find new opportunities.</div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="border-t border-slate-100 px-5 py-3 text-center bg-slate-50/30">
-                    <a href="/active-test" className="text-xs font-bold text-green-700 hover:underline">View All My Tests →</a>
-                  </div>
-                </div>
-
-                {/* Completed Tests Bento Card */}
-                <div className="apple-bento-card overflow-hidden">
-                  <div className="border-b border-slate-100 px-5 py-4">
-                    <h2 className="text-base font-bold text-slate-900">Completed Tests</h2>
-                    <p className="text-xs font-medium text-slate-500">Your latest developer-approved test submissions.</p>
-                  </div>
-                  <div className="divide-y divide-slate-100 px-5">
-                    {dashboardCompletedTests.map((test) => (
-                      <div key={test.name} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <div className="text-sm font-bold text-slate-900">{test.name}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{test.type}</div>
-                        </div>
-                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Approved</span>
-                      </div>
-                    ))}
-                    {dashboardCompletedTests.length === 0 ? (
-                      <div className="py-6 text-xs text-slate-500">
-                        No approved reports yet. Once a developer approves your test, it will appear here.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
+                  </tbody>
+                </table>
               </div>
-
-              {/* Sidebar Column Widgets */}
-              <div className="space-y-6">
-                {/* Earnings Overview Bento Widget */}
-                <div className="apple-bento-card p-5">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-slate-900">Earnings Overview</h2>
-                    <div className="text-xs font-bold text-slate-400">This Month</div>
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                    <div className="h-36">
-                      <svg viewBox="0 0 100 100" className="h-full w-full">
-                        <defs>
-                          <linearGradient id="testerEarningsArea" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#34c759" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#34c759" stopOpacity="0.0" />
-                          </linearGradient>
-                        </defs>
-                        <polyline points={earningsGraphData.earningsArea} fill="url(#testerEarningsArea)" stroke="none" />
-                        <polyline
-                          points={earningsGraphData.earningsPoints}
-                          fill="none"
-                          stroke="#16a34a"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        {earningsGraphData.monthlyEarnings.map((value: number, index: number) => {
-                          const x = (index / (earningsGraphData.monthlyEarnings.length - 1)) * 100;
-                          const y = 100 - (value / earningsGraphData.earningsMax) * 100;
-                          return <circle key={index} cx={`${x}%`} cy={`${y}%`} r="3" fill="#16a34a" className="transition-all duration-300 hover:r-4" />;
-                        })}
-                      </svg>
-                    </div>
-                    <div className="mt-3 flex justify-between text-[10px] font-bold text-slate-400">
-                      {earningsGraphData.monthlyLabels.map((label: string, i: number) => (
-                        <span key={i}>{label}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-900 p-4 text-white">
-                    <div className="flex items-center gap-2.5 text-xs font-bold">
-                      <LineChart className="h-5 w-5 text-green-400" />
-                      Total Earnings
-                    </div>
-                    <span className="text-lg font-extrabold text-green-400">{formatRands(earningsSummary.lifetimeApprovedZar)}</span>
-                  </div>
+            ) : (
+              <div className="p-8 text-center bg-[#FFFFFF]">
+                <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-[#92928E]">
+                  <FlaskConical className="h-4 w-4" />
                 </div>
-
-                {/* Payout Method Bento Widget */}
-                <div className="apple-bento-card p-5">
-                  <h2 className="text-base font-bold text-slate-900">Payout Method</h2>
-
-                  <div className="mt-3.5 space-y-2">
-                    <label className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50/60 p-3 text-xs font-bold text-slate-900 cursor-pointer">
-                      <input type="radio" name="payout-method" defaultChecked className="h-4 w-4 accent-green-600" />
-                      Bank Transfer (EFT)
-                    </label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100/50">
-                      <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
-                      SnapScan
-                    </label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100/50">
-                      <input type="radio" name="payout-method" className="h-4 w-4 accent-green-600" />
-                      Airtime top-up
-                    </label>
-                  </div>
-
-                  <div className="mt-3 text-xs text-slate-400 font-medium">
-                    {earningsSummary.payouts.length > 0
-                      ? `Last payout: ${formatDate(earningsSummary.payouts[0].createdAt)} · ${formatRands(earningsSummary.payouts[0].amountZar)}`
-                      : 'No payouts yet'}
-                  </div>
-                  <a href="/tester/payout-method" className="mt-3 block text-xs font-bold text-slate-900 hover:underline">
-                    Change Payout Method →
-                  </a>
-                </div>
-
-                {/* Pending Approvals Widget */}
-                <div className="apple-bento-card p-5">
-                  <h2 className="text-base font-bold text-slate-900">Pending Approvals</h2>
-                  <p className="mt-1 text-xs text-slate-500 font-medium">Submissions waiting for developer review.</p>
-                  <div className="mt-4 space-y-3">
-                    {earningsError ? (
-                      <div className="rounded-2xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{earningsError}</div>
-                    ) : null}
-                    {dashboardApprovals.map((item) => (
-                      <div key={item.name} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-900 truncate">{item.name}</div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">{item.date}</div>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <div className="text-xs font-extrabold text-slate-900">{item.amount}</div>
-                            <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-200">
-                              {item.status}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {dashboardApprovals.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs text-slate-500 font-medium">
-                        No reports are waiting for approval right now.
-                      </div>
-                    ) : null}
-                  </div>
-                  <a href="/tester/submissions" className="mt-4 block text-xs font-bold text-slate-900 hover:underline">
-                    View All Submissions →
-                  </a>
-                </div>
+                <div className="mt-2 text-xs font-semibold text-[#181817]">No active test assignments</div>
+                <div className="mt-0.5 text-xs text-[#666663]">Apply for available tests below to begin testing.</div>
               </div>
-            </section>
+            )}
+          </div>
 
-            <section className="mt-6 grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-              <div className="apple-bento-card overflow-hidden">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                  <h2 className="text-base font-bold text-slate-900">Transaction History</h2>
-                  <button className="rounded-full border border-slate-200/80 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition apple-press-effect">
-                    This Month <ChevronDown className="inline h-3.5 w-3.5" />
-                  </button>
-                </div>
+          {/* Recommended / Featured Tests Section */}
+          <div className="squash-panel overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E7E5] bg-[#FAFAF9]">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-[#181817]" />
+                <h2 className="text-sm font-semibold text-[#181817]">Available Opportunities</h2>
+              </div>
+              <Link to="/tester-jobs" className="text-xs font-medium text-[#666663] hover:text-[#181817]">
+                View all jobs →
+              </Link>
+            </div>
 
-                {/* Mobile Cards List */}
-                <div className="divide-y divide-slate-100 md:hidden">
-                  {dashboardTransactions.map((item) => (
-                    <div key={`${item.date}-${item.description}`} className="p-4 space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-bold text-slate-900">{item.description}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{item.date} • {item.type}</div>
-                        </div>
-                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClasses(item.status)}`}>
-                          {item.status}
-                        </span>
+            <div className="divide-y divide-[#EEEEEC]">
+              {isLoadingOpportunities ? (
+                <div className="space-y-3 p-4" aria-label="Loading available jobs">
+                  {[0, 1].map((item) => (
+                    <div key={item} className="flex animate-pulse items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#EEEEEC]" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-2/5 rounded bg-[#EEEEEC]" />
+                        <div className="h-2.5 w-3/5 rounded bg-[#F2F2F0]" />
                       </div>
-                      <div className="flex justify-end pt-1">
-                        <span className={`font-extrabold text-sm ${item.amount.startsWith('-') ? 'text-red-600' : 'text-slate-900'}`}>
-                          {item.amount}
-                        </span>
-                      </div>
+                      <div className="h-8 w-16 rounded-md bg-[#EEEEEC]" />
                     </div>
                   ))}
                 </div>
+              ) : null}
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        <th className="px-5 py-3.5">Date</th>
-                        <th className="px-5 py-3.5">Type</th>
-                        <th className="px-5 py-3.5">Description</th>
-                        <th className="px-5 py-3.5">Amount</th>
-                        <th className="px-5 py-3.5">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {dashboardTransactions.map((item) => (
-                        <tr key={`${item.date}-${item.description}`} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="px-5 py-4 text-xs font-semibold text-slate-500">{item.date}</td>
-                          <td className="px-5 py-4 text-xs font-medium text-slate-600">{item.type}</td>
-                          <td className="px-5 py-4 text-sm font-bold text-slate-900">{item.description}</td>
-                          <td className={`px-5 py-4 text-sm font-extrabold ${item.amount.startsWith('-') ? 'text-red-600' : 'text-slate-900'}`}>
-                            {item.amount}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${getStatusClasses(item.status)}`}>
-                              {item.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {opportunitiesError ? (
+                <div className="p-5 text-center">
+                  <p className="text-xs font-semibold text-[#C95050]">Available jobs could not be loaded.</p>
+                  <Link to="/tester-jobs" className="mt-2 inline-flex text-xs font-semibold text-[#181817] hover:underline">
+                    Open the jobs board →
+                  </Link>
                 </div>
+              ) : null}
 
-                <div className="border-t border-slate-100 px-5 py-3.5 text-center bg-slate-50/30">
-                  <a href="/tester/earnings" className="text-xs font-bold text-slate-900 hover:underline">View All Transactions →</a>
+              {!isLoadingOpportunities && !opportunitiesError && featuredOpportunities.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-xs font-semibold text-[#181817]">No open jobs right now</p>
+                  <p className="mt-1 text-[11px] text-[#666663]">New testing opportunities will appear here as developers publish them.</p>
                 </div>
+              ) : null}
+
+              {featuredOpportunities.map((test) => {
+                const ItemIcon = test.icon;
+                const actionLabel =
+                  test.applicationStatus === 'accepted'
+                    ? 'Accepted'
+                    : test.applicationStatus === 'pending'
+                      ? 'Applied'
+                      : test.applicationStatus === 'rejected'
+                        ? 'Not selected'
+                        : test.applicationStatus === 'withdrawn'
+                          ? 'Withdrawn'
+                          : 'Apply';
+                return (
+                  <div key={test.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 hover:bg-[#F7F7F6] transition-colors">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-[#181817] mt-0.5">
+                        {test.logoUrl ? (
+                          <img src={test.logoUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <ItemIcon className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-[#181817] truncate">{test.title}</span>
+                          <span className={`squash-status-pill ${test.urgency === 'Matched' ? 'squash-status-success' : 'squash-status-neutral'}`}>
+                            {test.urgency}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#666663]">
+                          <span>{test.category}</span>
+                          <span>•</span>
+                          <span>{test.platform}</span>
+                          <span>•</span>
+                          <span>{test.testType}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center justify-between sm:justify-end gap-4 mt-1 sm:mt-0 border-t sm:border-0 border-[#EEEEEC] pt-2 sm:pt-0">
+                      <div className="text-left sm:text-right">
+                        <div className="text-xs font-semibold text-[#181817]">{test.payout}</div>
+                        <div className="text-[11px] text-[#92928E]">{test.duration}</div>
+                      </div>
+                      <Link
+                        to={`/tester-jobs/${test.id}`}
+                        className={`${test.applicationStatus ? 'squash-btn-secondary' : 'squash-btn-primary'} !h-8 !px-3`}
+                      >
+                        {actionLabel}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Recent Activity Table */}
+          <div className="squash-panel overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E7E5] bg-[#FAFAF9]">
+              <h2 className="text-sm font-semibold text-[#181817]">Recent Activity</h2>
+              <Link to="/tester/earnings" className="text-xs font-medium text-[#666663] hover:text-[#181817]">
+                View earnings →
+              </Link>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="squash-table-header">
+                    <th className="px-4 py-2 font-medium">Date</th>
+                    <th className="px-4 py-2 font-medium">Type</th>
+                    <th className="px-4 py-2 font-medium">Description</th>
+                    <th className="px-4 py-2 font-medium">Amount</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardTransactions.map((item, idx) => (
+                    <tr key={`${item.date}-${idx}`} className="squash-table-row">
+                      <td className="px-4 py-2.5 text-[#666663] text-xs">{item.date}</td>
+                      <td className="px-4 py-2.5 text-[#181817] text-xs font-medium">{item.type}</td>
+                      <td className="px-4 py-2.5 text-[#181817] text-xs font-medium max-w-[200px] truncate">{item.description}</td>
+                      <td className={`px-4 py-2.5 text-xs font-semibold ${item.amount.startsWith('-') ? 'text-[#C95050]' : 'text-[#181817]'}`}>
+                        {item.amount}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`squash-status-pill ${
+                          item.status === 'Approved' || item.status === 'Paid'
+                            ? 'squash-status-success'
+                            : item.status === 'Pending' || item.status === 'Changes Requested'
+                            ? 'squash-status-warning'
+                            : 'squash-status-error'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Secondary Column Widgets */}
+        <div className="space-y-5">
+          {/* Earnings & Target Widget */}
+          <div className="squash-panel p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Earnings Overview</h2>
+              <span className="text-[11px] text-[#666663]">Target: R500.00</span>
+            </div>
+
+            <div className="p-3 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#666663]">Available Balance</span>
+                <span className="font-semibold text-[#181817]">{formatRands(earningsSummary.availableBalanceZar)}</span>
               </div>
-
-              <div className="apple-bento-card p-5 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-slate-900">Tester Level</h2>
-                    <ContactRound className="h-5 w-5 text-slate-400" />
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-4">
-                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm border ${currentTier.bg} ${currentTier.border}`}>
-                      <TierIcon className={`h-7 w-7 ${currentTier.color}`} />
-                    </div>
-                    <div>
-                      <div className="text-xl font-extrabold text-slate-900">{currentTier.label.replace(' 💎', '')}</div>
-                      <div className="text-xs font-semibold text-slate-500">Tier Status</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-                      <span>Progress</span>
-                      <span>{progressText}</span>
-                    </div>
-                    <div className="mt-2 h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-slate-900 transition-all duration-500" style={{ width: `${tierProgress}%` }} />
-                    </div>
-                  </div>
-
-                  <div className="mt-5 space-y-2.5 text-slate-700">
-                    <div className="flex items-center gap-2.5 text-xs font-semibold">
-                      <ShieldCheck className="h-4 w-4 shrink-0 text-green-600" />
-                      <span>Complete tests consistently</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs font-semibold">
-                      <BadgeCheck className="h-4 w-4 shrink-0 text-green-600" />
-                      <span>Keep approval rate above 90%</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs font-semibold">
-                      <Clock3 className="h-4 w-4 shrink-0 text-green-600" />
-                      <span>Stay active every month</span>
-                    </div>
-                  </div>
-                </div>
-
-                <a href="/tester/level-benefits" className="mt-5 block text-xs font-bold text-slate-900 hover:underline">
-                  View Level Benefits →
-                </a>
-              </div>
-            </section>
-
-            <section className="mt-6 apple-bento-card p-6">
-              <h2 className="text-lg font-bold text-slate-900">My Specializations</h2>
-              <p className="mt-1 text-xs font-medium text-slate-500">
-                Choose your strengths so we can match you with the right tests. Language, network and
-                assistive-technology specializations pay more, and need to be verified once before you
-                can apply to those jobs.
-              </p>
-
-              {verificationNotice ? (
-                <p className="mt-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                  {verificationNotice}
-                </p>
-              ) : null}
-              {verificationError ? (
-                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-                  {verificationError}
-                </p>
-              ) : null}
-              {verifyingKey ? (
-                <p className="mt-3 text-xs font-semibold text-slate-500">
-                  Uploading and scanning your evidence…
-                </p>
-              ) : null}
-
-              {challenge ? (
-                <div className="mt-4 rounded-2xl border border-slate-900 bg-slate-900 p-5 text-white">
-                  <div className="text-xs font-black uppercase tracking-wider text-green-400">
-                    Verification challenge · {getSpecializationLabel(challenge.key)}
-                  </div>
-                  <p className="mt-3 text-base font-bold leading-7">{challenge.promptText}</p>
-                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-300">
-                    Record yourself answering this out loud, then upload the video. You have until{' '}
-                    <strong className="text-white">
-                      {new Intl.DateTimeFormat('en-ZA', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }).format(new Date(challenge.expiresAt))}
-                    </strong>
-                    . The question is chosen at random and changes every time, so record it yourself,
-                    now — a recording made in advance or by someone else will not pass review.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={handleChallengeUpload}
-                      className="rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700"
-                    >
-                      Upload my recording
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChallenge(null)}
-                      className="rounded-xl border border-white/20 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
-              <input
-                ref={evidenceInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
-                onChange={handleEvidenceSelected}
-                className="hidden"
-              />
-
-              <div className="mt-4">
-                <SpecializationChecklist
-                  selected={specializations}
-                  onToggle={toggleSpecialization}
-                  verification={verification}
-                  onRequestVerification={handleRequestVerification}
+              <div className="h-1.5 w-full bg-[#EEEEEC] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#16A34A] rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((earningsSummary.availableBalanceZar / 500) * 100))}%` }}
                 />
               </div>
-            </section>
+            </div>
 
-            <section className="relative mt-6 overflow-hidden rounded-[24px] border border-white/60 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg shadow-slate-900/10">
-              <div className="pointer-events-none absolute -left-12 -top-12 h-36 w-36 rounded-full bg-green-500/20 blur-3xl" />
-              <div className="pointer-events-none absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-emerald-500/20 blur-2xl" />
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
-                <div>
-                  <h2 className="text-xl font-extrabold tracking-tight">Need Help?</h2>
-                  <p className="mt-1 text-xs text-slate-300 font-medium">Our support team is here to help with any payout or test questions.</p>
-                </div>
-                <a href="/help-center" className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-xs font-bold text-slate-900 hover:bg-slate-100 transition apple-press-effect shadow-sm">
-                  Contact Support
-                </a>
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-[#EEEEEC]">
+              <span className="text-[#666663]">Lifetime Approved</span>
+              <span className="font-semibold text-[#181817]">{formatRands(earningsSummary.lifetimeApprovedZar)}</span>
+            </div>
+          </div>
+
+          {/* Tester Tier & Level Widget */}
+          <div className="squash-panel p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Tester Level</h2>
+              <Award className="h-4 w-4 text-[#92928E]" />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-[#181817]">
+                <TierIcon className="h-5 w-5" />
               </div>
-            </section>
+              <div>
+                <div className="text-sm font-semibold text-[#181817]">{currentTier.label.replace(' 💎', '')}</div>
+                <div className="text-[11px] text-[#666663]">{progressText}</div>
+              </div>
+            </div>
+
+            <div className="h-1.5 w-full bg-[#EEEEEC] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#1D1D1B] rounded-full transition-all duration-300"
+                style={{ width: `${tierProgress}%` }}
+              />
+            </div>
+
+            <Link to="/tester/level-benefits" className="block text-xs font-medium text-[#666663] hover:text-[#181817] pt-1">
+              View Level Benefits →
+            </Link>
+          </div>
+
+          {/* Pending Reviews Widget */}
+          <div className="squash-panel p-4 space-y-3">
+            <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Pending Reviews</h2>
+            <div className="space-y-2">
+              {dashboardApprovals.map((item, i) => (
+                <div key={`${item.name}-${i}`} className="p-2.5 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <div className="text-xs font-medium text-[#181817] truncate">{item.name}</div>
+                    <div className="text-[10px] text-[#92928E]">{item.date}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-semibold text-[#181817]">{item.amount}</div>
+                    <span className="squash-status-pill squash-status-warning !text-[9px] !h-4">
+                      {item.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {dashboardApprovals.length === 0 ? (
+                <div className="text-xs text-[#92928E] py-2 text-center">No pending reviews.</div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Specializations Quick Widget */}
+          <div className="squash-panel p-4 space-y-3">
+            <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Specializations</h2>
+            <p className="text-xs text-[#666663] leading-normal">
+              Select verified specializations to qualify for higher paying tests.
+            </p>
+            {verificationNotice ? (
+              <p className="text-xs text-[#238554] bg-[#EAF7EF] p-2 rounded-md font-medium">
+                {verificationNotice}
+              </p>
+            ) : null}
+            <SpecializationChecklist
+              selected={specializations}
+              onToggle={toggleSpecialization}
+              verification={verification}
+              onRequestVerification={handleRequestVerification}
+            />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
-
-

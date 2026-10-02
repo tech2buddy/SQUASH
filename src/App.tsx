@@ -456,6 +456,7 @@ export default function App() {
         <Route path="/developer/reports" element={<SquashDeveloperReportsPage />} />
         <Route path="/developer/activity" element={<SquashDeveloperActivityPage />} />
         <Route path="/developer/settings" element={<SquashDeveloperSettingsPage />} />
+        <Route path="/developer/support" element={<SquashSupportPage embedded />} />
         <Route path="/report-details/attachments" element={<SquashReportAttachmentsPage />} />
         <Route path="/billing/payment-methods" element={<Navigate to="/billing" replace />} />
       </Route>
@@ -468,6 +469,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
+        <Route path="/tester/support" element={<SquashSupportPage embedded />} />
         <Route element={<TesterQualificationGate />}>
         <Route path="/tester/dashboard" element={<SquashTesterDashboardPage />} />
         <Route path="/tester-qualification" element={<SquashTesterQualificationPage />} />

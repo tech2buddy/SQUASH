@@ -133,7 +133,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
               Back to Login
             </Link>
             <div className="mt-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-600 ring-1 ring-green-100">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white ring-1 ring-black/10">
                 <KeyRound className="h-6 w-6" />
               </div>
               <div>
@@ -150,13 +150,13 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
           </div>
 
           {successNotice ? (
-            <div className="rounded-2xl border border-green-200 bg-green-50 p-5 text-center">
-              <CheckCircle2 className="mx-auto h-10 w-10 text-green-600" />
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-center">
+              <CheckCircle2 className="mx-auto h-10 w-10 text-[#e63946]" />
               <p className="mt-3 text-sm font-semibold text-slate-900">{successNotice}</p>
               <div className="mt-5">
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center rounded-2xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
+                  className="inline-flex items-center justify-center rounded-2xl bg-[#e63946] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d62828]"
                 >
                   Return to Login
                 </Link>
@@ -164,7 +164,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
             </div>
           ) : mode === 'update' && recovery === 'checking' ? (
             <div className="py-6 text-center">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-3 border-green-600 border-t-transparent" />
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-3 border-[#e63946] border-t-transparent" />
               <p className="text-sm font-semibold text-slate-700">Verifying your reset link...</p>
             </div>
           ) : mode === 'update' && recovery === 'invalid' ? (
@@ -175,7 +175,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
               </div>
               <Link
                 to="/forgot-password"
-                className="block w-full rounded-2xl bg-green-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-green-700"
+                className="block w-full rounded-2xl bg-[#e63946] px-5 py-3 text-center font-semibold text-white transition hover:bg-[#d62828]"
               >
                 Request a new reset link
               </Link>
@@ -184,7 +184,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
             <form onSubmit={handleRequestReset} className="space-y-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                 Email Address
-                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-green-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-100">
+                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-[#e63946] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#e63946]/20">
                   <Mail className="h-4 w-4 text-slate-400" />
                   <input
                     type="email"
@@ -202,7 +202,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:opacity-50"
+                className="w-full rounded-2xl bg-[#e63946] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#d62828] disabled:opacity-50"
               >
                 {submitting ? 'Sending link...' : 'Send Reset Link'}
               </button>
@@ -211,7 +211,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                 New Password
-                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-green-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-100">
+                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-[#e63946] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#e63946]/20">
                   <Lock className="h-4 w-4 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -234,7 +234,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
 
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                 Confirm New Password
-                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-green-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-100">
+                <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-slate-800 transition focus-within:border-[#e63946] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#e63946]/20">
                   <Lock className="h-4 w-4 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -253,7 +253,7 @@ export default function SquashResetPasswordPage({ mode }: { mode: 'request' | 'u
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-2xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:opacity-50"
+                className="w-full rounded-2xl bg-[#e63946] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#d62828] disabled:opacity-50"
               >
                 {submitting ? 'Updating...' : 'Update Password'}
               </button>

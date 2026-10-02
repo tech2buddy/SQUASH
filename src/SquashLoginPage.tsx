@@ -22,6 +22,15 @@ export default function SquashLoginPage() {
   const nextPath = useMemo(() => searchParams.get('next'), [searchParams]);
 
   useEffect(() => {
+    // Set by the idle-timeout redirect in auth.tsx, so a forced sign-out
+    // reads as an explained security measure rather than an unexplained
+    // logout -- the exact confusion that prompted adding the timeout.
+    if (searchParams.get('reason') === 'idle') {
+      setNotice('You were signed out after a period of inactivity. Please log in again.');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const handleRestoreState = () => {
       setSubmitting(false);
       setNotice((prev) => (prev.includes('Redirecting') ? '' : prev));
@@ -109,7 +118,7 @@ export default function SquashLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ecfdf3_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff1f2_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
@@ -139,7 +148,7 @@ export default function SquashLoginPage() {
               onClick={() => setRole('developer')}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 role === 'developer'
-                  ? 'bg-green-100 text-green-700 ring-1 ring-green-200'
+                  ? 'bg-rose-50 text-[#e63946] ring-1 ring-rose-200'
                   : 'text-slate-600 hover:bg-white'
               }`}
             >
@@ -149,7 +158,7 @@ export default function SquashLoginPage() {
               onClick={() => setRole('tester')}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 role === 'tester'
-                  ? 'bg-green-100 text-green-700 ring-1 ring-green-200'
+                  ? 'bg-rose-50 text-[#e63946] ring-1 ring-rose-200'
                   : 'text-slate-600 hover:bg-white'
               }`}
             >
@@ -201,15 +210,15 @@ export default function SquashLoginPage() {
                 <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="font-semibold text-green-700 hover:text-green-800">
+              <Link to="/forgot-password" className="font-semibold text-[#e63946] hover:text-[#d62828]">
                 Forgot password?
               </Link>
             </div>
 
             {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
-            {notice ? <p className="text-sm font-medium text-green-700">{notice}</p> : null}
+            {notice ? <p className="text-sm font-medium text-[#e63946]">{notice}</p> : null}
 
-            <button type="submit" className="mt-5 w-full rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
+            <button type="submit" className="mt-5 w-full rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828]">
               {submitting ? 'Logging in...' : 'Login'}
             </button>
           </form>
@@ -241,7 +250,7 @@ export default function SquashLoginPage() {
 
           <div className="mt-6 text-center text-sm text-slate-600">
             Don&apos;t have an account?{' '}
-            <Link to={`/signup?role=${role}`} className="font-semibold text-green-700 hover:text-green-800">
+            <Link to={`/signup?role=${role}`} className="font-semibold text-[#e63946] hover:text-[#d62828]">
               Sign up
             </Link>
           </div>

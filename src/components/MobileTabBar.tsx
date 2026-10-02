@@ -34,7 +34,7 @@ export default function MobileTabBar({ role, testerQualified = true }: { role: '
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
-      <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
+      <div className="mx-auto max-w-md rounded-full border border-black/[0.08] bg-white/85 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
         <nav className="flex items-center justify-between gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -51,14 +51,14 @@ export default function MobileTabBar({ role, testerQualified = true }: { role: '
               <Link
                 key={tab.label}
                 to={tab.href}
-                className={`relative flex flex-1 flex-col items-center justify-center rounded-2xl py-2 px-2.5 transition-all duration-200 apple-press-effect ${
+                className={`relative flex flex-1 flex-col items-center justify-center rounded-full py-2 px-2.5 transition-all duration-200 active:scale-95 ${
                   isActive
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 font-bold'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/60 font-semibold'
+                    ? 'bg-[#1d1d1f] text-white shadow-2xs font-bold'
+                    : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04] font-medium'
                 }`}
               >
                 <Icon className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
-                <span className="text-[11px] font-bold tracking-tight leading-none mt-1">{tab.label}</span>
+                <span className="text-[10px] font-semibold tracking-tight leading-none mt-1">{tab.label}</span>
               </Link>
             );
           })}

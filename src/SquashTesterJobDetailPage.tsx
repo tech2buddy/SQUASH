@@ -1,14 +1,9 @@
-import { ArrowLeft, CheckCircle2, Clock3, FileText, Globe2, Lock, Smartphone, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, FileText, Globe2, Smartphone, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useAuth } from './auth';
 import { getCategoryById, type TestCategoryId } from './components/testCategories';
-import {
-  getSpecializationLabel,
-  requiredSpecializationsForJob,
-} from './components/testerSpecializations';
 import { applyToJob, getActiveJobById, getTesterApplications, type DeveloperJob } from './lib/jobApi';
-import { getApprovedSpecializationKeys } from './lib/specializationApi';
 import { testerPayoutForJob } from './lib/pricing';
 import { getTesterQualificationStatus, type QualificationStatus } from './lib/testerQualificationApi';
 import { getTestTypeByKey } from './lib/testTypes';
@@ -28,22 +23,6 @@ export default function SquashTesterJobDetailPage() {
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState('');
   const [applyError, setApplyError] = useState('');
-  const [approvedKeys, setApprovedKeys] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!session?.userId) return;
-    let active = true;
-    getApprovedSpecializationKeys(session.userId)
-      .then((keys) => {
-        if (active) setApprovedKeys(keys);
-      })
-      .catch(() => {
-        // The database gate is authoritative; this only drives the explanation.
-      });
-    return () => {
-      active = false;
-    };
-  }, [session?.userId]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -134,7 +113,7 @@ export default function SquashTesterJobDetailPage() {
   if (!job) {
     return (
       <div className="space-y-4">
-        <Link to="/tester-jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-800">
+        <Link to="/tester-jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-[#e63946] hover:text-[#d62828]">
           <ArrowLeft className="h-4 w-4" /> Back to jobs
         </Link>
         <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -147,225 +126,147 @@ export default function SquashTesterJobDetailPage() {
   const testType = getTestTypeByKey(job.packageKey);
   // Mirrors job_application_requirement_keys in phase 47 -- shown so a tester
   // learns about the requirement here rather than from a rejected application.
-  const requiredKeys = requiredSpecializationsForJob(job.packageKey, job.preferredSpecializations);
-  const meetsRequirement =
-    requiredKeys.length === 0 || requiredKeys.some((key) => approvedKeys.includes(key));
   const category = getCategoryById(job.category as TestCategoryId);
   const payout = testerPayoutForJob(job.totalAmountZar, job.testersNeeded);
   const tasks = (job.tasks || '').split('\n').map((task) => task.trim()).filter(Boolean);
   const isOwnJob = job.developerId === session?.userId;
 
   return (
-    <div className="space-y-6">
-      <Link to="/tester-jobs" className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-800">
-        <ArrowLeft className="h-4 w-4" /> Back to jobs
+    <div className="space-y-4">
+      <Link to="/tester-jobs" className="inline-flex items-center gap-1.5 text-xs font-medium text-[#666663] hover:text-[#181817] transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to job board
       </Link>
 
       {notice ? (
-        <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">{notice}</div>
+        <div className="p-3 rounded-md bg-[#EAF7EF] border border-[#238554]/20 text-xs text-[#238554] font-medium">{notice}</div>
       ) : null}
       {applyError ? (
-        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{applyError}</div>
+        <div className="p-3 rounded-md bg-[#FDECEC] border border-[#C95050]/20 text-xs text-[#C95050] font-medium">{applyError}</div>
       ) : null}
 
-      <section className="apple-bento-card p-6">
+      {/* Main Header Panel */}
+      <section className="squash-panel p-5 space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3.5">
             {job.logoUrl ? (
-              <img src={job.logoUrl} alt="" className="h-14 w-14 rounded-2xl object-cover ring-1 ring-slate-200" />
+              <img src={job.logoUrl} alt="" className="h-10 w-10 rounded-md object-cover border border-[#E7E7E5]" />
             ) : (
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-green-700 text-lg font-black text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-xs font-semibold text-[#181817]">
                 {job.title.charAt(0).toUpperCase()}
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">{job.title}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold">
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-green-800">{testType.label}</span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{category.name}</span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{job.platform}</span>
+              <h1 className="text-lg font-semibold tracking-tight text-[#181817]">{job.title}</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="squash-status-pill squash-status-info">{testType.label}</span>
+                <span className="squash-status-pill squash-status-neutral">{category.name}</span>
+                <span className="squash-status-pill squash-status-neutral">{job.platform}</span>
               </div>
             </div>
           </div>
 
-          <div className="shrink-0 rounded-2xl bg-green-50 px-5 py-4 text-center ring-1 ring-green-100">
-            <div className="text-3xl font-black text-green-700">R{payout}</div>
-            <div className="mt-1 text-xs font-semibold text-slate-600">per approved test</div>
+          <div className="shrink-0 rounded-xl bg-[#1d4b38] text-white p-3 text-center min-w-[140px] shadow-[0_8px_18px_rgba(29,75,56,0.18)]">
+            <div className="text-xl font-semibold tracking-tight text-white">R{payout}</div>
+            <div className="text-[10px] text-[#c7e7d2]">Per Approved QA Report</div>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="flex items-center gap-2.5 rounded-2xl bg-slate-50 px-4 py-3">
-            <Clock3 className="h-4 w-4 shrink-0 text-green-700" />
-            <span className="text-sm font-semibold text-slate-700">About {testType.estimatedMinutes} min</span>
+        <div className="grid gap-2 sm:grid-cols-3 pt-3 border-t border-[#EEEEEC]">
+          <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-xs font-medium text-[#181817]">
+            <Clock3 className="h-3.5 w-3.5 text-[#666663]" />
+            <span>Est. {testType.estimatedMinutes} mins</span>
           </div>
-          <div className="flex items-center gap-2.5 rounded-2xl bg-slate-50 px-4 py-3">
-            <Users className="h-4 w-4 shrink-0 text-green-700" />
-            <span className="text-sm font-semibold text-slate-700">{job.testersNeeded} testers needed</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-xs font-medium text-[#181817]">
+            <Users className="h-3.5 w-3.5 text-[#666663]" />
+            <span>{job.testersNeeded} testers needed</span>
           </div>
-          <div className="flex items-center gap-2.5 rounded-2xl bg-slate-50 px-4 py-3">
-            <Smartphone className="h-4 w-4 shrink-0 text-green-700" />
-            <span className="text-sm font-semibold text-slate-700">{job.platform}</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] text-xs font-medium text-[#181817]">
+            <Smartphone className="h-3.5 w-3.5 text-[#666663]" />
+            <span>{job.platform}</span>
           </div>
         </div>
       </section>
 
-      <section className="apple-bento-card p-6">
-        <h2 className="text-lg font-bold text-slate-900">About this app</h2>
-        <p className="mt-3 whitespace-pre-line leading-7 text-slate-600">
-          {job.description || 'The developer has not added a description for this app.'}
+      {/* About App */}
+      <section className="squash-panel p-5 space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#181817]">About Application</h2>
+        <p className="text-xs text-[#666663] whitespace-pre-line leading-relaxed">
+          {job.description || 'No description provided.'}
         </p>
         {job.appUrl ? (
-          <div className="mt-4 flex items-center gap-2 text-sm">
-            <Globe2 className="h-4 w-4 shrink-0 text-green-700" />
-            <span className="font-semibold text-slate-700">You will test:</span>
-            <span className="break-all text-slate-600">{job.appUrl}</span>
+          <div className="mt-3 flex items-center gap-2 text-xs pt-2 border-t border-[#EEEEEC]">
+            <Globe2 className="h-3.5 w-3.5 text-[#92928E]" />
+            <span className="font-medium text-[#181817]">Target URL / App:</span>
+            <span className="text-[#666663] truncate">{job.appUrl}</span>
           </div>
         ) : null}
       </section>
 
-      <section className="apple-bento-card p-6">
-        <h2 className="text-lg font-bold text-slate-900">What you will do</h2>
+      {/* Test Tasks */}
+      <section className="squash-panel p-5 space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#181817]">Tasks To Execute</h2>
         {tasks.length ? (
-          <ol className="mt-4 space-y-3">
+          <ol className="space-y-2">
             {tasks.map((task, index) => (
-              <li key={`${task}-${index}`} className="flex items-start gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-green-100 text-xs font-bold text-green-800">
+              <li key={`${task}-${index}`} className="flex items-start gap-2.5 text-xs text-[#181817]">
+                <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded bg-[#F7F7F6] border border-[#E7E7E5] text-[10px] font-semibold text-[#666663] mt-0.5">
                   {index + 1}
                 </span>
-                <span className="leading-7 text-slate-700">{task}</span>
+                <span className="leading-relaxed">{task}</span>
               </li>
             ))}
           </ol>
         ) : (
-          <p className="mt-3 text-slate-600">The developer will share the task list once you are accepted.</p>
+          <p className="text-xs text-[#92928E]">The developer will share specific test cases upon acceptance.</p>
         )}
       </section>
 
-      {job.focusAreas ? (
-        <section className="apple-bento-card p-6">
-          <h2 className="text-lg font-bold text-slate-900">What to focus on</h2>
-          <p className="mt-3 whitespace-pre-line leading-7 text-slate-600">{job.focusAreas}</p>
-        </section>
-      ) : null}
-
-      {job.additionalInfo ? (
-        <section className="apple-bento-card p-6">
-          <h2 className="text-lg font-bold text-slate-900">Extra notes from the developer</h2>
-          <p className="mt-3 whitespace-pre-line leading-7 text-slate-600">{job.additionalInfo}</p>
-        </section>
-      ) : null}
-
-      {requiredKeys.length ? (
-        <section className="apple-bento-card p-6">
-          <h2 className="text-lg font-bold text-slate-900">Verification this job requires</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            {testType.label} pays more because SQUASH guarantees the tester really has this. You need
-            one of these verified on your profile before you can apply:
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {requiredKeys.map((id) => (
-              <span
-                key={id}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                  approvedKeys.includes(id)
-                    ? 'border-green-200 bg-green-50 text-green-700'
-                    : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                {getSpecializationLabel(id)}
-                {approvedKeys.includes(id) ? ' ✓' : ''}
-              </span>
-            ))}
-          </div>
-          {meetsRequirement ? (
-            <p className="mt-3 text-sm font-semibold text-green-700">
-              You're verified for this — you can apply.
-            </p>
-          ) : (
-            <p className="mt-3 text-sm text-slate-500">
-              Not verified yet.{' '}
-              <Link to="/tester/dashboard" className="font-semibold text-green-700 hover:text-green-800">
-                Submit evidence from your dashboard
-              </Link>{' '}
-              and a reviewer will check it.
-            </p>
-          )}
-        </section>
-      ) : null}
-
-      {job.preferredSpecializations.length ? (
-        <section className="apple-bento-card p-6">
-          <h2 className="text-lg font-bold text-slate-900">Tester profile the developer wants</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {job.preferredSpecializations.map((id) => (
-              <span key={id} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
-                {getSpecializationLabel(id)}
-              </span>
-            ))}
-          </div>
-          <p className="mt-3 text-sm text-slate-500">
-            {requiredKeys.length
-              ? 'Beyond the verification above, these are preferences rather than hard requirements.'
-              : 'These are preferences, not hard requirements. You can still apply if some do not match you.'}
-          </p>
-        </section>
-      ) : null}
-
-      <section className="apple-bento-card p-6">
-        <div className="flex items-start gap-3">
-          <Lock className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Attachments</h2>
-            <p className="mt-2 leading-7 text-slate-600">
-              Any files the developer attached — screens, test accounts or briefs — become available
-              on your Test Lab screen once your application is accepted. They stay private until then.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="apple-bento-card p-6">
+      {/* Primary Action Panel */}
+      <section className="squash-panel p-4 bg-[#FAFAF9]">
         {isOwnJob ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-            This is your own job posting, so you cannot apply to it.
+          <div className="p-3 text-xs text-[#A86E19] bg-[#FFF5E6] rounded-md font-medium">
+            This is your own job posting; you cannot apply to it.
           </div>
         ) : qualificationStatus !== null && qualificationStatus !== 'approved' ? (
-          <div className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="font-bold text-amber-900">Finish your Tester Academy first</div><p className="mt-1 text-sm leading-6 text-amber-800">Paid job applications unlock after your quiz, controlled sample test and SQUASH review are complete.</p></div><Link to="/tester-qualification" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white">Continue Academy</Link></div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#FFF5E6] rounded-md text-xs">
+            <div>
+              <div className="font-semibold text-[#A86E19]">Academy Qualification Required</div>
+              <p className="text-[#666663]">Complete your SQUASH Academy sample test before applying to paid jobs.</p>
+            </div>
+            <Link to="/tester-qualification" className="squash-btn-primary shrink-0">
+              Continue Academy
+            </Link>
+          </div>
         ) : applicationStatus === 'accepted' ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-              <CheckCircle2 className="h-5 w-5" /> You have been accepted for this job.
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#238554]">
+              <CheckCircle2 className="h-4 w-4" /> Application Accepted.
             </div>
             <button
               type="button"
               onClick={() => navigate('/active-test')}
-              className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+              className="squash-btn-primary"
             >
-              Go to my tests
+              Enter Test Lab
             </button>
           </div>
         ) : applicationStatus === 'pending' ? (
-          <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
-            <FileText className="h-5 w-5" /> Application sent — the developer is reviewing your profile.
-          </div>
-        ) : applicationStatus === 'rejected' ? (
-          <div className="text-sm font-semibold text-slate-600">
-            Your application for this job was not accepted this time.
+          <div className="flex items-center gap-2 text-xs font-medium text-[#A86E19]">
+            <FileText className="h-4 w-4" /> Application Under Review.
           </div>
         ) : (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="text-lg font-bold text-slate-900">Ready to take this on?</div>
-              <div className="mt-1 text-sm text-slate-600">
-                You earn R{payout} once your report is approved.
+              <div className="text-xs font-semibold text-[#181817]">Ready to execute this assignment?</div>
+              <div className="text-[11px] text-[#666663]">
+                R{payout} payout upon approved report submission.
               </div>
             </div>
             <button
               type="button"
               onClick={handleApply}
               disabled={applying}
-              className="rounded-2xl bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-700 disabled:opacity-60"
+              className="squash-btn-primary"
             >
               {applying ? 'Applying...' : 'Apply Now'}
             </button>

@@ -199,7 +199,7 @@ Run `supabase/phase42_tester_qualification_sample_test.sql` after Phase 41.
 
 This adds the private qualification-sample report table and the `qualification-evidence` storage bucket. The practical sample is separate from paid jobs, has no developer or payment data, and requires a structured report plus one to three private evidence files. Evidence is stored inside the tester and attempt folder, with tester/admin-only access and the existing malware scan endpoint.
 
-The application assigns `checkout-flow-v1` on the first attempt and `booking-flow-v1` on the retry. These are deliberately different simulated flows, so a retry cannot simply repeat the original test.
+Phase 42 shipped two fixed simulated flows and assigned a different one on the retry. Both the fixed list and the must-differ rule are replaced in Phase 59 — see below.
 ## Phase 43: Administrator qualification review
 
 Run `supabase/phase43_tester_qualification_review.sql` after Phase 42.
@@ -220,3 +220,15 @@ Every qualification decision now records four 1–5 reviewer scores: report clar
 Run `supabase/phase46_tester_probation_operations.sql` after Phase 45.
 
 This turns the 30-day quality and safety monitoring period into an auditable admin workflow. From `/A31/probation`, an administrator can clear a reliable tester, extend the observation period by 7–90 days, or restrict future paid-job applications while an issue is investigated. Every decision needs a written reason, preserves the tester’s history, and sends a private in-app notification to the tester.
+## Phase 59: Admin-authored sample tests
+
+Run `supabase/phase59_qualification_real_sample_tests.sql` after Phase 58.
+
+Phase 58 made the practical sample's *content* editable; the list of scenarios was still two fixed demo rows of training copy. This makes the list itself admin-owned, from `/A31/qualification-template`:
+
+- **A scenario can be a real job.** New `app_url` (https only) and `access_notes` columns. The tester gets an "Open the app" link and a "How to get in" panel, instead of a written-only exercise. `access_notes` is shown to every tester assigned that test, so it must only ever hold throwaway test credentials.
+- **Create, retire and remove.** `admin_save_qualification_scenario` writes the variant row and the template row in one transaction — a variant saved without its content would fail the tester at the sample stage with a 503. `admin_delete_qualification_scenario` deletes a scenario nothing references, and deactivates rather than deletes one a tester has already been assigned, so an attempt in flight keeps working.
+- **Assignment.** A tester is given a random *active* scenario that has content, preferring one they have not seen. The Phase 42 rule that attempt 2 must use a different scenario is dropped (`tester_qualification_sample_variant_unique`): it silently required two scenarios to exist forever, so with one real test set up, a retrying tester dead-ended on "A distinct qualification variant is not available yet". The quiz keeps its must-differ rule — two quiz variants ship with the platform, and re-serving graded questions would make the retry meaningless.
+- **Empty list is now explicit.** With no active scenario, starting an attempt fails with "No sample test has been set up yet. Please contact SQUASH support." The admin page warns when nothing is live.
+
+The seeded demo scenarios (`checkout-flow-v1`, `booking-flow-v1`) are removed by this migration, or deactivated where a tester was already assigned one.

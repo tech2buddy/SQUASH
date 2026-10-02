@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    /* TypeScript 6 requires rootDir to be explicit (TS5011) as soon as anything
+       outside `include` is compiled with these options. `vercel dev` does
+       exactly that: it hands these compilerOptions to ts-node to load the
+       `api/*.ts` functions, and without this the functions fail to start. */
+    "rootDir": ".",
     "target": "es2023",
     "module": "esnext",
     "lib": ["ES2023", "DOM"],

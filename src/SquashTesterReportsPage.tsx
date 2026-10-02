@@ -2,15 +2,11 @@ import {
   AlertCircle,
   BadgeCheck,
   Camera,
-  CheckCircle2,
-  ChevronDown,
   Clock3,
   FileText,
-  MessageSquare,
-  Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 
 
@@ -98,14 +94,14 @@ export default function SquashTesterReportsPage() {
   }, [realReports]);
 
   const summaryCards = [
-    { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-green-700', bg: 'bg-green-50' },
+    { title: 'Submitted', value: String(realReports.length), note: 'Total reports', icon: FileText, color: 'text-slate-700', bg: 'bg-slate-50' },
     {
       title: 'Approved',
       value: String(realReports.filter((report) => report.status === 'approved').length),
       note: 'Payment released',
       icon: BadgeCheck,
-      color: 'text-emerald-700',
-      bg: 'bg-emerald-50',
+      color: 'text-[#e63946]',
+      bg: 'bg-rose-50',
     },
     {
       title: 'Pending',
@@ -120,8 +116,8 @@ export default function SquashTesterReportsPage() {
       value: String(realReports.filter((report) => report.status === 'changes_requested').length),
       note: 'Need attention',
       icon: AlertCircle,
-      color: 'text-sky-700',
-      bg: 'bg-sky-50',
+      color: 'text-[#1d1d1f]',
+      bg: 'bg-slate-100',
     },
   ];
 
@@ -134,14 +130,6 @@ export default function SquashTesterReportsPage() {
       due: 'Action needed',
     }));
 
-  const statusClass = (status: ReportStatus) => {
-    if (status === 'Approved') return 'bg-green-50 text-green-700 border-green-200';
-    if (status === 'Pending Review') return 'bg-amber-50 text-amber-700 border-amber-200';
-    if (status === 'Changes Requested') return 'bg-sky-50 text-sky-700 border-sky-200';
-    if (status === 'Rejected') return 'bg-red-50 text-red-600 border-red-200';
-    return 'bg-slate-50 text-slate-700 border-slate-200';
-  };
-
   if (loadingReports) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 text-center text-xs font-bold text-slate-500">
@@ -151,286 +139,173 @@ export default function SquashTesterReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between animate-fade-up">
-              <div>
-                <span className="inline-flex rounded-full bg-green-100/80 px-3.5 py-1 text-xs font-extrabold text-green-800">
-                  Tester Reports
-                </span>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">Reports & Submissions</h1>
-                <p className="mt-1 text-xs text-slate-500 sm:text-sm font-medium">
-                  Track bug reports, requested changes, approvals, and evidence files.
-                </p>
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-[#E7E7E5]">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-[#181817]">Reports & Submissions</h1>
+          <p className="mt-0.5 text-xs text-[#666663]">
+            Track bug reports, requested changes, approvals, and evidence files.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link to="/active-test" className="squash-btn-primary">
+            Continue Test
+          </Link>
+          <Link to="/tester-jobs" className="squash-btn-secondary">
+            Find Tests
+          </Link>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.title} className="squash-panel p-3.5 h-[84px] flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-[#666663]">{card.title}</span>
+                <Icon className="h-3.5 w-3.5 text-[#92928E]" />
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                <a
-                  href="/active-test"
-                  className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect"
-                >
-                  Continue Test
-                </a>
-                <a
-                  href="/tester-jobs"
-                  className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect"
-                >
-                  Find Tests
-                </a>
+              <div>
+                <div className="text-xl font-semibold text-[#181817] leading-none">{card.value}</div>
+                <div className="mt-1 text-[11px] text-[#92928E]">{card.note}</div>
               </div>
             </div>
+          );
+        })}
+      </section>
 
-            {/* Summary Cards */}
-            <section className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4 animate-fade-up-delayed">
-              {summaryCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div key={card.title} className="apple-bento-card p-5 flex flex-col justify-between">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="text-xs font-bold text-slate-500">{card.title}</div>
-                        <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{card.value}</div>
-                        <div className="mt-1.5 text-xs font-medium text-slate-400">{card.note}</div>
-                      </div>
-                      <div className={`grid h-10 w-10 place-items-center rounded-2xl ${card.bg}`}>
-                        <Icon className={`h-4.5 w-4.5 ${card.color}`} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
+      {/* Main Reports Table & Sidebar */}
+      <section className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+        <div className="squash-panel overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E7E5] bg-[#FAFAF9]">
+            <h2 className="text-sm font-semibold text-[#181817]">My Reports</h2>
+            <span className="text-xs text-[#666663]">{reports.length} total</span>
+          </div>
 
-            {/* Reports List */}
-            <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-              <div className="apple-bento-card overflow-hidden">
-                <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">My Reports</h2>
-                    <p className="mt-0.5 text-xs font-medium text-slate-500">Latest submissions and approval status.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button className="rounded-full border border-slate-200/80 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition apple-press-effect">
-                      All Status <ChevronDown className="inline h-3.5 w-3.5" />
-                    </button>
-                    <button className="rounded-full border border-slate-200/80 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition apple-press-effect">
-                      Latest First
-                    </button>
-                  </div>
-                </div>
-
-                {/* Mobile Cards List */}
-                <div className="divide-y divide-slate-100 md:hidden">
-                  {loadingReports ? (
-                    <div className="px-5 py-8 text-center text-xs font-semibold text-slate-500">
-                      Loading your real submissions...
-                    </div>
-                  ) : null}
-                  {reportsError ? (
-                    <div className="px-5 py-8 text-center text-xs font-semibold text-red-600">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="squash-table-header">
+                  <th className="px-4 py-2 font-medium">Report</th>
+                  <th className="px-4 py-2 font-medium">App</th>
+                  <th className="px-4 py-2 font-medium">Evidence</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 text-right font-medium">Earnings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingReports ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#92928E]">
+                      Loading submissions...
+                    </td>
+                  </tr>
+                ) : null}
+                {reportsError ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-xs text-[#C95050] bg-[#FDECEC]">
                       {reportsError}
-                    </div>
-                  ) : null}
-                  {!loadingReports && !reportsError && reports.length === 0 ? (
-                    <div className="px-5 py-8 text-center text-xs leading-6 text-slate-500">
+                    </td>
+                  </tr>
+                ) : null}
+                {!loadingReports && !reportsError && reports.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#92928E]">
                       You have not submitted any reports yet.
-                    </div>
-                  ) : null}
-                  {reports.map((report) => (
-                    <button
-                      key={report.submissionId}
-                      type="button"
-                      onClick={() => navigate(`/tester/reports/${report.submissionId}`)}
-                      className="block w-full space-y-3 p-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-500"
-                      aria-label={`View report for ${report.app}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm">{report.title}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{report.id} • {report.app} ({report.platform})</div>
-                        </div>
-                        <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold ${statusClass(report.status)}`}>
-                          {report.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between pt-1 text-xs">
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
-                            <Camera className="h-3 w-3" />
-                            {report.bugCount > 0 ? `${report.bugCount} bugs` : 'Report'}
+                    </td>
+                  </tr>
+                ) : null}
+                {reports.map((report) => (
+                  <tr
+                    key={report.submissionId}
+                    onClick={() => navigate(`/tester/reports/${report.submissionId}`)}
+                    className="squash-table-row cursor-pointer"
+                  >
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium text-[#181817] text-xs max-w-[200px] truncate">{report.title}</div>
+                      <div className="text-[10px] text-[#92928E]">{report.id}</div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium text-[#181817] text-xs max-w-[150px] truncate">{report.app}</div>
+                      <div className="text-[10px] text-[#92928E]">{report.platform}</div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-1.5 text-xs text-[#666663]">
+                        <Camera className="h-3 w-3 text-[#92928E]" />
+                        <span>{report.bugCount > 0 ? `${report.bugCount} bugs` : 'Report'}</span>
+                        {report.hasVideo ? (
+                          <span className="squash-status-pill squash-status-error !text-[9.5px] !h-4">
+                            Video
                           </span>
-                          {report.hasVideo ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600">
-                              <Video className="h-3 w-3" />
-                              Video
-                            </span>
-                          ) : null}
-                        </div>
-                        <span className="font-extrabold text-slate-900">{report.earnings}</span>
+                        ) : null}
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className={`squash-status-pill ${
+                        report.status === 'Approved'
+                          ? 'squash-status-success'
+                          : report.status === 'Pending Review' || report.status === 'Under Review'
+                          ? 'squash-status-info'
+                          : report.status === 'Changes Requested'
+                          ? 'squash-status-warning'
+                          : 'squash-status-error'
+                      }`}>
+                        {report.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right font-medium text-xs text-[#181817]">{report.earnings}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        <th className="px-5 py-3.5">Report</th>
-                        <th className="px-5 py-3.5">App</th>
-                        <th className="px-5 py-3.5">Evidence</th>
-                        <th className="px-5 py-3.5">Status</th>
-                        <th className="px-5 py-3.5">Earnings</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {loadingReports ? (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-8 text-center text-xs font-semibold text-slate-500">
-                            Loading your real submissions...
-                          </td>
-                        </tr>
-                      ) : null}
-                      {reportsError ? (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-8 text-center text-xs font-semibold text-red-600">
-                            {reportsError}
-                          </td>
-                        </tr>
-                      ) : null}
-                      {!loadingReports && !reportsError && reports.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-8 text-center text-xs text-slate-500">
-                            You have not submitted any reports yet. Once you complete an accepted test, your submission history will appear here.
-                          </td>
-                        </tr>
-                      ) : null}
-                      {reports.map((report) => (
-                        <tr
-                          key={report.submissionId}
-                          tabIndex={0}
-                          role="link"
-                          onClick={() => navigate(`/tester/reports/${report.submissionId}`)}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              event.preventDefault();
-                              navigate(`/tester/reports/${report.submissionId}`);
-                            }
-                          }}
-                          className="cursor-pointer transition-colors hover:bg-slate-50/80 focus-visible:bg-green-50/60 focus-visible:outline-none"
-                          aria-label={`View report for ${report.app}`}
-                        >
-                          <td className="px-5 py-4">
-                            <div className="text-xs font-bold text-slate-900">{report.title}</div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">{report.id}</div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="text-xs font-bold text-slate-900">{report.app}</div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">{report.platform}</div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex flex-wrap gap-1.5">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
-                                <Camera className="h-3 w-3" />
-                                {report.bugCount > 0 ? `${report.bugCount} bugs` : 'Report'}
-                              </span>
-                              {report.hasVideo ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600">
-                                  <Video className="h-3 w-3" />
-                                  Video
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold ${statusClass(report.status)}`}>
-                              {report.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-xs font-extrabold text-slate-900">{report.earnings}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <div className="space-y-4">
+          <div className="squash-panel p-4 space-y-3">
+            <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Changes Requested</h2>
+            <div className="space-y-2">
+              {requestedChanges.map((item) => (
+                <div key={`${item.app}-${item.title}`} className="p-3 rounded-md bg-[#F7F7F6] border border-[#E7E7E5] space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-medium text-[#181817] truncate">{item.title}</div>
+                    <span className="squash-status-pill squash-status-warning !text-[9px] !h-4">
+                      Action needed
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#666663]">{item.comment}</p>
+                  <Link to="/active-test" className="inline-block text-[11px] font-medium text-[#181817] hover:underline pt-1">
+                    Update Report →
+                  </Link>
                 </div>
+              ))}
+              {requestedChanges.length === 0 ? (
+                <div className="text-xs text-[#92928E] py-2 text-center">Nothing needs changes right now.</div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="squash-panel p-4 space-y-3">
+            <h2 className="text-xs font-semibold text-[#181817] uppercase tracking-wider">Quality Score</h2>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between text-[#666663]">
+                <span>Approval Rate</span>
+                <span className="font-semibold text-[#181817]">{testerProfile ? `${testerProfile.approvalRate}%` : '0%'}</span>
               </div>
-
-              <div className="space-y-6">
-                <div className="apple-bento-card p-6">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-sky-600" />
-                    <h2 className="text-base font-bold text-slate-900">Changes Requested</h2>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500 font-medium">
-                    Update these reports quickly to keep your approval rate high.
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    {requestedChanges.map((item) => (
-                      <div key={`${item.app}-${item.title}`} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-xs font-bold text-slate-900">{item.title}</div>
-                            <div className="mt-0.5 text-[11px] text-slate-400 font-medium">{item.app}</div>
-                          </div>
-                          <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-[10px] font-extrabold text-sky-700">
-                            {item.due}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-600 font-medium">{item.comment}</p>
-                        <a href="/active-test" className="mt-3 block text-xs font-bold text-slate-900 hover:underline">
-                          Update Report →
-                        </a>
-                      </div>
-                    ))}
-                    {requestedChanges.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs text-slate-500 font-medium">
-                        Nothing needs changes right now. Clean slate!
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="apple-bento-card p-6">
-                  <h2 className="text-base font-bold text-slate-900">Report Quality</h2>
-                  <div className="mt-4 space-y-3.5">
-                    {[
-                      { label: 'Clear reproduction steps', value: testerProfile ? `${testerProfile.approvalRate}%` : '0%' },
-                      { label: 'Helpful evidence attached', value: testerProfile ? `${Math.round((testerProfile.rating / 5) * 100)}%` : '0%' },
-                      { label: 'Revision speed', value: testerProfile ? `${Math.max(0, testerProfile.approvalRate - 4)}%` : '0%' },
-                    ].map((item) => (
-                      <div key={item.label}>
-                        <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
-                          <span className="text-slate-700">{item.label}</span>
-                          <span className="text-slate-500 font-bold">{item.value}</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                          <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: item.value }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="h-1.5 w-full bg-[#EEEEEC] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#16A34A] rounded-full transition-all duration-300"
+                  style={{ width: `${testerProfile?.approvalRate || 0}%` }}
+                />
               </div>
-            </section>
-
-            <section className="apple-bento-card p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-3.5">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Better reports earn faster approvals</h2>
-                    <p className="mt-0.5 text-xs text-slate-500 font-medium">
-                      Include steps, expected result, actual result, screenshots, and video evidence where useful.
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href="/guides"
-                  className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition apple-press-effect shrink-0 text-center"
-                >
-                  View Reporting Guide →
-                </a>
-              </div>
-            </section>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

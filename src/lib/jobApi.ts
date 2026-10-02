@@ -5,6 +5,7 @@ import { sendTransactionalEmail } from './emailApi';
 import type { TestTypeKey } from './testTypes';
 import { testerPayoutForJob } from './pricing';
 import { parseTestBrief, type TestBrief } from './testBrief';
+import { formatJobTitle, formatPersonName } from './displayText';
 
 export type JobPackageKey = TestTypeKey;
 type JobInsert = Database['public']['Tables']['jobs']['Insert'];
@@ -119,7 +120,7 @@ function mapJob(row: {
   return {
     id: row.id,
     developerId: row.developer_id,
-    title: row.title,
+    title: formatJobTitle(row.title),
     appUrl: row.app_url,
     logoUrl: row.logo_url || null,
     platform: row.platform,
@@ -470,12 +471,12 @@ export async function getDeveloperApplications(developerId: string): Promise<Dev
 
     return {
       ...mapApplication(application),
-      jobTitle: job?.title || 'Unknown job',
+      jobTitle: formatJobTitle(job?.title || 'Unknown job'),
       jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
       jobPackageKey: job?.packageKey || 'bug-hunting',
-      testerName: profile?.full_name || 'Tester applicant',
+      testerName: formatPersonName(profile?.full_name || 'Tester applicant'),
       testerEmail: profile?.email || '',
       testerAvatarUrl: profile?.avatar_url || null,
       testerCity: profile?.city || 'South Africa',
@@ -604,7 +605,7 @@ export async function getTesterAssignments(testerId: string): Promise<TesterAssi
     const job = jobById.get(assignment.job_id);
     return {
       ...base,
-      jobTitle: job?.title || 'Accepted test',
+      jobTitle: formatJobTitle(job?.title || 'Accepted test'),
       jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
@@ -653,7 +654,7 @@ export async function getTesterAssignmentById(assignmentId: string, testerId: st
   const mappedJob = job ? mapJob(job) : null;
   return {
     ...mapAssignment(assignment),
-    jobTitle: mappedJob?.title || 'Accepted test',
+    jobTitle: formatJobTitle(mappedJob?.title || 'Accepted test'),
     jobLogoUrl: mappedJob?.logoUrl || null,
     jobPlatform: mappedJob?.platform || 'App',
     jobCategory: mappedJob?.category || 'mobile-app-testing',
@@ -940,11 +941,11 @@ export async function getDeveloperSubmittedReports(developerId: string): Promise
       summary: submission.summary,
       submittedAt: submission.submitted_at,
       createdAt: submission.created_at,
-      jobTitle: job?.title || 'Submitted test report',
+      jobTitle: formatJobTitle(job?.title || 'Submitted test report'),
       jobLogoUrl: job?.logoUrl || null,
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
-      testerName: profile?.full_name || 'Tester',
+      testerName: formatPersonName(profile?.full_name || 'Tester'),
       testerEmail: profile?.email || '',
       testerRating: Number(testerProfile?.rating || 0),
       testerTestsCompleted: testerProfile?.tests_completed || 0,
@@ -1072,7 +1073,7 @@ export async function getTesterEarningsSummary(testerId: string): Promise<Tester
     const job = jobById.get(submission.job_id);
     return {
       id: submission.id,
-      jobTitle: job?.title || 'Submitted test',
+      jobTitle: formatJobTitle(job?.title || 'Submitted test'),
       status: submission.status === 'submitted' || submission.status === 'draft' ? 'pending' : submission.status,
       amountZar: testerPayoutForJob(job?.totalAmountZar || 0, job?.testersNeeded || 0),
       submittedAt: submission.submitted_at,
@@ -1194,7 +1195,7 @@ export async function getTesterReportSubmissions(testerId: string): Promise<Test
       id: submission.id,
       assignmentId: submission.assignment_id,
       jobId: submission.job_id,
-      jobTitle: job?.title || 'Submitted test',
+      jobTitle: formatJobTitle(job?.title || 'Submitted test'),
       jobPlatform: job?.platform || 'App',
       jobCategory: job?.category || 'mobile-app-testing',
       status: submission.status,
@@ -1411,12 +1412,12 @@ export async function getSubmissionDetails(submissionId: string): Promise<Develo
     id: submission.id,
     assignmentId: submission.assignment_id,
     jobId: submission.job_id,
-    jobTitle: job?.title || 'Bug Report Submission',
+    jobTitle: formatJobTitle(job?.title || 'Bug Report Submission'),
     jobLogoUrl: job?.logo_url || null,
     jobPlatform: job?.platform || 'App',
     jobCategory: job?.category || 'mobile-app-testing',
     testerId: submission.tester_id,
-    testerName: profile?.full_name || 'Tester',
+    testerName: formatPersonName(profile?.full_name || 'Tester'),
     testerEmail: profile?.email || '',
     testerTestsCompleted: testerProfile?.tests_completed || 0,
     status: submission.status,

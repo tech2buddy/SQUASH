@@ -27,8 +27,8 @@ import {
 } from './lib/profileApi';
 
 function statusClasses(status: string) {
-  if (status === 'reward_ready') return 'bg-green-50 text-green-700 ring-green-100';
-  if (status === 'approved_work') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+  if (status === 'reward_ready') return 'bg-rose-50 text-[#e63946] ring-rose-100';
+  if (status === 'approved_work') return 'bg-rose-50 text-[#e63946] ring-rose-100';
   if (status === 'signed_up') return 'bg-sky-50 text-sky-700 ring-sky-100';
   return 'bg-amber-50 text-amber-700 ring-amber-100';
 }
@@ -123,7 +123,7 @@ export default function SquashTesterReferralsPage() {
         <aside className="hidden border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
             <img src="/squash-logo.png" alt="SQUASH logo" className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm" />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
+            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-[#e63946]">SQUASH</a>
           </div>
           <nav className="flex-1 space-y-2 px-4 py-6">
             {navItems.map((item) => {
@@ -164,19 +164,19 @@ export default function SquashTesterReferralsPage() {
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
+                <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-[#e63946] ring-1 ring-rose-100">
                   <Gift className="h-4 w-4" /> Referrals
                 </div>
                 <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">Invite everyday testers</h1>
                 <p className="mt-2 max-w-2xl text-slate-600">Grow the SQUASH tester community with trusted people who have useful devices, network conditions and language experience.</p>
               </div>
-              <a href="/tester-jobs" className="w-fit rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">Find Tests</a>
+              <a href="/tester-jobs" className="w-fit rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828]">Find Tests</a>
             </div>
 
             <section className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><div className="text-sm font-semibold text-slate-500">Invites sent</div><div className="mt-2 text-3xl font-black text-slate-900">{invitedCount}</div></div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><div className="text-sm font-semibold text-slate-500">Signed up</div><div className="mt-2 text-3xl font-black text-slate-900">{signedUpCount}</div></div>
-              <div className="rounded-3xl border border-green-100 bg-green-50 p-5 shadow-sm"><div className="text-sm font-semibold text-green-700">Reward ready</div><div className="mt-2 text-3xl font-black text-slate-900">{rewardReadyCount}</div></div>
+              <div className="rounded-3xl border border-rose-100 bg-rose-50 p-5 shadow-sm"><div className="text-sm font-semibold text-[#e63946]">Reward ready</div><div className="mt-2 text-3xl font-black text-slate-900">{rewardReadyCount}</div></div>
             </section>
 
             <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
@@ -186,14 +186,14 @@ export default function SquashTesterReferralsPage() {
                     <h2 className="text-2xl font-bold text-slate-900">Your referral link</h2>
                     <p className="mt-1 text-sm text-slate-600">Share this with people you trust. Rewards should only unlock after approved work.</p>
                   </div>
-                  <Gift className="h-8 w-8 text-green-700" />
+                  <Gift className="h-8 w-8 text-[#1d1d1f]" />
                 </div>
                 <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Referral code</div>
                   <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{referralCode || '·······'}</div>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <input readOnly value={referralLink} placeholder="Generating your link..." className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none" />
-                    <button type="button" disabled={!referralLink} onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="button" disabled={!referralLink} onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white hover:bg-[#d62828] disabled:opacity-50">
                       {copied ? <CheckCircle2 className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
                       {copied ? 'Copied' : 'Copy'}
                     </button>
@@ -208,10 +208,10 @@ export default function SquashTesterReferralsPage() {
                   is what links their signup to your account.
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
-                  <label className="block"><span className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Mail className="h-4 w-4 text-slate-400" /> Email address</span><input value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-green-500" placeholder="friend@example.com" /></label>
-                  <button type="button" disabled={sending} onClick={() => void sendInvite()} className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700 disabled:opacity-50">{sending ? 'Saving...' : 'Save invite'}</button>
+                  <label className="block"><span className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Mail className="h-4 w-4 text-slate-400" /> Email address</span><input value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#e63946]" placeholder="friend@example.com" /></label>
+                  <button type="button" disabled={sending} onClick={() => void sendInvite()} className="rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828] disabled:opacity-50">{sending ? 'Saving...' : 'Save invite'}</button>
                 </div>
-                {inviteNotice ? <div className="mt-4 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{inviteNotice}</div> : null}
+                {inviteNotice ? <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-semibold text-[#e63946]">{inviteNotice}</div> : null}
               </div>
             </section>
 
@@ -259,15 +259,15 @@ export default function SquashTesterReferralsPage() {
               </div>
 
               <div className="space-y-6">
-                <div className="rounded-3xl border border-green-100 bg-green-50 p-6 shadow-sm">
-                  <div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-6 w-6 text-green-700" /><div><h2 className="text-2xl font-bold text-slate-900">Reward safety</h2><p className="mt-2 text-sm leading-6 text-slate-700">Referral rewards should only be reviewed after the invited tester signs up, completes real work, and has an approved submission.</p></div></div>
+                <div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 shadow-sm">
+                  <div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-6 w-6 text-[#1d1d1f]" /><div><h2 className="text-2xl font-bold text-slate-900">Reward safety</h2><p className="mt-2 text-sm leading-6 text-slate-700">Referral rewards should only be reviewed after the invited tester signs up, completes real work, and has an approved submission.</p></div></div>
                 </div>
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="text-2xl font-bold text-slate-900">Who to invite</h2>
                   <div className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
-                    <div className="flex gap-2"><span className="text-green-600">?</span><span>People with real devices and honest feedback.</span></div>
-                    <div className="flex gap-2"><span className="text-green-600">?</span><span>Users from different network conditions and locations.</span></div>
-                    <div className="flex gap-2"><span className="text-green-600">?</span><span>People who can write clear, respectful reports.</span></div>
+                    <div className="flex gap-2"><span className="text-[#e63946]">?</span><span>People with real devices and honest feedback.</span></div>
+                    <div className="flex gap-2"><span className="text-[#e63946]">?</span><span>Users from different network conditions and locations.</span></div>
+                    <div className="flex gap-2"><span className="text-[#e63946]">?</span><span>People who can write clear, respectful reports.</span></div>
                   </div>
                 </div>
               </div>

@@ -63,8 +63,8 @@ function nextFridayDate() {
   return `${year}-${month}-${day}`;
 }
 function payoutStatusClass(status: AdminPayoutRow['status']) {
-  if (status === 'paid') return 'bg-green-50 text-green-700 ring-green-100';
-  if (status === 'processing') return 'bg-sky-50 text-sky-700 ring-sky-100';
+  if (status === 'paid') return 'bg-[#f5f5f7] text-[#1d1d1f] ring-black/10';
+  if (status === 'processing') return 'bg-amber-50 text-amber-700 ring-amber-100';
   if (status === 'failed' || status === 'cancelled') return 'bg-red-50 text-red-600 ring-red-100';
   return 'bg-amber-50 text-amber-700 ring-amber-100';
 }
@@ -289,7 +289,7 @@ export default function SquashAdminPayoutsPage() {
 
   const payoutStats = [
     { label: 'Pending Requests', value: overview.pendingPayouts, note: 'Needs admin action', icon: Wallet, bg: 'bg-amber-50', color: 'text-amber-700' },
-    { label: 'Pending Total', value: formatRand(overview.pendingPayoutTotalZar), note: 'Waiting to be processed', icon: CreditCard, bg: 'bg-green-50', color: 'text-green-700' },
+    { label: 'Pending Total', value: formatRand(overview.pendingPayoutTotalZar), note: 'Waiting to be processed', icon: CreditCard, bg: 'bg-[#1d1d1f]', color: 'text-white' },
     { label: 'All Payout Rows', value: payouts.length, note: 'Current queue records', icon: ShieldCheck, bg: 'bg-slate-50', color: 'text-slate-700' },
   ];
 
@@ -299,7 +299,7 @@ export default function SquashAdminPayoutsPage() {
         <aside className="hidden border-r border-slate-200 bg-white lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
             <img src="/squash-logo.png" alt="SQUASH logo" className="h-11 w-11 rounded-2xl border border-slate-200 object-cover shadow-sm" />
-            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-green-700">SQUASH</a>
+            <a href="/" className="text-2xl font-black tracking-tight text-slate-900 hover:text-[#e63946]">SQUASH</a>
           </div>
 
           <nav className="flex-1 space-y-2 px-4 py-6">
@@ -310,7 +310,7 @@ export default function SquashAdminPayoutsPage() {
                   key={item.label}
                   href={item.href}
                   className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    item.active ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
+                    item.active ? 'bg-rose-50 text-[#e63946]' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -321,9 +321,9 @@ export default function SquashAdminPayoutsPage() {
           </nav>
 
           <div className="p-4 pt-0">
-            <div className="rounded-3xl border border-green-100 bg-green-50 p-5 shadow-sm">
+            <div className="rounded-3xl border border-rose-100 bg-rose-50 p-5 shadow-sm">
               <div className="flex items-center gap-2 font-bold text-slate-900">
-                <ShieldCheck className="h-5 w-5 text-green-700" />
+                <ShieldCheck className="h-5 w-5 text-[#e63946]" />
                 Money workflow
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-700">
@@ -371,7 +371,7 @@ export default function SquashAdminPayoutsPage() {
           <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="inline-flex rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 ring-1 ring-green-100">
+                <div className="inline-flex rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-[#e63946] ring-1 ring-rose-100">
                   Admin finance control
                 </div>
                 <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">Payout Queue</h1>
@@ -390,7 +390,7 @@ export default function SquashAdminPayoutsPage() {
             </div>
 
             {error ? <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</div> : null}
-            {notice ? <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">{notice}</div> : null}
+            {notice ? <div className="mt-6 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-semibold text-[#e63946]">{notice}</div> : null}
 
             <section className="mt-8 grid gap-4 md:grid-cols-3">
               {payoutStats.map((card) => {
@@ -427,14 +427,14 @@ export default function SquashAdminPayoutsPage() {
                       type="date"
                       value={batchDate}
                       onChange={(event) => setBatchDate(event.target.value)}
-                      className="mt-1 block rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-green-500"
+                      className="mt-1 block rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#e63946]"
                     />
                   </label>
                   <button
                     type="button"
                     onClick={prepareBatch}
                     disabled={updatingBatchId === 'prepare'}
-                    className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
+                    className="rounded-xl bg-[#e63946] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#d62828] disabled:opacity-50"
                   >
                     {updatingBatchId === 'prepare' ? 'Preparing...' : 'Prepare batch'}
                   </button>
@@ -450,7 +450,7 @@ export default function SquashAdminPayoutsPage() {
                           <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Friday EFT run</div>
                           <div className="mt-1 text-xl font-black text-slate-900">{formatDate(batch.scheduledFor)}</div>
                         </div>
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${batch.status === 'completed' ? 'bg-green-50 text-green-700' : batch.status === 'cancelled' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${batch.status === 'completed' ? 'bg-[#f5f5f7] text-[#1d1d1f]' : batch.status === 'cancelled' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
                           {batch.status}
                         </span>
                       </div>
@@ -475,7 +475,7 @@ export default function SquashAdminPayoutsPage() {
                           <button type="button" disabled={updating} onClick={() => changeBatchStatus(batch, 'processing')} className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Start EFT processing</button>
                         ) : null}
                         {batch.status === 'processing' ? (
-                          <button type="button" disabled={updating} onClick={() => changeBatchStatus(batch, 'completed')} className="rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Complete batch</button>
+                          <button type="button" disabled={updating} onClick={() => changeBatchStatus(batch, 'completed')} className="rounded-xl bg-[#e63946] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Complete batch</button>
                         ) : null}
                         {updating ? <span className="self-center text-xs font-semibold text-slate-500">Updating...</span> : null}
                       </div>
@@ -503,7 +503,7 @@ export default function SquashAdminPayoutsPage() {
                           <div className="text-sm text-slate-500">{submission.testerEmail}</div>
                           <div className="mt-1 text-xs text-slate-400">Submitted {formatDate(submission.submittedAt)}</div>
                         </div>
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${submission.verificationStatus === 'approved' ? 'bg-green-50 text-green-700' : pendingReview ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${submission.verificationStatus === 'approved' ? 'bg-rose-50 text-[#e63946]' : pendingReview ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
                           {submission.verificationStatus.replace('_', ' ')}
                         </span>
                       </div>
@@ -515,8 +515,8 @@ export default function SquashAdminPayoutsPage() {
                         <div><dt className="text-xs text-slate-500">Branch code</dt><dd className="mt-1 font-mono font-semibold">{submission.branchCode}</dd></div>
                         <div className="cursor-pointer group" onClick={() => openBankingProof(submission)} title="Click to view proof document">
                           <dt className="text-xs text-slate-500">Document</dt>
-                          <dd className="mt-1 flex items-center gap-1 truncate font-bold text-emerald-700 group-hover:underline">
-                            <FileText className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                          <dd className="mt-1 flex items-center gap-1 truncate font-bold text-[#e63946] group-hover:underline">
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-[#e63946]" />
                             <span className="truncate">{submission.proofDocumentName || 'Proof of account'}</span>
                           </dd>
                         </div>
@@ -530,9 +530,9 @@ export default function SquashAdminPayoutsPage() {
                       </div>
                       {pendingReview ? (
                         <div className="mt-4 border-t border-slate-100 pt-4">
-                          <textarea value={bankingNotes[submission.testerId] || ''} onChange={(event) => setBankingNotes((current) => ({ ...current, [submission.testerId]: event.target.value }))} rows={2} placeholder="Review note (required for rejection or changes)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-green-500" />
+                          <textarea value={bankingNotes[submission.testerId] || ''} onChange={(event) => setBankingNotes((current) => ({ ...current, [submission.testerId]: event.target.value }))} rows={2} placeholder="Review note (required for rejection or changes)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-[#e63946]" />
                           <div className="mt-3 flex flex-wrap gap-2">
-                            <button type="button" disabled={reviewing} onClick={() => handleBankingReview(submission, 'approved')} className="rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50">Approve</button>
+                            <button type="button" disabled={reviewing} onClick={() => handleBankingReview(submission, 'approved')} className="rounded-xl bg-[#e63946] px-3 py-2 text-xs font-semibold text-white hover:bg-[#d62828] disabled:opacity-50">Approve</button>
                             <button type="button" disabled={reviewing} onClick={() => handleBankingReview(submission, 'changes_required')} className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 disabled:opacity-50">Request changes</button>
                             <button type="button" disabled={reviewing} onClick={() => handleBankingReview(submission, 'rejected')} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50">Reject</button>
                           </div>
@@ -554,7 +554,7 @@ export default function SquashAdminPayoutsPage() {
                   <select
                     value={payoutFilter}
                     onChange={(event) => setPayoutFilter(event.target.value as typeof payoutFilter)}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-green-500"
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-[#e63946]"
                   >
                     <option value="all">All</option>
                     <option value="pending">Pending</option>
@@ -593,7 +593,7 @@ export default function SquashAdminPayoutsPage() {
                             <div className="font-semibold text-slate-900">{payout.testerName}</div>
                             <div className="text-sm text-slate-500">{payout.testerEmail}</div>
                             <div className="mt-1 text-xs text-slate-400">Requested {formatDate(payout.createdAt)}</div>
-                              {payout.scheduledFor ? <div className="mt-1 text-xs font-semibold text-green-700">Scheduled Friday: {formatDate(payout.scheduledFor)}</div> : null}
+                              {payout.scheduledFor ? <div className="mt-1 text-xs font-semibold text-[#e63946]">Scheduled Friday: {formatDate(payout.scheduledFor)}</div> : null}
                           </td>
                           <td className="px-6 py-5">
                             <div className="font-semibold text-slate-900">{payout.method}</div>
@@ -604,7 +604,7 @@ export default function SquashAdminPayoutsPage() {
                                   {revealedPayoutBanking[payout.id] ? payout.bankingDetails.accountNumber : maskedAccount(payout.bankingDetails.accountNumber)}
                                 </div>
                                 <div>{payout.bankingDetails.accountType} - branch {payout.bankingDetails.branchCode}</div>
-                                <button type="button" onClick={() => setRevealedPayoutBanking((current) => ({ ...current, [payout.id]: !current[payout.id] }))} className="font-bold text-green-700 hover:text-green-800">
+                                <button type="button" onClick={() => setRevealedPayoutBanking((current) => ({ ...current, [payout.id]: !current[payout.id] }))} className="font-bold text-[#e63946] hover:text-[#d62828]">
                                   {revealedPayoutBanking[payout.id] ? 'Hide account' : 'Reveal account'}
                                 </button>
                               </div>
@@ -622,20 +622,20 @@ export default function SquashAdminPayoutsPage() {
                                 value={payoutNotes[payout.id]?.reference || ''}
                                 onChange={(event) => updatePayoutDraft(payout.id, 'reference', event.target.value)}
                                 placeholder="Payment reference"
-                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-green-500"
+                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-[#e63946]"
                               />
                               <input
                                 value={payoutNotes[payout.id]?.note || ''}
                                 onChange={(event) => updatePayoutDraft(payout.id, 'note', event.target.value)}
                                 placeholder="Admin note"
-                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-green-500"
+                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-[#e63946]"
                               />
                               {payout.status === 'pending' || payout.status === 'processing' ? (
                                 <label className="cursor-pointer rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
                                   {payoutProofs[payout.id]?.name || 'Upload EFT proof (PDF, PNG or JPEG)'}
                                   <input type="file" accept="application/pdf,image/png,image/jpeg" className="hidden" onChange={(event) => setPayoutProofs((current) => ({ ...current, [payout.id]: event.target.files?.[0] || null }))} />
                                 </label>
-                              ) : payout.proofDocumentName ? <div className="text-xs font-semibold text-green-700">Proof: {payout.proofDocumentName}</div> : null}
+                              ) : payout.proofDocumentName ? <div className="text-xs font-semibold text-[#e63946]">Proof: {payout.proofDocumentName}</div> : null}
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {payout.status === 'pending' ? (
@@ -696,7 +696,7 @@ export default function SquashAdminPayoutsPage() {
               You are about to mark {confirmPayout.testerName}'s payout of {formatRand(confirmPayout.amountZar)} as paid.
               Make sure the bank/payment reference is correct before confirming.
             </p>
-            <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-slate-700">
+            <div className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-slate-700">
               Reference: <span className="font-bold text-slate-900">{payoutNotes[confirmPayout.id]?.reference || 'Missing'}</span><br />
               Proof: <span className="font-bold text-slate-900">{payoutProofs[confirmPayout.id]?.name || 'Missing'}</span>
             </div>
@@ -711,7 +711,7 @@ export default function SquashAdminPayoutsPage() {
               <button
                 type="button"
                 onClick={() => handlePayoutStatus(confirmPayout, 'paid')}
-                className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700"
+                className="rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white hover:bg-[#d62828]"
               >
                 Confirm Paid
               </button>
@@ -725,7 +725,7 @@ export default function SquashAdminPayoutsPage() {
           <div className="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white border border-[#1d1d1f]/20">
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
@@ -756,11 +756,11 @@ export default function SquashAdminPayoutsPage() {
                 )
               ) : (
                 <div className="text-center p-8 text-white space-y-2">
-                  <FileText className="h-12 w-12 text-emerald-400 mx-auto" />
+                  <FileText className="h-12 w-12 text-[#e63946]/60 mx-auto" />
                   <p className="text-sm font-extrabold text-white">{proofModal.submission.proofDocumentName || 'Proof of Account Statement'}</p>
                   <p className="text-xs font-semibold text-slate-400">Official Bank Confirmation Document on File</p>
                   <div className="pt-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-xs font-bold text-emerald-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e63946]/10 border border-[#e63946]/30 px-3 py-1 text-xs font-bold text-[#e63946]">
                       Bank: {proofModal.submission.bankName} • Account: Ending {proofModal.submission.accountNumber.slice(-4)}
                     </span>
                   </div>

@@ -143,7 +143,7 @@ export default function SquashTesterQualificationPage() {
           <h2 className="mt-4 text-xl font-bold tracking-tight text-slate-900">QA Foundations Quiz</h2>
           <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500 font-normal">Answer 12 short testing scenario questions to demonstrate your core software testing knowledge. 9 correct answers required to pass.</p>
           {quiz?.attempt.status === 'retry_required' ? <div className="mt-4 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3.5 text-xs leading-5 text-amber-800 font-medium">Your retry attempt will feature a fresh set of questions.</div> : null}
-          <button type="button" onClick={() => void startQuiz()} disabled={starting} className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-60 transition-all">{starting ? 'Preparing Quiz...' : quiz ? 'Start Retry' : 'Start QA Foundations'} <ArrowRight className="h-4 w-4" /></button>
+          <button type="button" onClick={() => void startQuiz()} disabled={starting} className="squash-btn-primary mt-6">{starting ? 'Preparing Quiz...' : quiz ? 'Start Retry' : 'Start QA Foundations'} <ArrowRight className="h-4 w-4" /></button>
         </section>
       ) : null}
 
@@ -200,7 +200,7 @@ export default function SquashTesterQualificationPage() {
               type="button"
               onClick={() => void submitQuiz()}
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-60 transition-all"
+              className="squash-btn-primary"
             >
               {submitting ? 'Evaluating...' : 'Submit Answers'} <ArrowRight className="h-4 w-4" />
             </button>

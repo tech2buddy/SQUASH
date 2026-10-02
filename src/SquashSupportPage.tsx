@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -42,8 +42,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Weekly EFT',
     description: 'Weekly bank transfers, minimum threshold (R50 ZAR), & account verification.',
     icon: Sparkles,
-    accent: 'text-emerald-700',
-    iconBg: 'bg-emerald-50 border-emerald-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'job',
@@ -51,8 +51,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Real Devices',
     description: 'Posting jobs, targeting Android/iOS/Web, and test slot limits.',
     icon: Zap,
-    accent: 'text-amber-700',
-    iconBg: 'bg-amber-50 border-amber-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'report',
@@ -60,8 +60,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'QA Quality',
     description: 'Screen recordings, reproduction steps, severity levels, & reviews.',
     icon: FileText,
-    accent: 'text-teal-700',
-    iconBg: 'bg-teal-50 border-teal-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'safety',
@@ -69,8 +69,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Admin Review',
     description: '48-hour report dispute reviews, NDA confidentiality, & safety.',
     icon: ShieldCheck,
-    accent: 'text-purple-700',
-    iconBg: 'bg-purple-50 border-purple-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'account',
@@ -78,8 +78,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Auth & Roles',
     description: 'Password resets, Google/GitHub sign-in, and switching Developer/Tester roles.',
     icon: UserCheck,
-    accent: 'text-sky-700',
-    iconBg: 'bg-sky-50 border-sky-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'payment',
@@ -87,8 +87,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'ZAR Invoicing',
     description: 'Funding account balance, VAT receipts, and unspent budget returns.',
     icon: CreditCard,
-    accent: 'text-indigo-700',
-    iconBg: 'bg-indigo-50 border-indigo-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'privacy',
@@ -96,8 +96,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Data Security',
     description: 'Protection of Personal Information Act compliance & data rights.',
     icon: Lock,
-    accent: 'text-rose-700',
-    iconBg: 'bg-rose-50 border-rose-100',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
   {
     id: 'other',
@@ -105,8 +105,8 @@ const TOPIC_CATEGORIES: TopicCategory[] = [
     badge: 'Help Desk',
     description: 'Partnerships, press inquiries, and general support assistance.',
     icon: HelpCircle,
-    accent: 'text-slate-700',
-    iconBg: 'bg-slate-100 border-slate-200',
+    accent: 'text-[#e63946]',
+    iconBg: 'bg-[#1d1d1f] text-white shadow-2xs',
   },
 ];
 
@@ -163,7 +163,7 @@ const KNOWLEDGE_BASE_FAQS: FAQItem[] = [
   },
 ];
 
-export default function SquashSupportPage() {
+export default function SquashSupportPage({ embedded = false }: { embedded?: boolean }) {
   usePageMeta({
     title: 'Help Center & Support Desk',
     description: 'Find answers, browse knowledge base articles, or open a tracked support ticket with the SQUASH team.',
@@ -186,18 +186,20 @@ export default function SquashSupportPage() {
   const [openFaqId, setOpenFaqId] = useState<string | null>('faq-1');
   const [copiedEmail, setCopiedEmail] = useState(false);
 
-  const loadTickets = useCallback(async () => {
-    if (!session) return;
-    try {
-      setTickets(await getMySupportTickets());
-    } catch {
-      // Graceful fallback
-    }
-  }, [session?.userId]);
-
   useEffect(() => {
-    loadTickets();
-  }, [loadTickets]);
+    if (!session?.userId) return;
+    let active = true;
+    getMySupportTickets()
+      .then((items) => {
+        if (active) setTickets(items);
+      })
+      .catch(() => {
+        // The knowledge base remains available if ticket history cannot load.
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.userId]);
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('support@squashqa.co.za');
@@ -251,16 +253,18 @@ export default function SquashSupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-emerald-100">
-      <PublicHeader />
+    <div className={embedded ? 'text-slate-900' : 'min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-emerald-100'}>
+      {!embedded ? <PublicHeader /> : null}
 
       {/* Header Banner */}
-      <div className="border-b border-slate-200/70 bg-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+      <div className={embedded
+        ? 'rounded-[24px] border border-white/80 bg-white/72 px-4 py-8 shadow-[0_14px_34px_rgba(60,55,54,0.075)] backdrop-blur-xl sm:px-6'
+        : 'border-b border-slate-200/70 bg-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8'}>
         <div className="mx-auto max-w-5xl space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800">
-                <LifeBuoy className="h-3.5 w-3.5 text-emerald-600" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-3.5 py-1 text-xs font-bold text-[#e63946]">
+                <LifeBuoy className="h-3.5 w-3.5 text-[#e63946]" />
                 <span>SQUASH Help & Support Desk</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
@@ -274,16 +278,16 @@ export default function SquashSupportPage() {
             {/* Direct Contact Pill Card */}
             <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 shrink-0 sm:max-w-xs space-y-2 shadow-2xs">
               <div className="flex items-center justify-between text-xs font-bold text-slate-900">
-                <span className="flex items-center gap-1.5 text-emerald-700">
+                <span className="flex items-center gap-1.5 text-[#e63946]">
                   <Mail className="h-4 w-4" />
                   Direct Email
                 </span>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-[#e63946]">
                   &lt; 2h Response
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <a href="mailto:support@squashqa.co.za" className="text-xs font-extrabold text-slate-900 hover:text-emerald-700 underline">
+                <a href="mailto:support@squashqa.co.za" className="text-xs font-extrabold text-slate-900 hover:text-[#e63946] underline">
                   support@squashqa.co.za
                 </a>
                 <button
@@ -295,7 +299,7 @@ export default function SquashSupportPage() {
                   <Copy className="h-3.5 w-3.5" />
                 </button>
               </div>
-              {copiedEmail ? <div className="text-[10px] font-bold text-emerald-600">Copied to clipboard!</div> : null}
+              {copiedEmail ? <div className="text-[10px] font-bold text-[#e63946]">Copied to clipboard!</div> : null}
             </div>
           </div>
 
@@ -307,7 +311,7 @@ export default function SquashSupportPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search knowledge base articles, payouts, job rules, NDA, or disputes..."
-              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/80 py-3.5 pl-11 pr-10 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-100 shadow-2xs"
+              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/80 py-3.5 pl-11 pr-10 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-[#e63946] focus:bg-white focus:ring-4 focus:ring-rose-100 shadow-2xs"
             />
             {searchQuery ? (
               <button
@@ -347,7 +351,7 @@ export default function SquashSupportPage() {
               <MessageSquare className="h-4 w-4" />
               <span>Submit & Track Support Ticket</span>
               {tickets.length > 0 ? (
-                <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">
+                <span className="rounded-full bg-[#e63946] px-1.5 py-0.2 text-[10px] font-extrabold text-white">
                   {tickets.length}
                 </span>
               ) : null}
@@ -356,7 +360,7 @@ export default function SquashSupportPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-12">
+      <div role="main" className={embedded ? 'mx-auto mt-6 max-w-5xl space-y-12' : 'mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-12'}>
         {/* MODE 1: KNOWLEDGE BASE & FAQS */}
         {activeTab === 'kb' ? (
           <div className="space-y-10">
@@ -385,22 +389,22 @@ export default function SquashSupportPage() {
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedCategory(isSelected ? 'all' : cat.id)}
-                      className={`text-left rounded-2xl border p-4 transition-all duration-200 apple-press-effect ${
+                      className={`text-left apple-interactive-card p-4 transition-all duration-200 ${
                         isSelected
-                          ? 'border-emerald-600 bg-white ring-2 ring-emerald-500/20 shadow-md'
-                          : 'border-slate-200/80 bg-white hover:border-slate-300 shadow-2xs hover:shadow-sm'
+                          ? 'border-[#e63946] ring-2 ring-[#e63946]/20'
+                          : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${cat.iconBg} ${cat.accent}`}>
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${cat.iconBg}`}>
                           <Icon className="h-4.5 w-4.5" />
                         </div>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold text-slate-600">
+                        <span className="rounded-full bg-[#f5f5f7] border border-black/[0.04] px-2 py-0.5 text-[10px] font-extrabold text-[#1d1d1f]">
                           {cat.badge}
                         </span>
                       </div>
-                      <h3 className="mt-3 text-xs font-bold text-slate-900">{cat.name}</h3>
-                      <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">
+                      <h3 className="mt-3 text-xs font-extrabold text-[#1d1d1f]">{cat.name}</h3>
+                      <p className="mt-1 text-[11px] text-[#86868b] font-normal leading-relaxed line-clamp-2">
                         {cat.description}
                       </p>
                     </button>
@@ -410,11 +414,11 @@ export default function SquashSupportPage() {
             </div>
 
             {/* Knowledge Base FAQs List */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
+            <div className="apple-interactive-card p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-black/[0.06] pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">Frequently Asked Questions</h2>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1d1d1f]">Frequently Asked Questions</h2>
+                  <p className="text-xs text-[#86868b] font-normal">
                     Showing {filteredFaqs.length} article{filteredFaqs.length === 1 ? '' : 's'}
                     {selectedCategory !== 'all' ? ` in ${selectedCategory}` : ''}
                   </p>
@@ -427,24 +431,24 @@ export default function SquashSupportPage() {
                   return (
                     <div
                       key={faq.id}
-                      className="rounded-2xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition"
+                      className="rounded-xl border border-black/[0.06] bg-[#f5f5f7]/60 overflow-hidden transition"
                     >
                       <button
                         type="button"
                         onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
-                        className="flex w-full items-center justify-between p-4 text-left font-bold text-slate-900 text-sm hover:bg-slate-100/60 transition"
+                        className="flex w-full items-center justify-between p-4 text-left font-extrabold text-[#1d1d1f] text-xs sm:text-sm hover:bg-[#f5f5f7] transition"
                       >
-                        <span className="flex items-center gap-2">
-                          <HelpCircle className="h-4 w-4 text-emerald-700 shrink-0" />
+                        <span className="flex items-center gap-2.5">
+                          <HelpCircle className="h-4 w-4 text-[#e63946] shrink-0" />
                           <span>{faq.question}</span>
                         </span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
+                        <ChevronDown className={`h-4 w-4 shrink-0 text-[#86868b] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#e63946]' : ''}`} />
                       </button>
 
                       {isOpen ? (
-                        <div className="px-4 pb-4 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium border-t border-slate-200/60 pt-3">
+                        <div className="px-4 pb-4 text-xs text-[#86868b] leading-relaxed font-normal border-t border-black/[0.06] pt-3">
                           <p>{faq.answer}</p>
-                          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 font-semibold border-t border-slate-100 pt-2">
+                          <div className="mt-3 flex items-center justify-between text-[11px] text-[#86868b] font-semibold border-t border-black/[0.04] pt-2">
                             <span>Category: {faq.category}</span>
                             <button
                               type="button"
@@ -453,7 +457,7 @@ export default function SquashSupportPage() {
                                 setSubject(`Help with ${faq.question}`);
                                 setActiveTab('ticket');
                               }}
-                              className="text-emerald-700 font-bold hover:underline inline-flex items-center gap-1"
+                              className="text-[#e63946] font-bold hover:underline inline-flex items-center gap-1"
                             >
                               Still need help? Open a Ticket <ArrowRight className="h-3 w-3" />
                             </button>
@@ -465,7 +469,7 @@ export default function SquashSupportPage() {
                 })}
 
                 {filteredFaqs.length === 0 ? (
-                  <div className="p-8 text-center text-xs font-semibold text-slate-500">
+                  <div className="p-8 text-center text-xs font-semibold text-[#86868b]">
                     No knowledge base articles matched your search. Switch to "Submit & Track Support Ticket" above to get direct help from our team!
                   </div>
                 ) : null}
@@ -481,7 +485,7 @@ export default function SquashSupportPage() {
               </div>
             ) : !session ? (
               <div className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-12 text-center max-w-md mx-auto shadow-2xs space-y-4">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white border border-[#1d1d1f]">
                   <Mail className="h-6 w-6" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900">Sign in to open a support ticket</h2>
@@ -507,7 +511,7 @@ export default function SquashSupportPage() {
                         <h2 className="text-lg font-bold text-slate-900">New Support Ticket</h2>
                         <p className="text-xs text-slate-500 font-medium">Fill in your request details</p>
                       </div>
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-extrabold text-emerald-800 border border-emerald-100">
+                      <span className="rounded-full bg-rose-50 px-3 py-1 text-[10px] font-extrabold text-[#e63946] border border-rose-100">
                         Tracked & Verified
                       </span>
                     </div>
@@ -520,7 +524,7 @@ export default function SquashSupportPage() {
                     ) : null}
 
                     {notice ? (
-                      <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs font-bold text-emerald-800">
+                      <div className="flex items-center gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3.5 text-xs font-bold text-[#e63946]">
                         <CheckCircle2 className="h-4 w-4 shrink-0" />
                         <span>{notice}</span>
                       </div>
@@ -534,7 +538,7 @@ export default function SquashSupportPage() {
                         <select
                           value={ticketCategory}
                           onChange={(e) => setTicketCategory(e.target.value as SupportCategory)}
-                          className="w-full appearance-none rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                          className="w-full appearance-none rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-[#e63946] focus:ring-2 focus:ring-rose-100"
                         >
                           {TOPIC_CATEGORIES.map((item) => (
                             <option key={item.id} value={item.id}>
@@ -556,7 +560,7 @@ export default function SquashSupportPage() {
                         onChange={(e) => setSubject(e.target.value)}
                         maxLength={160}
                         placeholder="Brief summary of your question or issue"
-                        className="w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 outline-none focus:border-[#e63946] focus:ring-2 focus:ring-rose-100 placeholder:text-slate-400"
                       />
                     </div>
 
@@ -570,7 +574,7 @@ export default function SquashSupportPage() {
                         maxLength={5000}
                         rows={6}
                         placeholder="Provide details (job title, payout request, device details, report ID)..."
-                        className="w-full rounded-xl border border-slate-200/80 bg-white p-3.5 text-xs sm:text-sm text-slate-800 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white p-3.5 text-xs sm:text-sm text-slate-800 outline-none focus:border-[#e63946] focus:ring-2 focus:ring-rose-100 placeholder:text-slate-400"
                       />
                       <div className="text-right text-[10px] text-slate-400 mt-1 font-semibold">
                         {description.length}/5000 characters
@@ -580,7 +584,7 @@ export default function SquashSupportPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition disabled:opacity-50 apple-press-effect"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#e63946] py-3 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#d62828] transition disabled:opacity-50 apple-press-effect"
                     >
                       <Send className="h-4 w-4" />
                       <span>{submitting ? 'Submitting Ticket...' : 'Submit Support Ticket'}</span>
@@ -608,7 +612,7 @@ export default function SquashSupportPage() {
                               <h3 className="text-xs font-bold text-slate-900 leading-snug">{ticket.subject}</h3>
                               <span
                                 className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold capitalize ${
-                                  isResolved ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                                  isResolved ? 'bg-rose-100 text-[#e63946]' : 'bg-slate-200 text-slate-700'
                                 }`}
                               >
                                 {ticket.status.replace('_', ' ')}
@@ -623,8 +627,8 @@ export default function SquashSupportPage() {
 
                             {ticket.adminNote ? (
                               <div className="mt-2 rounded-xl bg-white p-3 text-xs text-slate-700 border border-slate-200/80 space-y-1">
-                                <div className="font-bold text-emerald-800 flex items-center gap-1">
-                                  <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                                <div className="font-bold text-[#e63946] flex items-center gap-1">
+                                  <Sparkles className="h-3.5 w-3.5 text-[#e63946]" />
                                   <span>SQUASH Response:</span>
                                 </div>
                                 <p className="leading-relaxed">{ticket.adminNote}</p>
@@ -646,9 +650,9 @@ export default function SquashSupportPage() {
             )}
           </div>
         )}
-      </main>
+      </div>
 
-      <PublicFooter />
+      {!embedded ? <PublicFooter /> : null}
     </div>
   );
 }

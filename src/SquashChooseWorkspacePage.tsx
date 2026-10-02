@@ -54,7 +54,7 @@ export default function SquashChooseWorkspacePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ecfdf3_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff1f2_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between gap-4">
           <a href="/" className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export default function SquashChooseWorkspacePage() {
         </div>
 
         <div className="mt-12 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
+          <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-[#e63946]">
             <ShieldCheck className="h-4 w-4" /> Secure workspace access
           </div>
           <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">Choose your workspace</h1>
@@ -94,7 +94,7 @@ export default function SquashChooseWorkspacePage() {
             const hasAccess = session.roles.includes(card.role);
             return (
               <div key={card.role} className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-100">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white ring-1 ring-black/10">
                   <Icon className="h-7 w-7" />
                 </div>
                 <h2 className="mt-5 text-2xl font-black text-slate-900">{card.title}</h2>
@@ -109,8 +109,8 @@ export default function SquashChooseWorkspacePage() {
                   disabled={busyRole !== null}
                   className={`mt-6 w-full rounded-2xl px-5 py-3 font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:bg-slate-300 ${
                     hasAccess
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                      ? 'bg-[#e63946] text-white hover:bg-[#d62828]'
+                      : 'border border-rose-200 bg-rose-50 text-[#e63946] hover:bg-rose-100'
                   }`}
                 >
                   {busyRole === card.role ? 'Opening...' : card.cta}

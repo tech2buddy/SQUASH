@@ -129,7 +129,7 @@ export default function SquashSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ecfdf3_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff1f2_0%,#f8fafc_45%,#f8fafc_100%)] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
@@ -159,7 +159,7 @@ export default function SquashSignupPage() {
               onClick={() => setRole('developer')}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 role === 'developer'
-                  ? 'bg-green-100 text-green-700 ring-1 ring-green-200'
+                  ? 'bg-rose-50 text-[#e63946] ring-1 ring-rose-200'
                   : 'text-slate-600 hover:bg-white'
               }`}
             >
@@ -169,7 +169,7 @@ export default function SquashSignupPage() {
               onClick={() => setRole('tester')}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 role === 'tester'
-                  ? 'bg-green-100 text-green-700 ring-1 ring-green-200'
+                  ? 'bg-rose-50 text-[#e63946] ring-1 ring-rose-200'
                   : 'text-slate-600 hover:bg-white'
               }`}
             >
@@ -266,12 +266,12 @@ export default function SquashSignupPage() {
                   onClick={() => setRole('developer')}
                   className={`rounded-2xl border p-4 text-left transition ${
                     role === 'developer'
-                      ? 'border-green-300 bg-green-50'
+                      ? 'border-[#e63946] bg-rose-50'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-2 text-base font-bold text-slate-900">
-                    <Code2 className="h-4 w-4 text-green-700" /> Developer
+                    <Code2 className="h-4 w-4 text-[#e63946]" /> Developer
                   </div>
                   <div className="mt-1 text-sm text-slate-600">Post jobs, manage tests and view reports.</div>
                 </button>
@@ -280,12 +280,12 @@ export default function SquashSignupPage() {
                   onClick={() => setRole('tester')}
                   className={`rounded-2xl border p-4 text-left transition ${
                     role === 'tester'
-                      ? 'border-green-300 bg-green-50'
+                      ? 'border-[#e63946] bg-rose-50'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-2 text-base font-bold text-slate-900">
-                    <UserRound className="h-4 w-4 text-green-700" /> Tester
+                    <UserRound className="h-4 w-4 text-[#e63946]" /> Tester
                   </div>
                   <div className="mt-1 text-sm text-slate-600">Find jobs, test apps and earn money.</div>
                 </button>
@@ -301,15 +301,15 @@ export default function SquashSignupPage() {
               />
               <span>
                 I agree to the{' '}
-                <a href="/terms" className="font-semibold text-green-700">Terms of Service</a>{' '}
-                and <a href="/privacy" className="font-semibold text-green-700">Privacy Policy</a>
+                <a href="/terms" className="font-semibold text-[#e63946]">Terms of Service</a>{' '}
+                and <a href="/privacy" className="font-semibold text-[#e63946]">Privacy Policy</a>
               </span>
             </label>
 
             {error ? <p className="mt-3 text-sm font-medium text-red-600">{error}</p> : null}
-            {notice ? <p className="mt-3 text-sm font-medium text-green-700">{notice}</p> : null}
+            {notice ? <p className="mt-3 text-sm font-medium text-[#e63946]">{notice}</p> : null}
 
-            <button type="submit" className="mt-5 w-full rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-green-700">
+            <button type="submit" className="mt-5 w-full rounded-2xl bg-[#e63946] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#d62828]">
               {submitting ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
@@ -341,7 +341,7 @@ export default function SquashSignupPage() {
 
           <div className="mt-6 text-center text-sm text-slate-600">
             Already have an account?{' '}
-            <Link to={`/login?role=${role}`} className="font-semibold text-green-700 hover:text-green-800">
+            <Link to={`/login?role=${role}`} className="font-semibold text-[#e63946] hover:text-[#d62828]">
               Login
             </Link>
           </div>

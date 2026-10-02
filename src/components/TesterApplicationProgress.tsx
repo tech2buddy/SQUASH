@@ -63,7 +63,7 @@ export default function TesterApplicationProgress({ current, awaitingReview = fa
                   <div
                     className={`grid h-8 w-8 place-items-center rounded-full text-xs font-bold transition-all ${
                       complete
-                        ? 'bg-emerald-500 text-white shadow-xs'
+                        ? 'bg-[#e63946] text-white shadow-xs'
                         : active
                         ? 'bg-slate-900 text-white ring-4 ring-slate-100 shadow-xs'
                         : 'border border-slate-200 bg-slate-50 text-slate-400'
@@ -74,7 +74,7 @@ export default function TesterApplicationProgress({ current, awaitingReview = fa
                   {index < steps.length - 1 && (
                     <div
                       className={`h-0.5 flex-1 rounded-full transition-all ${
-                        number <= completedSteps ? 'bg-emerald-500' : 'bg-slate-100'
+                        number <= completedSteps ? 'bg-[#e63946]' : 'bg-slate-100'
                       }`}
                     />
                   )}
@@ -105,7 +105,7 @@ export default function TesterApplicationProgress({ current, awaitingReview = fa
                   active
                     ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
                     : complete
-                    ? 'border-emerald-200 bg-emerald-50/50 text-slate-900'
+                    ? 'border-rose-100 bg-rose-50 text-slate-900'
                     : 'border-slate-100 bg-slate-50/60 text-slate-400'
                 }`}
               >
@@ -123,7 +123,7 @@ export default function TesterApplicationProgress({ current, awaitingReview = fa
         <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-100">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-slate-900 transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-[#e63946] transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>

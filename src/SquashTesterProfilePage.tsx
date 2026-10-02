@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import SpecializationChecklist from './components/SpecializationChecklist';
 
 import TesterBadge from './components/TesterBadge';
+import TesterAvatar from './components/TesterAvatar';
 import { getSpecializationLabel, hasSaLanguageTag } from './components/testerSpecializations';
 import { useAuth } from './auth';
 import { getTesterProfile, getTesterSpecializations, replaceTesterSpecializations, uploadTesterProfilePhoto, type TesterPublicProfile } from './lib/profileApi';
@@ -60,6 +61,9 @@ export default function SquashTesterProfilePage() {
     try {
       const avatarUrl = await uploadTesterProfilePhoto(session.userId, file);
       setProfileDetails((current) => current ? { ...current, avatarUrl } : current);
+      window.dispatchEvent(new CustomEvent('squash_profile_photo_updated', {
+        detail: { userId: session.userId, avatarUrl },
+      }));
       setProfileMessage('Profile photo updated. Developers will now see it on your tester card.');
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : 'Could not upload profile photo.');
@@ -119,7 +123,7 @@ export default function SquashTesterProfilePage() {
               <div className="flex flex-wrap gap-2.5">
                 <a
                   href="/tester-jobs"
-                  className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/10 hover:bg-slate-800 transition apple-press-effect"
+                  className="squash-btn-primary"
                 >
                   Find Tests
                 </a>
@@ -147,11 +151,12 @@ export default function SquashTesterProfilePage() {
               <div className="apple-bento-card p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                   <label className="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full bg-slate-900 text-white shadow-sm ring-4 ring-white">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt={`${testerName} profile`} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-3xl font-extrabold">{testerName.charAt(0)}</span>
-                    )}
+                    <TesterAvatar
+                      name={testerName}
+                      avatarUrl={avatarUrl}
+                      className="h-full w-full rounded-full ring-0"
+                      alt={`${testerName} profile`}
+                    />
                     <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-slate-950/75 py-1.5 text-[10px] font-bold opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
                       <Camera className="h-3 w-3" /> {photoUploading ? 'Uploading' : 'Change'}
                     </span>
@@ -232,9 +237,7 @@ export default function SquashTesterProfilePage() {
                 <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-14 w-14 overflow-hidden rounded-full bg-white text-xl font-black text-slate-900 shadow-sm ring-1 ring-slate-200">
-                        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center">{testerName.charAt(0)}</span>}
-                      </div>
+                      <TesterAvatar name={testerName} avatarUrl={avatarUrl} className="h-14 w-14 rounded-full shadow-sm" />
                       <div>
                         <div className="font-bold text-slate-900">{testerName}</div>
                         <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
@@ -355,5 +358,3 @@ export default function SquashTesterProfilePage() {
     </div>
   );
 }
-
-

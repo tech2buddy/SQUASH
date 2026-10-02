@@ -73,7 +73,7 @@ export default function TesterMobileDrawer({ isOpen, onClose, activePath }: Prop
                   to={item.href}
                   onClick={onClose}
                   className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    isActive ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50'
+                    isActive ? 'bg-[#e63946] text-white' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -85,9 +85,9 @@ export default function TesterMobileDrawer({ isOpen, onClose, activePath }: Prop
         </div>
 
         <div className="border-t border-slate-100 pt-4 space-y-3">
-          <div className="rounded-2xl border border-green-100 bg-green-50/70 p-4">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <CheckCircle2 className="h-4 w-4 text-green-700" />
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#e63946]">
+              <CheckCircle2 className="h-4 w-4 text-[#e63946]" />
               Tester Account Active
             </div>
             <div className="mt-1 text-xs text-slate-600">Complete tests to level up!</div>

@@ -17,15 +17,15 @@ export default function FeaturedTesterCard({
   const isLanguageTester = hasSaLanguageTag(specializations);
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:border-rose-200 hover:shadow-md transition">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/80 shadow-2xs">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white border border-black/10 shadow-2xs">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
           <div className="font-bold text-slate-900 leading-snug">{name}</div>
           <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
-            <Target className="h-3 w-3 text-emerald-600" />
+            <Target className="h-3 w-3 text-[#e63946]" />
             {subtitle}
           </div>
         </div>
@@ -44,12 +44,12 @@ export default function FeaturedTesterCard({
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {isTownshipTester ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-1 text-xs font-semibold text-[#e63946]">
             <Building2 className="h-3 w-3" /> Township Network Tester
           </span>
         ) : null}
         {isLanguageTester ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-1 text-xs font-semibold text-[#e63946]">
             <Globe className="h-3 w-3" /> SA Language Tester
           </span>
         ) : null}

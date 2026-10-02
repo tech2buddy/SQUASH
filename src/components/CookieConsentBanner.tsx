@@ -31,7 +31,7 @@ export default function CookieConsentBanner() {
       <div className="rounded-3xl border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-xl text-slate-900 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#1d1d1f] text-white border border-black/10">
               <Cookie className="h-5 w-5" />
             </div>
             <div>
@@ -51,7 +51,7 @@ export default function CookieConsentBanner() {
 
         <p className="text-xs leading-relaxed text-slate-600 font-medium">
           SQUASH uses essential cookies for secure login authentication, session management, and analytics to improve real-device QA testing. Learn more in our{' '}
-          <Link to="/privacy" className="font-bold text-emerald-700 hover:underline">
+          <Link to="/privacy" className="font-bold text-[#e63946] hover:underline">
             Privacy Policy
           </Link>
           .
@@ -61,7 +61,7 @@ export default function CookieConsentBanner() {
           <button
             type="button"
             onClick={handleAcceptAll}
-            className="flex-1 rounded-2xl bg-emerald-600 py-2.5 px-4 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition apple-press-effect"
+            className="flex-1 rounded-2xl bg-[#e63946] py-2.5 px-4 text-xs font-bold text-white shadow-sm hover:bg-[#d62828] transition apple-press-effect"
           >
             Accept Cookies
           </button>

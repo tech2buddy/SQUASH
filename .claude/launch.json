@@ -9,8 +9,8 @@
     },
     {
       "name": "squash-vercel-dev",
-      "runtimeExecutable": "vercel",
-      "runtimeArgs": ["dev", "--listen", "3000", "--yes"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:api"],
       "port": 3000
     },
     {

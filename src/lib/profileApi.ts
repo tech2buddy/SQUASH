@@ -1,5 +1,6 @@
 import { hasExpectedFileSignature, type SafeFileKind } from './fileValidation';
 import { isSupabaseConfigured, supabase, SERVICE_UNAVAILABLE_MESSAGE } from './supabase';
+import { formatPersonName } from './displayText';
 
 export type TesterProfileSettings = {
   fullName: string;
@@ -268,7 +269,7 @@ export async function getTesterLeaderboard(): Promise<TesterLeaderboardEntry[]> 
     tier: string | null;
   }>).map((row) => ({
     rank: row.rank,
-    name: row.full_name || 'Anonymous Tester',
+    name: formatPersonName(row.full_name || 'Anonymous Tester'),
     city: row.city || 'South Africa',
     rating: row.rating || 0,
     testsCompleted: row.tests_completed || 0,
@@ -493,10 +494,9 @@ export async function getTopTesters(limit = 3): Promise<TopTesterDisplay[]> {
 
   // Map to the display format expected by the UI. 
   return data.map((t: any) => ({
-    name: t.profiles.full_name || 'Anonymous',
+    name: formatPersonName(t.profiles.full_name || 'Anonymous'),
     level: '', // Will be computed in the component using getTesterTier
     testsCompleted: t.tests_completed || 0,
     rating: Number(t.rating) || 0,
   }));
 }
-

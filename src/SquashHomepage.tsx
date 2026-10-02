@@ -1,424 +1,550 @@
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
-import { Users, ShieldCheck, Bug, Gauge } from 'lucide-react';
-import { TEST_CATEGORIES } from './components/testCategories';
+import { Wifi, Globe, Play, Pause, ChevronRight, Clock, ArrowRight, Check, Sliders, Shield, Volume2, Smartphone, MapPin, FileText } from 'lucide-react';
 import { usePageMeta } from './hooks/usePageMeta';
+import { useRef, useState, type PointerEvent } from 'react';
 
 export default function SquashHomepage() {
   usePageMeta({
-    title: 'SQUASH',
-    description: 'SQUASH connects developers and startups with real South African testers to find bugs, run usability tests, and validate apps before launch. Post a testing job or earn money testing apps.',
+    title: 'SQUASH — Real Humans. Real Devices.',
+    description: 'SQUASH connects developers and startups with everyday South African testers on real hardware and real networks. Bug hunting, usability testing, and localization QA before launch.',
     path: '/',
   });
 
+  const [activeNetwork, setActiveNetwork] = useState<'mtn' | 'vodacom' | 'telkom' | 'cellc'>('mtn');
+  const [activeLanguage, setActiveLanguage] = useState('isiZulu');
+  const [selectedSpec, setSelectedSpec] = useState<'bughunting' | 'usability' | 'lowdata' | 'localization'>('bughunting');
+  const [testerCount, setTesterCount] = useState<number>(10);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(true);
+  const heroGlowRef = useRef<HTMLDivElement>(null);
 
+  const moveHeroGlow = (event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType !== 'mouse' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const steps = [
-    {
-      title: 'Post your app',
-      text: 'Developers submit a website or app test job with goals, tasks, and target users.',
-    },
-    {
-      title: 'Everyday users test it',
-      text: 'Everyday testers complete real usability checks, bug hunts, and task-based flows.',
-    },
-    {
-      title: 'Get your report',
-      text: 'Receive screenshots, bug details, usability scores, and written feedback before launch.',
-    },
-  ];
+    const bounds = event.currentTarget.getBoundingClientRect();
+    heroGlowRef.current?.style.setProperty('left', `${event.clientX - bounds.left}px`);
+    heroGlowRef.current?.style.setProperty('top', `${event.clientY - bounds.top}px`);
+  };
 
-  const testimonials = [
-    {
-      quote:
-        "Building a great app is hard; testing it shouldn't be. SQUASH helps engineering teams ship faster with 100% confidence by turning real user testing into structured, developer-ready reports.",
-      name: 'M. Khosa',
-      role: 'Founder, SQUASH',
+  const networkSpecs = {
+    mtn: { name: 'MTN 5G / LTE', latency: '14ms', speed: '120 Mbps', location: 'Johannesburg', quality: 'Optimal' },
+    vodacom: { name: 'Vodacom 4G', latency: '28ms', speed: '45 Mbps', location: 'Cape Town', quality: 'Strong' },
+    telkom: { name: 'Telkom 3G', latency: '82ms', speed: '8 Mbps', location: 'Durban', quality: 'Moderate' },
+    cellc: { name: 'Cell C 2G / EDGE', latency: '310ms', speed: '0.4 Mbps', location: 'Polokwane', quality: 'Throttled' },
+  };
+  const networkBrand = {
+    mtn: { color: '#ffcc08', textColor: '#1d1d1f' },
+    vodacom: { color: '#e60000', textColor: '#ffffff' },
+    telkom: { color: '#0099d8', textColor: '#ffffff' },
+    cellc: { color: '#f58220', textColor: '#ffffff' },
+  };
+  const activeNetworkBrand = networkBrand[activeNetwork];
+
+  const saLanguageQuotes: Record<string, { quote: string; region: string }> = {
+    isiZulu: { quote: 'Uhlelo lwakho luhamba kahle kakhulu emoyeni.', region: 'KZN & Gauteng' },
+    isiXhosa: { quote: 'Isebenza ngaphandle kwezinkinga kwinethiwekhi.', region: 'Eastern Cape' },
+    Afrikaans: { quote: 'Geen foute gevind nie. Baie goeie toepassing!', region: 'Western Cape' },
+    'English (SA)': { quote: 'Smooth checkout flow on Vodacom LTE.', region: 'National' },
+    Sepedi: { quote: 'Tshepediso e shoma gabotse kudu.', region: 'Limpopo' },
+    Setswana: { quote: 'Tiriso e wela sentle fela bila Mathata.', region: 'North West' },
+  };
+
+  const specsData = {
+    bughunting: {
+      title: 'Bug Hunting',
+      rate: 100,
+      price: 'R100',
+      unit: 'per tester',
+      duration: '20 min avg session',
+      minTesters: 5,
+      description: 'Exploratory bug hunting across real iOS & Android hardware. Uncover edge-case crashes, layout breaks, and broken links.',
+      features: ['Full reproduction steps', 'Screen recording & screenshots', 'Device telemetry & OS logs', 'Automated severity scoring'],
     },
-    {
-      quote:
-        "As a builder, nothing hurts more than losing users on day one to silent bugs you didn't catch. SQUASH was created to give every startup access to enterprise-grade QA from day one.",
-      name: 'M. Khosa',
-      role: 'Founder, SQUASH',
+    usability: {
+      title: 'Usability & UX Flow',
+      rate: 140,
+      price: 'R140',
+      unit: 'per tester',
+      duration: '30 min avg session',
+      minTesters: 5,
+      description: 'Observe real human reactions to your onboarding funnel, checkout flow, and navigation usability.',
+      features: ['Audio thought-aloud notes', 'Task completion success rates', 'UX friction point map', 'Written qualitative feedback'],
     },
-  ];
+    lowdata: {
+      title: 'Low-Data & 2G/3G Testing',
+      rate: 150,
+      price: 'R150',
+      unit: 'per tester',
+      duration: '30 min avg session',
+      minTesters: 3,
+      description: 'Verify your product performance under authentic South African low-bandwidth network throttling.',
+      features: ['Real 2G/3G network conditions', 'Asset load timeout verification', 'Offline state gracefully handling', 'Data payload audit'],
+    },
+    localization: {
+      title: 'Local Language QA',
+      rate: 180,
+      price: 'R180',
+      unit: 'per tester',
+      duration: '30 min avg session',
+      minTesters: 3,
+      description: 'Native speakers in South Africa test your app copy, currency formatting, and cultural nuance.',
+      features: ['11 SA official languages', 'Native speaker verification', 'Translation nuance check', 'Local payment method validation'],
+    },
+  };
+
+  const calculatedTotal = specsData[selectedSpec].rate * Math.max(testerCount, specsData[selectedSpec].minTesters);
+  const estimatedHours = (Math.max(testerCount, specsData[selectedSpec].minTesters) * 0.35).toFixed(1);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-[#1d1d1f] selection:text-white font-sans antialiased">
       <PublicHeader active="home" />
 
       <main>
-        <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:px-8 lg:py-24">
-          <div className="animate-fade-up flex flex-col justify-center">
-            <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-600 sm:text-sm">
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              Catch bugs before your users do
-            </div>
+        {/* Apple Signature Full-Bleed Hero Section */}
+        <section
+          className="relative min-h-[82vh] flex flex-col justify-start items-center pt-24 pb-32 sm:pt-28 sm:pb-40 overflow-hidden text-center bg-[#1d1d1f]"
+          onPointerMove={moveHeroGlow}
+        >
+          {/* Full-Bleed Background Image Layer.
+              Anchored to the bottom: the artwork keeps its console mock-up and
+              red floor glow along the lower edge, and crops from the empty top
+              instead — which is also where the headline sits. */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            {/* Deliberately soft. The source art is only 1672px wide, so it
+                upscales badly on a full-bleed hero; a shallow depth-of-field
+                blur reads as intentional and hides that. scale-110 covers the
+                transparent edge the blur would otherwise feather in — the
+                overhang has to beat the blur radius on the short axis too. */}
+            <img
+              src="/hero-bg-dashboard.jpg"
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full scale-110 object-cover object-bottom blur-[5px] transition-all duration-700"
+            />
+            <div
+              ref={heroGlowRef}
+              aria-hidden="true"
+              className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(230,73,82,0.22)_0%,rgba(187,53,69,0.12)_35%,transparent_70%)] blur-3xl mix-blend-screen transition-[left,top] duration-700 ease-out motion-reduce:transition-none"
+            />
+            {/* Scrim behind the copy, and a bottom fade into the next section.
+                Kept off the middle so the mock-up is not dulled. */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1d1d1f]/85 via-[#1d1d1f]/25 via-45% to-[#1d1d1f]/70" />
+          </div>
 
-            <h1 className="max-w-xl text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Squash <span className="text-red-500">Bugs</span> Before{' '}
-              <span className="text-emerald-600">Launch</span>
-            </h1>
-
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
-              SQUASH connects developers and startups with everyday users who test your products, find bugs,
-              complete usability tests, and deliver real feedback before launch day.
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Eyebrow */}
+            <p className="animate-fade-up text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#e63946]">
+              SQUASH QA Network
             </p>
 
-            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
+            {/* Hero Headline — white on dark */}
+            <h1
+              className="animate-fade-up mt-5 text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-apple-tight leading-[1.05] max-w-4xl mx-auto"
+              /* style.css has an unlayered `h1 { color: inherit }`, which beats a
+                 layered `text-white` utility and would render this dark. */
+              style={{ color: '#ffffff' }}
+            >
+              Squash bugs. <br className="hidden sm:inline" />
+              Before your users do.
+            </h1>
+
+            {/* Subheadline */}
+            <p className="animate-fade-up-delayed mt-6 text-base sm:text-lg text-white/65 max-w-2xl mx-auto font-medium leading-relaxed">
+              Real South Africans test your product on real devices and send clear, reproducible bug
+              reports before your customers ever see the problem.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="animate-fade-up-delayed mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <a
                 href="/signup?role=developer&next=%2Fpost-job"
-                className="w-full text-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#e63946] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-900/40 transition hover:bg-[#d62828] active:scale-98"
               >
-                Post a Job
+                Post a test — From R100/tester
+                <ArrowRight className="h-4 w-4 stroke-[2.5]" />
               </a>
               <a
                 href="/signup?role=tester&next=%2Ftester-jobs"
-                className="w-full text-center rounded-2xl border border-slate-300 px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-white/20 bg-[rgba(255,255,255,0.06)] px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-[rgba(255,255,255,0.12)]"
               >
-                Become a Tester
+                Become a tester
               </a>
             </div>
 
-            {/* Checkmarks list optimized for mobile grid */}
-            <div className="mt-6 grid grid-cols-2 gap-2.5 text-xs font-semibold text-slate-600 sm:mt-10 sm:flex sm:flex-wrap sm:gap-6 sm:text-sm">
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">✓</span> Real everyday users
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">✓</span> Screenshots and reports
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">✓</span> Faster product feedback
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">✓</span> Built for South Africa
-              </div>
-            </div>
-          </div>
-
-          <div className="animate-fade-up-delayed relative lg:pl-6">
-            <div className="absolute -inset-6 -z-10 hidden rounded-[40px] bg-gradient-to-br from-emerald-100 via-slate-100 to-white blur-2xl sm:block" />
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-2 shadow-lg sm:rounded-[30px] sm:p-3 sm:shadow-xl">
-              <div className="aspect-[16/10] overflow-hidden rounded-[18px] sm:aspect-[4/3] sm:rounded-[22px]">
-                <img
-                  src="/about-hero.png"
-                  alt="Bug testing illustration with code, charts, and magnifying glass"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+            {/* Proof chips */}
+            <div className="animate-fade-up-delayed mt-10 flex flex-wrap items-center justify-center gap-2.5">
+              {[
+                { icon: Smartphone, label: 'Real devices' },
+                { icon: MapPin, label: 'Local testers' },
+                { icon: FileText, label: 'Structured bug reports' },
+                { icon: Globe, label: '11 SA languages' },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[rgba(255,255,255,0.06)] px-3.5 py-2 text-xs font-semibold text-white/80 backdrop-blur-md"
+                >
+                  <Icon className="h-3.5 w-3.5 text-[#e63946]" />
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Motion Graphic Hero Bento Section */}
-        <section className="border-y border-slate-200/80 bg-slate-50/80 py-8 sm:py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Section 2: Apple Light Bento Grid */}
+        <section className="py-20 bg-[#f2f2f5] border-t border-black/[0.06]">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-apple-tight text-[#1d1d1f]">
+                Engineered for South Africa.
+              </h2>
+              <p className="mt-3 text-base sm:text-xl text-[#86868b]">
+                Built specifically to solve the real-world testing challenges of local devices, networks, and native languages.
+              </p>
+            </div>
 
-              {/* Bento Card 1: Real User Testing (Live Avatar Radar) */}
-              <div className="group relative rounded-3xl border border-slate-200/90 bg-white p-4.5 sm:p-6 shadow-sm hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl group-hover:bg-emerald-400/20 transition" />
-
+            {/* Bento Grid */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* Bento Card 1 (Large 2-Column): Real SA Networks Simulator */}
+              <div className="lg:col-span-2 apple-interactive-card p-6 sm:p-8 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-2xs group-hover:scale-110 transition-transform duration-300">
-                      <Users className="h-5.5 w-5.5" />
+                  <div className="flex items-center justify-between mb-5">
+                    <div
+                      className="h-10 w-10 rounded-xl text-white flex items-center justify-center shadow-2xs transition-colors duration-300"
+                      style={{ backgroundColor: activeNetworkBrand.color, color: activeNetworkBrand.textColor }}
+                    >
+                      <Wifi className="h-5 w-5" />
                     </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                      </span>
-                      Live Pool
+                    <span
+                      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition-colors duration-300"
+                      style={{
+                        backgroundColor: `${activeNetworkBrand.color}14`,
+                        borderColor: `${activeNetworkBrand.color}33`,
+                        color: activeNetworkBrand.color,
+                      }}
+                    >
+                      Network Conditions Preview
                     </span>
                   </div>
 
-                  {/* Motion Graphic Widget: Floating Avatars & Active Beacon */}
-                  <div className="my-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex -space-x-2">
-                        {['NK', 'KM', 'AV'].map((avatar, idx) => (
-                          <div
-                            key={avatar}
-                            className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[10px] font-extrabold text-white ring-2 ring-white shadow-xs animate-float-slow"
-                            style={{ animationDelay: `${idx * 400}ms` }}
-                          >
-                            {avatar}
-                          </div>
-                        ))}
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-black text-white ring-2 ring-white shadow-xs">
-                          +50
+                  <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1d1d1f]">
+                    Real 2G, 3G & LTE Network Conditions.
+                  </h3>
+                  <p className="mt-1.5 text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
+                    Test your app with real South Africans on local cellular network conditions to catch latency freezes before your users do.
+                  </p>
+
+                  <div className="mt-6 rounded-xl bg-[#f5f5f7] p-4 border border-black/[0.06]">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {(['mtn', 'vodacom', 'telkom', 'cellc'] as const).map((net) => (
+                        <button
+                          key={net}
+                          onClick={() => setActiveNetwork(net)}
+                          className={`px-3.5 py-1 rounded-lg text-xs font-semibold transition ${
+                            activeNetwork === net
+                              ? 'shadow-xs'
+                              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                          }`}
+                          style={activeNetwork === net ? {
+                            backgroundColor: networkBrand[net].color,
+                            color: networkBrand[net].textColor,
+                          } : undefined}
+                        >
+                          {net.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-left">
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Carrier</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{networkSpecs[activeNetwork].name}</div>
+                      </div>
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Ping Latency</div>
+                        <div className="text-xs font-bold mt-0.5 flex items-center gap-1.5" style={{ color: activeNetworkBrand.color }}>
+                          <span className="h-1.5 w-1.5 rounded-full animate-ping-subtle" style={{ backgroundColor: activeNetworkBrand.color }} />
+                          {networkSpecs[activeNetwork].latency}
                         </div>
                       </div>
-                      <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-full">
-                        24 Online
-                      </span>
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Bandwidth</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{networkSpecs[activeNetwork].speed}</div>
+                      </div>
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Region</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{networkSpecs[activeNetwork].location}</div>
+                      </div>
                     </div>
                   </div>
-
-                  <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                    Real User Testing
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    Real humans on real devices finding issues that automated scripts miss.
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Coverage</span>
-                  <span className="font-extrabold text-emerald-600">100% Human QA</span>
                 </div>
               </div>
 
-              {/* Bento Card 2: Verified Devices (Laser Scanline Graphic) */}
-              <div className="group relative rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-blue-400/10 blur-2xl group-hover:bg-blue-400/20 transition" />
-
+              {/* Bento Card 2: 11 SA Languages with Speech Preview */}
+              <div className="apple-interactive-card p-6 sm:p-8 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 shadow-2xs group-hover:scale-110 transition-transform duration-300">
-                      <ShieldCheck className="h-5.5 w-5.5" />
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-extrabold text-slate-700">
-                      Target Filter
-                    </span>
+                  <div className="h-10 w-10 rounded-xl bg-[#16a34a] text-white flex items-center justify-center mb-5 shadow-2xs">
+                    <Globe className="h-5 w-5" />
                   </div>
-
-                  {/* Motion Graphic Widget: Device Scanner & Laser Beam */}
-                  <div className="my-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 relative overflow-hidden">
-                    {/* Glowing Laser Scanline */}
-                    <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_#10b981] animate-scanline z-10" />
-
-                    <div className="flex items-center justify-between gap-1 text-[10px] font-extrabold text-slate-600">
-                      <span className="rounded-md bg-white border border-slate-200/80 px-2 py-1 shadow-2xs">Android 14</span>
-                      <span className="rounded-md bg-white border border-slate-200/80 px-2 py-1 shadow-2xs">iOS 17</span>
-                      <span className="rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-1 shadow-2xs">4G / 5G</span>
-                    </div>
-                  </div>
-
-                  <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                    Verified Devices
+                  <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1d1d1f]">
+                    11 Official Languages.
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    Filter by exact phone model, OS version, language, and network conditions.
+                  <p className="mt-1.5 text-xs text-[#86868b] leading-relaxed">
+                    Verify translation nuances and copy accuracy with verified native speakers.
                   </p>
+
+                  <div className="mt-5 flex flex-wrap gap-1.5">
+                    {Object.keys(saLanguageQuotes).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => setActiveLanguage(lang)}
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition ${
+                          activeLanguage === lang
+                            ? 'bg-[#16a34a] text-white shadow-xs'
+                            : 'bg-[#f5f5f7] text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Native Speech Card Bubble */}
+                  <div className="mt-4 rounded-xl bg-[#f5f5f7] p-3 border border-black/[0.06] text-left">
+                    <div className="text-[10px] font-bold text-[#16803c] uppercase">
+                      Native {activeLanguage} Feedback:
+                    </div>
+                    <div className="text-xs font-medium text-[#1d1d1f] italic mt-0.5">
+                      "{saLanguageQuotes[activeLanguage]?.quote}"
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Environment</span>
-                  <span className="font-extrabold text-blue-600">Real Hardware</span>
+                <div className="mt-5 pt-3 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#86868b]">
+                  <span>Region: <strong className="text-[#1d1d1f]">{saLanguageQuotes[activeLanguage]?.region}</strong></span>
+                  <span className="text-[#16803c] font-semibold">Verified Native</span>
                 </div>
               </div>
 
-              {/* Bento Card 3: Detailed Bug Reports (Floating Proof Card) */}
-              <div className="group relative rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-rose-400/10 blur-2xl group-hover:bg-rose-400/20 transition" />
-
+              {/* Bento Card 3: Interactive Audio Waveform & Screen Proof */}
+              <div className="apple-interactive-card p-6 sm:p-8 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 shadow-2xs group-hover:scale-110 transition-transform duration-300">
-                      <Bug className="h-5.5 w-5.5" />
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-extrabold text-slate-700">
-                      Structured QA
-                    </span>
+                  <div className="h-10 w-10 rounded-xl bg-[#1d1d1f] text-white flex items-center justify-center mb-5 shadow-2xs">
+                    <Volume2 className="h-5 w-5" />
                   </div>
-
-                  {/* Motion Graphic Widget: Mini Floating Bug Card */}
-                  <div className="my-3 rounded-2xl border border-rose-100 bg-rose-50/30 p-2.5 animate-float-slow">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-extrabold text-slate-800 truncate max-w-[110px]">Issue in Task 1</span>
-                      <span className="rounded-full bg-rose-100 border border-rose-200 px-1.5 py-0.2 text-[9px] font-black text-rose-700 animate-pulse">
-                        CRITICAL
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full w-4/5 animate-pulse" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                    Rich Bug Reports
+                  <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1d1d1f]">
+                    Screen & Audio Evidence.
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    Clear reproduction steps, screenshot proofs, and executive summaries.
+                  <p className="mt-1.5 text-xs text-[#86868b] leading-relaxed">
+                    Every bug report includes video recordings, tap heatmaps, and spoken commentary.
                   </p>
+
+                  {/* Interactive Soundwave Player */}
+                  <div className="mt-5 rounded-xl bg-[#f5f5f7] p-3.5 border border-black/[0.06] flex items-center gap-3">
+                    <button
+                      onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                      className="h-9 w-9 rounded-full bg-[#e63946] text-white flex items-center justify-center shrink-0 shadow-sm hover:scale-105 transition"
+                    >
+                      {isPlayingAudio ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />}
+                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-[#1d1d1f] mb-1">
+                        <span>Audio Note #842</span>
+                        <span className="text-[#e63946] font-mono text-[9px]">00:24 / 01:45</span>
+                      </div>
+                      {/* Animated Waveform Frequency Bars */}
+                      <div className="flex items-end gap-1 h-5">
+                        {[12, 20, 8, 16, 24, 14, 18, 10, 22, 12, 16, 8].map((h, i) => (
+                          <div
+                            key={i}
+                            className={`w-1 rounded-full ${
+                              isPlayingAudio
+                                ? `bg-[#e63946] animate-soundwave-${(i % 4) + 1}`
+                                : 'bg-slate-300'
+                            }`}
+                            style={{ height: isPlayingAudio ? undefined : `${h}px` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Evidence</span>
-                  <span className="font-extrabold text-rose-600">Full Visual Logs</span>
+                <div className="mt-5 pt-3 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#86868b]">
+                  <span>Evidence Format</span>
+                  <span className="text-[#e63946] font-semibold">1080p Video + Voice</span>
                 </div>
               </div>
 
-              {/* Bento Card 4: Fast Turnaround (Speed Dial Graphic) */}
-              <div className="group relative rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-amber-400/10 blur-2xl group-hover:bg-amber-400/20 transition" />
-
+              {/* Bento Card 4 (Large 2-Column): Turnaround Speed */}
+              <div className="lg:col-span-2 apple-interactive-card p-6 sm:p-8 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 shadow-2xs group-hover:scale-110 transition-transform duration-300">
-                      <Gauge className="h-5.5 w-5.5" />
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-700">
-                      &lt; 24h Delivery
-                    </span>
+                  <div className="h-10 w-10 rounded-xl bg-[#1d1d1f] text-white flex items-center justify-center mb-5 shadow-2xs">
+                    <Clock className="h-5 w-5" />
                   </div>
-
-                  {/* Motion Graphic Widget: Speedometer Ticker */}
-                  <div className="my-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                      <span className="text-xs font-black text-slate-800">Avg 4.2 Hours</span>
-                    </div>
-                    <span className="rounded-md bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5">
-                      Fast Track
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                    Fast Turnaround
+                  <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1d1d1f]">
+                    Structured reports in under 24 hours.
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    Post your app testing brief and start getting actionable bug reports in hours.
+                  <p className="mt-1.5 text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
+                    Get developer-ready bug tickets complete with console logs, network payloads, and device specs ready to drop into Jira or GitHub.
                   </p>
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Speed</span>
-                  <span className="font-extrabold text-amber-600">Same-Day Results</span>
+                  <div className="mt-5 grid grid-cols-3 gap-2.5">
+                    <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
+                      <div className="text-lg sm:text-xl font-extrabold text-amber-600">&lt; 4 Hours</div>
+                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Avg First Bug</div>
+                    </div>
+                    <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
+                      <div className="text-lg sm:text-xl font-extrabold text-[#1d1d1f]">100%</div>
+                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Human QA</div>
+                    </div>
+                    <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
+                      <div className="text-lg sm:text-xl font-extrabold text-[#e63946]">R100 - R220</div>
+                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Tester Rate</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
             </div>
           </div>
         </section>
 
-        <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-4 py-1.5 text-xs font-extrabold uppercase tracking-wider text-emerald-700 backdrop-blur-md">
-              How It Works
+        {/* Section 3: Interactive Developer ROI & Spec Sheet Calculator */}
+        <section className="py-20 bg-[#f5f5f7] border-t border-black/[0.06]">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-apple-tight text-[#1d1d1f]">
+                Simple, transparent pricing.
+              </h2>
+              <p className="mt-3 text-base sm:text-xl text-[#86868b]">
+                Calculate your exact job cost with single source of truth rates and zero subscription fees.
+              </p>
             </div>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-              A faster way to validate your product before launch
-            </h2>
-            <p className="mt-4 text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
-              Post a testing job, get matched with everyday users, and receive clear bug reports
-              and usability feedback.
-            </p>
-          </div>
 
-          {/* Apple Bento Cards Grid */}
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <div
-                key={step.title}
-                className="group relative rounded-[28px] border border-slate-200/90 bg-white p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_12px_36px_rgba(0,0,0,0.07)]"
-              >
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-sm font-black text-white shadow-md group-hover:scale-105 transition-transform">
-                    0{index + 1}
-                  </div>
-                  <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
-                    Step 0{index + 1}
-                  </span>
-                </div>
-                <h3 className="text-xl font-extrabold tracking-tight text-slate-900">{step.title}</h3>
-                <p className="mt-3 text-sm font-medium leading-relaxed text-slate-600">{step.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Popular Categories Frosted Strip */}
-          <div className="mt-10 rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-6 backdrop-blur-md shadow-2xs">
-            <div className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Popular Test Categories
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {TEST_CATEGORIES.slice(0, 8).map((category) => {
-                const Icon = category.icon;
-                return (
-                  <span
-                    key={category.id}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-300 transition"
+            {/* Apple Segmented Control Tabs */}
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex p-1 rounded-full bg-slate-200/80 max-w-full overflow-x-auto">
+                {(Object.keys(specsData) as Array<keyof typeof specsData>).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedSpec(key)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition ${
+                      selectedSpec === key
+                        ? 'bg-[#1d1d1f] text-white shadow-sm'
+                        : 'text-[#86868b] hover:text-[#1d1d1f]'
+                    }`}
                   >
-                    <Icon className="h-3.5 w-3.5" style={{ color: category.color }} />
-                    {category.name}
-                    {category.saExclusive ? (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800">
-                        SA
-                      </span>
-                    ) : null}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-          <p className="mt-8 text-center text-sm text-slate-500">
-            Serving developers and everyday users across Johannesburg, Cape Town, Durban and beyond.
-          </p>
-        </section>
-
-        <section className="bg-slate-50">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div>
-                <div className="inline-flex rounded-full bg-red-50 px-4 py-2 text-sm font-medium text-red-600 ring-1 ring-red-100">
-                  Built for startups and developers
-                </div>
-                <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
-                  Know what breaks, what confuses users, and what to fix first
-                </h2>
-                <p className="mt-4 text-lg leading-8 text-slate-600">
-                  SQUASH helps teams launch with confidence by collecting feedback from real users,
-                  not guesses.
-                </p>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Keyed by quote, not name: both cards are from the same
-                    founder, so name alone was not unique and React warned
-                    about duplicate keys. */}
-                {testimonials.map((item) => (
-                  <div key={item.quote} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <p className="leading-7 text-slate-600">"{item.quote}"</p>
-                    <div className="mt-6 border-t border-slate-100 pt-4">
-                      <div className="font-bold text-slate-900">{item.name}</div>
-                      <div className="text-sm text-slate-500">{item.role}</div>
-                    </div>
-                  </div>
+                    {specsData[key].title}
+                  </button>
                 ))}
               </div>
             </div>
+
+            {/* Spec Sheet & Interactive Volume Slider */}
+            <div className="apple-interactive-card p-6 sm:p-10">
+              <div className="grid gap-8 lg:grid-cols-2 items-center">
+                <div>
+                  <div className="inline-block rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-700 mb-2.5">
+                    {specsData[selectedSpec].duration}
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] tracking-tight">
+                    {specsData[selectedSpec].title}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-[#86868b] leading-relaxed">
+                    {specsData[selectedSpec].description}
+                  </p>
+
+                  {/* Interactive Tester Volume Slider */}
+                  <div className="mt-6 p-4 rounded-xl bg-[#f5f5f7] border border-black/[0.06]">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#1d1d1f]">
+                      <span className="flex items-center gap-1.5">
+                        <Sliders className="h-4 w-4 text-[#e63946]" />
+                        Select Tester Volume:
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold text-[#e63946]">{testerCount} Testers</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={specsData[selectedSpec].minTesters}
+                      max={50}
+                      step={1}
+                      value={testerCount}
+                      onChange={(e) => setTesterCount(parseInt(e.target.value, 10))}
+                      className="mt-2.5 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#e63946]"
+                    />
+                    <div className="flex justify-between text-[10px] text-[#86868b] mt-1 font-semibold">
+                      <span>{specsData[selectedSpec].minTesters} Min</span>
+                      <span>25 Testers</span>
+                      <span>50 Max</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 space-y-2">
+                    {specsData[selectedSpec].features.map((feat) => (
+                      <div key={feat} className="flex items-center gap-2 text-xs text-[#1d1d1f] font-medium">
+                        <Check className="h-4 w-4 text-emerald-600 shrink-0 stroke-[2.5]" />
+                        {feat}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Calculated Price Tile */}
+                <div className="rounded-2xl bg-[#f5f5f7] p-6 text-center border border-black/[0.06] flex flex-col justify-between h-full">
+                  <div>
+                    <div className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">Estimated Total Payout</div>
+                    <div className="mt-1.5 text-4xl sm:text-5xl font-extrabold text-[#1d1d1f] tracking-tight">
+                      R{calculatedTotal.toLocaleString()}
+                    </div>
+                    <div className="mt-1.5 text-xs text-[#86868b] font-medium">
+                      {testerCount} testers × {specsData[selectedSpec].price} / tester
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-2.5 text-left">
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold">Est. Delivery</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">~{estimatedHours} Hours</div>
+                      </div>
+                      <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
+                        <div className="text-[9px] text-[#86868b] font-semibold">Est. Bug Yield</div>
+                        <div className="text-xs font-bold text-[#e63946] mt-0.5">~{Math.round(testerCount * 1.4)} Issues</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <a
+                    href="/signup?role=developer&next=%2Fpost-job"
+                    className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#e63946] px-5 py-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 hover:bg-[#d62828] active:scale-98 transition"
+                  >
+                    Post Job with {testerCount} Testers (R{calculatedTotal})
+                    <ChevronRight className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-[32px] bg-slate-900 px-6 py-12 text-white sm:px-10 lg:px-12">
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-                  Ready to test before you launch?
-                </h2>
-                <p className="mt-4 max-w-2xl text-lg text-slate-300">
-                  Post your first job or join as a tester and start building better digital
-                  experiences with SQUASH.
-                </p>
+        {/* Section 4: Apple Quality Seal & Founder Note */}
+        <section className="py-20 bg-white border-t border-black/[0.06]">
+          <div className="mx-auto max-w-4xl px-4 text-center">
+            <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-slate-100 text-[#1d1d1f] mb-5">
+              <Shield className="h-5.5 w-5.5 text-[#1d1d1f]" />
+            </div>
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#1d1d1f] tracking-tight whitespace-nowrap">
+              "Building a great app is hard; testing it shouldn't be."
+            </h3>
+            <p className="mt-3 text-xs sm:text-base text-[#86868b] max-w-2xl mx-auto leading-relaxed">
+              SQUASH was created to give every South African startup and software engineering team access to enterprise-grade QA on real devices from day one.
+            </p>
+
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-[#1d1d1f] text-white font-bold flex items-center justify-center text-xs">
+                MK
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <a
-                  href="/signup?role=developer&next=%2Fpost-job"
-                  className="rounded-2xl bg-green-500 px-6 py-3 font-semibold text-white transition hover:bg-green-600"
-                >
-                  Post a Job
-                </a>
-                <a
-                  href="/signup?role=tester&next=%2Ftester-jobs"
-                  className="rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
-                >
-                  Become a Tester
-                </a>
+              <div className="text-left">
+                <div className="text-xs font-bold text-[#1d1d1f]">M. Khosa</div>
+                <div className="text-[10px] text-[#86868b]">Founder, SQUASH</div>
               </div>
             </div>
           </div>
@@ -429,4 +555,3 @@ export default function SquashHomepage() {
     </div>
   );
 }
-

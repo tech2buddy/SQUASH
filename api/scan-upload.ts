@@ -10,18 +10,9 @@ const SCANNABLE_BUCKETS = new Set([
   'qualification-evidence',
   'specialization-evidence',
   'job-attachments',
-  'job-logos',
-  'tester-profile-photos',
 ]);
 
 const SCAN_TIMEOUT_MS = 25_000;
-// Specialization evidence is reviewed by an admin and backs a paid credential,
-// so it fails closed for the same reason qualification evidence does.
-const FAIL_CLOSED_BUCKETS = new Set([
-  'tester-banking-documents',
-  'qualification-evidence',
-  'specialization-evidence',
-]);
 
 function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';
@@ -69,7 +60,7 @@ export default async function handler(req: any, res: any) {
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   const bucket = typeof req.body?.bucket === 'string' ? req.body.bucket : '';
-  const path = typeof req.body?.path === 'string' ? req.body.path : '';
+  const path: string = typeof req.body?.path === 'string' ? req.body.path : '';
   if (!SCANNABLE_BUCKETS.has(bucket) || !path || path.includes('..')) {
     return res.status(400).json({ error: 'Invalid file reference' });
   }
@@ -79,17 +70,18 @@ export default async function handler(req: any, res: any) {
   });
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
+  // Every scanned upload is stored under the uploader's auth UID. Check this
+  // before using the service role to download or remove a storage object.
+  if (!path.startsWith(`${user.id}/`) || path.split('/').some((segment) => !segment || segment === '.')) {
+    return res.status(403).json({ error: 'File is not owned by this account' });
+  }
 
-  // No scanner configured (Cloudmersive not set up yet) -- operating without
-  // malware scanning for now. Every bucket, including the normally
-  // fail-closed ones, is allowed through unscanned but the gap is recorded
-  // in file_scans so it's auditable. Once CLOUDMERSIVE_API_KEY is set again,
-  // FAIL_CLOSED_BUCKETS below re-engages automatically on scanner failures.
   if (!scanApiKey) {
     await recordScan(supabase, {
       bucket, path, userId: user.id, status: 'error', threats: ['scanner_not_configured'],
     });
-    return res.status(200).json({ scanned: false, clean: true });
+    await supabase.storage.from(bucket).remove([path]);
+    return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
   }
 
   const { data: file, error: downloadError } = await supabase.storage.from(bucket).download(path);
@@ -126,14 +118,8 @@ export default async function handler(req: any, res: any) {
       bucket, path, userId: user.id, status: 'error', threats: ['scan_failed'],
     });
 
-    // Banking documents and qualification evidence fail closed. The latter is
-    // part of an admission decision, so reviewers must never see an unscanned file.
-    // Other report evidence remains available with the failure recorded.
-    if (FAIL_CLOSED_BUCKETS.has(bucket)) {
-      await supabase.storage.from(bucket).remove([path]);
-      return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
-    }
-    return res.status(200).json({ scanned: false, clean: true });
+    await supabase.storage.from(bucket).remove([path]);
+    return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
   }
 
   await recordScan(supabase, {

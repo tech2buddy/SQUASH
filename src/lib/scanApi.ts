@@ -14,14 +14,11 @@ export class InfectedFileError extends Error {
  * already deleted it from the bucket at that point), so callers can surface
  * the message and clean up their own database rows.
  *
- * A scanner outage does not throw for low-risk buckets -- the server records
- * the failure and allows the upload. Banking documents fail closed and will
- * throw, because those are reviewed by admins and are the highest-value
- * target for a malicious upload.
+ * Scanner failures throw for every bucket; the server removes unscanned files.
  */
 export async function scanUploadedFile(bucket: string, path: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return;
+  if (!session?.access_token) throw new Error('Please sign in again before uploading a file.');
 
   const response = await fetch('/api/scan-upload', {
     method: 'POST',

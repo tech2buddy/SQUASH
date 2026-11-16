@@ -164,11 +164,13 @@ export default function SquashPostJobPage() {
       if (!selectedTestType) return 'Please choose a test type before continuing.';
       const config = getTestTypeByKey(selectedTestType);
       if (testersNeeded < config.minTesters) return `${config.label} requires at least ${config.minTesters} testers.`;
+      if (testersNeeded > 1000) return 'A job can have at most 1,000 testers.';
       if (testTasks.every((task) => !task.trim())) return 'Please add the tasks testers must complete.';
       const briefIssues = briefCompletionIssues(testBrief);
       if (briefIssues.length) return briefIssues[0];
       if (!focusAreas.trim()) return 'Please add what testers should focus on.';
     }
+    if (stepIndex === 3 && liveSessionEnabled) return 'Live sessions are not available for online checkout yet. Turn off the add-on to continue.';
     return '';
   };
 
@@ -321,6 +323,11 @@ export default function SquashPostJobPage() {
   };
 
   const saveDraft = async () => {
+    if (liveSessionEnabled) {
+      setErrorMessage(validateStep(3));
+      setCurrentStep(3);
+      return;
+    }
 
     if (!session?.userId || !session.roles.includes('developer')) {
       setFeedbackMessage('');
@@ -352,11 +359,11 @@ export default function SquashPostJobPage() {
   };
   const submitStep = async (e: FormEvent) => {
     e.preventDefault();
-    const validationError = validateStep(0) || validateStep(1);
+    const validationError = validateStep(0) || validateStep(1) || validateStep(3);
     if (validationError) {
       setFeedbackMessage('');
       setErrorMessage(validationError);
-      setCurrentStep(validationError.includes('app name') ? 0 : 1);
+      setCurrentStep(liveSessionEnabled ? 3 : validationError.includes('app name') ? 0 : 1);
       return;
     }
 
@@ -617,6 +624,7 @@ export default function SquashPostJobPage() {
                       <input
                         type="number"
                         min={selectedTestTypeConfig?.minTesters || 1}
+                        max={1000}
                         value={testersNeeded}
                         onChange={(e) => setTestersNeeded(Number(e.target.value) || 0)}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#e63946]"
@@ -902,16 +910,18 @@ export default function SquashPostJobPage() {
                 </section>
 
                 <section className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ${currentStep === 3 ? '' : 'hidden'}`}>
-                  <h2 className="text-2xl font-bold text-slate-900">Live Session Add-on</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">Live Sessions</h2>
+                  <p className="mt-2 text-sm text-slate-600">Online booking is not available yet. <a className="font-semibold text-rose-700 underline" href="/live-session">Contact us about a session.</a></p>
                   <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <input
                       type="checkbox"
                       checked={liveSessionEnabled}
+                      disabled={!liveSessionEnabled}
                       onChange={(e) => setLiveSessionEnabled(e.target.checked)}
                       className="mt-1 h-4 w-4 rounded border-slate-300 accent-[#e63946]"
                     />
                     <span className="text-sm text-slate-700">
-                      <span className="font-semibold text-slate-900">Add Live Test Session - R2,000</span>
+                      <span className="font-semibold text-slate-900">Live Test Session — unavailable for online booking</span>
                       <span className="mt-1 block">
                         Watch a tester use your app in real time via video call. Ask questions and observe their natural behavior live.
                       </span>
@@ -920,7 +930,7 @@ export default function SquashPostJobPage() {
 
                   {liveSessionEnabled ? (
                     <div className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm leading-6 text-slate-700">
-                      <div>You will receive a Zoom/Google Meet link 24 hours before your scheduled session.</div>
+                      <div>Turn off this add-on before funding the job. Contact SQUASH to discuss a separate session.</div>
                       <div>1 tester - 60 minute session - Screen share included</div>
                       <div className="mt-4">
                         <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred session time</label>

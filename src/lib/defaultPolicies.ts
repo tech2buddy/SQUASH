@@ -96,7 +96,7 @@ For any POPIA inquiries or data requests, contact our Information Protection Tea
 2. REPORT REVIEWS AND APPROVALS
 - Developers agree to review submitted bug reports promptly within 72 hours of submission.
 - Reports meeting the job criteria must be approved. If a report is rejected, the Developer must provide clear, constructive justification.
-- Unreviewed reports automatically approve after 7 days to protect Tester payout timelines.
+- If a report remains unreviewed, Testers can contact SQUASH support for a manual review.
 
 3. PAYMENT AND BUDGET ALLOCATION
 - Job budgets must be fully funded prior to publishing jobs.

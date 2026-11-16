@@ -68,24 +68,7 @@ export async function createSupportTicket(input: { category: SupportCategory; su
     .select('*')
     .single();
 
-  if (insertError) {
-    return {
-      id: `ticket-${Date.now()}`,
-      userId,
-      userName: userSession.session?.user?.email || 'SQUASH User',
-      userEmail: userSession.session?.user?.email || '',
-      category: input.category,
-      subject: input.subject.trim(),
-      description: input.description.trim(),
-      priority: 'normal' as SupportPriority,
-      status: 'open' as SupportStatus,
-      responseDueAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-      isOverdue: false,
-      adminNote: 'Thank you! Our support team has received your ticket and will respond shortly.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }
+  if (insertError || !newRow) throw new Error('Your support request was not saved. Please try again or email support@squashqa.co.za.');
 
   return mapTicket(newRow);
 }

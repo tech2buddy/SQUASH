@@ -1,5 +1,29 @@
 # SQUASH Supabase Backend Notes
 
+## Paid-launch prerequisites
+
+Apply `phase67_job_pricing_guard.sql` after the earlier migrations and before
+enabling paid checkout. It rejects new or commercially edited jobs whose
+test type, tester count, and total do not match the published rates. It also
+prevents selling the live-session add-on until booking and fulfilment exist.
+Checkout independently validates the same conditions, so an older invalid
+draft cannot be funded even before its owner edits it.
+Apply `phase68_policy_review_copy.sql` afterward so a published developer
+policy cannot continue promising automatic approval that does not exist.
+
+Configure `CLOUDMERSIVE_API_KEY` in every environment that accepts evidence or
+documents. Uploads now fail and the uploaded object is removed if scanning is
+unavailable; the UI must never present an unscanned file as accepted.
+
+Before opening registration widely, use disposable tester and developer
+accounts in the production environment to verify email confirmation, password
+reset, onboarding, an active qualification scenario, admin approval, paid job
+posting with a payment-provider test checkout, report review, and payout
+review. Verify the payment webhook makes the funded job active and that a
+retried delivery does not create a second payment. Check Vercel logs for each
+step. These checks require the real production configuration and cannot be
+inferred from the local `.env.local` file.
+
 This folder contains database setup for the SQUASH backend.
 
 ## Security rules

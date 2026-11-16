@@ -88,7 +88,7 @@ export default async function handler(req: any, res: any) {
   });
   const { data: payment, error: paymentError } = await supabase
     .from('job_payments')
-    .select('id, job_id, amount_cents, currency, status')
+    .select('id, job_id, amount_cents, currency, status, provider_payment_id')
     .eq('provider_checkout_id', checkoutId)
     .maybeSingle();
   if (paymentError) {
@@ -104,8 +104,9 @@ export default async function handler(req: any, res: any) {
     payment_id: payment.id,
     payload: event,
   });
-  if (eventError?.code === '23505') return res.status(200).json({ received: true });
-  if (eventError) {
+  // An earlier delivery may have written the audit event and payment, then
+  // failed to activate the job. A duplicate must resume that final step.
+  if (eventError && eventError.code !== '23505') {
     console.error('Webhook event audit insert failed', eventError);
     return res.status(500).json({ error: 'Webhook processing failed' });
   }
@@ -117,25 +118,35 @@ export default async function handler(req: any, res: any) {
     console.error('Webhook amount mismatch', { paymentId: payment.id, webhookId });
     return res.status(400).json({ error: 'Payment amount mismatch' });
   }
+  if (typeof event.payload.id !== 'string' || !event.payload.id) {
+    return res.status(400).json({ error: 'Invalid payment reference' });
+  }
+  if (payment.status === 'succeeded' && payment.provider_payment_id !== event.payload.id) {
+    console.error('Webhook payment reference mismatch', { paymentId: payment.id, webhookId });
+    return res.status(409).json({ error: 'Payment reference mismatch' });
+  }
 
-  const { error: updateError } = await supabase
-    .from('job_payments')
-    .update({
-      status: 'succeeded',
-      provider_payment_id: event.payload.id,
-      provider_mode: event.payload.mode || null,
-      paid_at: event.payload.createdDate || new Date().toISOString(),
-    })
-    .eq('id', payment.id);
-  if (updateError) {
-    console.error('Payment update failed', updateError);
-    return res.status(500).json({ error: 'Webhook processing failed' });
+  if (payment.status !== 'succeeded') {
+    const { error: updateError } = await supabase
+      .from('job_payments')
+      .update({
+        status: 'succeeded',
+        provider_payment_id: event.payload.id,
+        provider_mode: event.payload.mode || null,
+        paid_at: event.payload.createdDate || new Date().toISOString(),
+      })
+      .eq('id', payment.id);
+    if (updateError) {
+      console.error('Payment update failed', updateError);
+      return res.status(500).json({ error: 'Webhook processing failed' });
+    }
   }
 
   const { error: jobError } = await supabase
     .from('jobs')
     .update({ status: 'active' })
-    .eq('id', payment.job_id);
+    .eq('id', payment.job_id)
+    .eq('status', 'draft');
   if (jobError) {
     console.error('Paid job activation failed', jobError);
     return res.status(500).json({ error: 'Webhook processing failed' });

@@ -356,15 +356,14 @@ export default function SquashForDevelopersPage() {
           <div className="mt-6 apple-interactive-card p-6 sm:p-8">
             <h3 className="text-xl sm:text-2xl font-extrabold text-[#1d1d1f] tracking-tight">Live Test Sessions</h3>
             <p className="mt-1.5 text-xs sm:text-sm text-[#86868b] leading-relaxed">
-              Book a live session where you watch a real user navigate your app via video call.
-              See exactly where they hesitate, what confuses them, and ask questions in real time.
+              Ask us about arranging a session where you watch a real user navigate your app via video call.
+              We will confirm availability, format, and pricing with you.
             </p>
-            <div className="mt-3 text-xs font-extrabold text-[#e63946]">From R2,000 per session</div>
             <a
               href="/live-session"
               className="mt-4 inline-flex rounded-full bg-[#e63946] px-5 py-2.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#d62828] active:scale-98 transition"
             >
-              Book a Live Session
+              Ask About Live Sessions
             </a>
           </div>
 

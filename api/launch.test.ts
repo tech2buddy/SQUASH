@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { expectedJobTotal } from './job-pricing';
+import { expectedJobTotal } from './create-checkout';
 import { TEST_TYPES } from '../src/lib/testTypes';
 
 const backend = vi.hoisted(() => ({ client: null as any }));

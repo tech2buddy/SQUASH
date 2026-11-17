@@ -1,5 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
-import { expectedJobTotal } from './job-pricing';
+
+// Kept inside the Vercel function so its runtime does not depend on a
+// cross-directory TypeScript import. phase67 enforces the same rates in SQL.
+const rates: Record<string, { rate: number; minimum: number }> = {
+  'bug-hunting': { rate: 100, minimum: 5 },
+  onboarding: { rate: 90, minimum: 3 },
+  usability: { rate: 140, minimum: 5 },
+  'low-data': { rate: 150, minimum: 3 },
+  localization: { rate: 180, minimum: 3 },
+  accessibility: { rate: 220, minimum: 3 },
+};
+
+export function expectedJobTotal(type: unknown, count: unknown): number | null {
+  if (typeof type !== 'string' || !Object.hasOwn(rates, type)) return null;
+  const price = rates[type];
+  if (!Number.isSafeInteger(count) || (count as number) < price.minimum || (count as number) > 1000) return null;
+  return price.rate * (count as number);
+}
 
 function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';

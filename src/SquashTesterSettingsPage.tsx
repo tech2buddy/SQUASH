@@ -401,7 +401,7 @@ export default function SquashTesterSettingsPage() {
                 </div>
 
                 <div className="mt-6 space-y-3">
-                  {payoutOptions.map((option) => (
+                  {payoutOptions.filter((option) => !option.comingSoon).map((option) => (
                     <label
                       key={option.id}
                       className={`flex items-start gap-3 rounded-2xl border p-4 transition ${
@@ -534,7 +534,7 @@ export default function SquashTesterSettingsPage() {
                 </div>
 
                 <div className="mt-6 divide-y divide-slate-100">
-                  {privacyRows.map((row) => (
+                  {privacyRows.filter((row) => !row.comingSoon).map((row) => (
                     <div key={row.key} className={`flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0 ${row.comingSoon ? 'opacity-60' : ''}`}>
                       <div>
                         <div className="flex items-center gap-2">

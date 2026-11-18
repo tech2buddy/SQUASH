@@ -18,6 +18,10 @@ export function expectedJobTotal(type: unknown, count: unknown): number | null {
   return price.rate * (count as number);
 }
 
+const CHECKOUT_LIFETIME_MS = 45 * 60_000;
+const PAYMENT_SETTLEMENT_GRACE_MS = 30 * 60_000;
+const MIN_YOCO_EXPIRY_LEAD_MS = 30 * 60_000;
+
 function bearerToken(header: unknown) {
   return typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : '';
 }
@@ -72,7 +76,7 @@ export default async function handler(req: any, res: any) {
 
   const { data: existing } = await supabase
     .from('job_payments')
-    .select('id, status, redirect_url')
+    .select('id, status, redirect_url, created_at, metadata')
     .eq('job_id', job.id)
     .in('status', ['creating', 'pending', 'succeeded'])
     .order('created_at', { ascending: false })
@@ -81,15 +85,42 @@ export default async function handler(req: any, res: any) {
   if (existing?.status === 'succeeded') {
     return res.status(409).json({ error: 'This job has already been paid' });
   }
-  if (existing?.status === 'pending' && existing.redirect_url) {
-    return res.status(200).json({ checkoutUrl: existing.redirect_url });
+  const now = Date.now();
+  const priorExpiry = typeof existing?.metadata?.checkout_expires_at === 'string'
+    ? Date.parse(existing.metadata.checkout_expires_at) : NaN;
+  if (existing?.status === 'pending') {
+    if (!Number.isFinite(priorExpiry)) {
+      return res.status(409).json({ error: 'This earlier checkout needs payment review. Please contact SQUASH support.' });
+    }
+    if (now < priorExpiry && existing.redirect_url) {
+      return res.status(200).json({ checkoutUrl: existing.redirect_url });
+    }
+    if (now < priorExpiry + PAYMENT_SETTLEMENT_GRACE_MS) {
+      return res.status(409).json({ error: 'This checkout has expired. Please wait for payment confirmation before retrying.' });
+    }
+    const { data: expired, error: expireError } = await supabase.from('job_payments')
+      .update({ status: 'cancelled', failure_reason: 'Checkout expired without payment confirmation' })
+      .eq('id', existing.id).eq('status', 'pending').select('id').maybeSingle();
+    if (expireError || !expired) return res.status(409).json({ error: 'Payment status changed. Please refresh and try again.' });
   }
-  if (existing?.status === 'creating') {
+  if (existing?.status === 'creating' && now - Date.parse(existing.created_at) < 30_000) {
     return res.status(409).json({ error: 'A checkout is already being prepared. Please try again shortly.' });
   }
 
   const amountCents = job.total_amount_zar * 100;
-  const { data: payment, error: paymentError } = await supabase
+  const reusable = existing?.status === 'creating'
+    && Number.isFinite(priorExpiry)
+    && priorExpiry - now >= MIN_YOCO_EXPIRY_LEAD_MS;
+  if (existing?.status === 'creating' && !reusable) {
+    const { data: cleared, error: clearError } = await supabase.from('job_payments')
+      .update({ status: 'failed', failure_reason: 'Interrupted checkout creation' })
+      .eq('id', existing.id).eq('status', 'creating').select('id').maybeSingle();
+    if (clearError || !cleared) return res.status(409).json({ error: 'Payment status changed. Please refresh and try again.' });
+  }
+  const checkoutExpiresAt = reusable
+    ? new Date(priorExpiry).toISOString()
+    : new Date(now + CHECKOUT_LIFETIME_MS).toISOString();
+  const newPayment = reusable ? { data: { id: existing.id }, error: null } : await supabase
     .from('job_payments')
     .insert({
       job_id: job.id,
@@ -97,10 +128,11 @@ export default async function handler(req: any, res: any) {
       amount_cents: amountCents,
       currency: 'ZAR',
       status: 'creating',
-      metadata: { job_title: job.title },
+      metadata: { job_title: job.title, checkout_expires_at: checkoutExpiresAt },
     })
     .select('id')
     .single();
+  const { data: payment, error: paymentError } = newPayment;
   if (paymentError || !payment) {
     console.error('Could not create internal payment record', paymentError);
     return res.status(500).json({ error: 'Unable to prepare payment' });
@@ -135,6 +167,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         amount: amountCents,
         currency: 'ZAR',
+        expiresAt: checkoutExpiresAt,
         successUrl: `${baseUrl}/billing?payment=success&job=${job.id}`,
         cancelUrl: `${baseUrl}/billing?payment=cancelled&job=${job.id}`,
         failureUrl: `${baseUrl}/billing?payment=failed&job=${job.id}`,
@@ -150,31 +183,29 @@ export default async function handler(req: any, res: any) {
     clearTimeout(timeout);
     const checkout = await response.json().catch(() => null);
     if (!response.ok || !checkout?.id || !checkout?.redirectUrl) {
-      await supabase
-        .from('job_payments')
-        .update({ status: 'failed', failure_reason: `Checkout creation failed (${response.status})` })
-        .eq('id', payment.id);
       console.error('Payment checkout creation failed', response.status, checkout);
       return res.status(502).json({ error: 'Unable to start secure payment' });
     }
 
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('job_payments')
       .update({
         provider_checkout_id: checkout.id,
         redirect_url: checkout.redirectUrl,
         status: 'pending',
         provider_mode: checkout.processingMode || null,
-        metadata: { job_title: job.title, checkout_status: checkout.status },
+        metadata: { job_title: job.title, checkout_status: checkout.status, checkout_expires_at: checkoutExpiresAt },
       })
-      .eq('id', payment.id);
+      .eq('id', payment.id)
+      .eq('status', 'creating')
+      .select('id')
+      .maybeSingle();
     if (updateError) throw updateError;
+    if (!updated) return res.status(409).json({ error: 'Payment status changed. Please refresh.' });
     return res.status(200).json({ checkoutUrl: checkout.redirectUrl });
   } catch (error) {
-    await supabase
-      .from('job_payments')
-      .update({ status: 'failed', failure_reason: 'Checkout request failed' })
-      .eq('id', payment.id);
+    // Keep the same idempotency key available for the next attempt. The
+    // provider may have created a checkout even if its response was lost.
     console.error('Payment checkout request failed', error);
     return res.status(502).json({ error: 'Unable to start secure payment' });
   }

@@ -1,6 +1,6 @@
 import PublicFooter from './PublicFooter';
 import PublicHeader from './PublicHeader';
-import { Wifi, Globe, Play, Pause, ChevronRight, Clock, ArrowRight, Check, Sliders, Shield, Volume2, Smartphone, MapPin, FileText } from 'lucide-react';
+import { Wifi, Globe, ChevronRight, Clock, ArrowRight, Check, Sliders, Shield, Volume2, Smartphone, MapPin, FileText } from 'lucide-react';
 import { usePageMeta } from './hooks/usePageMeta';
 import { useRef, useState, type PointerEvent } from 'react';
 
@@ -15,7 +15,6 @@ export default function SquashHomepage() {
   const [activeLanguage, setActiveLanguage] = useState('isiZulu');
   const [selectedSpec, setSelectedSpec] = useState<'bughunting' | 'usability' | 'lowdata' | 'localization'>('bughunting');
   const [testerCount, setTesterCount] = useState<number>(10);
-  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(true);
   const heroGlowRef = useRef<HTMLDivElement>(null);
 
   const moveHeroGlow = (event: PointerEvent<HTMLElement>) => {
@@ -27,10 +26,10 @@ export default function SquashHomepage() {
   };
 
   const networkSpecs = {
-    mtn: { name: 'MTN 5G / LTE', latency: '14ms', speed: '120 Mbps', location: 'Johannesburg', quality: 'Optimal' },
-    vodacom: { name: 'Vodacom 4G', latency: '28ms', speed: '45 Mbps', location: 'Cape Town', quality: 'Strong' },
-    telkom: { name: 'Telkom 3G', latency: '82ms', speed: '8 Mbps', location: 'Durban', quality: 'Moderate' },
-    cellc: { name: 'Cell C 2G / EDGE', latency: '310ms', speed: '0.4 Mbps', location: 'Polokwane', quality: 'Throttled' },
+    mtn: { name: 'MTN', connection: 'Varies by tester', location: 'South Africa' },
+    vodacom: { name: 'Vodacom', connection: 'Varies by tester', location: 'South Africa' },
+    telkom: { name: 'Telkom', connection: 'Varies by tester', location: 'South Africa' },
+    cellc: { name: 'Cell C', connection: 'Varies by tester', location: 'South Africa' },
   };
   const networkBrand = {
     mtn: { color: '#ffcc08', textColor: '#1d1d1f' },
@@ -58,7 +57,7 @@ export default function SquashHomepage() {
       duration: '20 min avg session',
       minTesters: 5,
       description: 'Exploratory bug hunting across real iOS & Android hardware. Uncover edge-case crashes, layout breaks, and broken links.',
-      features: ['Full reproduction steps', 'Screen recording & screenshots', 'Device telemetry & OS logs', 'Automated severity scoring'],
+      features: ['Structured bug descriptions', 'Screenshots or video when supplied', 'Tester device details', 'Tester-selected severity'],
     },
     usability: {
       title: 'Usability & UX Flow',
@@ -68,7 +67,7 @@ export default function SquashHomepage() {
       duration: '30 min avg session',
       minTesters: 5,
       description: 'Observe real human reactions to your onboarding funnel, checkout flow, and navigation usability.',
-      features: ['Audio thought-aloud notes', 'Task completion success rates', 'UX friction point map', 'Written qualitative feedback'],
+      features: ['Task outcomes', 'Written observations', 'Usability feedback', 'Executive summary'],
     },
     lowdata: {
       title: 'Low-Data & 2G/3G Testing',
@@ -78,7 +77,7 @@ export default function SquashHomepage() {
       duration: '30 min avg session',
       minTesters: 3,
       description: 'Verify your product performance under authentic South African low-bandwidth network throttling.',
-      features: ['Real 2G/3G network conditions', 'Asset load timeout verification', 'Offline state gracefully handling', 'Data payload audit'],
+      features: ['Tester-reported network context', 'Load and offline observations', 'Written issue reports', 'Device details'],
     },
     localization: {
       title: 'Local Language QA',
@@ -88,12 +87,11 @@ export default function SquashHomepage() {
       duration: '30 min avg session',
       minTesters: 3,
       description: 'Native speakers in South Africa test your app copy, currency formatting, and cultural nuance.',
-      features: ['11 SA official languages', 'Native speaker verification', 'Translation nuance check', 'Local payment method validation'],
+      features: ['Language-specific feedback', 'Copy and formatting review', 'Written issue reports', 'Tester device context'],
     },
   };
 
   const calculatedTotal = specsData[selectedSpec].rate * Math.max(testerCount, specsData[selectedSpec].minTesters);
-  const estimatedHours = (Math.max(testerCount, specsData[selectedSpec].minTesters) * 0.35).toFixed(1);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-[#1d1d1f] selection:text-white font-sans antialiased">
@@ -223,12 +221,12 @@ export default function SquashHomepage() {
                         color: activeNetworkBrand.color,
                       }}
                     >
-                      Network Conditions Preview
+                      Illustrative carrier selection
                     </span>
                   </div>
 
                   <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1d1d1f]">
-                    Real 2G, 3G & LTE Network Conditions.
+                    Test on South African networks.
                   </h3>
                   <p className="mt-1.5 text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
                     Test your app with real South Africans on local cellular network conditions to catch latency freezes before your users do.
@@ -261,15 +259,15 @@ export default function SquashHomepage() {
                         <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{networkSpecs[activeNetwork].name}</div>
                       </div>
                       <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
-                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Ping Latency</div>
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Connection</div>
                         <div className="text-xs font-bold mt-0.5 flex items-center gap-1.5" style={{ color: activeNetworkBrand.color }}>
                           <span className="h-1.5 w-1.5 rounded-full animate-ping-subtle" style={{ backgroundColor: activeNetworkBrand.color }} />
-                          {networkSpecs[activeNetwork].latency}
+                          {networkSpecs[activeNetwork].connection}
                         </div>
                       </div>
                       <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
-                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Bandwidth</div>
-                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{networkSpecs[activeNetwork].speed}</div>
+                        <div className="text-[9px] text-[#86868b] font-semibold uppercase">Speed</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">Recorded per test</div>
                       </div>
                       <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
                         <div className="text-[9px] text-[#86868b] font-semibold uppercase">Region</div>
@@ -336,43 +334,25 @@ export default function SquashHomepage() {
                     Screen & Audio Evidence.
                   </h3>
                   <p className="mt-1.5 text-xs text-[#86868b] leading-relaxed">
-                    Every bug report includes video recordings, tap heatmaps, and spoken commentary.
+                    Testers submit structured findings and can attach screenshots or video as evidence.
                   </p>
 
-                  {/* Interactive Soundwave Player */}
+                  {/* Example of evidence that a tester may attach. */}
                   <div className="mt-5 rounded-xl bg-[#f5f5f7] p-3.5 border border-black/[0.06] flex items-center gap-3">
-                    <button
-                      onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                      className="h-9 w-9 rounded-full bg-[#e63946] text-white flex items-center justify-center shrink-0 shadow-sm hover:scale-105 transition"
-                    >
-                      {isPlayingAudio ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />}
-                    </button>
+                    <div className="h-9 w-9 rounded-full bg-[#e63946] text-white flex items-center justify-center shrink-0 shadow-sm"><FileText className="h-4 w-4" /></div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between text-[10px] font-bold text-[#1d1d1f] mb-1">
-                        <span>Audio Note #842</span>
-                        <span className="text-[#e63946] font-mono text-[9px]">00:24 / 01:45</span>
+                        <span>Evidence attached by the tester</span>
+                        <span className="text-[#e63946] text-[9px]">When available</span>
                       </div>
-                      {/* Animated Waveform Frequency Bars */}
-                      <div className="flex items-end gap-1 h-5">
-                        {[12, 20, 8, 16, 24, 14, 18, 10, 22, 12, 16, 8].map((h, i) => (
-                          <div
-                            key={i}
-                            className={`w-1 rounded-full ${
-                              isPlayingAudio
-                                ? `bg-[#e63946] animate-soundwave-${(i % 4) + 1}`
-                                : 'bg-slate-300'
-                            }`}
-                            style={{ height: isPlayingAudio ? undefined : `${h}px` }}
-                          />
-                        ))}
-                      </div>
+                      <div className="text-xs text-[#86868b]">Screenshots and video can help reproduce an issue.</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-5 pt-3 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#86868b]">
                   <span>Evidence Format</span>
-                  <span className="text-[#e63946] font-semibold">1080p Video + Voice</span>
+                  <span className="text-[#e63946] font-semibold">Optional screenshot or video</span>
                 </div>
               </div>
 
@@ -383,20 +363,20 @@ export default function SquashHomepage() {
                     <Clock className="h-5 w-5" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1d1d1f]">
-                    Structured reports in under 24 hours.
+                    Structured reports from real testers.
                   </h3>
                   <p className="mt-1.5 text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
-                    Get developer-ready bug tickets complete with console logs, network payloads, and device specs ready to drop into Jira or GitHub.
+                    Receive task outcomes, written observations, bug reproduction steps, and evidence when testers attach it.
                   </p>
 
                   <div className="mt-5 grid grid-cols-3 gap-2.5">
                     <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
-                      <div className="text-lg sm:text-xl font-extrabold text-amber-600">&lt; 4 Hours</div>
-                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Avg First Bug</div>
+                      <div className="text-lg sm:text-xl font-extrabold text-amber-600">Task by task</div>
+                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Structured outcomes</div>
                     </div>
                     <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
-                      <div className="text-lg sm:text-xl font-extrabold text-[#1d1d1f]">100%</div>
-                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Human QA</div>
+                      <div className="text-lg sm:text-xl font-extrabold text-[#1d1d1f]">Real testers</div>
+                      <div className="text-[10px] text-[#86868b] font-semibold mt-0.5">Human feedback</div>
                     </div>
                     <div className="rounded-xl bg-[#f5f5f7] p-3 text-center border border-black/[0.06]">
                       <div className="text-lg sm:text-xl font-extrabold text-[#e63946]">R100 - R220</div>
@@ -492,7 +472,7 @@ export default function SquashHomepage() {
                 {/* Calculated Price Tile */}
                 <div className="rounded-2xl bg-[#f5f5f7] p-6 text-center border border-black/[0.06] flex flex-col justify-between h-full">
                   <div>
-                    <div className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">Estimated Total Payout</div>
+                    <div className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">Estimated Job Price</div>
                     <div className="mt-1.5 text-4xl sm:text-5xl font-extrabold text-[#1d1d1f] tracking-tight">
                       R{calculatedTotal.toLocaleString()}
                     </div>
@@ -502,12 +482,12 @@ export default function SquashHomepage() {
 
                     <div className="mt-5 grid grid-cols-2 gap-2.5 text-left">
                       <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
-                        <div className="text-[9px] text-[#86868b] font-semibold">Est. Delivery</div>
-                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">~{estimatedHours} Hours</div>
+                        <div className="text-[9px] text-[#86868b] font-semibold">Testers requested</div>
+                        <div className="text-xs font-bold text-[#1d1d1f] mt-0.5">{testerCount}</div>
                       </div>
                       <div className="rounded-lg bg-white p-2.5 border border-black/[0.06]">
-                        <div className="text-[9px] text-[#86868b] font-semibold">Est. Bug Yield</div>
-                        <div className="text-xs font-bold text-[#e63946] mt-0.5">~{Math.round(testerCount * 1.4)} Issues</div>
+                        <div className="text-[9px] text-[#86868b] font-semibold">Report format</div>
+                        <div className="text-xs font-bold text-[#e63946] mt-0.5">Structured findings</div>
                       </div>
                     </div>
                   </div>

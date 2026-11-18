@@ -22,8 +22,6 @@ import { getActiveJobs, getTesterApplications, getTesterAssignments, type Develo
 import { testerPayoutForJob } from './lib/pricing';
 import { getTestTypeByKey } from './lib/testTypes';
 
-type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
-
 type TesterJobCard = {
   name: string;
   description: string;
@@ -31,7 +29,6 @@ type TesterJobCard = {
   type: string;
   time: string;
   deadline: string;
-  severity: Severity;
   pay: string;
   amount: string;
   testers: string;
@@ -53,12 +50,6 @@ export default function SquashTesterJobBoard() {
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('All Jobs');
   const [sortBy, setSortBy] = useState<'Newest' | 'Highest Pay'>('Newest');
-  const [severityFilter, setSeverityFilter] = useState<Record<Severity, boolean>>({
-    Critical: true,
-    High: true,
-    Medium: true,
-    Low: true,
-  });
   const [jobTypeFilter, setJobTypeFilter] = useState('Any');
   const [platformFilter, setPlatformFilter] = useState('Any');
   const [testTypeFilter, setTestTypeFilter] = useState('Any');
@@ -96,7 +87,7 @@ export default function SquashTesterJobBoard() {
 
   const databaseJobCards = useMemo<TesterJobCard[]>(
     () =>
-      databaseJobs.map((job, index) => {
+      databaseJobs.map((job) => {
         const testTypeConfig = getTestTypeByKey(job.packageKey);
         const payoutZar = testerPayoutForJob(job.totalAmountZar, job.testersNeeded);
         return {
@@ -106,7 +97,6 @@ export default function SquashTesterJobBoard() {
         type: getCategoryById(job.category as TestCategoryId).name,
         time: `About ${testTypeConfig.estimatedMinutes} min`,
         deadline: 'Open now',
-        severity: index === 0 ? 'High' : 'Medium',
         pay: `R${payoutZar}`,
         amount: String(payoutZar),
         testers: `${job.testersNeeded} testers needed`,
@@ -182,15 +172,8 @@ export default function SquashTesterJobBoard() {
     );
   }, [session?.userId]);
 
-  const severityClasses: Record<Severity, string> = {
-    Critical: 'text-red-500',
-    High: 'text-red-500',
-    Medium: 'text-amber-500',
-    Low: 'text-slate-600',
-  };
-
   const filteredJobs = useMemo(() => {
-    let result = jobs.filter((job) => severityFilter[job.severity]);
+    let result = [...jobs];
 
     if (activeTab !== 'All Jobs') {
       const tabCategory = TEST_CATEGORIES.find((category) => category.name === activeTab);
@@ -250,7 +233,6 @@ export default function SquashTesterJobBoard() {
     jobs,
     platformFilter,
     searchText,
-    severityFilter,
     sortBy,
     testTypeFilter,
     timeFilter,
@@ -259,7 +241,7 @@ export default function SquashTesterJobBoard() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, jobTypeFilter, platformFilter, testTypeFilter, timeFilter, searchText, sortBy, severityFilter]);
+  }, [activeTab, jobTypeFilter, platformFilter, testTypeFilter, timeFilter, searchText, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
   const paginatedJobs = useMemo(() => {
@@ -302,12 +284,6 @@ export default function SquashTesterJobBoard() {
     setSearchText('');
     setActiveTab('All Jobs');
     setSortBy('Newest');
-    setSeverityFilter({
-      Critical: true,
-      High: true,
-      Medium: true,
-      Low: true,
-    });
     setJobTypeFilter('Any');
     setPlatformFilter('Any');
     setTestTypeFilter('Any');
@@ -606,25 +582,6 @@ export default function SquashTesterJobBoard() {
                   <span>R0</span>
                   <span>R500+</span>
                 </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-black/[0.06]">
-              <div className="mb-2.5 text-xs font-bold text-[#1d1d1f]">Severity</div>
-              <div className="space-y-2 text-xs font-semibold">
-                {(['Critical', 'High', 'Medium', 'Low'] as Severity[]).map((level) => (
-                  <label key={level} className="flex items-center gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={severityFilter[level]}
-                      onChange={(e) =>
-                        setSeverityFilter((prev) => ({ ...prev, [level]: e.target.checked }))
-                      }
-                      className="h-3.5 w-3.5 rounded border-black/20 accent-[#e63946] cursor-pointer"
-                    />
-                    <span className={severityClasses[level]}>{level}</span>
-                  </label>
-                ))}
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import { Mail } from 'lucide-react';
-import { InstagramIcon, LinkedInIcon, XIcon } from './BrandIcons';
+import { InstagramIcon } from './BrandIcons';
 
 const footerLinks = {
   Platform: [
@@ -9,7 +9,6 @@ const footerLinks = {
     { label: 'Platform Story', href: '/about' },
   ],
   Resources: [
-    { label: 'API Documentation', href: '/api-docs' },
     { label: 'Help & Support', href: '/help-center' },
     { label: 'Developer Guides', href: '/guides' },
   ],
@@ -61,20 +60,6 @@ export default function PublicFooter() {
               >
                 <span className="sr-only">Email</span>
                 <Mail className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="p-1.5 rounded-full text-[#86868b] hover:text-[#1d1d1f] transition"
-              >
-                <span className="sr-only">Twitter</span>
-                <XIcon className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="p-1.5 rounded-full text-[#86868b] hover:text-[#1d1d1f] transition"
-              >
-                <span className="sr-only">LinkedIn</span>
-                <LinkedInIcon className="h-4 w-4" />
               </a>
             </div>
           </div>

@@ -125,6 +125,7 @@ export default async function handler(req: any, res: any) {
     });
   }
 
+  if (attempt.status === 'sample_submitted') return res.status(200).json({ submitted: true });
   if (attempt.status !== 'sample_in_progress') {
     return res.status(409).json({ error: attempt.status === 'sample_submitted' ? 'This practical sample is already submitted.' : 'Complete the QA foundations quiz before submitting this sample.' });
   }
@@ -178,12 +179,12 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  const { error: reportError } = await supabase.from('tester_qualification_sample_reports').insert({
-    attempt_id: attempt.id,
-    tester_id: user.id,
-    sample_variant_key: attempt.sample_variant_key,
-    task_outcomes: taskOutcomes,
-    issue_reports: issueReports.map((issue) => ({
+  const { error: submitError } = await supabase.rpc('submit_qualification_sample', {
+    p_attempt_id: attempt.id,
+    p_tester_id: user.id,
+    p_report: {
+      task_outcomes: taskOutcomes,
+      issue_reports: issueReports.map((issue) => ({
       taskId: issue.taskId,
       bugTitle: issue.bugTitle.trim(),
       stepsToReproduce: issue.stepsToReproduce.trim(),
@@ -192,25 +193,15 @@ export default async function handler(req: any, res: any) {
       severity: issue.severity,
       reproducibility: issue.reproducibility,
       evidencePaths: issue.evidencePaths,
-    })),
-    tester_notes: typeof testerNotes === 'string' ? testerNotes.trim() || null : null,
-    environment: environment && typeof environment === 'object' ? environment : {},
-    evidence_paths: allEvidencePaths,
+      })),
+      tester_notes: typeof testerNotes === 'string' ? testerNotes.trim() || null : null,
+      environment: environment && typeof environment === 'object' ? environment : {},
+      evidence_paths: allEvidencePaths,
+    },
   });
-  if (reportError) {
-    console.error('tester-qualification-sample: report insert failed', reportError);
-    return res.status(500).json({ error: 'Unable to save your practical sample.' });
-  }
-
-  const { error: submitError } = await supabase
-    .from('tester_qualification_attempts')
-    .update({ status: 'sample_submitted', sample_submitted_at: new Date().toISOString() })
-    .eq('id', attempt.id)
-    .eq('tester_id', user.id)
-    .eq('status', 'sample_in_progress');
   if (submitError) {
-    console.error('tester-qualification-sample: could not mark attempt sample_submitted', submitError);
-    return res.status(500).json({ error: 'Your sample was saved but could not be queued for review. Contact SQUASH support.' });
+    console.error('tester-qualification-sample: atomic submission failed', submitError);
+    return res.status(500).json({ error: 'Unable to submit your practical sample. Please try again.' });
   }
 
   return res.status(200).json({ submitted: true });

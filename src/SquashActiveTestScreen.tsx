@@ -31,7 +31,6 @@ import {
   recordTestTaskOutcome,
   getOrCreateTestLabSession,
   getTestLabTaskResults,
-  markTestLabSubmitted,
   reopenTestLabTask,
   saveTestLabProgress,
   startTestLabTask,
@@ -442,7 +441,6 @@ export default function SquashActiveTestScreen() {
           jobId: assignment.jobId,
           summary: reportSummary.trim(),
         });
-        if (labSessionId) await markTestLabSubmitted(labSessionId);
       }
       setProgressNotice('Test submitted successfully.');
       navigate('/tester/reports');

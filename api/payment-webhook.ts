@@ -95,7 +95,10 @@ export default async function handler(req: any, res: any) {
     console.error('Webhook payment lookup failed', paymentError);
     return res.status(500).json({ error: 'Webhook processing failed' });
   }
-  if (!payment) return res.status(200).json({ received: true });
+  if (!payment) {
+    console.error('Webhook checkout not yet linked', { checkoutId, webhookId });
+    return res.status(503).json({ error: 'Payment reference is not available yet. Retry delivery.' });
+  }
 
   const { error: eventError } = await supabase.from('payment_webhook_events').insert({
     webhook_id: webhookId,

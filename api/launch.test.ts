@@ -25,6 +25,31 @@ afterEach(() => {
 });
 
 describe('paid job safety', () => {
+  it('fails closed when the existing payment lookup fails', async () => {
+    vi.stubEnv('SUPABASE_URL', 'https://audit.invalid');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'fake');
+    vi.stubEnv('YOCO_SECRET_KEY', 'fake');
+    vi.stubEnv('APP_URL', 'https://audit.invalid');
+    const insert = vi.fn();
+    backend.client = {
+      auth: { getUser: async () => ({ data: { user: { id: 'developer' } }, error: null }) },
+      from(table: string) {
+        if (table === 'jobs') return {
+          select() { return this; }, eq() { return this; },
+          maybeSingle: async () => ({ data: { id: 'job', package_key: 'bug-hunting', testers_needed: 10, total_amount_zar: 1000, status: 'draft' }, error: null }),
+        };
+        return {
+          select() { return this; }, eq() { return this; }, in() { return this; }, order() { return this; }, limit() { return this; },
+          maybeSingle: async () => ({ data: null, error: { message: 'database unavailable' } }), insert,
+        };
+      },
+    };
+    const res = response();
+    await createCheckout({ method: 'POST', headers: { authorization: 'Bearer token' }, body: { jobId: '00000000-0000-0000-0000-000000000001' } }, res);
+    expect(res.code).toBe(503);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it('uses the published rates and rejects invalid counts', () => {
     const guardSql = readFileSync(new URL('../supabase/phase67_job_pricing_guard.sql', import.meta.url), 'utf8');
     for (const type of TEST_TYPES) {

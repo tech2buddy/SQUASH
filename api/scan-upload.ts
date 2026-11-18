@@ -27,13 +27,14 @@ function bearerToken(header: unknown) {
 async function recordScan(
   supabase: any,
   input: { bucket: string; path: string; userId: string; status: string; threats: string[] },
-) {
+): Promise<boolean> {
   const { error } = await supabase.from('file_scans').upsert({
     bucket_id: input.bucket,
     object_path: input.path,
     uploaded_by: input.userId,
     status: input.status,
     threat_names: input.threats,
+    scanned_at: new Date().toISOString(),
   }, { onConflict: 'bucket_id,object_path' });
 
   if (error) {
@@ -44,6 +45,7 @@ async function recordScan(
       error,
     });
   }
+  return !error;
 }
 
 export default async function handler(req: any, res: any) {
@@ -122,9 +124,14 @@ export default async function handler(req: any, res: any) {
     return res.status(503).json({ error: 'File scanning is unavailable. Please try again later.' });
   }
 
-  await recordScan(supabase, {
+  const recorded = await recordScan(supabase, {
     bucket, path, userId: user.id, status: cleanResult ? 'clean' : 'infected', threats,
   });
+
+  if (!recorded) {
+    await supabase.storage.from(bucket).remove([path]);
+    return res.status(503).json({ error: 'File verification could not be recorded. Please upload it again.' });
+  }
 
   if (!cleanResult) {
     await supabase.storage.from(bucket).remove([path]);

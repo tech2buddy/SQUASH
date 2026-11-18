@@ -74,7 +74,7 @@ export default async function handler(req: any, res: any) {
     return res.status(409).json({ error: 'This job needs a valid draft price before payment. Please review and save it again.' });
   }
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('job_payments')
     .select('id, status, redirect_url, created_at, metadata')
     .eq('job_id', job.id)
@@ -82,6 +82,10 @@ export default async function handler(req: any, res: any) {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (existingError) {
+    console.error('Checkout payment lookup failed', existingError);
+    return res.status(503).json({ error: 'Unable to verify payment status. Please try again shortly.' });
+  }
   if (existing?.status === 'succeeded') {
     return res.status(409).json({ error: 'This job has already been paid' });
   }
@@ -134,6 +138,7 @@ export default async function handler(req: any, res: any) {
     .single();
   const { data: payment, error: paymentError } = newPayment;
   if (paymentError || !payment) {
+    if (paymentError?.code === '23505') return res.status(409).json({ error: 'A checkout is already being prepared. Please refresh shortly.' });
     console.error('Could not create internal payment record', paymentError);
     return res.status(500).json({ error: 'Unable to prepare payment' });
   }
